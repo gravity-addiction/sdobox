@@ -1,0 +1,13 @@
+Releases At
+https://w1.fi/releases/
+
+Needed Files
+
+hostap/src/common :
+  wpa_ctrl.h wpa_ctrl.c
+hostap/src/utils :
+  build_config.h common.h includes.h os.h os_unix.c wpabuf.h wpa_debug.h
+
+
+gcc -Wall -Wextra -I ./libs/wpa/ -MMD -c -g -o ./wpa/wpa_ctrl.o ./wpa/wpa_ctrl.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+gcc -Wall -Wextra -I ./libs/wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX

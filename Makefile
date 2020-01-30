@@ -1,0 +1,70 @@
+HOME = /home/pi
+DEBUG = -O3
+CC = clang
+INCLUDE = #-I/usr/local/include
+CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
+LDFLAGS = -L/usr/local/lib
+LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2
+
+GSLC_CORE = GUIslice/GUIslice.c GUIslice/elem/*.c #GUIslice/GUIslice_config.h
+GSLC_LIBS = -I./GUIslice
+
+TOUCHAPP_LIBS = -I./libs #-I./wpa
+TOUCHAPP_CORE = libs/*.c $(wildcard libs/**/*.c) gui/*.c $(wildcard gui/**/*.c) \
+                wpa/*.o
+
+
+APP_GUI =
+APP_MODULES =
+
+GSLC_DRV := SDL1
+
+ifndef GSLC_TOUCH
+  GSLC_LDLIB_EXTRA := -lm -lts
+else
+  ifeq (TSLIB,${GSLC_TOUCH})
+    GSLC_LDLIB_EXTRA := -lm -lts
+  else
+    GSLC_LDLIB_EXTRA := -lm
+  endif
+endif
+
+# === SDL1.2 ===
+ifeq (SDL1,${GSLC_DRV})
+  GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
+  # - Add extra linker libraries if needed
+  LDLIBS = -lSDL -lSDL_ttf ${GSLC_LDLIB_EXTRA}
+endif
+
+## === SDL2.0 ===
+#ifeq (SDL2,${GSLC_DRV})
+#  $(info GUIslice driver mode: SDL2)
+#  GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
+#  # - Add extra linker libraries if needed
+#  LDLIBS = -lSDL2 -lSDL2_ttf ${GSLC_LDLIB_EXTRA}
+#endif
+
+
+SRC = touchapp.c
+
+# OBJ = $(SRC:.c=.o)
+
+BINS = $(SRC:.c=)
+
+all: $(BINS)
+
+clean:
+	@echo "Cleaning directory..."
+	$(RM) $(BINS)
+
+wpa/wpa_ctrl.o: touchapp.c
+	@echo [Building $@]
+	@$(CC) -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/wpa_ctrl.o ./wpa/wpa_ctrl.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+
+wpa/os_unix.o: touchapp.c
+	@echo [Building $@]
+	@$(CC) -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+
+touchapp: touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
+	@echo [Building $@]
+	@$(CC) $(CFLAGS) -fsanitize=memory -fno-omit-frame-pointer -g -O1 $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)

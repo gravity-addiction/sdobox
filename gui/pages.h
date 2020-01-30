@@ -1,0 +1,38 @@
+#ifndef _PAGES_H_
+#define _PAGES_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
+
+enum {
+  E_PG_MAIN,
+  E_PG_KEYBOARD,
+  E_PG_WIFI,
+  E_PG_SLIDESHOW,
+  E_PG_SKYDIVEORBUST,
+  E_PG_SDOB_SUBMIT,
+  E_PG_SDOB_VIDEOLIST,
+  MAX_PAGES
+};
+
+#include "GUIslice.h"
+#include "GUIslice-wrapper/GUIslice-wrapper.h"
+
+int m_page_current;
+int m_page_show; // = -1;
+int m_page_previous; // = -1;
+
+void (*cbInit[MAX_PAGES])(gslc_tsGui *pGui);
+void (*cbOpen[MAX_PAGES])(gslc_tsGui *pGui);
+int (*cbThread[MAX_PAGES])(gslc_tsGui *pGui);
+void (*cbDestroy[MAX_PAGES])(gslc_tsGui *pGui);
+
+void touchscreenPageOpen(gslc_tsGui *pGui, int ePage);
+void touchscreenPageClose(gslc_tsGui *pGui, int ePage);
+void touchScreenPageCloseAll(gslc_tsGui *pGui);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+#endif // _PAGES_H_
