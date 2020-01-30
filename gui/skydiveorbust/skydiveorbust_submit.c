@@ -52,7 +52,7 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // Clear Scorecard
-  struct queue_head *item = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *item = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(item);
   item->action = E_Q_SCORECARD_CLEAR;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -66,7 +66,7 @@ bool pg_sdobSubmitCbBtnSubmitScore(void* pvGui,void *pvElemRef,gslc_teTouch eTou
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   // Submit Scorecard
-  struct queue_head *item = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *item = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(item);
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);

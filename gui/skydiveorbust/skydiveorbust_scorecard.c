@@ -40,7 +40,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 
   // debug_print("INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
   if (markTime >= 0 && markSelected == 0) { // Change up Start of Working Time
-    struct queue_head *itemSOWT = malloc_aligned(sizeof(struct queue_head));
+    struct queue_head *itemSOWT = malloc(sizeof(struct queue_head));
     INIT_QUEUE_HEAD(itemSOWT);
     itemSOWT->action = E_Q_SCORECARD_SCORING_SOWT;
     itemSOWT->time = markTime;
@@ -135,7 +135,7 @@ int pg_sdobSOWTSet(double markTime) {
   sdob_judgement->workingTime = 35.0;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  struct queue_head *itemStart = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *itemStart = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemStart);
   itemStart->action = E_Q_ACTION_MPV_COMMAND;
   size_t startSz = snprintf(NULL, 0, "set start %f\n", sdob_judgement->sowt) + 1;
@@ -145,7 +145,7 @@ int pg_sdobSOWTSet(double markTime) {
     queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
-  struct queue_head *itemLength = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *itemLength = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemLength);
   itemLength->action = E_Q_ACTION_MPV_COMMAND;
   size_t lengthSz = snprintf(NULL, 0, "set length %f\n", sdob_judgement->workingTime) + 1;
@@ -162,7 +162,7 @@ int pg_sdobSOWTReset() {
   sdob_judgement->sowt = -1.0;
   // debug_print("Reset SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  struct queue_head *itemStart = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *itemStart = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemStart);
   itemStart->action = E_Q_ACTION_MPV_COMMAND;
   size_t cmdStartSz = strlen("set start 0\n") + 1;
@@ -172,7 +172,7 @@ int pg_sdobSOWTReset() {
     queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
-  struct queue_head *itemEnd = malloc_aligned(sizeof(struct queue_head));
+  struct queue_head *itemEnd = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemEnd);
   itemEnd->action = E_Q_ACTION_MPV_COMMAND;
   size_t cmdEndSz = strlen("set length 100%\n") + 1;
@@ -182,13 +182,13 @@ int pg_sdobSOWTReset() {
     queue_put(itemEnd, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
-//  struct queue_head *itemChapters = malloc_aligned(sizeof(struct queue_head));
+//  struct queue_head *itemChapters = malloc(sizeof(struct queue_head));
 //  INIT_QUEUE_HEAD(itemChapters);
 //  itemChapters->action = E_Q_PLAYER_VIDEO_INFO;
 //  queue_put(itemChapters, pg_sdobQueue, &pg_sdobQueueLen);
 
 
-  // struct queue_head *itemLength = malloc_aligned(sizeof(struct queue_head));
+  // struct queue_head *itemLength = malloc(sizeof(struct queue_head));
   // INIT_QUEUE_HEAD(itemLength);
   // itemLength->action = E_Q_ACTION_MPV_COMMAND;
   // char *nCmd = (char*)calloc(cmdSz, sizeof(char));

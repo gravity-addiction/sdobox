@@ -48,7 +48,7 @@ void init_string(struct string *s);
 size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s);
 int fd_is_valid(int fd);
 int setnonblock(int sock);
-void *malloc_aligned(unsigned int size);
+void *malloc(unsigned int size);
 int sgetline(int fd, char ** out);
 void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz, size_t cnt));
 

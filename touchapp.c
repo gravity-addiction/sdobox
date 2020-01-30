@@ -234,7 +234,7 @@ int main( int argc, char* args[] )
   guislice_wrapper_quit(&m_gui);
 
   // Close all Pages
-  touchScreenPageCloseAll(&m_gui);
+  touchScreenPageDestroyAll(&m_gui);
 
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();

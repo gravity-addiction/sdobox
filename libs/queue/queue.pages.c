@@ -32,7 +32,7 @@ struct queue_head *queueGetPageQueue(int ePage) {
     return queue_get(m_queue_pages[ePage], m_queue_len[ePage]);
   } else {
     // debug_print("Cannot Get from Queue, MAX_PAGES: %d, not long enough for ePage: %d\n", MAX_PAGES, ePage);
-    struct queue_head *ret = malloc_aligned(sizeof(struct queue_head));
+    struct queue_head *ret = malloc(sizeof(struct queue_head));
     INIT_QUEUE_HEAD(ret);
     return ret;
   }

@@ -139,20 +139,6 @@ int setnonblock(int sock) {
   return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 }
 
-void *malloc_aligned(unsigned int size)
-{
-  // printf("Malloc Size: %d\n", size);
-  void *ptr;
-	int r = posix_memalign(&ptr, 32, size + 64 + sizeof(size_t));
-	if (r != 0) {
-		perror("malloc error");
-    // printf("malloc_aligned ABORTING!\n");
-		abort();
-	}
-	memset(ptr, 0, size);
-	return ptr;
-}
-
 int sgetline(int fd, char ** out)
 {
   int buf_size = 0;

@@ -3,38 +3,65 @@
 #include <time.h> // system time clocks
 #include <unistd.h>
 
+
+// Initialize Page
+void touchscreenPageInit(gslc_tsGui *pGui, int ePage) {
+  if (cbInit[ePage]) { cbInit[ePage](pGui); }
+}
+
+
+// Open Page
 void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; } 
-  printf("Opening: %d\n", ePage);
 
   // Open Page
   m_page_previous = m_page_current;
 
-  if (cbInit[ePage]) {
-    printf("Page Init Found: %d\n", ePage);
-    cbInit[ePage](pGui);
-  }
+  touchscreenPageInit(pGui, ePage);
   
-  printf("Setting Page Current: %d\n", ePage);
   gslc_SetPageCur(pGui, ePage);
   m_page_current = ePage;
 
   if (cbOpen[m_page_current]) {
-    printf("Page Open Found: %d\n", m_page_current);
     cbOpen[m_page_current](pGui);
   }
 }
 
 
+// Close Page
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; } 
-  if (cbDestroy[ePage]) { cbDestroy[ePage](pGui); }
+  if (cbClose[ePage] && cbClose[ePage] != NULL && cbInit[ePage] == NULL) {
+    cbClose[ePage](pGui);
+  }
 }
 
+
+// Destory Page
+void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
+  if (ePage < 0) { return; } 
+
+  if (m_page_current == ePage) {
+    touchscreenPageClose(pGui, ePage);
+  }
+  if (cbInit[ePage] == NULL && cbDestroy[ePage]) {
+    cbDestroy[ePage](pGui);
+  }
+}
+
+
+
+// Bulk Close All Pages
 void touchScreenPageCloseAll(gslc_tsGui *pGui) {
   for (size_t i = 0; i < MAX_PAGES; i++) {
-    if (cbDestroy[i] && cbInit[i] == NULL) {
-      cbDestroy[i](pGui);
-    }
+    touchscreenPageClose(pGui, i);
+  }
+}
+
+
+// Bulk Destory All Pages
+void touchScreenPageDestroyAll(gslc_tsGui *pGui) {
+  for (size_t i = 0; i < MAX_PAGES; i++) {
+    touchscreenPageDestroy(pGui, i);
   }
 }

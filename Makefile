@@ -59,12 +59,12 @@ clean:
 
 wpa/wpa_ctrl.o: touchapp.c
 	@echo [Building $@]
-	@$(CC) -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/wpa_ctrl.o ./wpa/wpa_ctrl.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/wpa_ctrl.o ./wpa/wpa_ctrl.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 
 wpa/os_unix.o: touchapp.c
 	@echo [Building $@]
-	@$(CC) -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
+	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 
 touchapp: touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
 	@echo [Building $@]
-	@$(CC) $(CFLAGS) -fsanitize=memory -fno-omit-frame-pointer -g -O1 $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)
+	@$(CC) $(CFLAGS) -fsanitize=leak -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)

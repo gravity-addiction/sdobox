@@ -26,11 +26,17 @@ int m_page_previous; // = -1;
 void (*cbInit[MAX_PAGES])(gslc_tsGui *pGui);
 void (*cbOpen[MAX_PAGES])(gslc_tsGui *pGui);
 int (*cbThread[MAX_PAGES])(gslc_tsGui *pGui);
+void (*cbClose[MAX_PAGES])(gslc_tsGui *pGui);
 void (*cbDestroy[MAX_PAGES])(gslc_tsGui *pGui);
 
+
+// Initialize Page
+void touchscreenPageInit(gslc_tsGui *pGui, int ePage);
 void touchscreenPageOpen(gslc_tsGui *pGui, int ePage);
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage);
+void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage);
 void touchScreenPageCloseAll(gslc_tsGui *pGui);
+void touchScreenPageDestroyAll(gslc_tsGui *pGui);
 
 #ifdef __cplusplus
 }
