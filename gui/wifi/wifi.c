@@ -118,11 +118,11 @@ void PG_WIFI_DESTROY_NETWORKS(struct pg_wifi_networksStruct *wns)
 
 
 
-int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_networksStruct *wns) {
-  if (wns->len < wns->max ) {
-    wns->networks[wns->len] = wifi;
-    ++wns->len;
-    return wns->len - 1;
+int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_networksStruct **wns) {
+  if ((*wns)->len < (*wns)->max ) {
+    (*wns)->networks[(*wns)->len] = wifi;
+    (*wns)->len += 1;
+    return (*wns)->len - 1;
   }
   return -1;
 }
@@ -138,12 +138,12 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
 
   char *t[4];
   t[0] = malloc(sizeof(int));
-  t[1] = malloc(sz);
-  t[2] = malloc(sz);
-  t[3] = malloc(sz);
+  t[1] = malloc(sz + 1);
+  t[2] = malloc(sz + 1);
+  t[3] = malloc(sz + 1);
 
   parseTabbedData(buf, t, 4);
-  printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
+  // printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
 
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
   wifi->network_id = atoi(t[0]);
@@ -166,41 +166,70 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   snprintf(newFlags, flagsSz, "%s", t[3]);
   wifi->flags = newFlags;
 
+  pg_wifi_appendNetwork(wifi, &pg_wifi_nets_saved);
   free(t[0]);
   free(t[1]);
   free(t[2]);
   free(t[3]);
-  pg_wifi_appendNetwork(wifi, pg_wifi_nets_saved);
 }
 
 
 void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   if (cnt == 0) { // has header line (skip for now)
-    printf("Got Header Line: --%s--\n", buf);
+    // bssid / frequency / signal level / flags / ssid
+    // printf("Got Header Line: --%s--\n", buf);
     return;
   }
 
-  printf("Got Parsed Line\n%s\n", buf);
-  return;
-  char *t[4];
-  t[0] = malloc(sizeof(int));
-  t[1] = malloc(sz);
-  t[2] = malloc(sz);
-  t[3] = malloc(sz);
+  char *t[5];
+  t[0] = malloc(sz + 1);
+  t[1] = malloc(sz + 1);
+  t[2] = malloc(sz + 1);
+  t[3] = malloc(sz + 1);
+  t[4] = malloc(sz + 1);
 
   parseTabbedData(buf, t, 4);
   printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
 
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
-  wifi->network_id = atoi(t[0]);
-  strlcpy(wifi->ssid, t[1], strlen(t[1]) + 1);
-  strlcpy(wifi->bssid, t[2], strlen(t[2]) + 1);
-  strlcpy(wifi->flags, t[3], strlen(t[3]) + 1);
+
+  // BSSID
+  size_t bssidSz = snprintf(NULL, 0, "%s", t[0]) + 1;
+  char *newBssid = (char *)realloc(wifi->bssid, bssidSz * sizeof(char));
+  snprintf(newBssid, bssidSz, "%s", t[0]);
+  wifi->bssid = newBssid;
+
+  // Freq
+  size_t freqSz = snprintf(NULL, 0, "%s", t[1]) + 1;
+  char *newFreq = (char *)realloc(wifi->freq, freqSz * sizeof(char));
+  snprintf(newFreq, freqSz, "%s", t[1]);
+  wifi->freq = newFreq;
+
+  // dBm
+  size_t dBmSz = snprintf(NULL, 0, "%s", t[2]) + 1;
+  char *newDBm = (char *)realloc(wifi->dBm, dBmSz * sizeof(char));
+  snprintf(newDBm, dBmSz, "%s", t[2]);
+  wifi->dBm = newDBm;
+  
+  // Flags
+  size_t flagsSz = snprintf(NULL, 0, "%s", t[3]) + 1;
+  char *newFlags = (char *)realloc(wifi->flags, flagsSz * sizeof(char));
+  snprintf(newFlags, flagsSz, "%s", t[3]);
+  wifi->flags = newFlags;
+
+  // SSID
+  size_t ssidSz = snprintf(NULL, 0, "%s", t[4]) + 1;
+  char *newSsid = (char *)realloc(wifi->ssid, ssidSz * sizeof(char));
+  snprintf(newSsid, ssidSz, "%s", t[4]);
+  wifi->ssid = newSsid;
+
+  pg_wifi_appendNetwork(wifi, &pg_wifi_nets_available);
+
   free(t[0]);
   free(t[1]);
   free(t[2]);
   free(t[3]);
-  pg_wifi_appendNetwork(wifi, pg_wifi_nets_available);
+  free(t[4]);
 }
 
 
@@ -324,6 +353,8 @@ void pg_wifi_updateAvailableNetworks() {
   // id / ssid / bssid / flags
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
   free(buf);
+
+  printf("Got Networks: %d\n", pg_wifi_nets_available->len);
 }
 
 

@@ -539,7 +539,7 @@ int run_system_cmd_with_return(char *fullpath, char *ret, int retsize) {
     return WEXITSTATUS(pidC);
   }
 }
-
+*/
 void fbcp_start() {
   if (!fbcp_running) {
     fbcp_stop();
@@ -551,5 +551,5 @@ void fbcp_stop() {
   system("killall fbcp &");
   fbcp_running = 0;
 }
-*/
+
 

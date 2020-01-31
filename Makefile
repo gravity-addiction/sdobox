@@ -4,7 +4,7 @@ CC = clang
 INCLUDE = #-I/usr/local/include
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
 LDFLAGS = -L/usr/local/lib
-LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2
+LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2 -lsystemd
 
 GSLC_CORE = GUIslice/GUIslice.c GUIslice/elem/*.c #GUIslice/GUIslice_config.h
 GSLC_LIBS = -I./GUIslice

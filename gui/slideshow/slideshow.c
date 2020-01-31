@@ -283,7 +283,7 @@ void pg_slideshowButtonLeftHeld() {
 }
 
 void pg_slideshowButtonRightHeld() {
-  // debug_print("%s\n", "Right Held Slideshow");
+  printf("%s\n", "Right Held Slideshow");
 }
 
 void pg_slideshowButtonRotaryHeld() {
@@ -293,7 +293,9 @@ void pg_slideshowButtonRotaryHeld() {
 }
 
 void pg_slideshowButtonDoubleHeld() {
-  kill(0, SIGINT);
+  // kill(0, SIGINT);
+  touchscreenPageClose(&m_gui, E_PG_SLIDESHOW);
+  touchscreenPageOpen(&m_gui, E_PG_MAIN);
 }
 
 void pg_slideshowButtonSetFuncs() {
@@ -423,6 +425,12 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
     pg_slideshowButtonRightPressed();
     return 1;
   }
+
+  char tmp_inotify_ret[1024];
+  while (fgets(tmp_inotify_ret, sizeof(tmp_inotify_ret)-1, pg_slideshowFD) != NULL) {
+    printf("SLIDESHOW--:%s:--\n", tmp_inotify_ret);
+	  
+  }
   return 0;
 }
 
@@ -433,7 +441,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Slideshow Setting Button Functions");
   pg_slideshowButtonSetFuncs();
 
-  if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/", "w"))){
+  if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/slideshow/", "w"))){
     // debug_print("%s\n", "Cannot Open image folder");
   } else {
     int d = fileno(pg_slideshowFD);
@@ -444,7 +452,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
   // // debug_print("%s\n", "Slideshow Starting Folder Watch");
   // pg_slideshowFolderWatchThreadStart();
   // debug_print("%s\n", "Slideshow Starting FBCP");
-  //-/ fbcp_start();
+  fbcp_start();
   // // debug_print("%s\n", "Slideshow Updating Filelist");
   // pg_slideshowUpdateFileList();
 
@@ -452,16 +460,19 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 }
 
 
-// GUI Destroy
-void pg_slideshow_destroy(gslc_tsGui *pGui) {
-  // debug_print("%s\n", "Slideshow Stopping");
-  pg_slideshowButtonUnsetFuncs();
-  //-/ fbcp_stop();
+void pg_slideshow_close(gslc_tsGui *pGui) {
+  fbcp_stop();
 
   system("killall fim");
   fflush(pg_slideshowFD);
   pclose(pg_slideshowFD);
+}
 
+// GUI Destroy
+void pg_slideshow_destroy(gslc_tsGui *pGui) {
+  // debug_print("%s\n", "Slideshow Stopping");
+  // pg_slideshowButtonUnsetFuncs();
+  
   // // debug_print("%s\n", "Slideshow Stopping Folder Watch");
   // pg_slideshowFolderWatchThreadStop();
   // // debug_print("%s\n", "Slideshow Stopping Slideshow Thread");
@@ -472,6 +483,7 @@ void pg_slideshow_destroy(gslc_tsGui *pGui) {
 void __attribute__ ((constructor)) pg_slideshow_constructor(void) {
   cbInit[E_PG_SLIDESHOW] = &pg_slideshow_init;
   cbOpen[E_PG_SLIDESHOW] = &pg_slideshow_open;
+  cbClose[E_PG_SLIDESHOW] = &pg_slideshow_close;
   cbThread[E_PG_SLIDESHOW] = &pg_slideshow_thread;
   cbDestroy[E_PG_SLIDESHOW] = &pg_slideshow_destroy;
   pg_slideshowQueue = ALLOC_QUEUE_ROOT();

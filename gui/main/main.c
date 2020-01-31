@@ -18,6 +18,16 @@ bool pg_mainCbBtn(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int
 }
 
 
+
+
+bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  system("export DISPLAY=:0.0; startx &");
+  return true;
+}
+
 bool pg_mainCbBtnSlideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
@@ -136,6 +146,20 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_TMPKB], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_TMPKB], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_TMPKB], true); 
+  }
+
+
+  // StartX
+  if ((
+    pg_mainEl[E_MAIN_EL_OPEN_STARTX] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {30, 100, 100, 60},
+            "X Windows", 0, E_FONT_MONO14, &pg_main_cbBtn_startX)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_OPEN_STARTX], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_OPEN_STARTX], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_OPEN_STARTX], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_OPEN_STARTX], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_OPEN_STARTX], true); 
   }
 
 

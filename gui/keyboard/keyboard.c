@@ -205,7 +205,7 @@ void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(
     strSz = pg_keyboard_data->max;
   }
   strlcpy(pg_keyboard_data->ptr, str, strSz);
-  pg_keyboard_data->len = strSz - 1;
+  pg_keyboard_data->len = strSz - 2;
   gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
   pg_keyboard_limitCheck(pGui);
 }
@@ -254,32 +254,15 @@ bool pg_keyboard_cbBtn_enter(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
 }
 
 
-
-// Spacebar Key
-bool pg_keyboard_cbBtn_spacebar(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
-{
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
-  if (pg_keyboard_data->len < pg_keyboard_data->max) {
-    strlcat(pg_keyboard_data->ptr, " ", 1);
-    ++pg_keyboard_data->len;
-    gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
-  }
-
-  return true;
-}
-
-
 // Delete Key
 bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
 {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  if (pg_keyboard_data->len > 0) {
-    pg_keyboard_data->ptr[pg_keyboard_data->len - 1] = '\0';
-    --pg_keyboard_data->len;
+  if (pg_keyboard_data->len > -1) {
+    pg_keyboard_data->ptr[pg_keyboard_data->len] = '\0';
+    pg_keyboard_data->len -= 1;
     gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
     pg_keyboard_limitCheck(pGui);
   }
@@ -348,6 +331,7 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
           xLen = snprintf(NULL, 0, "%c", pg_keyboard_data->layout[keyId]) + 1;
           x = (char *)calloc(xLen, sizeof(char));
           snprintf(x, xLen, "%c", pg_keyboard_data->layout[keyId]);
+          pg_keyboard_data->len += (xLen - 1);
 
           // realloc ptr
           if (pg_keyboard_data->len >= pg_keyboard_data->max) {
@@ -356,7 +340,7 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
             pg_keyboard_data->ptr = newBuf;
           }
 
-          pg_keyboard_data->len += xLen;
+          
           strlcat(pg_keyboard_data->ptr, x, pg_keyboard_data->len);
           
           free(x);
