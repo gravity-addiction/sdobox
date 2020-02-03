@@ -20,8 +20,11 @@ enum {
   E_MAIN_EL_MAX
 };
 
-gslc_tsElem m_asPgMainElem[MAX_ELEM_PG_DEFAULT_RAM];
-gslc_tsElemRef m_asPgMainElemRef[MAX_ELEM_PG_DEFAULT];
+#define MAX_ELEM_PG_MAIN      E_MAIN_EL_MAX
+#define MAX_ELEM_PG_MAIN_RAM  MAX_ELEM_PG_MAIN
+
+gslc_tsElem m_asPgMainElem[MAX_ELEM_PG_MAIN_RAM];
+gslc_tsElemRef m_asPgMainElemRef[MAX_ELEM_PG_MAIN];
 
 gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
 

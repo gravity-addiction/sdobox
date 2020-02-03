@@ -271,6 +271,22 @@ bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
   return true;
 }
 
+// Delete Key
+bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
+{
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageClose(pGui, E_PG_KEYBOARD);
+
+  if (m_page_previous > -1) {
+    touchscreenPageOpen(pGui, m_page_previous);
+  } else {
+    touchscreenPageOpen(pGui, E_PG_MAIN);
+  }
+  return true;
+}
+
 
 
 
@@ -388,7 +404,6 @@ bool pg_keyboard_draw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
 
 // Update Keyboard Buttons with Latest Display and Locations
 int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui) {
-  gslc_tsRect rFullscreen = {0,0,480,320};
 
   int keyY = 60;
 
@@ -488,7 +503,6 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
 {
 
   int ePage = E_PG_KEYBOARD;
-  gslc_tsRect rFullscreen = {0,0,480,320};
 
   gslc_PageAdd(&m_gui, ePage, pg_keyboardElem, MAX_ELEM_PG_KEYBOARD_RAM, pg_keyboardElemRef, MAX_ELEM_PG_KEYBOARD);
   // gslc_SetBkgndColor(&m_gui, GSLC_COL_BLACK);
@@ -504,7 +518,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
   // Keyboard Input Box
   if ((
     pg_keyboardEl[E_KEYBOARD_EL_INPUT] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect){(rFullscreen.x + 4), rFullscreen.y, (rFullscreen.w - 108), 60},
+          (gslc_tsRect){(rFullscreen.x + 4), rFullscreen.y, (rFullscreen.w - 112), 60},
           (char *)"", 0, E_FONT_MONO18)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_COL_GREEN);
@@ -517,7 +531,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
   // Delete Key
   if ((
     pg_keyboardEl[E_KEYBOARD_EL_DELETE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100),(rFullscreen.y + 5),100,50},
+            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 105),(rFullscreen.y + 5),50,50},
             (char *)"<--", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_delete)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_COL_WHITE);
@@ -525,6 +539,19 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
     gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], false);
     gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], true);
+  }
+
+  // Cancel Key
+  if ((
+    pg_keyboardEl[E_KEYBOARD_EL_CANCEL] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 50),(rFullscreen.y + 5),50,50},
+            (char *)"X", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_cancel)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], false);
+    gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], true);
   }
 
   return 1;

@@ -12,6 +12,7 @@
     static int16_t DebugOut(char ch) { return 0; }
 #endif
 
+
 // Configure environment variables suitable for display
 void UserInitEnv()
 {

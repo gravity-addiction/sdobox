@@ -85,6 +85,8 @@ extern "C" {
 #include "elem/XTextbox.h"
 
 
+static gslc_tsRect rFullscreen = {0,0,480,320};
+
 int m_show_wifi;
 int m_hide_wifi;
 int m_show_keyboard;

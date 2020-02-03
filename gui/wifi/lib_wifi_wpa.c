@@ -6,7 +6,7 @@
 #include <wiringPi.h> // Gordons Wiring Pi
 #include <unistd.h>
 
-#include "wifi_wpa.h"
+#include "lib_wifi_wpa.h"
 #include "shared.h"
 
 
@@ -36,7 +36,7 @@ PI_THREAD (pg_wifi_wpaEventThread) {
       // 60 59 61 bits at the beginning of the event, not sure why yet
       memmove(buf, buf+3, strlen(buf) - 1);
       buf[strlen(buf)] = '\0';
-
+printf("WPA Event: %s\n", buf);
       // call functions requesting access to events
       if (cbEvent[0]) { cbEvent[0](buf); }
 
@@ -68,7 +68,8 @@ int pg_wifi_wpaOpen(char* wpa_interface) {
     printf("WPA Connect Successful\n");
   }
 
-  /* Later to Attach Events */
+/*
+  // Later to Attach Events
   wpa_ctrl_attach(pg_wifi_wpa_conn);
 
   pg_wifi_wpaEventThreadStop = 0;
@@ -79,7 +80,7 @@ int pg_wifi_wpaOpen(char* wpa_interface) {
     }
     return 1;
   }
-
+*/
   return 0;
 }
 
@@ -102,13 +103,13 @@ int pg_wifi_wpaSendCmdBuf(char* cmd, char *buf, size_t *len) {
 
   int rc = wpa_ctrl_request(pg_wifi_wpa_conn, cmd, strlen(cmd), buf, len, NULL);
   if (rc == -1) {
-    // debug_print("wpa_ctrl_request() failed: %s.\n", strerror(errno));
+    printf("wpa_ctrl_request() failed: %s.\n", strerror(errno));
     return 0;
   } else if (rc == -2) {
-    // debug_print("%s\n", "wpa_ctrl_request() timeout.");
+    printf("%s\n", "wpa_ctrl_request() timeout.");
     return 0;
   }
-  // debug_print("WPA Cmd: %s\nLen: %ls\nBuffer: %s\n", cmd, len, buf);
+  // printf("WPA Cmd: %s\nLen: %ls\nBuffer: %s\n", cmd, len, buf);
   return 1;
 }
 
@@ -118,7 +119,7 @@ int pg_wifi_wpaSendCmd(char* cmd) {
   if (pg_wifi_wpaSendCmdBuf(cmd, buf, &len)) {
     return 0;
   }
-  free(buf);
+  // free(buf);
   return 1;
 }
 

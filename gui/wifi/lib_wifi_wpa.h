@@ -7,6 +7,7 @@ extern "C" {
 
 #include "wpa/wpa_ctrl.h"
 #include "wpa/common.h"
+#include "wiringPi.h"
 
 enum {
   E_WIFI_WPA_LIST_NETWORKS,
@@ -14,6 +15,7 @@ enum {
 };
 
 struct wpa_ctrl *pg_wifi_wpa_conn;
+
 
 int pg_wifi_wpaShownList;
 

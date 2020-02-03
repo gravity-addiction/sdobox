@@ -139,7 +139,6 @@ void pg_sdobSubmitGuiInit(gslc_tsGui *pGui) {
 
   // Define page enum (gui/pages.h)
   int ePage = E_PG_SDOB_SUBMIT;
-  gslc_tsRect rFullscreen = {0,0,480,320};
 
   // Create Page in guislice
   gslc_PageAdd(pGui, ePage, m_asPgSdobSubmitElem, MAX_ELEM_PG_DEFAULT, m_asPgSdobSubmitElemRef, MAX_ELEM_PG_DEFAULT);

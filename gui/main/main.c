@@ -22,8 +22,8 @@ bool pg_mainCbBtn(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int
 
 bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  
   system("export DISPLAY=:0.0; startx &");
   return true;
 }
@@ -88,7 +88,6 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   
   // Define page enum (gui/pages.h)
   int ePage = E_PG_MAIN;
-  gslc_tsRect rFullscreen = {0,0,480,320};
 
   // Create Page in guislice
   gslc_PageAdd(pGui, ePage, m_asPgMainElem, MAX_ELEM_PG_DEFAULT, m_asPgMainElemRef, MAX_ELEM_PG_DEFAULT);

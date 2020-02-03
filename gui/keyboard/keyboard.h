@@ -15,6 +15,7 @@ extern "C" {
 
 enum {
   E_KEYBOARD_EL_BOX,
+  E_KEYBOARD_EL_CANCEL,
   E_KEYBOARD_EL_INPUT,
   E_KEYBOARD_EL_DELETE,
 
@@ -57,13 +58,35 @@ gslc_tsElemRef* pg_keyboardEl[E_KEYBOARD_EL_MAX];
 
 int pg_keyboard_shiftOn;
 
+
+
+#include <stdio.h>
+#include <string.h>
+
+#include "keyboard.h"
+#include "shared.h"
+#include "gui/pages.h"
+
+
+
+// Upper Case American Layout
 struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(struct pg_keyboard_dataStruct *data);
+// Lower Case American Layout
 struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dataStruct *data);
 
+////////////////////////////
+// KEYBOARD LAYOUT CONFIGURATION
+//
+// layoutRowsLen - Number of total keyboard rows inside box
+// layoutRowsWid - Array aligned with rows used to calculate width of keys (width / layoutRowsWid[0])
+// layoutRows - Array aligned with rows and ->layout array for real number of key values in layout array
+//              this array should total layoutLen
+// layoutLen - total number of values in layout
+// layoutEl - gslc_tsElemRef pointers for keys
+// layout - ascii layout values
 struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data, 
       int *layoutRowsWid, int *layoutRows, int layoutRowsLen,
       int *layout, int layoutLen);
-
 
 struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA();
 void PG_KEYBOARD_DESTROY_DATA(struct pg_keyboard_dataStruct *data);
@@ -78,11 +101,12 @@ void pg_keyboard_limitCheck(gslc_tsGui *pGui);
 
 bool pg_keyboard_cbBtn_shift(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn_enter(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
-bool pg_keyboard_cbBtn_spacebar(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
+bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 
 bool pg_keyboard_draw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
+
 int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui);
 int pg_keyboard_guiKeyboard(gslc_tsGui* pGui);
 int pg_keyboard_guiInit(gslc_tsGui* pGui);
@@ -92,8 +116,6 @@ void pg_keyboard_open(gslc_tsGui *pGui);
 void pg_keyboard_close(gslc_tsGui *pGui);
 void pg_keyboard_destroy(gslc_tsGui *pGui);
 void __attribute__ ((constructor)) pg_keyboard_setup(void);
-
-bool CbBtnKeyboard(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 
 
 #ifdef __cplusplus

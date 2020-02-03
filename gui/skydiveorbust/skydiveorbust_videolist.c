@@ -147,7 +147,6 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
 
   // Define page enum (gui/pages.h)
   int ePage = E_PG_SDOB_VIDEOLIST;
-  gslc_tsRect rFullscreen = {0,0,480,320};
 
   // Create Page in guislice
   gslc_PageAdd(pGui, ePage, m_asPgSdobVideolistElem, MAX_ELEM_PG_DEFAULT, m_asPgSdobVideolistElemRef, MAX_ELEM_PG_DEFAULT);
