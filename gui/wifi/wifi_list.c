@@ -31,7 +31,7 @@ struct pg_wifi_list_data * PG_WIFI_LIST_INIT_DATA() {
 void PG_WIFI_LIST_CLEAR_DATA(struct pg_wifi_list_data *data)
 {
   for (int d = 0; d < data->len; ++d) {
-    free(data->ptrs[d]);
+    data->ptrs[d] = NULL;
   }
   data->len = 0;
   data->scrollMax = 1;
@@ -48,6 +48,27 @@ void pg_wifi_list_kbPass(gslc_tsGui *pGui, char* str) {
   printf("Sending %s\n", strCmd);
   pg_wifi_wpaSendCmd(strCmd);
   free(strCmd);
+}
+
+
+int pg_wifi_list_addNetworkList(pg_wifi_networkStruct *ptr) {
+  if (pg_wifi_list_networkList->len >= pg_wifi_list_networkList->max) {
+    pg_wifi_list_networkList->max = pg_wifi_list_networkList->len + 32;
+    char **newPtrs = (char**)realloc(pg_wifi_list_networkList->ptrs, pg_wifi_list_networkList->max * sizeof(char*));
+    pg_wifi_list_networkList->ptrs = newPtrs;
+  }
+  pg_wifi_list_networkList->ptrs[pg_wifi_list_networkList->len] = ptr;
+  pg_wifi_list_networkList->len += 1;
+}
+
+void pg_wifi_list_setNetworkList(pg_wifi_networkStruct **ptrs, int len) {
+  PG_WIFI_LIST_CLEAR_DATA(pg_wifi_list_networkList);
+  pg_wifi_list_networkList->len = len;
+  pg_wifi_list_networkList->ptrs = ptrs;
+}
+
+void pg_wifi_list_resetNetworkList() {
+  PG_WIFI_LIST_CLEAR_DATA(pg_wifi_list_networkList);
 }
 
 //////////////////////////////////
@@ -133,6 +154,7 @@ bool pg_wifi_list_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRed
   // Start Drawing
   gslc_DrawFillRect(pGui,pRect,pElem->colElemFill);
 
+printf("Listing Networks: %d\n", pg_wifi_list_networkList->len);
   for (int i = 0; i < 5; ++i) {
     if (i < pg_wifi_list_networkList->len) {
       gslc_ElemSetTxtStr(pGui, pg_wifiListEl[E_WIFI_LIST_EL_A + i], pg_wifi_list_networkList[i]->ssid);
@@ -145,6 +167,8 @@ bool pg_wifi_list_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRed
   gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
   return true;
 }
+
+
 
 
 void pg_wifi_list_sliderSetCurPos(gslc_tsGui *pGui, int slot_scroll) {
@@ -334,6 +358,9 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 void pg_wifi_list_init(gslc_tsGui *pGui) {
   // Initialize Network list
   pg_wifi_list_networkList = PG_WIFI_LIST_INIT_DATA();
+  
+  pg_wifi_updateAvailableNetworks();
+  pg_wifi_list_setNetworkList(pg_wifi_nets_available->ptrs, pg_wifi_nets_available->len);
 
   // Create Interface
   pg_wifi_list_guiInit(pGui);
