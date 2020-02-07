@@ -9,6 +9,14 @@ extern "C" {
 #include "gui/pages.h"
 
 enum {
+  E_MAIN_EL_BTN_A,
+  E_MAIN_EL_BTN_B,
+  E_MAIN_EL_BTN_C,
+  E_MAIN_EL_BTN_D,
+  E_MAIN_EL_BTN_E,
+  E_MAIN_EL_BTN_F,
+
+
   E_MAIN_EL_BOX,
   E_MAIN_EL_OPEN_STARTX,
   E_MAIN_EL_OPEN_SLIDESHOW,
@@ -16,6 +24,7 @@ enum {
   E_MAIN_EL_TXT_TMP,
   E_MAIN_EL_BTN_TMP,
   E_MAIN_EL_BTN_TMPKB,
+  
 
   E_MAIN_EL_MAX
 };

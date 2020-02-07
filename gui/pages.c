@@ -53,7 +53,8 @@ void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
 
 // Bulk Close All Pages
 void touchScreenPageCloseAll(gslc_tsGui *pGui) {
-  for (size_t i = 0; i < MAX_PAGES; i++) {
+  // Start at 1 as to not destory the main page
+  for (size_t i = 1; i < MAX_PAGES; i++) {
     touchscreenPageClose(pGui, i);
   }
 }
@@ -61,7 +62,8 @@ void touchScreenPageCloseAll(gslc_tsGui *pGui) {
 
 // Bulk Destory All Pages
 void touchScreenPageDestroyAll(gslc_tsGui *pGui) {
-  for (size_t i = 0; i < MAX_PAGES; i++) {
+  // Start at 1 as to not destory the main page
+  for (size_t i = 1; i < MAX_PAGES; i++) {
     touchscreenPageDestroy(pGui, i);
   }
 }

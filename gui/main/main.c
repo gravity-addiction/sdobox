@@ -7,19 +7,6 @@
 
 ////////////////
 // Button Callback
-bool pg_mainCbBtn(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_WIFI);
-  gslc_ElemSetTxtStr(pGui, pg_mainEl[E_MAIN_EL_BTN_TMP], "Pressed!");
-
-  return true;
-}
-
-
-
-
 bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
@@ -28,7 +15,7 @@ bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_
   return true;
 }
 
-bool pg_mainCbBtnSlideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
@@ -36,12 +23,20 @@ bool pg_mainCbBtnSlideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   return true;
 }
 
-bool pg_mainCbBtnSDOB(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+bool pg_main_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
 
+  return true;
+}
+
+bool pg_main_cbBtn_system(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  touchscreenPageOpen(pGui, E_PG_SYSTEM);
   return true;
 }
 
@@ -92,6 +87,84 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   // Create Page in guislice
   gslc_PageAdd(pGui, ePage, m_asPgMainElem, MAX_ELEM_PG_DEFAULT, m_asPgMainElemRef, MAX_ELEM_PG_DEFAULT);
   
+
+
+  // Button A
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_A] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 10, 100, 50},
+            "Slideshow", 0, E_FONT_MONO14, &pg_main_cbBtn_slideshow)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_A], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_A], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_A], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_A], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_A], true); 
+  }
+  // Button B
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_B] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 60, 100, 50},
+            "SDOB", 0, E_FONT_MONO14, &pg_main_cbBtn_sdob)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_B], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_B], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_B], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_B], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_B], true); 
+  }
+  // Button C
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 110, 100, 50},
+            "Start X", 0, E_FONT_MONO14, &pg_main_cbBtn_startX)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_C], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_C], true); 
+  }
+  // Button D
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_D] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 160, 100, 50},
+            " ", 0, E_FONT_MONO14)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_D], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_D], true); 
+  }
+  // Button E
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_E] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 210, 100, 50},
+            " ", 0, E_FONT_MONO14)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_E], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_E], true); 
+  }
+  // Button F
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_F] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 260, 100, 50},
+            "System", 0, E_FONT_MONO14, &pg_main_cbBtn_system)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_F], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_F], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_F], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_F], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_F], true); 
+  }
+
+
+/*
+
   // Create Fullscreen Draw Box
   // Must use a box so redrawing between pages functions correctly
   if ((
@@ -187,6 +260,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_OPEN_SKYDIVEORBUST], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_OPEN_SKYDIVEORBUST], true); 
   }
+*/
 }
 
 

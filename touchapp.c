@@ -235,6 +235,7 @@ int main( int argc, char* args[] )
 
   // Close all Pages
   touchScreenPageDestroyAll(&m_gui);
+  touchscreenPageDestroy(&m_gui, 0);
 
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();

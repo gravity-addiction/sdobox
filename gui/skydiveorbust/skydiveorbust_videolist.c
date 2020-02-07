@@ -103,8 +103,9 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   item->action = E_Q_SCORECARD_CLEAR;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-  char* tmpMeet = "SVNH2019";
-  char* tmpFile = "Group1-34_2.mp4";
+  // Load File (Temp)
+  char* tmpMeet = "MEET2020";
+  char* tmpFile = "Group1-12_2.mp4";
   pg_sdobUpdateMeet(pGui, tmpMeet);
   pg_sdobUpdateVideoDesc(pGui, tmpFile);
   pg_sdobUpdateVideoRate(pGui, mpv_speed(1.0));

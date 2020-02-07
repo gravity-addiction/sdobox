@@ -8,21 +8,46 @@ extern "C" {
 
 #include "gui/pages.h"
 
+//////////////////
+// GUI Page
+enum {
+  E_SLIDESHOW_EL_TOUCHPAD,
+  E_SLIDESHOW_EL_CLOSE,
+  E_SLIDESHOW_EL_FBCP,
+  E_SLIDESHOW_EL_TOUCHPAD_UP,
+  E_SLIDESHOW_EL_TOUCHPAD_DOWN,
+  E_SLIDESHOW_EL_TOUCHPAD_RIGHT,
+  E_SLIDESHOW_EL_TOUCHPAD_LEFT,
+  
+  E_SLIDESHOW_EL_MAX
+};
 
-gslc_tsElem pg_slideshowElem[MAX_ELEM_PG_DEFAULT_RAM];
-gslc_tsElemRef pg_slideshowElemRef[MAX_ELEM_PG_DEFAULT];
+#define MAX_ELEM_PG_SLIDESHOW      E_SLIDESHOW_EL_MAX
+#define MAX_ELEM_PG_SLIDESHOW_RAM  MAX_ELEM_PG_SLIDESHOW
+
+gslc_tsElem pg_slideshowElem[MAX_ELEM_PG_SLIDESHOW];
+gslc_tsElemRef pg_slideshowElemRef[MAX_ELEM_PG_SLIDESHOW_RAM];
+
+gslc_tsElemRef* pg_slideshowEl[E_SLIDESHOW_EL_MAX];
+
+int pg_slideshow_player_mpv_fd;
+int pg_slideshowMpvSocketThreadKill;
+int pg_slideshowMpvSocketThreadRunning;
 
 int pg_slideshowPgPointed;
 
 FILE *pg_slideshowFolderWatchFP;
 FILE *pg_slideshowFD;
 
-struct queue_root *pg_slideshowQueue;
+// struct queue_root *pg_slideshowQueue;
+
+double pg_slideshowZoom;
+double pg_slideshowPanX;
+double pg_slideshowPanY;
+int pg_slideshowIsPicture;
 
 int pg_slideshowNMove;
 int pg_slideshowPMove;
-int pg_slideshowDelay;
-int pg_slideshowDelayNext;
 int pg_slideshowPaused;
 
 int pg_slideshowThreadKill; // Stopping Thread

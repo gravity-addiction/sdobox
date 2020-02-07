@@ -49,6 +49,7 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s);
 int fd_is_valid(int fd);
 int setnonblock(int sock);
 void *malloc(unsigned int size);
+void clearsocket(int fd);
 int sgetline(int fd, char ** out);
 void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz, size_t cnt));
 
@@ -57,7 +58,7 @@ int cmp_atoi(const void *a, const void *b);
 int time_to_secs(char* timestamp);
 void secs_to_time(int millisecs, char *retFormat, int retLen);
 int jsoneq(const char *json, jsmntok_t *tok, const char *s);
-void ta_json_parse(char *json, char* prop, char ** ret_var);
+int ta_json_parse(char *json, char* prop, char ** ret_var);
 int parseTabbedData(const char *s, char *data[], size_t n);
 
 size_t file_list(const char *path, char ***ls);

@@ -37,7 +37,7 @@ struct pg_wifi_statusStruct * PG_WIFI_INIT_STATUS()
 {
   struct pg_wifi_statusStruct *ws = (struct pg_wifi_statusStruct*)malloc(sizeof(struct pg_wifi_statusStruct));
 
-  ws->network_id = -1;
+  ws->id = -1;
   
   ws->ip_address = (char *)calloc(4, sizeof(char));
   strlcpy(ws->ip_address, "IP:", 4);
@@ -91,7 +91,7 @@ struct pg_wifi_networkStruct * PG_WIFI_INIT_NETWORK()
 {
   struct pg_wifi_networkStruct *net = (struct pg_wifi_networkStruct*)malloc(sizeof(struct pg_wifi_networkStruct));
 
-  net->network_id = -1;
+  net->id = -1;
   net->bssid = (char *)calloc(1, sizeof(char));
   net->freq = (char *)calloc(1, sizeof(char));
   net->dBm = (char *)calloc(1, sizeof(char));
@@ -118,7 +118,7 @@ struct pg_wifi_networksStruct * PG_WIFI_INIT_NETWORKS() {
   struct pg_wifi_networksStruct *nets = (struct pg_wifi_networksStruct*)malloc(sizeof(struct pg_wifi_networksStruct));
   nets->max = 32;
   nets->len = 0;
-  nets->networks = (struct pg_wifi_networkStruct**)malloc(nets->max * sizeof(struct pg_wifi_networkStruct*));
+  nets->ptrs = (struct pg_wifi_networkStruct**)malloc(nets->max * sizeof(struct pg_wifi_networkStruct*));
 
   return nets;
 }
@@ -126,9 +126,9 @@ struct pg_wifi_networksStruct * PG_WIFI_INIT_NETWORKS() {
 void PG_WIFI_DESTROY_NETWORKS(struct pg_wifi_networksStruct *wns)
 {
   for (int i = 0; i < wns->len; ++i) {
-    PG_WIFI_DESTROY_NETWORK(wns->networks[i]);
+    PG_WIFI_DESTROY_NETWORK(wns->ptrs[i]);
   }
-  free(wns->networks);
+  free(wns->ptrs);
   free(wns);
 }
 
@@ -143,15 +143,19 @@ int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_net
   // Exists? replace
   for (int w = 0; w < (*wns)->len; ++w) {
     if (wifi->ssid == NULL) { break; }
-    if (strcmp((*wns)->networks[w]->ssid, wifi->ssid) == 0) {
-      (*wns)->networks[w] = wifi;
+    if ((*wns)->ptrs[w]->id > -1 && (*wns)->ptrs[w]->id == wifi->id) {
+      (*wns)->ptrs[w] = wifi;
+      return w;
+    } else
+    if (strcmp((*wns)->ptrs[w]->ssid, wifi->ssid) == 0) {
+      (*wns)->ptrs[w] = wifi;
       return w;
     }
   }
 
   // Add additionally
   if ((*wns)->len < (*wns)->max ) {
-    (*wns)->networks[(*wns)->len] = wifi;
+    (*wns)->ptrs[(*wns)->len] = wifi;
     (*wns)->len += 1;
     return (*wns)->len - 1;
   }
@@ -161,7 +165,7 @@ int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_net
 void pg_wifi_clearNetworks(struct pg_wifi_networksStruct **wns) {
   int wnsLen = (*wns)->len;
   for (int i = 0; i < wnsLen; ++i) {
-    PG_WIFI_DESTROY_NETWORK((*wns)->networks[i]);
+    PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[i]);
   }
   (*wns)->len = 0;
 }
@@ -185,7 +189,7 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   // printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
 
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
-  wifi->network_id = atoi(t[0]);
+  wifi->id = atoi(t[0]);
 
   // SSID
   size_t ssidSz = snprintf(NULL, 0, "%s", t[1]) + 1;
@@ -214,7 +218,7 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
 
 
 void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
-  printf("%s\n", buf);
+  // printf("%s\n", buf);
   if (cnt == 0) { // has header line (skip for now)
     // bssid / frequency / signal level / flags / ssid
     // printf("Got Header Line: --%s--\n", buf);
@@ -229,7 +233,7 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   t[4] = malloc(sz + 1);
 
   parseTabbedData(buf, t, 5);
-  printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
+  // printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
 
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
 
@@ -334,15 +338,16 @@ void pg_wifi_updateStatus(char *buf, size_t sz, size_t cnt) {
     pg_wifi_status->wpa_state = newConnection;
 
 
-  }/* else if (strcmp(key, "id") == 0) {
-    // sscanf(buf, "%128[^=]=%d", key, &vaI);
-    //pg_wifi_status->network_id = vaI;
+  } else if (strcmp(key, "id") == 0) {
+    pg_wifi_status->id = atoi(val);
+  } else if (strcmp(key, "key_mgmt") == 0) {
+    // pg_wifi_status->key_mgmt = val;
+  }
+    /*
   } else if (strcmp(key, "pairwise_cipher") == 0) {
     // pg_wifi_status->pairwise_cipher = val;
   } else if (strcmp(key, "group_cipher") == 0) {
     // pg_wifi_status->group_cipher = val;
-  } else if (strcmp(key, "key_mgmt") == 0) {
-    // pg_wifi_status->key_mgmt = val;
   } else if (strcmp(key, "p2p_device_address") == 0) {
     // pg_wifi_status->p2p_device_address = val;
   } else if (strcmp(key, "address") == 0) {
@@ -361,7 +366,13 @@ void pg_wifi_updateStatus(char *buf, size_t sz, size_t cnt) {
 
 
 
-
+void pg_wifi_setInterface(char* interface) {
+  size_t cmdMem = snprintf(NULL, 0, "INTERFACE %s", interface);
+  char *cmd = malloc(cmdMem + 1);
+  snprintf(cmd, cmdMem + 1, "INTERFACE %s", interface);
+  pg_wifi_wpaSendCmd(cmd);
+  free(cmd);
+}
 
 void pg_wifi_updateSavedNetworks() {
 
@@ -393,11 +404,11 @@ void pg_wifi_updateAvailableNetworks() {
   }
   // id / ssid / bssid / flags
   // pg_wifi_clearNetworks(&pg_wifi_nets_available);
-  printf("%s\n", buf);
+  // printf("%s\n", buf);
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
   free(buf);
 
-  printf("Got Available Networks: %d\n", pg_wifi_nets_available->len);
+  // printf("Got Available Networks: %d\n", pg_wifi_nets_available->len);
 }
 
 
@@ -425,32 +436,29 @@ void pg_wifi_enableNetworkAll() {
   pg_wifi_wpaSendCmd("ENABLE_NETWORK all");
 }
 
-void pg_wifi_disableNetwork(int network_id) {
-  size_t cmdMem = snprintf(NULL, 0, "DISABLE_NETWORK %d", network_id);
+void pg_wifi_disableNetwork(int id) {
+  size_t cmdMem = snprintf(NULL, 0, "DISABLE_NETWORK %d", id);
   char *cmd = malloc(cmdMem + 1);
-  snprintf(cmd, cmdMem + 1, "DISABLE_NETWORK %d", network_id);
+  snprintf(cmd, cmdMem + 1, "DISABLE_NETWORK %d", id);
   // debug_print("\n\n%s\n", cmd);
-  // pg_wifi_wpaSendCmd(cmd);
+  pg_wifi_wpaSendCmd(cmd);
+  free(cmd);
 }
-void pg_wifi_enableNetwork(int network_id) {
-  size_t cmdMem = snprintf(NULL, 0, "ENABLE_NETWORK %d", network_id);
+void pg_wifi_enableNetwork(int id) {
+  size_t cmdMem = snprintf(NULL, 0, "ENABLE_NETWORK %d", id);
   char *cmd = malloc(cmdMem + 1);
-  snprintf(cmd, cmdMem + 1, "ENABLE_NETWORK %d", network_id);
+  snprintf(cmd, cmdMem + 1, "ENABLE_NETWORK %d", id);
   // debug_print("\n\n%s\n", cmd);
-  // pg_wifi_wpaSendCmd(cmd);
+  pg_wifi_wpaSendCmd(cmd);
+  free(cmd);
+}
+void pg_wifi_selectNetwork(int id) {
+  size_t cmdMem = snprintf(NULL, 0, "SELECT_NETWORK %d", id);
+  char *cmd = malloc(cmdMem + 1);
+  snprintf(cmd, cmdMem + 1, "SELECT_NETWORK %d", id);
+  // debug_print("\n\n%s\n", cmd);
+  pg_wifi_wpaSendCmd(cmd);
+  free(cmd);
 }
 
-// pg_wifi_wpaSetEventCallbackFunc ?
-void wifiWpaEvent(char* event) {
-  // debug_print("Got Event: --%s--\n", event);
-  if (strcmp(event, "CTRL-EVENT-SCAN-STARTED ") == 0) {
-    // debug_print("%s\n", "Scan Started!");
-  }
-  /*
-  char *newTxt = malloc(strlen(str) + 1);
-  strlcpy(newTxt, str, strlen(str) + 1);
-  scorecard->judge = newTxt;
-  gslc_ElemSetTxtStr(pGui, m_pElemScorecardJudge, str);
-  */
-}
 

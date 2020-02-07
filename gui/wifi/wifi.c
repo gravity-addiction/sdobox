@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
@@ -213,7 +214,7 @@ commands:
   dpp_pkex_remove *|<id> = remove DPP pkex information
 */
 
-void pg_wifi_cbBtn_kbSSID(gslc_tsGui *pGui, char* str) {
+void pg_wifi_cbBtn_setSSID(gslc_tsGui *pGui, char* str) {
   // 
   size_t strSz = snprintf(NULL, 0, "%s", str) + 1;
   if (strSz > pg_wifi_addInput->ssidMax) {
@@ -225,7 +226,7 @@ void pg_wifi_cbBtn_kbSSID(gslc_tsGui *pGui, char* str) {
   gslc_ElemSetTxtStr(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], pg_wifi_addInput->ssidPtr);
 }
 
-void pg_wifi_cbBtn_kbPass(gslc_tsGui *pGui, char* str) {
+void pg_wifi_cbBtn_setPass(gslc_tsGui *pGui, char* str) {
   // 
   size_t strSz = snprintf(NULL, 0, "%s", str) + 1;
   if (strSz > pg_wifi_addInput->passMax) {
@@ -246,19 +247,19 @@ void pg_wifi_cbBtn_kbPass(gslc_tsGui *pGui, char* str) {
 //
 // GUI CALLBACK BUTTONS
 //
-bool pg_wifi_cbBtn_setSSID(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+bool pg_wifi_cbBtn_SSID(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_keyboard_show(pGui, 16, pg_wifi_addInput->ssidPtr, &pg_wifi_cbBtn_kbSSID);
+  pg_keyboard_show(pGui, 16, pg_wifi_addInput->ssidPtr, &pg_wifi_cbBtn_setSSID);
   return true;
 }
 
-bool pg_wifi_cbBtn_setPass(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+bool pg_wifi_cbBtn_SSIDPass(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_keyboard_show(pGui, 16, pg_wifi_addInput->passPtr, &pg_wifi_cbBtn_kbPass);
+  pg_keyboard_show(pGui, 16, pg_wifi_addInput->passPtr, &pg_wifi_cbBtn_setPass);
   return true;
 }
 
@@ -266,8 +267,15 @@ bool pg_wifi_cbBtn_findnet(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  printf("Find Wifi Networks\n");
   touchscreenPageOpen(pGui, E_PG_WIFI_LIST);
+  return true;
+}
+
+bool pg_wifi_cbBtn_savednet(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageOpen(pGui, E_PG_WIFI_LIST_SAVED);
   return true;
 }
 
@@ -276,6 +284,47 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   printf("Connect to Wifi\n");
+  // Add Network get id
+
+  // set_network 1 ssid "TEST1"
+  // set_network 1 psk "TESTPASS!@#"
+  // password 1 "TEST!PASDF#"
+  // enable_network
+  // save_config
+  
+  size_t len = 32;
+  char buf[len + 1];
+  CLEAR(buf, len + 1);
+  buf[len] = '\0';
+
+  pg_wifi_wpaSendCmdBuf("ADD_NETWORK", buf, &len);
+  char *pEnd;
+  int network_id = strtol(buf, &pEnd, 10); 
+  if (pEnd == buf
+      || errno == ERANGE
+  ) {
+    printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
+    return false;
+  } else {
+    printf("Using Network Id: %d\n", network_id);
+    size_t strSsidSz = snprintf(NULL, 0, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr) + 1;
+    char *strSsidCmd = (char *)malloc(strSsidSz * sizeof(char));
+    snprintf(strSsidCmd, strSsidSz, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr);
+    printf("%s\n", strSsidCmd);
+    pg_wifi_wpaSendCmd(strSsidCmd);
+    free(strSsidCmd);
+
+    size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr) + 1;
+    char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
+    snprintf(strPassCmd, strPassSz, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr);
+    printf("%s\n", strPassCmd);
+    pg_wifi_wpaSendCmd(strPassCmd);
+    free(strPassCmd);
+
+    pg_wifi_enableNetwork(network_id);
+    pg_wifi_wpaSendCmd("SAVE_CONFIG");
+  }
+
   return true;
 }
 
@@ -297,11 +346,23 @@ bool pg_wifi_cbBtn_reassociate(void* pvGui, void *pvElemRef, gslc_teTouch eTouch
   return true;
 }
 
+
+bool pg_wifi_cbBtn_refresh(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_wifi_getStatus();
+  pg_wifi_showStatus(pGui);
+
+  return true;
+}
+
+
 bool pg_wifi_cbBtn_disableNetwork(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_wifi_disableNetwork(pg_wifi_status->network_id);
+  pg_wifi_disableNetwork(pg_wifi_status->id);
   return true;
 }
 
@@ -309,7 +370,7 @@ bool pg_wifi_cbBtn_enableNetwork(void* pvGui, void *pvElemRef, gslc_teTouch eTou
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_wifi_enableNetwork(pg_wifi_status->network_id);
+  pg_wifi_enableNetwork(pg_wifi_status->id);
   return true;
 }
 
@@ -371,13 +432,8 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   // debug_print("%s\n", "Wifi GUI Init");
   int ePage = E_PG_WIFI;
   gslc_PageAdd(pGui, ePage, pg_wifiElem, MAX_ELEM_PG_WIFI_RAM, pg_wifiElemRef, MAX_ELEM_PG_WIFI);
-
-  // Set Background to a flat color
-  gslc_SetBkgndColor(pGui, GSLC_COL_BLACK);
-
-  gslc_tsRect rFullscreen = {0,0,480,320};
+  
   int xHei = 20;
-
 
   // Main View Box
   pg_wifiEl[E_WIFI_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, (gslc_tsRect){0,170,420,120});
@@ -388,26 +444,26 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
 
 
   pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {5,165,470,50}, (char*)"SSID:", 0, E_FONT_MONO18, &pg_wifi_cbBtn_setSSID);
+            (gslc_tsRect) {0,165,480,50}, (char*)"SSID:", 0, E_FONT_MONO18, &pg_wifi_cbBtn_SSID);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], GSLC_COL_WHITE, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], GSLC_ALIGN_MID_LEFT);
-  gslc_ElemSetTxtMarginXY(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], 3, 0);
+  gslc_ElemSetTxtMarginXY(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], 8, 0);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], false);
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], true);
   gslc_ElemSetGlowEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], false);
 
   pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {5,220,470,50}, (char*)"Pass:", 0, E_FONT_MONO18, &pg_wifi_cbBtn_setPass);
+            (gslc_tsRect) {0,220,480,50}, (char*)"Pass:", 0, E_FONT_MONO18, &pg_wifi_cbBtn_SSIDPass);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], GSLC_COL_WHITE, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], GSLC_ALIGN_MID_LEFT);
-  gslc_ElemSetTxtMarginXY(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], 3, 0);
+  gslc_ElemSetTxtMarginXY(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], 8, 0);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], false);
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], true);
   gslc_ElemSetGlowEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], false);
 
 
    pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {70,165,405,50}, pg_wifi_addInput->ssidPtr, 0, E_FONT_MONO24, &pg_wifi_cbBtn_setSSID);
+            (gslc_tsRect) {70,165,405,50}, pg_wifi_addInput->ssidPtr, 0, E_FONT_MONO24, &pg_wifi_cbBtn_SSID);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], GSLC_COL_BLACK, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], false);
@@ -417,7 +473,7 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
 
 
    pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {70,220,405,50}, (char*)" ", 0, E_FONT_MONO18, &pg_wifi_cbBtn_setPass);
+            (gslc_tsRect) {70,220,405,50}, (char*)" ", 0, E_FONT_MONO18, &pg_wifi_cbBtn_SSIDPass);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], GSLC_COL_BLACK, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], false);
@@ -425,16 +481,25 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetGlowEn(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], false);
 
   pg_wifiEl[E_WIFI_EL_BTN_FINDNET] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0,275,230,45}, (char*)"Find Networks", 0, E_FONT_MONO18, &pg_wifi_cbBtn_findnet);
+            (gslc_tsRect) {0,275,152,45}, (char*)"Search WIFI", 0, E_FONT_MONO18, &pg_wifi_cbBtn_findnet);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], GSLC_COL_BLACK, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], true);
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], true);
   gslc_ElemSetGlowEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], false);
 
+  pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {164,275,152,45}, (char*)"Saved", 0, E_FONT_MONO18, &pg_wifi_cbBtn_savednet);
+  gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], GSLC_COL_BLACK, GSLC_COL_BLUE_DK2, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], true);
+  gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], true);
+  gslc_ElemSetGlowEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], false);
+
   pg_wifiEl[E_WIFI_EL_BTN_CONNECT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {245,275,230,45}, (char*)"Connect to Wifi", 0, E_FONT_MONO18, &pg_wifi_cbBtn_connect);
+            (gslc_tsRect) {328,275,152,45}, (char*)"Connect", 0, E_FONT_MONO18, &pg_wifi_cbBtn_connect);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], GSLC_COL_BLACK, GSLC_COL_GREEN_DK2, GSLC_COL_BLACK);
+  gslc_ElemSetTxtCol(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], true);
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], true);
@@ -489,7 +554,7 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
 
   // Disable Network
   pg_wifiEl[E_WIFI_EL_DISABLE_NETWORK] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {(rFullscreen.x + 5),(rFullscreen.y + 5),105,50},
+          (gslc_tsRect) {(rFullscreen.x),(rFullscreen.y + 5),105,50},
           "Disable", 0, E_FONT_MONO14, &pg_wifi_cbBtn_disableNetwork);
   gslc_ElemSetTxtCol(pGui, pg_wifiEl[E_WIFI_EL_DISABLE_NETWORK], GSLC_COL_WHITE);
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_DISABLE_NETWORK], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -517,6 +582,15 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_REASSOCIATE], false);
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_REASSOCIATE], true);
 
+  // Refresh Status
+  pg_wifiEl[E_WIFI_EL_REFRESH] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100),(rFullscreen.y + 100),100,50},
+          "Refresh", 0, E_FONT_MONO14, &pg_wifi_cbBtn_refresh);
+  gslc_ElemSetTxtCol(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], false);
+  gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], true);
 
   xHei = 20;
   pg_wifiEl[E_WIFI_EL_STATUS_SSID] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -602,6 +676,22 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
 
 
 
+// pg_wifi_wpaSetEventCallbackFunc ?
+void pg_wifi_wpaEvent(char* event) {
+  if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
+    pg_wifi_updateAvailableNetworks();
+  }
+
+  if (pg_wifi_getStatus()) {
+    pg_wifi_showStatus(&m_gui);
+  }
+  /*
+  char *newTxt = malloc(strlen(str) + 1);
+  strlcpy(newTxt, str, strlen(str) + 1);
+  scorecard->judge = newTxt;
+  gslc_ElemSetTxtStr(pGui, m_pElemScorecardJudge, str);
+  */
+}
 
 
 // GUI Init
@@ -616,12 +706,17 @@ void pg_wifi_init(gslc_tsGui *pGui) {
   // Initialize Network info arrays
   pg_wifi_nets_available = PG_WIFI_INIT_NETWORKS();
   pg_wifi_nets_saved = PG_WIFI_INIT_NETWORKS();
-  pg_wifi_net_selected = PG_WIFI_INIT_NETWORK();
+  pg_wifi_net_selected = NULL;
 
   // Create Interface
   pg_wifi_guiInit(pGui);
 
+  // pg_wifi_setInterface("wlan0");
+  pg_wifi_wpaScanning = 0;
   pg_wifi_wpaOpen("/var/run/wpa_supplicant/wlan0");
+  pg_wifi_wpaEvents("/var/run/wpa_supplicant/wlan0");
+  
+  // pg_wifi_wpaSendCmd("SCAN");
 
   cbInit[E_PG_WIFI] = NULL;
 }
@@ -632,6 +727,7 @@ void pg_wifi_open(gslc_tsGui *pGui) {
 
   // Open WPA Interface socket
   // ls -l /var/run/wpa_supplicant for list of interfaces
+  pg_wifi_wpaSetEventCallbackFunc(&pg_wifi_wpaEvent);
 
   // Fetch and show current wifi status
   if (pg_wifi_getStatus()) {
@@ -639,10 +735,15 @@ void pg_wifi_open(gslc_tsGui *pGui) {
   } else {
     // Status Unavailable, Show error
   }
+
+  // Show Selected In Box
+  if (pg_wifi_net_selected) {
+    pg_wifi_cbBtn_setSSID(pGui, pg_wifi_net_selected->ssid);
+  }
 }
 
 void pg_wifi_close(gslc_tsGui *pGui) {
-
+  pg_wifi_wpaRemoveEventCallbackFunc(0);
 }
 
 // GUI Destroy
@@ -651,6 +752,8 @@ void pg_wifi_destroy() {
   PG_WIFI_DESTROY_STATUS(pg_wifi_status);
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_available);
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_saved);
+
+
 
   pg_wifi_wpaClose();
 }

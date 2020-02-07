@@ -16,7 +16,7 @@ struct pg_wifi_networkAddStruct {
 };
 
 struct pg_wifi_statusStruct {
-  int network_id;
+  int id;
   char* bssid;
   char* freq;
   char* ssid;
@@ -34,7 +34,7 @@ struct pg_wifi_statusStruct *pg_wifi_status;
 
 
 struct pg_wifi_networkStruct {
-  int network_id;
+  int id;
   char* bssid;
   char* freq;
   char* dBm;
@@ -45,12 +45,11 @@ struct pg_wifi_networkStruct {
 struct pg_wifi_networksStruct {
   int max;
   int len;
-  struct pg_wifi_networkStruct **networks;
+  struct pg_wifi_networkStruct **ptrs;
 };
 struct pg_wifi_networksStruct *pg_wifi_nets_available;
 struct pg_wifi_networksStruct *pg_wifi_nets_saved;
 struct pg_wifi_networkStruct *pg_wifi_net_selected;
-
 
 struct pg_wifi_networkAddStruct * PG_WIFI_INIT_INPUT();
 void PG_WIFI_DESTROY_INPUT(struct pg_wifi_networkAddStruct *inp);
@@ -70,6 +69,7 @@ void pg_wifi_destroyNetwork(struct pg_wifi_networksStruct *wns, int i);
 void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt);
 void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt);
 void pg_wifi_updateStatus(char *buf, size_t sz, size_t cnt);
+void pg_wifi_setInterface(char* interface);
 void pg_wifi_updateSavedNetworks();
 void pg_wifi_updateAvailableNetworks();
 int pg_wifi_getStatus();
@@ -79,8 +79,9 @@ void wifiWpaEvent(char* event);
 
 void pg_wifi_disableNetworkAll();
 void pg_wifi_enableNetworkAll();
-void pg_wifi_disableNetwork(int network_id);
-void pg_wifi_enableNetwork(int network_id);
+void pg_wifi_disableNetwork(int id);
+void pg_wifi_enableNetwork(int id);
+void pg_wifi_selectNetwork(int id);
 
 
 #ifdef __cplusplus

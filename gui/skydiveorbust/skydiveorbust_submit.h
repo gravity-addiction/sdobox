@@ -41,7 +41,8 @@ struct pg_sdob_submit_info *sdob_submit_info;
 struct pg_sdob_submit_info * PG_SDOB_SUBMIT_INIT_INFO();
 void PG_SDOB_SUBMIT_CLEAR_INFO(struct pg_sdob_submit_info *si);
 
-
+// Double press clear button
+int pg_sdob_submit_clearCheck;
 
 void pg_sdobSubmitButtonRotaryCW();
 void pg_sdobSubmitButtonRotaryCCW();

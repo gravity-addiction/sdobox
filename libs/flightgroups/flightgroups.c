@@ -13,7 +13,7 @@ void xml_flightgroups_parseFile(char *filename) {
 
   if (data)
   {
-    char* json_file = malloc(128);
+    char* json_file;
     ta_json_parse(data, "Group1-12_2.mp4", &json_file);
     printf("Groups: %s\n", json_file);
   }

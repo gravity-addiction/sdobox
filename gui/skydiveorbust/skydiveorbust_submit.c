@@ -48,16 +48,20 @@ bool pg_sdobSubmitCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
 
 bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  // Clear Scorecard
-  struct queue_head *item = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(item);
-  item->action = E_Q_SCORECARD_CLEAR;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-  // Close Submit Menu
-  pg_sdobSubmitClose(pGui);
+  if (pg_sdob_submit_clearCheck == 1) {
+    // Clear Scorecard
+    struct queue_head *item = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(item);
+    item->action = E_Q_SCORECARD_CLEAR;
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    // Close Submit Menu
+    pg_sdobSubmitClose(pGui);
+  } else {
+    gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], true);
+    pg_sdob_submit_clearCheck = 1;
+  }
   return true;
 }
 
@@ -244,7 +248,7 @@ void pg_sdobSubmitGuiInit(gslc_tsGui *pGui) {
             "Clear", 0, E_FONT_MONO14, &pg_sdobSubmitCbBtnClear)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], GSLC_COL_PURPLE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], GSLC_COL_PURPLE, GSLC_COL_PURPLE, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], false);
     gslc_ElemSetFrameEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], true);
@@ -326,7 +330,8 @@ void pg_sdobSubmit_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_sdobSubmitButtonSetFuncs();
 
-
+  gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], false);
+  pg_sdob_submit_clearCheck = 0;
 }
 
 

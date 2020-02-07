@@ -36,13 +36,16 @@ int       i_chapter_cnt; // placeholder for chapter count
 double    m_video_percent_new;
 double    m_video_percent_tmp;
 
+int mpv_socket_fdSelect;
+fd_set mpv_socket_set;
+struct timeval mpv_socket_timeout;
+
 // ------------------------------
 // mpv.c
 
-
-int mpv_init(gslc_tsGui *pGui);
 int mpv_socket_conn();
 void mpv_socket_close(int fd);
+int mpv_init(gslc_tsGui *pGui);
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);
@@ -54,11 +57,15 @@ int mpvSocketSinglet(char* prop, char ** json_prop);
 int mpv_cmd(char *cmd_string);
 int mpv_cmd_str(char* cmd_string);
 int mpv_set_prop_char(char* prop, char* prop_val);
+int mpv_set_prop_int(char* prop, int prop_val);
 int mpv_set_prop_double(char* prop, double prop_val);
 int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val);
 
 int mpv_seek(double distance);
 int mpv_seek_arg(double distance, char* flags);
+
+int mpv_pause();
+int mpv_play();
 
 double mpv_speed(double spd);
 double mpv_speed_adjust(double spd);

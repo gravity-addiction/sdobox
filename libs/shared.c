@@ -139,6 +139,13 @@ int setnonblock(int sock) {
   return fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 }
 
+void clearsocket(int fd) {
+  int nread;
+  char receive[1024];
+  while((nread = read(fd, receive, 1023) > 0)) {
+    receive[nread]='\0';
+  }
+}
 int sgetline(int fd, char ** out)
 {
   int buf_size = 0;
@@ -206,7 +213,10 @@ int sgetline(int fd, char ** out)
   // add a null terminator
   buffer[in_buf] = '\0';
   // printf("Readline: %s\n", buffer);
-  strlcpy(*out, buffer, in_buf + 1);
+  if (in_buf > 0) {
+    *out = (char*)malloc((in_buf + 1) * sizeof(char));
+    strlcpy(*out, buffer, in_buf + 1);
+  }
   free(buffer);
   // *out = buffer; // complete line
   return in_buf; // number of chars in the line, not counting the line break and null terminator
@@ -298,7 +308,7 @@ int jsoneq(const char *json, jsmntok_t *tok, const char *s)
   return -1;
 }
 
-void ta_json_parse(char *json, char* prop, char ** ret_var) {
+int ta_json_parse(char *json, char* prop, char ** ret_var) {
   int i;
   int r;
   jsmn_parser p;
@@ -311,13 +321,13 @@ void ta_json_parse(char *json, char* prop, char ** ret_var) {
                  sizeof(t) / sizeof(t[0]));
   if (r < 0) {
     // printf("Failed to parse JSON: %d\n", r);
-    return;
+    return 0;
   }
 
   /* Assume the top-level element is an object */
   if (r < 1 || t[0].type != JSMN_OBJECT) {
     // printf("Object expected\n");
-    return;
+    return 0;
   }
 
   // // debug_print("JSON PARSE, %d - %s", r, json);
@@ -333,13 +343,15 @@ void ta_json_parse(char *json, char* prop, char ** ret_var) {
       }
       buffer = new_buffer;
       /* We may use strndup() to fetch string value */
-      snprintf(buffer, len + 1, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
-      strlcpy(*ret_var, buffer, len + 2);
+      size_t bufferSz = snprintf(NULL, 0, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
+      *ret_var = (char*)calloc(bufferSz + 1, sizeof(char));
+      snprintf(*ret_var, bufferSz + 1, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);      
       free(buffer);
+      return bufferSz;
     }
     i++;
   }
-return;
+return 0;
 }
 
 int parseTabbedData(const char *s, char *data[], size_t n) {
@@ -542,7 +554,6 @@ int run_system_cmd_with_return(char *fullpath, char *ret, int retsize) {
 */
 void fbcp_start() {
   if (!fbcp_running) {
-    fbcp_stop();
     fbcp_running = 1;
     system("fbcp &");
   }

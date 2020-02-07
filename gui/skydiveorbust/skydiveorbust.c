@@ -359,9 +359,8 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
     // debug_print("Timepos: %s\n", retTime);
     if (retTime == NULL) {
       pg_sdob_player_move_timepos_lock = 0;
-      free(retTime);
       return;
-    }
+    } else
     if (pg_sdob_player_move > -1) {
       pg_sdob_player_move_timepos_lock = 0;
       free(retTime);
@@ -369,10 +368,10 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
     }
 
     sdob_player->position = atof(retTime);
+    free(retTime);
   } else {
     sdob_player->position = -1;
   }
-  free(retTime);
 
   if (sdob_judgement->sowt == -1.0) {
 
@@ -720,10 +719,13 @@ bool pg_sdobCbBtnScCount(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
 bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  
+/*
   struct queue_head *item = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(item);
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+*/
   touchscreenPageOpen(pGui, E_PG_SDOB_SUBMIT);
 
   return true;
@@ -909,9 +911,9 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
         // // debug_print("Sel: %d, T: %f\n", i, sdob_judgement->marks->arrScorecardTimes[i]);
         gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
-        if (sdob_judgement->marks->selected == 0) {
-          pg_sdob_player_pause(1);
-        }
+        // if (sdob_judgement->marks->selected == 0) {
+        //   pg_sdob_player_pause(1);
+        // }
         if (sdob_judgement->marks->selected > -1 &&
             sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected] >= 0
         ) {
@@ -1807,13 +1809,13 @@ PI_THREAD (pg_sdobMpvSocketThread)
 
 
 // Grab Next Socket Line
-    char *mpv_event_ret = malloc(128);
+    char* mpv_event_ret; // = malloc(128);
     // int rc = getline(&mpv_event_ret, 256, pg_sdob_player_mpv_fd);
     int rc = sgetline(pg_sdob_player_mpv_fd, &mpv_event_ret);
     if (rc > 0) {
       //printf("Got Back: '%s'\n", mpv_event_ret);
 
-      char *json_event = malloc(128);
+      char* json_event; // = malloc(128);
       ta_json_parse(mpv_event_ret, "event", &json_event);
       //printf("MPV Event: %s Len: %d\n", json_event, rc);
       free(mpv_event_ret);
@@ -1882,7 +1884,6 @@ PI_THREAD (pg_sdobMpvSocketThread)
 
   // No Work needed done
     else {
-      free(mpv_event_ret);
       // Nothing to Do, Sleep for a moment
       usleep(200000);
     }
@@ -2175,9 +2176,10 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         case E_Q_SCORECARD_SUBMIT_SCORECARD:
           // Submit scorecard to syslog
           pg_sdobSubmitScorecard();
-
+        printf("SUIBMIT SCORES!!\n");
         // No break, clear scorecard after submit
         case E_Q_SCORECARD_CLEAR:
+        printf("CLEAR SCORES!!\n");
           pg_sdob_scorecard_clear(pGui);
         break;
 
@@ -2363,7 +2365,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   //-/ pg_sdobThreadStart();
 
   // Reset Scorecard Slider to Top
-  pg_sdobSliderResetCurPos(pGui);
+  // pg_sdobSliderResetCurPos(pGui);
 
   // debug_print("%s\n", "Page SkydiveOrBust Started");
 }
@@ -2383,6 +2385,11 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
 
 // GUI Destroy
 void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
+  size_t cmdStopSz = snprintf(NULL, 0, "%s\n", "stop") + 1;
+  char *cmdStop = (char*)malloc(cmdStopSz * sizeof(char));
+  snprintf(cmdStop, cmdStopSz, "%s\n", "stop");
+  mpv_cmd(cmdStop);
+
   // Free Judgement Info
   free(sdob_judgement->judge);
   free(sdob_judgement->video_file);

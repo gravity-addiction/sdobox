@@ -15,8 +15,9 @@ enum {
 };
 
 struct wpa_ctrl *pg_wifi_wpa_conn;
+struct wpa_ctrl *pg_wifi_wpa_events;
 
-
+int pg_wifi_wpaScanning;
 int pg_wifi_wpaShownList;
 
 int pg_wifi_wpaEventThreadRunning;
@@ -26,6 +27,7 @@ void (*cbEvent[1])(char*) ;
 
 void *pg_wifi_wpaEventThread (UNU void *dummy);
 
+int pg_wifi_wpaEvents(char* wpa_interface);
 int pg_wifi_wpaOpen(char* wpa_interface);
 int pg_wifi_wpaTestConnection();
 int pg_wifi_wpaSendCmdBuf(char* cmd, char *buf, size_t *len);

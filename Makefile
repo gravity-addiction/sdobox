@@ -57,11 +57,11 @@ clean:
 	@echo "Cleaning directory..."
 	$(RM) $(BINS)
 
-wpa/wpa_ctrl.o: touchapp.c
+wpa/wpa_ctrl.o:
 	@echo [Building $@]
 	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/wpa_ctrl.o ./wpa/wpa_ctrl.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 
-wpa/os_unix.o: touchapp.c
+wpa/os_unix.o:
 	@echo [Building $@]
 	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 

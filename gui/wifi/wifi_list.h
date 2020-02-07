@@ -22,6 +22,7 @@ enum {
   E_WIFI_LIST_EL_BOX,
   E_WIFI_LIST_EL_CLOSE,
   E_WIFI_LIST_EL_CONNECT,
+  E_WIFI_LIST_EL_SCAN,
 
   E_WIFI_LIST_EL_SLIDER,
   E_WIFI_LIST_EL_SLIDER_DOWN,
@@ -53,16 +54,14 @@ gslc_tsXSlider pg_wifi_list_slider;
 struct pg_wifi_list_data {
   int max;
   int len;
+  int cur;
   int scrollMax;
   int scroll;
-  pg_wifi_networkStruct **ptrs;
+  struct pg_wifi_networkStruct **ptrs;
 };
 struct pg_wifi_list_data *pg_wifi_list_networkList;
 struct pg_wifi_list_data * PG_WIFI_LIST_INIT_DATA();
 void PG_WIFI_LIST_CLEAR_DATA(struct pg_wifi_list_data *data);
-
-int pg_wifi_list_scroll_max; // max positions of vertical scrollbar
-int pg_wifi_list_scroll; // position of vertical scrollbar
 
 bool pg_wifi_list_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
 
