@@ -2,6 +2,9 @@
 #include <errno.h>
 #include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
+#include <fcntl.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "shared.h"
 #include "system.h"
@@ -47,7 +50,6 @@ bool pg_system_cbBtn_powercycleHdmi(void* pvGui, void *pvElemRef, gslc_teTouch e
 
 bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   
   m_bQuit = 1;
   system("sudo /sbin/shutdown -r now &");
@@ -57,7 +59,6 @@ bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
 
 bool pg_system_cbBtn_update(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   
 
   return true;
@@ -72,9 +73,6 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   // debug_print("%s\n", "Wifi GUI Init");
   int ePage = E_PG_SYSTEM;
   gslc_PageAdd(pGui, ePage, pg_systemElem, MAX_ELEM_PG_SYSTEM_RAM, pg_systemElemRef, MAX_ELEM_PG_SYSTEM);
-
-  int xHei = 20;
-
 
   // Close Key
   pg_systemEl[E_SYSTEM_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,

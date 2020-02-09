@@ -25,8 +25,8 @@ enum {
   E_SDOB_SUBMIT_EL_MAX
 };
 
-gslc_tsElem m_asPgSdobSubmitElem[MAX_ELEM_PG_DEFAULT_RAM];
-gslc_tsElemRef m_asPgSdobSubmitElemRef[MAX_ELEM_PG_DEFAULT];
+gslc_tsElem m_asPgSdobSubmitElem[E_SDOB_SUBMIT_EL_MAX];
+gslc_tsElemRef m_asPgSdobSubmitElemRef[E_SDOB_SUBMIT_EL_MAX];
 
 gslc_tsElemRef* pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_MAX];
 

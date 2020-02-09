@@ -17,6 +17,7 @@
 #include "buttons/buttons.h"
 #include "mpv/mpv.h"
 #include "gui/pages.h"
+#include "fbcp/fbcp.h"
 
 void pg_slideshowReset(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Slideshow Reset");
@@ -131,10 +132,7 @@ bool pg_slideshow_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   
-  if (!fbcp_running) {
-    fbcp_start();
-  } else {
-    fbcp_stop();
+  if (!fbcp_toggle()) {
     gslc_PageRedrawSet(pGui, true);
   }
   return true;
@@ -243,6 +241,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], GSLC_COL_WHITE, GSLC_COL_GREEN_LT3, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], true);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], true);
   
   
@@ -254,6 +253,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], GSLC_COL_WHITE, GSLC_COL_GREEN_LT2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], true);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], true);
   
   // Touchpad Left
@@ -264,6 +264,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], GSLC_COL_WHITE, GSLC_COL_GREEN_LT2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], true);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], true);
   
   
@@ -275,6 +276,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], GSLC_COL_WHITE, GSLC_COL_GREEN_LT2, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], true);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], true);
   
   
@@ -288,6 +290,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], false);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], true);
   
   // FBCP Key
@@ -298,6 +301,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetCol(pGui, pg_slideshowEl[E_SLIDESHOW_EL_FBCP], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_slideshowEl[E_SLIDESHOW_EL_FBCP], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_FBCP], false);
+  gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_FBCP], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_FBCP], true);
 }
 
@@ -385,7 +389,8 @@ void pg_slideshowButtonLeftPressed() {
     pg_slideshowPanY = 0;
     pg_slideshowPanX = 0;
   }
-  pg_slideshowPrevImage();
+  // pg_slideshowPrevImage();
+  mpv_set_prop_char("loop-playlist", "no");
 }
 
 void pg_slideshowButtonRightPressed() {
@@ -623,9 +628,7 @@ PI_THREAD (pg_slideshowMpvSocketThread)
       int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
       // printf("MPV Event: -%s-, Parsed: %s Len: %d\n\n\n", mpv_event_ret, json_event, rcE);
       free(mpv_event_ret);
-      if (rcE == 0) {
-        continue;
-      }
+      if (rcE == 0) { continue; }
 
 
       if (strcmp(json_event, "seek") == 0
@@ -662,7 +665,7 @@ PI_THREAD (pg_slideshowMpvSocketThread)
           char* json_picType;
           pg_slideshowIsPicture = ta_json_parse(retFrameInfo, "picture-type", &json_picType);
           free(retFrameInfo);
-          free(json_picType);
+          if (pg_slideshowIsPicture > 0) { free(json_picType); }
         } else {
           pg_slideshowIsPicture = 0;
         }
@@ -739,8 +742,14 @@ void pg_slideshow_init(gslc_tsGui *pGui) {
   char* plFile = "/home/pi/shared/slideshow/playlist.txt";
   size_t cmdSz = snprintf(NULL, 0, "loadlist \"%s\"\n", plFile) + 1;
   char *cmd = (char*)malloc(cmdSz * sizeof(char));
-  snprintf(cmd, cmdSz, "loadlist %s\n", plFile);
+  snprintf(cmd, cmdSz, "loadlist \"%s\"\n", plFile);
   mpv_cmd(cmd);
+  
+  size_t cmdFileSz = snprintf(NULL, 0, "loadfile ytdl://https://www.youtube.com/watch?v=sNuKpwX6Tz4 append-play\n") + 1;
+  char *cmdFile = (char*)malloc(cmdFileSz * sizeof(char));
+  snprintf(cmdFile, cmdFileSz, "loadfile https://www.youtube.com/watch?v=sNuKpwX6Tz4 append-play\n");
+  mpv_cmd(cmdFile);
+  
 
   cbInit[E_PG_SLIDESHOW] = NULL;
 }
@@ -749,8 +758,6 @@ void pg_slideshow_init(gslc_tsGui *pGui) {
 
 
 int pg_slideshow_thread(gslc_tsGui *pGui) {
-  int i_now = millis();
-
   char tmp_inotify_ret[1024];
   while (fgets(tmp_inotify_ret, sizeof(tmp_inotify_ret)-1, pg_slideshowFD) != NULL) {
     printf("SLIDESHOW--:%s:--\n", tmp_inotify_ret);
@@ -789,9 +796,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
 
 void pg_slideshow_close(gslc_tsGui *pGui) {
-  if (fbcp_running) {
-    fbcp_stop();
-  }
+  fbcp_stop();
   
   pg_slideshowMpvSocketThreadStop();
   

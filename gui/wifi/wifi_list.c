@@ -159,7 +159,6 @@ bool pg_wifi_list_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
 
 bool pg_wifi_list_cbBtn_scan(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   
   pg_wifi_wpaSendCmd("SCAN");
   return true;

@@ -88,7 +88,27 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   gslc_PageAdd(pGui, ePage, m_asPgMainElem, MAX_ELEM_PG_DEFAULT, m_asPgMainElemRef, MAX_ELEM_PG_DEFAULT);
   
 
-
+  // Playlist Playing
+  if ((
+    pg_mainEl[E_MAIN_EL_PLAYLIST] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {100, 0, 380, 35},
+            "Currently Playing: ", 0, E_FONT_MONO18, &pg_main_cbBtn_slideshow)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], GSLC_ALIGN_MID_LEFT);
+    gslc_ElemSetTxtMarginXY(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], 10, 0);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], false);
+    gslc_ElemSetGlowEn(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST], false);
+  }
+  if ((
+    pg_mainEl[E_MAIN_EL_PLAYLIST_UL] = gslc_ElemCreateLine(pGui, GSLC_ID_AUTO, ePage, 100, 35, 480, 35)
+  ) != NULL) {            
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_PLAYLIST_UL], GSLC_COL_WHITE, GSLC_COL_WHITE, GSLC_COL_WHITE);
+  }
+  
+  
   // Button A
   if ((
     pg_mainEl[E_MAIN_EL_BTN_A] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -115,9 +135,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   }
   // Button C
   if ((
-    pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+    pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 110, 100, 50},
-            "Start X", 0, E_FONT_MONO14, &pg_main_cbBtn_startX)
+            " ", 0, E_FONT_MONO14)
   ) != NULL) {            
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -162,6 +182,34 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_F], true); 
   }
 
+  
+  
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_FOLDER_A] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {100, 40, 260, 40},
+            "Previous Folder", 0, E_FONT_MONO14)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], GSLC_COL_WHITE, GSLC_COL_BLUE, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], GSLC_ALIGN_MID_LEFT);
+    gslc_ElemSetTxtMarginXY(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], 10, 0);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], false);
+    gslc_ElemSetGlowEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_A], true);
+  }
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {360, 40, 120, 40},
+            "0.0gB", 0, E_FONT_MONO14)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], GSLC_COL_WHITE, GSLC_COL_BLUE, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], GSLC_ALIGN_MID_RIGHT);
+    gslc_ElemSetTxtMarginXY(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], 10, 0);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], false);
+    gslc_ElemSetGlowEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_FOLDER_AA], true);
+  }
 
 /*
 

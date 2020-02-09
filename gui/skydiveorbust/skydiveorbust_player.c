@@ -11,7 +11,7 @@
 // Set sdob_player->paused
 void pg_sdob_player_setpause() {
   char* retPlay;
-  if (mpvSocketSinglet("pause", &retPlay)) {
+  if ((mpvSocketSinglet("pause", &retPlay)) > 0) {
     if (retPlay && strcmp(retPlay, "false") == 0) {
       sdob_player->paused = 0;
     } else {
@@ -26,7 +26,7 @@ void pg_sdob_player_setpause() {
 // Set sdob_player->pbrate
 void pg_sdob_player_setpbrate() {
   char* retSpeed;
-  if (mpvSocketSinglet("speed", &retSpeed)) {
+  if ((mpvSocketSinglet("speed", &retSpeed)) > 0) {
     sdob_player->pbrate = atof(retSpeed);
     free(retSpeed);
   } else {
@@ -38,7 +38,7 @@ void pg_sdob_player_setpbrate() {
 void pg_sdob_player_setduration() {
   // Update Duration
   char* retDur;
-  if (mpvSocketSinglet("duration", &retDur)) {
+  if ((mpvSocketSinglet("duration", &retDur)) > 0) {
     // printf("Video Duration: Status: %d, %s\n", strlen(retDur), retDur);
     sdob_player->duration = atof(retDur);
     free(retDur);
@@ -54,7 +54,7 @@ void pg_sdob_player_setduration() {
 // Current Video Chapter
 void pg_sdob_player_setChapterCur() {
   char* chapterRet;
-  if (mpvSocketSinglet("chapter", &chapterRet)) {
+  if ((mpvSocketSinglet("chapter", &chapterRet)) > 0) {
     sdob_chapters->cur = atoi(chapterRet);
     free(chapterRet);
   } else {
@@ -159,7 +159,7 @@ void pg_sdob_player_video_chapterList(int len) {
 
 void pg_sdob_player_video_chapters() {
   char* retChapters;
-  if (mpvSocketSinglet("chapter-list/count", &retChapters)) {
+  if ((mpvSocketSinglet("chapter-list/count", &retChapters)) > 0) {
     pg_sdob_player_video_chapterList(atoi(retChapters));
     free(retChapters);
   }

@@ -355,7 +355,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
   pg_sdob_player_move_timepos_lock = 1;
 
   char* retTime;
-  if (mpvSocketSinglet("time-pos", &retTime)) {
+  if ((mpvSocketSinglet("time-pos", &retTime)) > 0) {
     // debug_print("Timepos: %s\n", retTime);
     if (retTime == NULL) {
       pg_sdob_player_move_timepos_lock = 0;
@@ -832,7 +832,7 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
     if (mpvSpeed == 0) { mpvSpeed = 1.0; }
   } else { mpvSpeed = 1.0; }
 
-  if (mpvSocketSinglet("time-pos", &retTimePos)) {
+  if ((mpvSocketSinglet("time-pos", &retTimePos)) > 0) {
     timePos = atof(retTimePos);
     free(retTimePos);
   // } else if (m_video_pos) {
@@ -1471,7 +1471,7 @@ void pg_skydiveorbustButtonLeftPressed() {
     // Reset SOWT
     char* retTimePos;
     double markTime = 0.00;
-    if (mpvSocketSinglet("time-pos", &retTimePos)) {
+    if ((mpvSocketSinglet("time-pos", &retTimePos)) > 0) {
       markTime = atof(retTimePos);
       free(retTimePos);
       sdob_judgement->marks->arrScorecardTimes[0] = markTime;
@@ -1513,7 +1513,7 @@ void pg_skydiveorbustButtonRightPressed() {
     char* retTimePos;
     double markTime = 0.00;
 
-    if (mpvSocketSinglet("time-pos", &retTimePos)) {
+    if ((mpvSocketSinglet("time-pos", &retTimePos)) > 0) {
       markTime = atof(retTimePos);
       free(retTimePos);
       sdob_judgement->marks->arrScorecardTimes[0] = markTime;
@@ -1816,12 +1816,10 @@ PI_THREAD (pg_sdobMpvSocketThread)
       //printf("Got Back: '%s'\n", mpv_event_ret);
 
       char* json_event; // = malloc(128);
-      ta_json_parse(mpv_event_ret, "event", &json_event);
-      //printf("MPV Event: %s Len: %d\n", json_event, rc);
+      int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
+      //printf("MPV Event: %s Len: %d\n", json_event, rcE);
       free(mpv_event_ret);
-      if (!json_event || json_event == NULL) {
-        continue;
-      }
+      if (rcE == 0) { continue; }
 
 
       if (strcmp(json_event, "seek") == 0
@@ -1928,6 +1926,11 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Page SkydiveOrBust Init");
 
 
+  // gslc_tsElem pg_sdobElem[MAX_ELEM_PG_SDOB];
+  // gslc_tsElemRef pg_sdobElemRef[MAX_ELEM_PG_SDOB_RAM];
+
+  // pg_sdobEl = (gslc_tsElemRef*)malloc(E_SDOB_EL_MAX * sizeof(gslc_tsElemRef));
+
   //////////////////////////////
   // Queue Initializer
   pg_sdobQueue = ALLOC_QUEUE_ROOT();
@@ -2014,7 +2017,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // Load File (Temp)
   char* tmpMeet = "MEET2020";
   char* tmpFile = "Group1-12_2.mp4";
-  mpv_loadfile(tmpMeet, tmpFile, "replace", "fullscreen=yes");
+  mpv_loadfile("skydiveorbust", tmpMeet, tmpFile, "replace", "fullscreen=yes");
   pg_sdobUpdateMeet(pGui, tmpMeet);
   pg_sdobUpdateVideoDesc(pGui, tmpFile);
 

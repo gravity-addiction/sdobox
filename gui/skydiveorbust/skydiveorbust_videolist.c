@@ -71,7 +71,6 @@ bool pg_sdobVideoListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 
 bool pg_sdobVideoListCbBtnFolder(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   printf("Fetching Folders\n");
   pg_sdboVideoListGetFolders("/home/pi/Videos/");
@@ -110,7 +109,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   pg_sdobUpdateVideoDesc(pGui, tmpFile);
   pg_sdobUpdateVideoRate(pGui, mpv_speed(1.0));
 
-  mpv_loadfile(tmpMeet, tmpFile, "replace", "fullscreen=yes");
+  mpv_loadfile("skydiveorbust", tmpMeet, tmpFile, "replace", "fullscreen=yes");
 
   pg_sdob_pl_sliderForceUpdate = 1;
 

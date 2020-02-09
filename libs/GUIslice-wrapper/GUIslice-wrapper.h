@@ -85,8 +85,6 @@ extern "C" {
 #include "elem/XTextbox.h"
 
 
-static gslc_tsRect rFullscreen = {0,0,480,320};
-
 int m_show_wifi;
 int m_hide_wifi;
 int m_show_keyboard;
@@ -98,6 +96,7 @@ gslc_tsDriver m_drv;
 gslc_tsFont m_asFont[MAX_FONTS];
 gslc_tsPage m_asPage[MAX_PAGES];
 
+gslc_tsRect rFullscreen;
 
 int m_gslcWrapperThreadStop; // Stopping Thread
 int m_gslcWrapperThreadRunning; // Running Thread

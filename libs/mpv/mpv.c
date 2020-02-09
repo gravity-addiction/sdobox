@@ -60,9 +60,11 @@ int mpv_init(gslc_tsGui *pGui) {
   printf("%s\n", "MPV Init");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
-  if (!mpv_socket_fd) {
-    mpv_socket_fd = mpv_socket_conn();
-  }
+  // if (!mpv_socket_fd) {
+  //  mpv_socket_fd = mpv_socket_conn();
+  //}
+  
+  mpv_socket_fdSelect = -1;
 
   int cmdStopSz = strlen("stop\n") + 1;
   char *cmdStop = malloc(cmdStopSz);
@@ -170,26 +172,10 @@ int mpv_create_player(char* filePath) {
 
 
 int mpv_fd_write(char *data) {
-  if (!mpv_socket_fd) { mpv_socket_fd = mpv_socket_conn(); }
-  if (mpv_socket_fd == -1) { return 0; }
-  if (write(mpv_socket_fd, data, strlen(data)) != strlen(data)) {
-    return 0;
-  }
-  return 1;
-}
-
-int mpvSocketSinglet(char* prop, char ** json_prop) {
-  // printf("Socket: %s\n", prop);
-  while (mpv_singlet_lock == 1) {
-    usleep(25000);
-  }
-  mpv_singlet_lock = 1;
-
-  if (!mpv_socket_fdSelect) {
+  if (mpv_socket_fdSelect == -1) {
     mpv_socket_fdSelect = mpv_socket_conn();
     if (mpv_socket_fdSelect == -1) {
       mpv_socket_fdSelect = 0;
-      mpv_singlet_lock = 0;
       return 0;
     }
 
@@ -201,43 +187,42 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
     mpv_socket_timeout.tv_sec = 2;
     mpv_socket_timeout.tv_usec = 0;
   }
+  // printf("Write: %s\n", data);
+  if (write(mpv_socket_fdSelect, data, strlen(data)) != strlen(data)) {
+    return 0;
+  }
+  return 1;
+}
 
-  // Clean Socket
-  clearsocket(mpv_socket_fdSelect);
-  
+int mpv_cmd(char *cmd_string) {
+  int fdWrite = mpv_fd_write(cmd_string);
+  free(cmd_string);
+  return fdWrite;
+}
+
+int mpvSocketSinglet(char* prop, char ** json_prop) {
   // printf("MPV Singlet: %s\n", prop);
 
   char* data_tmp = "{ \"command\": [\"get_property\", \"%s\"] }\n";
   size_t len = snprintf(NULL, 0, data_tmp, prop) + 1;
-  char *data = (char*)calloc(len, sizeof(char));
+  char *data = (char*)malloc(len * sizeof(char));
   if (data == NULL) {
-    // debug_print("%s\n", "MPV Socket Error, JSON Creation");
-    mpv_socket_close(mpv_socket_fdSelect);
-    mpv_socket_fdSelect = 0;
-    mpv_singlet_lock = 0;
+    printf("%s\n%s\n", "Error!, No Memory", strerror(errno));
     return 0;
   }
   snprintf(data, len, data_tmp, prop);
-
-  // // debug_print("MPV SINGLET Data: %s\n", data);
-  if (write(mpv_socket_fdSelect, data, strlen(data)) != strlen(data)) {
-    // debug_print("Writing Does Not Match");
-    free(data);
-    mpv_socket_close(mpv_socket_fdSelect);
-    mpv_socket_fdSelect = 0;
-    mpv_singlet_lock = 0;
+  
+  if (!mpv_cmd(data)) {
     return 0;
   }
-  free(data);
-
+  
   while (1) {
     /* select returns 0 if timeout, 1 if input available, -1 if error. */
     int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
     if (selT == -1) {
+      printf("%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
       mpv_socket_close(mpv_socket_fdSelect);
-      mpv_socket_fdSelect = 0;
-
-      mpv_singlet_lock = 0;
+      mpv_socket_fdSelect = -1;
       return 0;
     } else if (selT == 1) {
       char* mpv_rpc_ret;
@@ -245,17 +230,14 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
       if (rc > 0 && mpv_rpc_ret != NULL) {
         // error response
         if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
-          mpv_socket_close(mpv_socket_fdSelect);
-          mpv_socket_fdSelect = 0;
+          printf("%s\n%s\n%s\n","Error!", mpv_rpc_ret, strerror(errno));
           free(mpv_rpc_ret);
-          mpv_singlet_lock = 0;
           return 0;
 
         // data response
         } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
           int rcP = ta_json_parse(mpv_rpc_ret, "data", json_prop);
           free(mpv_rpc_ret);
-          mpv_singlet_lock = 0;
           return rcP;
           
         // every other response
@@ -264,23 +246,15 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
         }
       } else {
         free(mpv_rpc_ret);
-        mpv_singlet_lock = 0;
         return 0;
       }
     }
   }
-  mpv_singlet_lock = 0;
   return 0;
 }
 
 
 
-
-int mpv_cmd(char *cmd_string) {
-  int fdWrite = mpv_fd_write(cmd_string);
-  free(cmd_string);
-  return fdWrite;
-}
 
 int mpv_set_prop_char(char* prop, char* prop_val) {
   char* data_tmp = "set %s %s\n";
@@ -399,12 +373,12 @@ double mpv_speed_adjust(double spd) {
 
 
 
-int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
-  char* data_tmp = "loadfile /home/pi/shared/skydiveorbust/%s/%s %s %s\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, folder, filename, flag, opts) + 1;
+int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts) {
+  char* data_tmp = "loadfile /home/pi/shared/%s/%s/%s %s %s\n";
+  size_t dataSz = snprintf(NULL, 0, data_tmp, app, folder, filename, flag, opts) + 1;
   char *data = (char*)calloc(dataSz, sizeof(char));
   if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, folder, filename, flag);
+  snprintf(data, dataSz, data_tmp, app, folder, filename, flag);
   return mpv_cmd(data);
 }
 

@@ -27,7 +27,6 @@ void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
   }
 }
 
-
 // Close Page
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; } 

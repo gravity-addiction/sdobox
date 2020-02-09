@@ -34,6 +34,7 @@
 #include "queue/queue.h"
 #include "buttons/buttons.h"
 #include "flightgroups/flightgroups.h"
+#include "fbcp/fbcp.h"
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
 // #include "gui/wifi/wifi.h"
@@ -241,7 +242,7 @@ int main( int argc, char* args[] )
   // lib_buttonsThreadStop();
 
   // Kill any outstanding fbcp instances
-  // fbcp_stop();
+  fbcp_stop();
 
   printf("%s\n", "Controls are yours.");
   usleep(250000);

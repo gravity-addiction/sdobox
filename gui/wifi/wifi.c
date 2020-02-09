@@ -281,7 +281,6 @@ bool pg_wifi_cbBtn_savednet(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
 
 bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   printf("Connect to Wifi\n");
   // Add Network get id

@@ -23,8 +23,8 @@ enum {
 };
 
 
-gslc_tsElem m_asPgSdobVideolistElem[MAX_ELEM_PG_DEFAULT_RAM];
-gslc_tsElemRef m_asPgSdobVideolistElemRef[MAX_ELEM_PG_DEFAULT];
+gslc_tsElem m_asPgSdobVideolistElem[E_SDOB_VIDEOLIST_EL_MAX];
+gslc_tsElemRef m_asPgSdobVideolistElemRef[E_SDOB_VIDEOLIST_EL_MAX];
 
 gslc_tsElemRef* pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_MAX];
 

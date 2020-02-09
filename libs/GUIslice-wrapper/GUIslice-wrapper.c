@@ -28,7 +28,11 @@ void UserInitEnv()
 
 int guislice_wrapper_init(gslc_tsGui *pGui) {
   if (gslc_wrapper_initalized) { return 1; }
-
+  
+  gslc_tsRect rF = {0, 0, 480, 320};
+  rFullscreen = rF;
+  
+  
   gslc_InitDebug(&DebugOut);
 
   // GUISlice Environment

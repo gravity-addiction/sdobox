@@ -67,8 +67,8 @@ size_t folder_list(const char *path, char ***ls);
 char * calculateSize(uint64_t size);
 // void run_system_cmd(char *fullpath);
 // int run_system_cmd_with_return(char *fullpath, char *ret, int retsize);
-void fbcp_start();
-void fbcp_stop();
+//-/ void fbcp_start();
+//-/ void fbcp_stop();
 
 #ifdef __cplusplus
 }

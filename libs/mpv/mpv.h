@@ -16,8 +16,6 @@ double mpv_video_duration; // = 0.00;
 double mpv_video_pos; // = 0.00;
 double mpv_video_rate; // = 1.0;
 
-int mpv_singlet_lock;
-
 long long int mi_video_fps_frame; // = 0;
 
 
@@ -70,7 +68,7 @@ int mpv_play();
 double mpv_speed(double spd);
 double mpv_speed_adjust(double spd);
 
-int mpv_loadfile(char* folder, char* filename, char* flag, char* opts);
+int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts);
 void mpv_quit();
 void stop_video();
 

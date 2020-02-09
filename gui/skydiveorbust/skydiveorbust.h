@@ -14,9 +14,6 @@ extern "C" {
 
 //////////////////
 // GUI Page
-#define MAX_ELEM_PG_SDOB      500
-#define MAX_ELEM_PG_SDOB_RAM  MAX_ELEM_PG_SDOB
-
 enum {
   E_SDOB_CLEAN,
   E_SDOB_EL_SC_SLIDER,
@@ -42,6 +39,9 @@ enum {
 
   E_SDOB_EL_MAX
 };
+
+#define MAX_ELEM_PG_SDOB      E_SDOB_EL_MAX + 100
+#define MAX_ELEM_PG_SDOB_RAM  MAX_ELEM_PG_SDOB
 
 gslc_tsElem pg_sdobElem[MAX_ELEM_PG_SDOB];
 gslc_tsElemRef pg_sdobElemRef[MAX_ELEM_PG_SDOB_RAM];
