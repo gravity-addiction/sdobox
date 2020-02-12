@@ -1,5 +1,5 @@
 HOME = /home/pi
-DEBUG = -O3
+DEBUG = -O1 -g
 CC = clang
 INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
@@ -43,18 +43,21 @@ endif
 #  LDLIBS = -lSDL2 -lSDL2_ttf ${GSLC_LDLIB_EXTRA}
 #endif
 
+all: touchapp
 
-SRC = touchapp.c
+TOUCHAPP_SRCS=touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
+TOUCHAPP_OBJS=$(patsubst %.c,%.o,$(TOUCHAPP_SRCS))
 
-# OBJ = $(SRC:.c=.o)
+ifeq ($(filter clean cleaner,$(MAKECMDGOALS)),)
+  include $(patsubst %.c,%.dep,$(TOUCHAPP_SRCS))
+endif
 
-BINS = $(SRC:.c=)
-
-all: $(BINS)
+%.dep: %.c
+	$(COMPILE.c) -MM $< | sed 's&^.*:&$(@):&' $(if $(REBUILD_ON_MAKEFILE_CHANGES),| sed 's/:/ $@: Makefile/') > $@
 
 clean:
 	@echo "Cleaning directory..."
-	$(RM) $(BINS)
+	$(RM) $(TOUCHAPP_OBJS)
 
 wpa/wpa_ctrl.o:
 	@echo [Building $@]
@@ -64,6 +67,6 @@ wpa/os_unix.o:
 	@echo [Building $@]
 	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 
-touchapp: touchapp.o $(patsubst %.c,%.o,$(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS))
+touchapp: $(TOUCHAPP_OBJS)
 	@echo [Building $@]
 	$(CC) $(CFLAGS) -fsanitize=address -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)

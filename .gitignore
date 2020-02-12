@@ -1,3 +1,4 @@
 
 touchapp
 *.o
+*.dep
