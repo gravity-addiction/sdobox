@@ -11,22 +11,23 @@ extern "C" {
 int queue_size;
 
 struct queue_head {
-	struct queue_head *next;
-  int action;
-  int mark;
-  int milli;
-  double time;
-  int selected;
-  double amt;
-  char *key;
-  char *cmd;
+    struct queue_head *next;
+    struct queue_head *prev;
+    int action;
+    int mark;
+    int milli;
+    double time;
+    int selected;
+    double amt;
+    char *key;
+    char *cmd;
 };
 
 struct queue_root *ALLOC_QUEUE_ROOT();
 void INIT_QUEUE_HEAD(struct queue_head *head);
 
 void queue_put(struct queue_head *new,
-	       struct queue_root *root, size_t *len);
+               struct queue_root *root, size_t *len);
 
 struct queue_head *queue_get(struct queue_root *root, size_t *len);
 
