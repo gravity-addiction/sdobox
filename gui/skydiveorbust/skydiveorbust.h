@@ -40,13 +40,11 @@ enum {
   E_SDOB_EL_MAX
 };
 
-#define MAX_ELEM_PG_SDOB      E_SDOB_EL_MAX + 100
-#define MAX_ELEM_PG_SDOB_RAM  MAX_ELEM_PG_SDOB
+gslc_tsElem *pg_sdobElem; // [MAX_ELEM_PG_SDOB];
+gslc_tsElemRef pg_sdobElemRef[E_SDOB_EL_MAX + 100];
 
-gslc_tsElem pg_sdobElem[MAX_ELEM_PG_SDOB];
-gslc_tsElemRef pg_sdobElemRef[MAX_ELEM_PG_SDOB_RAM];
-
-gslc_tsElemRef* pg_sdobEl[E_SDOB_EL_MAX];
+gslc_tsElemRef **pg_sdobEl;
+int pg_sdobElTotal;
 
 
 /////////////////
@@ -235,6 +233,7 @@ enum {
   E_Q_PLAYER_VIDEO_PAUSE,
   E_Q_PLAYER_VIDEO_UNPAUSE,
   E_Q_PLAYER_VIDEO_SETPAUSE,
+  E_Q_PLAYER_VIDEO_CHECKPAUSE,
   E_Q_PLAYER_SLIDER_UPDATE,
   E_Q_PLAYER_CHAPTER_CHANGED,
 

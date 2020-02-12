@@ -187,6 +187,7 @@ void lib_buttonsThreadStop() {
 // Set callback for button actions
 void lib_buttonsSetCallbackFunc(int btn, void (*function)()) {
   cbBtns[btn] = function;
+  lib_buttonsLastInterruptAction[btn] = 0;
   return;
 }
 

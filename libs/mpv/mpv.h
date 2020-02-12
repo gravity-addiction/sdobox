@@ -37,6 +37,7 @@ double    m_video_percent_tmp;
 int mpv_socket_fdSelect;
 fd_set mpv_socket_set;
 struct timeval mpv_socket_timeout;
+unsigned int mpv_socket_lastConn;
 
 // ------------------------------
 // mpv.c
@@ -68,6 +69,8 @@ int mpv_play();
 double mpv_speed(double spd);
 double mpv_speed_adjust(double spd);
 
+void mpv_stop();
+void mpv_playlist_clear();
 int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts);
 void mpv_quit();
 void stop_video();

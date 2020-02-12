@@ -27,7 +27,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     char* retTimePos;
     markSelected = curScorecardSize;
     if (markTime < 0) {
-      if ((mpvSocketSinglet("time-pos", &retTimePos)) > 0) {
+      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
         markTime = atof(retTimePos);
         free(retTimePos);
         sdob_judgement->marks->arrScorecardTimes[markSelected] = markTime;

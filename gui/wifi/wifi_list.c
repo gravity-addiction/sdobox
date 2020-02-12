@@ -211,6 +211,7 @@ bool pg_wifi_list_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTou
 
   printf("Up:\n");
   pg_wifi_list_networkList->scroll -= 1;
+  if (pg_wifi_list_networkList->scroll < 0) {  pg_wifi_list_networkList->scroll = 0; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
 
   return true;
@@ -220,7 +221,8 @@ bool pg_wifi_list_cbBtn_sliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eT
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   printf("Down:\n");
-  pg_wifi_list_networkList->scroll -= 1;
+  pg_wifi_list_networkList->scroll += 1;
+  if (pg_wifi_list_networkList->scroll > pg_wifi_list_networkList->scrollMax) { pg_wifi_list_networkList->scroll = pg_wifi_list_networkList->scrollMax; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
 
   return true;

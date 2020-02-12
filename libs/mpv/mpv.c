@@ -7,6 +7,7 @@
 #include <sys/un.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 
 // #include <mpv/client.h>
 #include "shared.h"
@@ -60,21 +61,15 @@ int mpv_init(gslc_tsGui *pGui) {
   printf("%s\n", "MPV Init");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
+  
   // if (!mpv_socket_fd) {
   //  mpv_socket_fd = mpv_socket_conn();
   //}
   
   mpv_socket_fdSelect = -1;
 
-  int cmdStopSz = strlen("stop\n") + 1;
-  char *cmdStop = malloc(cmdStopSz);
-  strlcpy(cmdStop, "stop\n", cmdStopSz);
-  mpv_cmd(cmdStop);
-  
-  int cmdClearSz = strlen("playlist-clear\n") + 1;
-  char *cmdClear = malloc(cmdClearSz);
-  strlcpy(cmdClear, "playlist-clear\n", cmdClearSz);
-  mpv_cmd(cmdClear);
+  mpv_stop();
+  mpv_playlist_clear();
   
   m_is_video_playing = 0;
   mi_video_fps_frame = 0;
@@ -170,12 +165,42 @@ int mpv_create_player(char* filePath) {
   return 1;
 }
 
+int mpv_fd_check(int fd) {
+  // Reset socket if more than 10 seconds since last reconnection
+  if (millis() - mpv_socket_lastConn > 10000) {
+    mpv_socket_close(fd);
+    return 0;
+  }
+  
+  // Check Socket is in good standing
+  if (fd > -1) {
+    int error = 0;
+    socklen_t len = sizeof(error);
+    int retval = getsockopt (fd, SOL_SOCKET, SO_ERROR, &error, &len);
+
+    if (retval != 0) {
+      /* there was a problem getting the error code */
+      printf("error getting socket error code: %s\n", strerror(retval));
+      mpv_socket_close(fd);
+      return 0;
+    }
+
+    if (error != 0) {
+      /* socket has a non zero error status */
+      printf("socket error: %s\n", strerror(error));
+      mpv_socket_close(mpv_socket_fdSelect);
+      return 0;
+    }
+    return 1;
+  }
+  return 0;
+}
 
 int mpv_fd_write(char *data) {
-  if (mpv_socket_fdSelect == -1) {
+  if (mpv_fd_check(mpv_socket_fdSelect) == 0) {
+    mpv_socket_lastConn = millis();
     mpv_socket_fdSelect = mpv_socket_conn();
     if (mpv_socket_fdSelect == -1) {
-      mpv_socket_fdSelect = 0;
       return 0;
     }
 
@@ -187,8 +212,13 @@ int mpv_fd_write(char *data) {
     mpv_socket_timeout.tv_sec = 2;
     mpv_socket_timeout.tv_usec = 0;
   }
-  // printf("Write: %s\n", data);
-  if (write(mpv_socket_fdSelect, data, strlen(data)) != strlen(data)) {
+  printf("Write: %s\n", data);
+  int writeSz = write(mpv_socket_fdSelect, data, strlen(data));
+  printf("Write Size: %d\n", writeSz);
+  if (writeSz != strlen(data)) {
+    printf("Bad MPV Write\n");
+    // mpv_socket_fdSelect = -1;
+    // mpv_fd_write(char *data)
     return 0;
   }
   return 1;
@@ -208,12 +238,12 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
   char *data = (char*)malloc(len * sizeof(char));
   if (data == NULL) {
     printf("%s\n%s\n", "Error!, No Memory", strerror(errno));
-    return 0;
+    return -1;
   }
   snprintf(data, len, data_tmp, prop);
   
   if (!mpv_cmd(data)) {
-    return 0;
+    return -1;
   }
   
   while (1) {
@@ -223,7 +253,7 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
       printf("%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
       mpv_socket_close(mpv_socket_fdSelect);
       mpv_socket_fdSelect = -1;
-      return 0;
+      return -1;
     } else if (selT == 1) {
       char* mpv_rpc_ret;
       int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
@@ -232,7 +262,7 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
         if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
           printf("%s\n%s\n%s\n","Error!", mpv_rpc_ret, strerror(errno));
           free(mpv_rpc_ret);
-          return 0;
+          return -1;
 
         // data response
         } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
@@ -245,12 +275,12 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
           free(mpv_rpc_ret);
         }
       } else {
-        free(mpv_rpc_ret);
-        return 0;
+        if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
+        return -1;
       }
     }
   }
-  return 0;
+  return -1;
 }
 
 
@@ -369,9 +399,19 @@ double mpv_speed_adjust(double spd) {
 
 
 
+void mpv_stop() {
+  int cmdStopSz = strlen("stop\n") + 1;
+  char *cmdStop = malloc(cmdStopSz);
+  strlcpy(cmdStop, "stop\n", cmdStopSz);
+  mpv_cmd(cmdStop);
+}
 
-
-
+void mpv_playlist_clear() {
+  int cmdClearSz = strlen("playlist-clear\n") + 1;
+  char *cmdClear = malloc(cmdClearSz);
+  strlcpy(cmdClear, "playlist-clear\n", cmdClearSz);
+  mpv_cmd(cmdClear);
+}
 
 int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts) {
   char* data_tmp = "loadfile /home/pi/shared/%s/%s/%s %s %s\n";

@@ -531,7 +531,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
   // Delete Key
   if ((
     pg_keyboardEl[E_KEYBOARD_EL_DELETE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 105),(rFullscreen.y + 5),50,50},
+            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 65),(rFullscreen.y + 5),60,50},
             (char *)"<--", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_delete)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_COL_WHITE);
@@ -544,8 +544,8 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
   // Cancel Key
   if ((
     pg_keyboardEl[E_KEYBOARD_EL_CANCEL] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 50),(rFullscreen.y + 5),50,50},
-            (char *)"X", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_cancel)
+            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 56),(rFullscreen.y + 213),56,50},
+            (char *)"Cancel", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_cancel)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
