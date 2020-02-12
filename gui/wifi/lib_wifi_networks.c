@@ -97,6 +97,7 @@ struct pg_wifi_networkStruct * PG_WIFI_INIT_NETWORK()
   net->dBm = (char *)calloc(1, sizeof(char));
   net->flags = (char *)calloc(1, sizeof(char));
   net->ssid = (char *)calloc(1, sizeof(char));
+  net->txt = (char *)calloc(1, sizeof(char));
 
   return net;
 }
@@ -108,6 +109,7 @@ void PG_WIFI_DESTROY_NETWORK(struct pg_wifi_networkStruct *wn)
   free(wn->dBm);
   free(wn->flags);
   free(wn->ssid);
+  free(wn->txt);
   free(wn); 
 }
 
@@ -135,7 +137,13 @@ void PG_WIFI_DESTROY_NETWORKS(struct pg_wifi_networksStruct *wns)
 
 
 
-
+void pg_wifi_clearNetworks(struct pg_wifi_networksStruct **wns) {
+  int wnsLen = (*wns)->len;
+  for (int i = 0; i < wnsLen; ++i) {
+    PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[i]);
+  }
+  (*wns)->len = 0;
+}
 
 
 
@@ -144,10 +152,16 @@ int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_net
   for (int w = 0; w < (*wns)->len; ++w) {
     if (wifi->ssid == NULL) { break; }
     if ((*wns)->ptrs[w]->id > -1 && (*wns)->ptrs[w]->id == wifi->id) {
+      // Clean old record
+      PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[w]);
+      // Replace
       (*wns)->ptrs[w] = wifi;
       return w;
     } else
     if (strcmp((*wns)->ptrs[w]->ssid, wifi->ssid) == 0) {
+      // Clean old record
+      PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[w]);
+      // Replace
       (*wns)->ptrs[w] = wifi;
       return w;
     }
@@ -162,13 +176,7 @@ int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_net
   return -1;
 }
 
-void pg_wifi_clearNetworks(struct pg_wifi_networksStruct **wns) {
-  int wnsLen = (*wns)->len;
-  for (int i = 0; i < wnsLen; ++i) {
-    PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[i]);
-  }
-  (*wns)->len = 0;
-}
+
 
 
 
@@ -196,6 +204,11 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   char *newSsid = (char *)realloc(wifi->ssid, ssidSz * sizeof(char));
   snprintf(newSsid, ssidSz, "%s", t[1]);
   wifi->ssid = newSsid;
+  // TXT (use SSID info)
+  char *newTxt = (char *)realloc(wifi->txt, ssidSz * sizeof(char));
+  snprintf(newTxt, ssidSz, "%s", t[1]);
+  wifi->txt = newTxt;
+  
 
   // BSSID
   size_t bssidSz = snprintf(NULL, 0, "%s", t[2]) + 1;
@@ -266,7 +279,11 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   char *newSsid = (char *)realloc(wifi->ssid, ssidSz * sizeof(char));
   snprintf(newSsid, ssidSz, "%s", t[4]);
   wifi->ssid = newSsid;
-
+  // TXT (use SSID info)
+  char *newTxt = (char *)realloc(wifi->txt, ssidSz * sizeof(char));
+  snprintf(newTxt, ssidSz, "%s", t[1]);
+  wifi->txt = newTxt;
+  
   pg_wifi_appendNetwork(wifi, &pg_wifi_nets_available);
 
   free(t[0]);
@@ -380,13 +397,13 @@ void pg_wifi_updateSavedNetworks() {
   char *buf = (char *)calloc(len, sizeof(char));
   // pg_wifi_wpaShownList = E_WIFI_WPA_LIST_NETWORKS;
 
+  pg_wifi_clearNetworks(&pg_wifi_nets_saved);
   pg_wifi_wpaSendCmdBuf("LIST_NETWORKS", buf, &len);
   if (!len) {
     free(buf);
     return;
   }
   // id / ssid / bssid / flags
-  // pg_wifi_clearNetworks(&pg_wifi_nets_saved);
   sgetlines_withcb(buf, len, &pg_wifi_addNetSaved);
   free(buf);
 }
@@ -396,6 +413,7 @@ void pg_wifi_updateAvailableNetworks() {
   size_t len = 4096;
   char *buf = (char *)calloc(len, sizeof(char));
   // pg_wifi_wpaShownList = E_WIFI_WPA_SCAN_NETWORKS;
+  pg_wifi_clearNetworks(&pg_wifi_nets_available);
 
   pg_wifi_wpaSendCmdBuf("SCAN_RESULTS", buf, &len);
   if (!len) {
@@ -403,7 +421,6 @@ void pg_wifi_updateAvailableNetworks() {
     return;
   }
   // id / ssid / bssid / flags
-  // pg_wifi_clearNetworks(&pg_wifi_nets_available);
   // printf("%s\n", buf);
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
   free(buf);

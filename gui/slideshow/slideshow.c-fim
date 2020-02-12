@@ -428,7 +428,7 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
 
   char tmp_inotify_ret[1024];
   while (fgets(tmp_inotify_ret, sizeof(tmp_inotify_ret)-1, pg_slideshowFD) != NULL) {
-    printf("SLIDESHOW--:%s:--\n", tmp_inotify_ret);
+   //  printf("SLIDESHOW--:%s:--\n", tmp_inotify_ret);
 	  
   }
   return 0;

@@ -17,18 +17,18 @@
 PI_THREAD (fbcpThread)
 {
   if (fbcpThreadRunning) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Already Started");
+    // debug_print("%s\n", "Not Starting FBCP Thread, Already Started");
     return NULL;
   }
   fbcpThreadRunning = 1;
 
   if (fbcpThreadKill) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
+    // debug_print("%s\n", "Not Starting FBCP Thread, Stop Flag Set");
     fbcpThreadRunning = 0;
     return NULL;
   }
 
-  // debug_print("%s\n", "Starting MPV TimePos Thread");
+  // debug_print("%s\n", "Starting FBCP Thread");
 
 /*
 License
@@ -132,7 +132,7 @@ SOFTWARE.
   vc_dispmanx_display_close(display);
 
 
-  // printf("%s\n", "Closing TimePos Thread");
+  // printf("%s\n", "Closing FBCP Thread");
   fbcpThreadRunning = 0;
   return NULL;
 }
@@ -148,7 +148,7 @@ int fbcp_toggle() {
 }
 
 int fbcp_start() {
-  printf("%s\n", "fbcpThreadStart()");
+  // printf("%s\n", "fbcpThreadStart()");
   if (fbcpThreadRunning) { return 0; }
 
   fbcpThreadKill = 0;
@@ -156,7 +156,7 @@ int fbcp_start() {
 }
 
 void fbcp_stop() {
-  printf("%s\n", "fbcpThreadStop()");
+  // printf("%s\n", "fbcpThreadStop()");
   if (fbcpThreadRunning && !fbcpThreadKill) {
     fbcpThreadKill = 1;
     int shutdown_cnt = 0;
@@ -165,6 +165,6 @@ void fbcp_stop() {
       shutdown_cnt++;
     }
     fbcpThreadKill = 0;
-    printf("FBCP Thread Shutdown %d\n", shutdown_cnt);
+    // printf("FBCP Thread Shutdown %d\n", shutdown_cnt);
   }
 }

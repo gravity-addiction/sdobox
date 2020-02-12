@@ -382,19 +382,16 @@ void pg_slideshowButtonRotaryCCW() {
 
 
 void pg_slideshowButtonLeftPressed() {
-  // debug_print("%s\n", "Prev Button!");
   if (pg_slideshowZooming) {
     pg_slideshowZooming = 0;
     pg_slideshowZoom = 0;
     pg_slideshowPanY = 0;
     pg_slideshowPanX = 0;
   }
-  // pg_slideshowPrevImage();
-  mpv_set_prop_char("loop-playlist", "no");
+  pg_slideshowPrevImage();
 }
 
 void pg_slideshowButtonRightPressed() {
-  // debug_print("%s\n", "Next Button!");
   if (pg_slideshowZooming) {
     pg_slideshowZooming = 0;
     pg_slideshowZoom = 0;
@@ -441,6 +438,13 @@ void pg_slideshowButtonLeftHeld() {
 
 void pg_slideshowButtonRightHeld() {
   // printf("%s\n", "Right Held Slideshow");
+  mpv_stop();
+  mpv_playlist_clear();
+  char* plFile = "/home/pi/shared/slideshow/playlist.txt";
+  size_t cmdSz = snprintf(NULL, 0, "loadlist \"%s\"\n", plFile) + 1;
+  char *cmd = (char*)malloc(cmdSz * sizeof(char));
+  snprintf(cmd, cmdSz, "loadlist \"%s\"\n", plFile);
+  mpv_cmd(cmd);
 }
 
 void pg_slideshowButtonRotaryHeld() {
@@ -660,7 +664,7 @@ PI_THREAD (pg_slideshowMpvSocketThread)
         // printf("Meta update\n");
         // printf("Parsed: %s Len: %d\n\n\n", json_event, rcE);
         char* retFrameInfo;
-        if (mpvSocketSinglet("video-frame-info", &retFrameInfo)) {
+        if (mpvSocketSinglet("video-frame-info", &retFrameInfo) != -1) {
           // printf("Info: %s\n", retFrameInfo);
           char* json_picType;
           pg_slideshowIsPicture = ta_json_parse(retFrameInfo, "picture-type", &json_picType);
@@ -745,11 +749,6 @@ void pg_slideshow_init(gslc_tsGui *pGui) {
   snprintf(cmd, cmdSz, "loadlist \"%s\"\n", plFile);
   mpv_cmd(cmd);
   
-  size_t cmdFileSz = snprintf(NULL, 0, "loadfile ytdl://https://www.youtube.com/watch?v=sNuKpwX6Tz4 append-play\n") + 1;
-  char *cmdFile = (char*)malloc(cmdFileSz * sizeof(char));
-  snprintf(cmdFile, cmdFileSz, "loadfile https://www.youtube.com/watch?v=sNuKpwX6Tz4 append-play\n");
-  mpv_cmd(cmdFile);
-  
 
   cbInit[E_PG_SLIDESHOW] = NULL;
 }
@@ -770,7 +769,7 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_slideshow_open(gslc_tsGui *pGui) {
-  // debug_print("%s\n", "Slideshow Setting Button Functions");
+  printf("%s\n", "Slideshow Setting Button Functions");
   pg_slideshowButtonSetFuncs();
   
   pg_slideshowMpvSocketThreadStart();
@@ -809,15 +808,8 @@ void pg_slideshow_close(gslc_tsGui *pGui) {
 void pg_slideshow_destroy(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Slideshow Stopping");
   // pg_slideshowButtonUnsetFuncs();
-  int cmdStopSz = strlen("stop\n") + 1;
-  char *cmdStop = malloc(cmdStopSz);
-  strlcpy(cmdStop, "stop\n", cmdStopSz);
-  mpv_cmd(cmdStop);
-  
-  int cmdClearSz = strlen("playlist-clear\n") + 1;
-  char *cmdClear = malloc(cmdClearSz);
-  strlcpy(cmdClear, "playlist-clear\n", cmdClearSz);
-  mpv_cmd(cmdClear);
+  mpv_stop();
+  mpv_playlist_clear();
 
   // // debug_print("%s\n", "Slideshow Stopping Folder Watch");
   // pg_slideshowFolderWatchThreadStop();

@@ -40,6 +40,7 @@ struct pg_wifi_networkStruct {
   char* dBm;
   char* flags;
   char* ssid;
+  char* txt;
 };
 
 struct pg_wifi_networksStruct {
@@ -63,6 +64,7 @@ void PG_WIFI_DESTROY_NETWORK(struct pg_wifi_networkStruct *wn);
 struct pg_wifi_networksStruct * PG_WIFI_INIT_NETWORKS();
 void PG_WIFI_DESTROY_NETWORKS(struct pg_wifi_networksStruct *wns);
 
+void pg_wifi_clearNetworks(struct pg_wifi_networksStruct **wns);
 int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_networksStruct **wns);
 void pg_wifi_destroyNetwork(struct pg_wifi_networksStruct *wns, int i);
 

@@ -8,10 +8,12 @@ extern "C" {
 int pg_sdob_player_chaptersUpdating;
 
 
-void pg_sdob_player_pause(int paused);
-void pg_sdob_player_setpause();
+
+void pg_sdob_player_setpause(int paused);
+void pg_sdob_player_checkpause();
 void pg_sdob_player_setpbrate();
 
+void pg_sdob_player_pause(int paused);
 void pg_sdob_player_toggle_play();
 void pg_sdob_player_setduration();
 void pg_sdob_player_setChapterCur();

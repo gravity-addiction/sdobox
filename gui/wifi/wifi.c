@@ -282,7 +282,6 @@ bool pg_wifi_cbBtn_savednet(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
 bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  printf("Connect to Wifi\n");
   // Add Network get id
 
   // set_network 1 ssid "TEST1"
@@ -305,18 +304,15 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
     printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
     return false;
   } else {
-    printf("Using Network Id: %d\n", network_id);
     size_t strSsidSz = snprintf(NULL, 0, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr) + 1;
     char *strSsidCmd = (char *)malloc(strSsidSz * sizeof(char));
     snprintf(strSsidCmd, strSsidSz, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr);
-    printf("%s\n", strSsidCmd);
     pg_wifi_wpaSendCmd(strSsidCmd);
     free(strSsidCmd);
 
     size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr) + 1;
     char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
     snprintf(strPassCmd, strPassSz, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr);
-    printf("%s\n", strPassCmd);
     pg_wifi_wpaSendCmd(strPassCmd);
     free(strPassCmd);
 
@@ -749,6 +745,10 @@ void pg_wifi_close(gslc_tsGui *pGui) {
 void pg_wifi_destroy() {
   PG_WIFI_DESTROY_INPUT(pg_wifi_addInput);
   PG_WIFI_DESTROY_STATUS(pg_wifi_status);
+
+  pg_wifi_clearNetworks(&pg_wifi_nets_available);
+  pg_wifi_clearNetworks(&pg_wifi_nets_saved);
+  
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_available);
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_saved);
 

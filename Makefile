@@ -67,5 +67,5 @@ wpa/os_unix.o:
 
 touchapp: touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
 	@echo [Building $@]
-	@$(CC) $(CFLAGS) -fsanitize=address -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)
+	@$(CC) $(CFLAGS) -fsanitize=leak -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)
 #	@$(CC) $(CFLAGS) -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)

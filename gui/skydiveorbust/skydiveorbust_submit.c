@@ -145,7 +145,7 @@ void pg_sdobSubmitGuiInit(gslc_tsGui *pGui) {
   int ePage = E_PG_SDOB_SUBMIT;
 
   // Create Page in guislice
-  gslc_PageAdd(pGui, ePage, m_asPgSdobSubmitElem, MAX_ELEM_PG_DEFAULT, m_asPgSdobSubmitElemRef, MAX_ELEM_PG_DEFAULT);
+  gslc_PageAdd(pGui, ePage, m_asPgSdobSubmitElem, E_SDOB_SUBMIT_EL_MAX, m_asPgSdobSubmitElemRef, E_SDOB_SUBMIT_EL_MAX);
 
   // Create Fullscreen Draw Box
   // Must use a box so redrawing between pages functions correctly

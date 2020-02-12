@@ -149,7 +149,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
   int ePage = E_PG_SDOB_VIDEOLIST;
 
   // Create Page in guislice
-  gslc_PageAdd(pGui, ePage, m_asPgSdobVideolistElem, MAX_ELEM_PG_DEFAULT, m_asPgSdobVideolistElemRef, MAX_ELEM_PG_DEFAULT);
+  gslc_PageAdd(pGui, ePage, m_asPgSdobVideolistElem, E_SDOB_VIDEOLIST_EL_MAX, m_asPgSdobVideolistElemRef, E_SDOB_VIDEOLIST_EL_MAX);
 
   // Create Fullscreen Draw Box
   // Must use a box so redrawing between pages functions correctly
