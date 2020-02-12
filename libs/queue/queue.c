@@ -11,90 +11,123 @@
 // int queue_size = 0;
 
 struct queue_root {
-	struct queue_head *in_queue;
-	struct queue_head *out_queue;
-//	pthread_spinlock_t lock;
-	pthread_mutex_t lock;
+    struct queue_head head;     /* base of doubly-linked circular list */
+    pthread_mutex_t lock;
 };
-
-#ifndef _cas
-# define _cas(ptr, oldval, newval) __sync_bool_compare_and_swap(ptr, oldval, newval)
-#endif
 
 struct queue_root *ALLOC_QUEUE_ROOT()
 {
-	struct queue_root *root =	malloc(sizeof(struct queue_root));
+    struct queue_root *root =   malloc(sizeof(struct queue_root));
 
-//	pthread_spin_init(&root->lock, PTHREAD_PROCESS_PRIVATE);
-	pthread_mutex_init(&root->lock, NULL);
+    pthread_mutex_init(&root->lock, NULL);
 
-	root->in_queue = NULL;
-	root->out_queue = NULL;
-	return root;
+    // Make the head point to itself in both directions
+    root->head.next = &root->head;
+    root->head.prev = &root->head;
+
+    return root;
 }
 
 void INIT_QUEUE_HEAD(struct queue_head *head)
 {
-	head->next = QUEUE_POISON1;
-	head->action = -1;
-	head->mark = -1;
-	head->selected = -1;
-	head->milli = -1;
-	head->time = -1.0;
-	head->amt = 0.0;
-//	head->key = calloc(64, sizeof(char));
-//	head->cmd = calloc(256, sizeof(char));
+    head->next = QUEUE_POISON1;
+    head->prev = QUEUE_POISON1;
+    head->action = -1;
+    head->mark = -1;
+    head->selected = -1;
+    head->milli = -1;
+    head->time = -1.0;
+    head->amt = 0.0;
+//  head->key = calloc(64, sizeof(char));
+//  head->cmd = calloc(256, sizeof(char));
 }
 
-void queue_put(struct queue_head *new,
-	       struct queue_root *root, size_t *len)
-{
-  if (m_bQuit) { return; }
+// #define QUEUE_DEBUG_P
 
-	while (1) {
-		struct queue_head *in_queue = root->in_queue;
-		new->next = in_queue;
-		if (_cas(&root->in_queue, in_queue, new)) {
-      (*len)++;
-      // ++queue_size;
-			break;
-		}
-	}
+#ifdef QUEUE_DEBUG_P
+static bool on_queue_p(struct queue_root* root, struct queue_head* x) {
+    struct queue_head* p = root->head.next;
+    while(p != &root->head) {
+        if (p == x)
+            return true;
+        p = p->next;
+    }
+    return false;
+}
+
+static unsigned queue_length(struct queue_root* root) {
+    struct queue_head* p = root->head.next;
+    unsigned count = 0;
+    while(p != &root->head) {
+        ++count;
+        p = p->next;
+        if (count > 100000)
+            return count;
+    }
+    return count;
+}
+#endif
+
+void queue_put(struct queue_head *new,
+               struct queue_root *root, size_t *len)
+{
+    if (m_bQuit) { return; }
+
+    pthread_mutex_lock(&root->lock);
+
+#ifdef QUEUE_DEBUG_P
+    if (on_queue_p(root, new)) {
+        printf("\nqueue_put: point already on queue! %p\n\n", new);
+        pthread_mutex_unlock(&root->lock);
+        return;
+    }
+#endif  
+
+    struct queue_head *head = &root->head;
+
+    new->prev = head;
+    new->next = head->next;
+    head->next = new;
+    new->next->prev = new;
+
+    (*len)++;
+
+#ifdef QUEUE_DEBUG_P
+    if (*len != queue_length(root))
+        printf("\nqueue_put: QUEUE LENGTH INCORRECT: %u != %u\n\n", *len, queue_length(root));
+#endif
+
+    pthread_mutex_unlock(&root->lock);
 }
 
 
 struct queue_head *queue_get(struct queue_root *root, size_t *len)
 {
-  if (m_bQuit) { return NULL; }
-//	pthread_spin_lock(&root->lock);
-	pthread_mutex_lock(&root->lock);
+    if (m_bQuit) { return NULL; }
 
-	if (!root->out_queue) {
-		while (1) {
-			struct queue_head *head = root->in_queue;
-			if (!head) {
-				break;
-			}
-			if (_cas(&root->in_queue, head, NULL)) {
-				// Reverse the order
-				while (head) {
-					struct queue_head *next = head->next;
-					head->next = root->out_queue;
-					root->out_queue = head;
-					head = next;
-				}
-				break;
-			}
-		}
-	}
+    pthread_mutex_lock(&root->lock);
 
-	struct queue_head *head = root->out_queue;
-	if (head) {
-		root->out_queue = head->next;
-    (*len)--;
-	}
-  // printf("Queue Get Size: %d, Total: %d\n", (*len), queue_size);
-//	pthread_spin_unlock(&root->lock);
-	pthread_mutex_unlock(&root->lock);
-	return head;
+    struct queue_head *head = &root->head;
+    struct queue_head *result = NULL;
+    if (head->prev != head) {
+        result = head->prev;
+        head->prev = result->prev;
+        head->prev->next = head;
+        result->next = QUEUE_POISON1;
+        result->prev = QUEUE_POISON1;
+        (*len)--;
+
+#ifdef QUEUE_DEBUG_P
+        if (*len != queue_length(root))
+            printf("\nqueue_get: QUEUE LENGTH INCORRECT: %u != %u\n\n", *len, queue_length(root));
+        if (on_queue_p(root, result)) {
+            printf("queue_get, after removal, result is still on queue! %p\n\n", result);
+        }
+#endif
+        if (*len > 0)
+            printf("queue_get: upon returning item, %u items remain\n", *len);
+    }
+    pthread_mutex_unlock(&root->lock);
+    return result;
 }
+

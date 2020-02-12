@@ -1,18 +1,17 @@
 HOME = /home/pi
-DEBUG = -O3
+DEBUG = -O1 -g
 CC = clang
-INCLUDE = #-I/usr/local/include
+INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib 
 LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread
 
-GSLC_CORE = GUIslice/GUIslice.c GUIslice/elem/*.c #GUIslice/GUIslice_config.h
-GSLC_LIBS = -I./GUIslice
+GSLC_CORE := GUIslice/GUIslice.c $(wildcard GUIslice/elem/*.c) #GUIslice/GUIslice_config.h
+GSLC_INCLUDES = -I./GUIslice
 
-TOUCHAPP_LIBS = -I./libs -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host -I/opt/vc/include/interface/vmcs_host/linux
-TOUCHAPP_CORE = libs/*.c $(wildcard libs/**/*.c) gui/*.c $(wildcard gui/**/*.c) \
-                wpa/*.o 
-
+TOUCHAPP_INCLUDES = -I./libs -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host -I/opt/vc/include/interface/vmcs_host/linux
+TOUCHAPP_CORE := $(wildcard libs/*.c) $(wildcard libs/**/*.c) $(wildcard gui/*.c) $(wildcard gui/**/*.c) \
+		         $(wildcard wpa/*.c)
 
 APP_GUI =
 APP_MODULES =
@@ -44,18 +43,21 @@ endif
 #  LDLIBS = -lSDL2 -lSDL2_ttf ${GSLC_LDLIB_EXTRA}
 #endif
 
+all: touchapp
 
-SRC = touchapp.c
+TOUCHAPP_SRCS=touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
+TOUCHAPP_OBJS=$(patsubst %.c,%.o,$(TOUCHAPP_SRCS))
 
-# OBJ = $(SRC:.c=.o)
+ifeq ($(filter clean cleaner,$(MAKECMDGOALS)),)
+  include $(patsubst %.c,%.dep,$(TOUCHAPP_SRCS))
+endif
 
-BINS = $(SRC:.c=)
-
-all: $(BINS)
+%.dep: %.c
+	$(COMPILE.c) -MM $< | sed 's&^.*:&$(@) $(*).o:&' $(if $(REBUILD_ON_MAKEFILE_CHANGES),| sed 's/:/ $@: Makefile/') > $@
 
 clean:
 	@echo "Cleaning directory..."
-	$(RM) $(BINS)
+	$(RM) touchapp $(TOUCHAPP_OBJS) $(patsubst %.c,%.dep,$(TOUCHAPP_SRCS)) TAGS
 
 wpa/wpa_ctrl.o:
 	@echo [Building $@]
@@ -65,7 +67,9 @@ wpa/os_unix.o:
 	@echo [Building $@]
 	gcc -Wall -Wextra -I./wpa/ -MMD -c -g -o ./wpa/os_unix.o ./wpa/os_unix.c -D CONFIG_CTRL_IFACE -D CONFIG_CTRL_IFACE_UNIX
 
-touchapp: touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS)
+touchapp: $(TOUCHAPP_OBJS)
 	@echo [Building $@]
-	@$(CC) $(CFLAGS) -fsanitize=leak -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)
-#	@$(CC) $(CFLAGS) -o $@ touchapp.c $(TOUCHAPP_CORE) $(GSLC_CORE) $(GSLC_SRCS) $(LDFLAGS) $(LDLIBS) -I . $(TOUCHAPP_LIBS) $(GSLC_LIBS) $(LDLIB_EXTRA)
+	$(CC) $(CFLAGS) -fsanitize=address -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
+
+tags:
+	etags $(TOUCHAPP_SRCS) *.h $(shell find GUIslice -name '*.h') $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
