@@ -53,11 +53,11 @@ ifeq ($(filter clean cleaner,$(MAKECMDGOALS)),)
 endif
 
 %.dep: %.c
-	$(COMPILE.c) -MM $< | sed 's&^.*:&$(@):&' $(if $(REBUILD_ON_MAKEFILE_CHANGES),| sed 's/:/ $@: Makefile/') > $@
+	$(COMPILE.c) -MM $< | sed 's&^.*:&$(@) $(*).o:&' $(if $(REBUILD_ON_MAKEFILE_CHANGES),| sed 's/:/ $@: Makefile/') > $@
 
 clean:
 	@echo "Cleaning directory..."
-	$(RM) $(TOUCHAPP_OBJS)
+	$(RM) touchapp $(TOUCHAPP_OBJS) $(patsubst %.c,%.dep,$(TOUCHAPP_SRCS)) TAGS
 
 wpa/wpa_ctrl.o:
 	@echo [Building $@]
@@ -70,3 +70,6 @@ wpa/os_unix.o:
 touchapp: $(TOUCHAPP_OBJS)
 	@echo [Building $@]
 	$(CC) $(CFLAGS) -fsanitize=address -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
+
+tags:
+	etags $(TOUCHAPP_SRCS) *.h $(shell find GUIslice -name '*.h') $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
