@@ -224,63 +224,76 @@ int mpv_fd_write(char *data) {
   return 1;
 }
 
+static pthread_mutex_t mpvSocketAccessLock = PTHREAD_MUTEX_INITIALIZER;
+
 int mpv_cmd(char *cmd_string) {
-  int fdWrite = mpv_fd_write(cmd_string);
-  free(cmd_string);
-  return fdWrite;
+
+    pthread_mutex_lock(&mpvSocketAccessLock);
+    int fdWrite = mpv_fd_write(cmd_string);
+    pthread_mutex_unlock(&mpvSocketAccessLock);
+
+    free(cmd_string);
+    return fdWrite;
 }
 
 int mpvSocketSinglet(char* prop, char ** json_prop) {
-  // printf("MPV Singlet: %s\n", prop);
+    // printf("MPV Singlet: %s\n", prop);
 
-  char* data_tmp = "{ \"command\": [\"get_property\", \"%s\"] }\n";
-  size_t len = snprintf(NULL, 0, data_tmp, prop) + 1;
-  char *data = (char*)malloc(len * sizeof(char));
-  if (data == NULL) {
-    printf("%s\n%s\n", "Error!, No Memory", strerror(errno));
-    return -1;
-  }
-  snprintf(data, len, data_tmp, prop);
-  
-  if (!mpv_cmd(data)) {
-    return -1;
-  }
-  
-  while (1) {
-    /* select returns 0 if timeout, 1 if input available, -1 if error. */
-    int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
-    if (selT == -1) {
-      printf("%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
-      mpv_socket_close(mpv_socket_fdSelect);
-      mpv_socket_fdSelect = -1;
-      return -1;
-    } else if (selT == 1) {
-      char* mpv_rpc_ret;
-      int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
-      if (rc > 0 && mpv_rpc_ret != NULL) {
-        // error response
-        if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
-          printf("%s\n%s\n%s\n","Error!", mpv_rpc_ret, strerror(errno));
-          free(mpv_rpc_ret);
-          return -1;
-
-        // data response
-        } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
-          int rcP = ta_json_parse(mpv_rpc_ret, "data", json_prop);
-          free(mpv_rpc_ret);
-          return rcP;
-          
-        // every other response
-        } else {
-          free(mpv_rpc_ret);
-        }
-      } else {
-        if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
+    char* data_tmp = "{ \"command\": [\"get_property\", \"%s\"] }\n";
+    size_t len = snprintf(NULL, 0, data_tmp, prop) + 1;
+    char *data = (char*)malloc(len * sizeof(char));
+    if (data == NULL) {
+        printf("%s\n%s\n", "Error!, No Memory", strerror(errno));
         return -1;
-      }
     }
-  }
-  return -1;
+    snprintf(data, len, data_tmp, prop);
+
+    int result = -1;
+
+    pthread_mutex_lock(&mpvSocketAccessLock);
+  
+    if (!mpv_fd_write(data)) {
+        goto cleanup;
+    }
+    free(data);
+  
+    while (1) {
+        /* select returns 0 if timeout, 1 if input available, -1 if error. */
+        int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
+        if (selT == -1) {
+            printf("%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
+            mpv_socket_close(mpv_socket_fdSelect);
+            mpv_socket_fdSelect = -1;
+            goto cleanup;
+        } else if (selT == 1) {
+            char* mpv_rpc_ret = NULL;
+            int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
+            if (rc > 0 && mpv_rpc_ret != NULL) {
+                // error response
+                if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
+                    printf("%s\n%s\n%s\n","Error!", mpv_rpc_ret, strerror(errno));
+                    free(mpv_rpc_ret);
+                    goto cleanup;
+                    // data response
+                } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
+                    result = ta_json_parse(mpv_rpc_ret, "data", json_prop);
+                    free(mpv_rpc_ret);
+                    goto cleanup;
+                    // every other response
+                } else {
+                    free(mpv_rpc_ret);
+                    // ...and try again
+                }
+            } else {
+                if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
+                goto cleanup;
+            }
+        }
+    }
+
+ cleanup:
+    pthread_mutex_unlock(&mpvSocketAccessLock);
+    return result;
 }
 
 
