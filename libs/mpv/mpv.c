@@ -207,11 +207,11 @@ int mpv_fd_write(char *data) {
     /* Initialize the file descriptor set. */
     FD_ZERO (&mpv_socket_set);
     FD_SET (mpv_socket_fdSelect, &mpv_socket_set);
-
-    /* Initialize the timeout data structure. */
-    mpv_socket_timeout.tv_sec = 2;
-    mpv_socket_timeout.tv_usec = 0;
   }
+
+  /* set the timeout data structure. */
+  mpv_socket_timeout.tv_sec = 2;
+  mpv_socket_timeout.tv_usec = 0;
   // printf("Write: %s\n", data);
   int writeSz = write(mpv_socket_fdSelect, data, strlen(data));
   // printf("Write Size: %d\n", writeSz);

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "skydiveorbust.h"
 #include "queue/queue.h"
@@ -177,15 +178,13 @@ void pg_sdob_player_sliderTicks(gslc_tsGui *pGui, double *tickMarks, int tickCnt
     gslc_ElemXSliderSetTicks(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], NULL, 0);
     return;
   }
-  while (sdob_player_ticks->lock) { return; }
-  sdob_player_ticks->lock = 1;
+  pthread_mutex_lock(&sdob_player_ticks->lock);
 
   if (tickCnt > sdob_player_ticks->max) {
     // printf("Upping Ticks\n");
     sdob_player_ticks->max += 64;
-    size_t tickSz = (sizeof(double) * sdob_player_ticks->max);
     double * oldTicks;
-    oldTicks = realloc(sdob_player_ticks->ptr, tickSz);
+    oldTicks = realloc(sdob_player_ticks->ptr, (sdob_player_ticks->max * sizeof(double)));
     sdob_player_ticks->ptr = oldTicks;
   }
 
@@ -199,7 +198,7 @@ void pg_sdob_player_sliderTicks(gslc_tsGui *pGui, double *tickMarks, int tickCnt
   }
 
   gslc_ElemXSliderSetTicks(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], sdob_player_ticks->ptr, sdob_player_ticks->len);
-  sdob_player_ticks->lock = 0;
+  pthread_mutex_unlock(&sdob_player_ticks->lock);
 }
 
 

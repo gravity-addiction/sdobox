@@ -27,6 +27,7 @@ enum {
   E_SDOB_EL_MEET_DESC,
   E_SDOB_EL_VIDEO_DESC,
   E_SDOB_EL_BTN_SUBMIT,
+  E_SDOB_EL_BTN_MIRROR,
 
   E_SDOB_EL_PL_PAUSE,
   E_SDOB_EL_PL_USER_RATE,
@@ -166,7 +167,7 @@ struct pg_sdob_player_chapters *sdob_chapters;
 struct pg_sdob_player_ticks {
   int len;
   int max;
-  int lock;
+  pthread_mutex_t lock;
   double *ptr;
 };
 struct pg_sdob_player_ticks *sdob_player_ticks;
@@ -250,8 +251,8 @@ size_t pg_sdobQueueLen;
 
 
 
-void pg_sdobSliderSetCurPos(gslc_tsGui *pGui, int slot_scroll);
-void pg_sdobSliderChangeCurPos(gslc_tsGui *pGui, int amt, bool redraw);
+void pg_sdobSliderSetCurPos(gslc_tsGui *pGui, int ss);
+void pg_sdobSliderChangeCurPos(gslc_tsGui *pGui, int amt);
 void pg_sdobSliderResetCurPos(gslc_tsGui *pGui);
 void pg_sdobUpdateCount(gslc_tsGui *pGui, gslc_tsElemRef *pElem);
 
@@ -296,7 +297,7 @@ void pg_sdob_scorecard_update_mark(gslc_tsGui *pGui, int selected, int mark);
 void pg_sdob_scorecard_delete_mark(gslc_tsGui *pGui, int selected);
 
 void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt);
-void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time);
+void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
 void pg_sdob_scorecard_clear(gslc_tsGui *pGui);
 void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui);
 void pg_sdob_player_sliderForceUpdate();

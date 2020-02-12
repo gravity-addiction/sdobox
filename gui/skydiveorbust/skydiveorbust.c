@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <syslog.h>
@@ -15,6 +16,7 @@
 #include "buttons/buttons.h"
 #include "queue/queue.h"
 #include "mpv/mpv.h"
+#include "fbcp/fbcp.h"
 
 #include "gui/keyboard/keyboard.h"
 
@@ -123,7 +125,7 @@ struct pg_sdob_player_ticks * PG_SDOB_INIT_PLAYER_TICKS() {
   struct pg_sdob_player_ticks *ticks = (struct pg_sdob_player_ticks*)malloc(sizeof(struct pg_sdob_player_ticks));
   ticks->len = 0;
   ticks->max = 64;
-  ticks->lock = 0;
+  pthread_mutex_init(&ticks->lock, NULL);
   ticks->ptr = (double*)calloc(ticks->max, sizeof(double));
   return ticks;
 }
@@ -181,6 +183,33 @@ struct pg_sdob_video_data * PG_SDOB_INIT_VIDEO() {
 //
 
 
+
+
+
+void pg_sdobSliderSetCurPos(gslc_tsGui *pGui, int ss) {
+  if (ss < 0) { ss = pg_sdob_scroll_max; }
+  else if (ss > pg_sdob_scroll_max) { ss = 0; }
+  pg_sdob_slot_scroll = ss;
+}
+
+// Updated Scorecard Slider Position
+void pg_sdobSliderChangeCurPos(gslc_tsGui *pGui, int amt) {
+  // Add amt
+  int ss = pg_sdob_slot_scroll + amt;
+
+  // Set Slider Pos
+  pg_sdobSliderSetCurPos(pGui, ss);
+}
+
+void pg_sdobSliderResetCurPos(gslc_tsGui *pGui) {
+  pg_sdobSliderSetCurPos(pGui, 0);
+}
+
+
+
+
+
+
 void pg_sdobPlayerVideoRateChanging(gslc_tsGui *pGui, int changable) {
 
   // toggle from changing to not changing
@@ -201,52 +230,6 @@ void pg_sdobPlayerVideoRateChanging(gslc_tsGui *pGui, int changable) {
     gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_PL_RATE], true);
   }
 }
-
-
-void pg_sdobSliderSetCurPos(gslc_tsGui *pGui, int slot_scroll) {
-  pg_sdob_slot_scroll = slot_scroll;
-  gslc_ElemXSliderSetPos(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER], pg_sdob_slot_scroll);
-}
-
-// Updated Scorecard Slider Position
-void pg_sdobSliderChangeCurPos(gslc_tsGui *pGui, int amt, bool redraw) {
-  // Save Current Slider POS as i_slot_old
-  int i_slot_old = gslc_ElemXSliderGetPos(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER]);
-  i_slot_old = i_slot_old + amt;
-  if (i_slot_old < 0) { i_slot_old = pg_sdob_scroll_max; }
-  else if (i_slot_old > pg_sdob_scroll_max) { i_slot_old = 0; }
-
-  // Set Slider Pos
-  pg_sdobSliderSetCurPos(pGui, i_slot_old);
-
-  // Up scroller indicator
-  if (pg_sdob_slot_scroll == 0) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_UP], GSLC_COL_GRAY_LT1);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_UP], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
-  } else {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_UP], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_UP], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
-  }
-
-  // Down Scroller indicator
-  if (pg_sdob_slot_scroll == pg_sdob_scroll_max) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], GSLC_COL_GRAY_LT1);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
-  } else {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
-  }
-
-  if (redraw) {
-    gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  }
-}
-
-void pg_sdobSliderResetCurPos(gslc_tsGui *pGui) {
-  int i_slot_old = gslc_ElemXSliderGetPos(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER]);
-  pg_sdobSliderChangeCurPos(&m_gui, (i_slot_old * -1), true);
-}
-
 
 // Update Scorecard Count
 void pg_sdobUpdateCount(gslc_tsGui *pGui, gslc_tsElemRef *pElem) {
@@ -475,23 +458,6 @@ bool pg_sdobScorecardCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
 
 
 
-void pg_sdobSliderChangeMaxPos(gslc_tsGui *pGui, int amt, bool redraw) {
-  gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER]);
-  gslc_tsXSlider* pSlider   = (gslc_tsXSlider*)(pElem->pXData);
-
-
-  // gslc_ElemXSliderSetPos(pGui, pSliderElemRef, i_slot_scroll);
-  pSlider->nPosMax += amt;
-  if (pSlider->nPosMax < 1) { pSlider->nPosMax = 1; }
-  pg_sdob_scroll_max = pSlider->nPosMax;
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER], GSLC_REDRAW_FULL);
-
-  // debug_print("Change Slider: %d - %d\n", amt, pg_sdob_scroll_max);
-  if (redraw) {
-    gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  }
-}
-
 
 
 bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
@@ -514,6 +480,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   int i_slot = 0; // Index for slot on display line
   int i_start_mark = i_line_start * pg_sdob_slot_max; // initial point for top left slot
   int i_start_disp = 0; // 0; added to display, use 1; for counting sowt as first point
+  int i_max = pg_sdob_line_max * pg_sdob_slot_max;
 
   // Typecast the parameters to match the GUI and element types
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
@@ -546,6 +513,9 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
       // Show full rounded number
       if (i_this_mark == 0) {
         sprintf(score, "%s", "S");
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+      } else if (i_this_mark == pg_sdob_score_count) {
+        sprintf(score, "%s", "E");
         gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
       } else if (i_this_mark < pg_sdob_score_count && (i_this_mark + i_start_disp) % 10 == 0) {
         sprintf(score, "%d", (i_this_mark + i_start_disp));
@@ -623,7 +593,8 @@ bool pg_sdobCbBtnSliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 
   pg_sdobScoringSelectionLastHidden(pGui);
 
-  pg_sdobSliderChangeCurPos(pGui, -1, true);
+  pg_sdobSliderChangeCurPos(pGui, -1);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
   return true;
 }
@@ -634,7 +605,8 @@ bool pg_sdobCbBtnSliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
 
   // Clear selection so people don't get lost
   pg_sdobScoringSelectionLastHidden(pGui);
-  pg_sdobSliderChangeCurPos(pGui, 1, true);
+  pg_sdobSliderChangeCurPos(pGui, 1);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -730,6 +702,18 @@ bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 
   return true;
 }
+
+// Mirror Button
+bool pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  
+  if (!fbcp_toggle()) {
+    gslc_PageRedrawSet(pGui, true);
+  }
+  return true;
+}
+
 
 
 // Pause Callback
@@ -902,7 +886,7 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
         ((gslc_tsElem*)pg_sdob_scorecard_elemsMark[i]->pElem)->nId == pElem->nId
       ) {
         int wantedSel = i + (pg_sdob_slot_scroll * pg_sdob_slot_max);
-        if (wantedSel < sdob_judgement->marks->size) {
+        if (wantedSel <= sdob_judgement->marks->size) {
           sdob_judgement->marks->selected = wantedSel;
         } else {
           sdob_judgement->marks->selected = -1;
@@ -914,7 +898,9 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
         // if (sdob_judgement->marks->selected == 0) {
         //   pg_sdob_player_pause(1);
         // }
-        if (sdob_judgement->marks->selected > -1 &&
+        if (sdob_judgement->marks->selected == sdob_judgement->marks->size) {
+          mpv_seek_arg((sdob_judgement->sowt + sdob_judgement->workingTime), "absolute+exact");
+        } else if (sdob_judgement->marks->selected > -1 &&
             sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected] >= 0
         ) {
           mpv_seek_arg(sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected], "absolute+exact");
@@ -1034,6 +1020,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_CLEAN], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
   }
 
+/*
   //////////////////////////////////////////
   // Create vertical scrollbar for scorecard
   if ((
@@ -1071,7 +1058,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], true);
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_SC_SLIDER_DOWN], GSLC_ALIGN_MID_MID);
   }
-
+*/
 
   // Judge Initials
   if ((
@@ -1146,7 +1133,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
 
  // Submit Button
   if ((
-    pg_sdobEl[E_SDOB_EL_BTN_SUBMIT] = gslc_ElemCreateBtnTxt(pGui, E_ELEM_SC_SUBMIT,
+    pg_sdobEl[E_SDOB_EL_BTN_SUBMIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
           ePage, (gslc_tsRect) {333,71,107,38},
           (char*)"Submit", 0, E_FONT_MONO18, &pg_sdobCbBtnSubmitBtn)
   ) != NULL) {
@@ -1154,6 +1141,18 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_BTN_SUBMIT], GSLC_COL_GRAY, GSLC_COL_RED_DK1, GSLC_COL_GREEN);
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_BTN_SUBMIT], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_BTN_SUBMIT], true);
+  }
+  
+ // Mirror Button
+  if ((
+    pg_sdobEl[E_SDOB_EL_BTN_MIRROR] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+          ePage, (gslc_tsRect) {440,110,40,130},
+          (char*)"M", 0, E_FONT_MONO18, &pg_sdobCbBtnMirrorBtn)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], GSLC_COL_GRAY, GSLC_COL_RED_DK1, GSLC_COL_GREEN);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], true);
   }
 
 //  printf("Slot Max: %d, Line Max: %d\n", pg_sdob_slot_max, pg_sdob_line_max);
@@ -1736,14 +1735,7 @@ PI_THREAD (pg_sdobMpvSocketThread)
   // debug_print("%s\n", "Starting MPV Event Thread");
 
   struct sockaddr_un addr;
-  // char buf[100];
-
-  // char* mpv_chapter_ret;
-
   int socket_try = 0;
-
-  int lastSize = 0;
-  // struct queue_head *item;
 
   // Wait for socket to arrive
   while (!pg_sdobMpvSocketThreadKill && socket_try < 10 && access(mpv_socket_path, R_OK) == -1) {
@@ -1784,27 +1776,6 @@ PI_THREAD (pg_sdobMpvSocketThread)
         // MPV Connect Error
         pg_sdobMpvSocketThreadKill = 1;
       }
-    }
-
-    if (lastSize != sdob_judgement->marks->size) {
-      // printf("Last Size Differ!\n");
-// Create Queue Entry
-      // Scorecard size changed
-      lastSize = sdob_judgement->marks->size;
-
-      // Update Slider Max Positions
-      int sliderMax = (int)(sdob_judgement->marks->size / pg_sdob_slot_max);
-      if (sliderMax != pg_sdob_scroll_max) {
-        pg_sdobSliderChangeMaxPos(&m_gui, (sliderMax - pg_sdob_scroll_max), false);
-      }
-
-      // Increase line after screen is fill
-      // printf("Max Score: %d, LS: %d\n", pg_sdob_slot_max * pg_sdob_line_max, lastSize);
-      if (lastSize > pg_sdob_slot_max * pg_sdob_line_max && lastSize % pg_sdob_slot_max == 1) {
-        pg_sdobSliderChangeCurPos(&m_gui, 1, true);
-      }
-      gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-      usleep(100);
     }
 
 
@@ -2046,6 +2017,19 @@ void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, 
   pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
+  // Display Point in Box
+  int mSize = sdob_judgement->marks->size;
+  // Update Slider Max Positions
+  int sliderMax = (int)(mSize / pg_sdob_slot_max);
+  if (sliderMax != pg_sdob_scroll_max) {
+    pg_sdob_scroll_max = sliderMax;
+  }
+  // Increase line after screen is full
+  if (mSize > pg_sdob_slot_max * pg_sdob_line_max && mSize % pg_sdob_slot_max == 1) {
+    pg_sdobSliderSetCurPos(pGui, pg_sdob_slot_scroll + 1);
+    gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  }
+
   // Update Scorecard Ticks
   pg_sdobScoringMarks(pGui);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
@@ -2093,7 +2077,7 @@ void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
 }
 
-void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time) {
+void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
   // Reset Ticks to Judge Marks
   // CLEAR_PLAYER_TICKS
   if (sdob_judgement->sowt == -1.0) {
@@ -2102,7 +2086,7 @@ void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time) {
   }
 
   // Set Start of Working Time
-  pg_sdobSOWTSet(time);
+  pg_sdobSOWTSet(time, workingTime);
 
   pg_sdob_pl_sliderForceUpdate = 1;
 }
@@ -2184,7 +2168,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         break;
 
         case E_Q_SCORECARD_SCORING_SOWT:
-          pg_sdob_scorecard_score_sowt(pGui, item->time);
+          pg_sdob_scorecard_score_sowt(pGui, item->time, 35.0);
         break;
 
         case E_Q_SCORECARD_SUBMIT_SCORECARD:

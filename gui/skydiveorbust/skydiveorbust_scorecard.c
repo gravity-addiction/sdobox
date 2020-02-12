@@ -132,9 +132,9 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 
 
 
-int pg_sdobSOWTSet(double markTime) {
+int pg_sdobSOWTSet(double markTime, double workingTime) {
   sdob_judgement->sowt = markTime;
-  sdob_judgement->workingTime = 35.0;
+  sdob_judgement->workingTime = workingTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
   struct queue_head *itemStart = malloc(sizeof(struct queue_head));
@@ -225,13 +225,13 @@ int pg_sdobScoringMarkHidden(int markI) {
 void pg_sdobScoringMarks(gslc_tsGui *pGui) {
 //  printf("Scoreing Marks: ");
 
-  sdob_judgement->marks->tickCnt = sdob_judgement->marks->size - 1;
+  sdob_judgement->marks->tickCnt = sdob_judgement->marks->size;
   if (sdob_judgement->marks->tickCnt < 1) { return; }
 
   for(int i = 0; i < sdob_judgement->marks->tickCnt; ++i) {
-    if (sdob_judgement->marks->arrScorecardTimes[i + 1] >= 0) {
-      // Get percent in working time ((mark - sowt) / wt)
-      sdob_judgement->marks->arrScorecardTicks[i] = (((sdob_judgement->marks->arrScorecardTimes[i + 1] - sdob_judgement->sowt) / sdob_judgement->workingTime) * 100);
+    if (sdob_judgement->marks->arrScorecardTimes[i] >= 0) {
+      // Get percent in working time ((mark - sowt) / wt)  
+      sdob_judgement->marks->arrScorecardTicks[i] = (((sdob_judgement->marks->arrScorecardTimes[i] - sdob_judgement->sowt) / sdob_judgement->workingTime) * 100);
     } else {
       sdob_judgement->marks->arrScorecardTicks[i] = -1.0;
     }
