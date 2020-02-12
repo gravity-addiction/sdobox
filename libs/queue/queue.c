@@ -123,9 +123,10 @@ struct queue_head *queue_get(struct queue_root *root, size_t *len)
         if (on_queue_p(root, result)) {
             printf("queue_get, after removal, result is still on queue! %p\n\n", result);
         }
-#endif
         if (*len > 0)
+            // somewhat interesting to see cases where events pile up
             printf("queue_get: upon returning item, %u items remain\n", *len);
+#endif
     }
     pthread_mutex_unlock(&root->lock);
     return result;
