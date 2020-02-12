@@ -2184,7 +2184,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         case E_Q_SCORECARD_SUBMIT_SCORECARD:
           // Submit scorecard to syslog
           pg_sdobSubmitScorecard();
-        printf("SUIBMIT SCORES!!\n");
+		  printf("SUBMIT SCORES!!\n");
         // No break, clear scorecard after submit
         case E_Q_SCORECARD_CLEAR:
         printf("CLEAR SCORES!!\n");
@@ -2243,6 +2243,10 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
           pg_sdob_player_sliderForceUpdate();
         break;
 
+	  default:
+		  printf("Undetected item action: %d\n", item->action);
+          abort();
+		  break;
       }
 
       free(item);
