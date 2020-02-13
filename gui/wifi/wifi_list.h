@@ -7,7 +7,7 @@ extern "C" {
 
 
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
 #include "shared.h"
@@ -27,7 +27,7 @@ enum {
 
   E_WIFI_LIST_EL_SSID,
   E_WIFI_LIST_EL_DBM,
-  
+
   E_WIFI_LIST_EL_MAX
 };
 
@@ -39,7 +39,7 @@ int pg_wifiListElTotal;
 
 struct vlist_config *pg_wifi_list_networkConfig;
 struct pg_wifi_networkStruct **pg_wifi_list_networkList;
-
+gslc_tsXSlider pg_wifi_list_networkSlider;
 
 void pg_wifi_list_kbPass(gslc_tsGui *pGui, char* str);
 int pg_wifi_list_addNetworkList(struct pg_wifi_networkStruct *ptr);

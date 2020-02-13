@@ -15,7 +15,7 @@ struct vlist_config * VLIST_INIT_CONFIG() {
   config->len = 0;
   config->cur = -1;
   config->per = 5;
-  config->scrollMax = 3;
+  config->scrollMax = 1;
   config->scroll = 0;
   config->refs = (gslc_tsElemRef**)malloc(config->per * sizeof(struct gslc_tsElemRef*));
 
@@ -77,13 +77,6 @@ void vlist_clickBtn(struct vlist_config *config, int i) {
 void vlist_sliderChangeCurPos(gslc_tsGui *pGui, struct vlist_config *config, int amt) {
   // Save Current Slider POS as i_slot_old
   int i_slot_old = gslc_ElemXSliderGetPos(pGui, config->sliderEl);
-  
-  if (amt > 0) {
-    vlist_sliderUp(config);
-  } else if (amt < 0) {
-    vlist_sliderDown(config);
-  }
-
   // Set Slider Pos
   vlist_sliderSetPos(pGui, config, (i_slot_old + amt));
   gslc_ElemXSliderSetPos(pGui, config->sliderEl, config->scroll);
@@ -109,8 +102,7 @@ void vlist_sliderChangeCurPos(gslc_tsGui *pGui, struct vlist_config *config, int
 
 // Reset Cur Slider pos
 void vlist_sliderResetCurPos(gslc_tsGui *pGui, struct vlist_config *config) {
-  int i_slot_old = gslc_ElemXSliderGetPos(pGui, config->sliderEl);
-  vlist_sliderChangeCurPos(pGui, config, (i_slot_old * -1));
+  vlist_sliderChangeCurPos(pGui, config, 0);
 }
 
 
@@ -128,10 +120,10 @@ void vlist_sliderMessage(gslc_tsGui *pGui, struct vlist_config *config, char* ms
 
 void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list) {
   int pgAdd = config->scroll * config->per;
-  
+
   for (int i = 0; i < config->per; ++i) {
     int iPg = i + pgAdd;
-    
+
     if (iPg < config->len) {
       gslc_ElemSetTxtStr(pGui, config->refs[i], list[iPg]);
     } else {

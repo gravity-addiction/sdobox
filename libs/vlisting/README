@@ -30,7 +30,7 @@ bool pg_default_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   vlist_clickBtn(pg_default_listConfig, 0);
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_defaultEl[E_DEFAULT_EL_BOX], GSLC_REDRAW_FULL);
@@ -128,6 +128,8 @@ bool pg_default_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
 
 ## GUI Init Items
 ```c
+gslc_tsXSlider pg_default_listSlider;
+
 // Init Gui
 int pg_default_guiInit(gslc_tsGui *pGui)
 {
@@ -165,14 +167,14 @@ int pg_default_guiInit(gslc_tsGui *pGui)
   //////////////////////////////////////////
   // Create vertical scrollbar
   pg_default_listConfig->sliderEl = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO,
-      ePage, &pg_default_listConfig->slider, (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y + 35, rFullscreen.w - (rListBox.x + rListBox.w) - 5, rListBox.h - 70},
+      ePage, &pg_default_listSlider, (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y + 35, rFullscreen.w - (rListBox.x + rListBox.w) - 5, rListBox.h - 70},
       0, pg_default_listConfig->scrollMax, 0, 10, true);
-
+  pg_default_listConfig->slider = pg_default_listSlider;
   gslc_ElemSetCol(pGui, pg_default_listConfig->sliderEl, GSLC_COL_BLUE_LT1, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemXSliderSetStyle(pGui, pg_default_listConfig->sliderEl, true, GSLC_COL_BLUE_DK1, 0, 0, GSLC_COL_BLACK);
   gslc_ElemXSliderSetPosFunc(pGui, pg_default_listConfig->sliderEl, &pg_wifi_list_cbBtn_sliderPos);
-  
-  
+
+
   //////////////////////////////////////////
   // Create vertical scrollbar Up Arrow
   pg_default_listConfig->sliderUpEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -182,7 +184,7 @@ int pg_default_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetCol(pGui, pg_default_listConfig->sliderUpEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetFrameEn(pGui, pg_default_listConfig->sliderUpEl, true);
   gslc_ElemSetTxtAlign(pGui, pg_default_listConfig->sliderUpEl, GSLC_ALIGN_MID_MID);
-  
+
 
   //////////////////////////////////////////
   // Create vertical scrollbar Down Arrow

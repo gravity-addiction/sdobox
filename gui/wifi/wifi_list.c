@@ -75,7 +75,7 @@ bool pg_wifi_list_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   vlist_clickBtn(pg_wifi_list_networkConfig, 0);
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -132,7 +132,7 @@ bool pg_wifi_list_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
 
 bool pg_wifi_list_cbBtn_scan(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  
+
   pg_wifi_wpaSendCmd("SCAN");
   return true;
 }
@@ -177,7 +177,6 @@ bool pg_wifi_list_cbBtn_sliderPos(void* pvGui, void* pvElemRef, int16_t nPos)
 
 bool pg_wifi_list_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_sliderChangeCurPos(pGui, pg_wifi_list_networkConfig, -1);
@@ -187,7 +186,6 @@ bool pg_wifi_list_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTou
 }
 bool pg_wifi_list_cbBtn_sliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_sliderChangeCurPos(pGui, pg_wifi_list_networkConfig, 1);
@@ -261,7 +259,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
   int xHei = 50;
   pg_wifi_list_networkConfig->refs[0] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {rListBox.x, (rListBox.y + (0 * xHei)), rListBox.w, xHei},
-          (char*)"000", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elA);
+          (char*)" ", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elA);
   gslc_ElemSetTxtCol(pGui, pg_wifi_list_networkConfig->refs[0], GSLC_COL_WHITE);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->refs[0], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetTxtMarginXY(pGui, pg_wifi_list_networkConfig->refs[0], 10, 0);
@@ -270,7 +268,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 
   pg_wifi_list_networkConfig->refs[1] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {rListBox.x, (rListBox.y + (1 * xHei)), rListBox.w, xHei},
-          (char*)"111", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elB);
+          (char*)" ", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elB);
   gslc_ElemSetTxtCol(pGui, pg_wifi_list_networkConfig->refs[1], GSLC_COL_WHITE);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->refs[1], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetTxtMarginXY(pGui, pg_wifi_list_networkConfig->refs[1], 10, 0);
@@ -279,7 +277,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 
   pg_wifi_list_networkConfig->refs[2] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {rListBox.x, (rListBox.y + (2 * xHei)), rListBox.w, xHei},
-          (char*)"222", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elC);
+          (char*)" ", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elC);
   gslc_ElemSetTxtCol(pGui, pg_wifi_list_networkConfig->refs[2], GSLC_COL_WHITE);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->refs[2], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetTxtMarginXY(pGui, pg_wifi_list_networkConfig->refs[2], 10, 0);
@@ -288,7 +286,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 
   pg_wifi_list_networkConfig->refs[3] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {rListBox.x, (rListBox.y + (3 * xHei)), rListBox.w, xHei},
-          (char*)"333", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elD);
+          (char*)" ", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elD);
   gslc_ElemSetTxtCol(pGui, pg_wifi_list_networkConfig->refs[3], GSLC_COL_WHITE);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->refs[3], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetTxtMarginXY(pGui, pg_wifi_list_networkConfig->refs[3], 10, 0);
@@ -297,7 +295,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 
   pg_wifi_list_networkConfig->refs[4] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {rListBox.x, (rListBox.y + (4 * xHei)), rListBox.w, xHei},
-          (char*)"444", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elE);
+          (char*)" ", 0, E_FONT_MONO18, &pg_wifi_list_cbBtn_elE);
   gslc_ElemSetTxtCol(pGui, pg_wifi_list_networkConfig->refs[4], GSLC_COL_WHITE);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->refs[4], GSLC_ALIGN_MID_LEFT);
   gslc_ElemSetTxtMarginXY(pGui, pg_wifi_list_networkConfig->refs[4], 10, 0);
@@ -307,15 +305,15 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
 
   //////////////////////////////////////////
   // Create vertical scrollbar
-  pg_wifi_list_networkConfig->sliderEl = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO,
-      ePage, &pg_wifi_list_networkConfig->slider, (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y + 35, rFullscreen.w - (rListBox.x + rListBox.w) - 5, rListBox.h - 70},
+  pg_wifi_list_networkConfig->sliderEl = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO, ePage, &pg_wifi_list_networkSlider,
+      (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y + 35, rFullscreen.w - (rListBox.x + rListBox.w) - 5, rListBox.h - 70},
       0, pg_wifi_list_networkConfig->scrollMax, 0, 10, true);
+      pg_wifi_list_networkConfig->slider = pg_wifi_list_networkSlider;
 
   gslc_ElemSetCol(pGui, pg_wifi_list_networkConfig->sliderEl, GSLC_COL_BLUE_LT1, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemXSliderSetStyle(pGui, pg_wifi_list_networkConfig->sliderEl, true, GSLC_COL_BLUE_DK1, 0, 0, GSLC_COL_BLACK);
   gslc_ElemXSliderSetPosFunc(pGui, pg_wifi_list_networkConfig->sliderEl, &pg_wifi_list_cbBtn_sliderPos);
-  
-  
+
   //////////////////////////////////////////
   // Create vertical scrollbar Up Arrow
   pg_wifi_list_networkConfig->sliderUpEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -325,7 +323,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetCol(pGui, pg_wifi_list_networkConfig->sliderUpEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetFrameEn(pGui, pg_wifi_list_networkConfig->sliderUpEl, true);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->sliderUpEl, GSLC_ALIGN_MID_MID);
-  
+
 
   //////////////////////////////////////////
   // Create vertical scrollbar Down Arrow
@@ -336,7 +334,6 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetCol(pGui, pg_wifi_list_networkConfig->sliderDownEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetFrameEn(pGui, pg_wifi_list_networkConfig->sliderDownEl, true);
   gslc_ElemSetTxtAlign(pGui, pg_wifi_list_networkConfig->sliderDownEl, GSLC_ALIGN_MID_MID);
-  pg_wifi_list_networkConfig->sliderDownEl = pg_wifi_list_networkConfig->sliderDownEl;
 
 
 
@@ -389,7 +386,7 @@ void pg_wifi_list_init(gslc_tsGui *pGui) {
   pg_wifiListElem = (gslc_tsElem *)malloc(pg_wifiListElTotal * sizeof(gslc_tsElem));
   // pg_wifiListElemRef = (gslc_tsElemRef*)calloc(pg_wifiListElTotal, sizeof(gslc_tsElemRef));
   pg_wifiListEl = (gslc_tsElemRef **)malloc(pg_wifiListElTotal * sizeof(gslc_tsElemRef*));
-  
+
   // Initialize Network list
   pg_wifi_list_networkConfig = VLIST_INIT_CONFIG();
 
