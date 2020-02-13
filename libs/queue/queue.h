@@ -1,36 +1,42 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <unistd.h>
+#include "gui/pages.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-
-#include "gui/pages.h"
-
 int queue_size;
 
 struct queue_head {
-struct queue_head *next;
-struct queue_head *prev;
-int action;
-int mark;
-int milli;
-double time;
-int selected;
-double amt;
-char *key;
-char *cmd;
+  struct queue_head *next;
+  struct queue_head *prev;
+  int action;
+  int mark;
+  int milli;
+  double time;
+  int selected;
+  double amt;
+  char *key;
+  char *cmd;
 };
 
 struct queue_root *ALLOC_QUEUE_ROOT();
 void INIT_QUEUE_HEAD(struct queue_head *head);
 
+static inline struct queue_head* new_qhead() {
+  struct queue_head* head = malloc(sizeof(struct queue_head));
+  INIT_QUEUE_HEAD(head);
+  return head;
+}
+
 void queue_put(struct queue_head *new,
                struct queue_root *root, size_t *len);
 
 struct queue_head *queue_get(struct queue_root *root, size_t *len);
-
+struct queue_head *queue_get_wtimeout(struct queue_root *root, size_t *len, useconds_t usecs);
 
 // queue.pages.c
 struct queue_root *m_queue_pages[MAX_PAGES];
