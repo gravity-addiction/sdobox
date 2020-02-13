@@ -11,16 +11,16 @@ extern "C" {
 int queue_size;
 
 struct queue_head {
-    struct queue_head *next;
-    struct queue_head *prev;
-    int action;
-    int mark;
-    int milli;
-    double time;
-    int selected;
-    double amt;
-    char *key;
-    char *cmd;
+struct queue_head *next;
+struct queue_head *prev;
+int action;
+int mark;
+int milli;
+double time;
+int selected;
+double amt;
+char *key;
+char *cmd;
 };
 
 struct queue_root *ALLOC_QUEUE_ROOT();
