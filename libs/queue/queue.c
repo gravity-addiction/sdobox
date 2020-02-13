@@ -118,15 +118,16 @@ struct queue_head *queue_get(struct queue_root *root, size_t *len)
     (*len)--;
 
 #ifdef QUEUE_DEBUG_P
-      if (*len != queue_length(root))
-        printf("\nqueue_get: QUEUE LENGTH INCORRECT: %u != %u\n\n", *len, queue_length(root));
-      if (on_queue_p(root, result)) {
-        printf("queue_get, after removal, result is still on queue! %p\n\n", result);
-      }
+        if (*len != queue_length(root))
+            printf("\nqueue_get: QUEUE LENGTH INCORRECT: %u != %u\n\n", *len, queue_length(root));
+        if (on_queue_p(root, result)) {
+            printf("queue_get, after removal, result is still on queue! %p\n\n", result);
+        }
+        if (*len > 0)
+            // somewhat interesting to see cases where events pile up
+            printf("queue_get: upon returning item, %u items remain\n", *len);
 #endif
-    // if (*len > 0)
-    //     printf("queue_get: upon returning item, %u items remain\n", *len);
-  }
-  pthread_mutex_unlock(&root->lock);
-  return result;
+    }
+    pthread_mutex_unlock(&root->lock);
+    return result;
 }

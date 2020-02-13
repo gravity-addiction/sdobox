@@ -192,7 +192,7 @@ bool gslc_ElemXRingGaugeDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRe
 
   int16_t nDrawStart;
   int16_t nDrawVal;
-  int16_t nDrawEnd;
+  int16_t nDrawEnd = 0;
 
   bool bDrawActive = false;
   bool bDrawInactive = false;
