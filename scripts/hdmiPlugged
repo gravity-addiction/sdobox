@@ -1,0 +1,44 @@
+#!/bin/bash
+service=advert-gui.service
+
+######################
+# Check if the HDMI is unplugged.
+unplugged () {
+  while /opt/vc/bin/tvservice -s | grep '0x120009\|0x120005\|0x40005' ; do
+  if (($(ps -ef | grep -v grep | grep $service | wc -l) > 0 )); then
+    # systemctl stop $service
+    # printf '\n unplugged' >> /home/pi/dev/hdmi.log
+  fi
+  sleep 5
+  plugged
+done
+}
+
+#####################
+# Check to see if the HDMI is plugged up.
+plugged () {
+  while /opt/vc/bin/tvservice -s | grep '0x12000a\|0x120006\|0x40006' ; do
+    if ! (($(ps -ef | grep -v grep | grep $service | wc -l) > 0 )); then
+      sleep 5
+
+      # Reset HDMI out by switching it off and back on and then set the framebuffer.
+      /opt/vc/bin/tvservice -o
+      sleep 5
+      /opt/vc/bin/tvservice -p
+      fbset -depth 8
+      fbset -depth 16
+      sleep 1
+
+      # Kodi was not running so we start it.
+      # systemctl start $service
+    fi
+    sleep 5
+    unplugged
+  done
+}
+
+# Sleep for 30 seconds to allow for boot up to complete.
+sleep 30
+
+plugged
+unplugged

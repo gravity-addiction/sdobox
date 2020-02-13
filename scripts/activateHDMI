@@ -1,0 +1,15 @@
+#!/bin/bash
+# Put this script in /etc/rc.local, fix paths to hdmiPlugged
+
+# sleep a few seconds for bootup to complete
+sleep 10
+
+# Check for active HDMI. If HDMI is not active then shutdown the tv output
+# and bring it back up with HDMI active and start the HDMI monitoring script
+if /opt/vc/bin/tvservice -s | grep 'NTSC';then
+  /opt/vc/bin/tvservice -o
+  /opt/vc/bin/tvservice -p
+  nohup /home/pi/dev/hdmiPlugged &
+else
+  nohup /home/pi/dev/hdmiPlugged &
+fi
