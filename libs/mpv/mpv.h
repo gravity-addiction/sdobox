@@ -71,7 +71,7 @@ double mpv_speed_adjust(double spd);
 
 void mpv_stop();
 void mpv_playlist_clear();
-int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts);
+int mpv_loadfile(char* folder, char* filename, char* flag, char* opts);
 void mpv_quit();
 void stop_video();
 

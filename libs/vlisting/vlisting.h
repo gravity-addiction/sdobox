@@ -12,7 +12,7 @@ struct vlist_config {
   int per; // number to display per page
   int scrollMax; // scrollbar current max
   int scroll; // scrollbar current position
-  gslc_tsXSlider slider; // slider guislice element
+  gslc_tsXSlider *slider; // slider guislice element
   gslc_tsElemRef *sliderEl; // slider Element
   gslc_tsElemRef *sliderUpEl; // slider Up Button Element
   gslc_tsElemRef *sliderDownEl; // slider Down Button Element
@@ -21,7 +21,8 @@ struct vlist_config {
 
 ///////////////////////////////
 // Slider Config Management
-struct vlist_config * VLIST_INIT_CONFIG();
+struct vlist_config * VLIST_INIT_CONFIG(int per, int max);
+void VLIST_UPDATE_CONFIG(struct vlist_config *config);
 void VLIST_CLEAR_CONFIG(struct vlist_config *config);
 
 ///////////////////////////////
@@ -33,11 +34,12 @@ void vlist_clickBtn(struct vlist_config *config, int i);
 
 ///////////////////////////////
 // Slider Display Updates
+void vlist_sliderUpdate(gslc_tsGui *pGui, struct vlist_config *config);
 void vlist_sliderChangeCurPos(gslc_tsGui *pGui, struct vlist_config *config, int amt);
 void vlist_sliderResetCurPos(gslc_tsGui *pGui, struct vlist_config *config);
 void vlist_sliderClear(gslc_tsGui *pGui, struct vlist_config *config);
 void vlist_sliderMessage(gslc_tsGui *pGui, struct vlist_config *config, char* msg);
-void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list);
+void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list, int maxLen);
 
 
 #ifdef __cplusplus

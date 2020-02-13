@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
 #include "vlisting.h"
@@ -8,18 +9,23 @@
 ///////////////////////////////
 // Slider Config Management
 
-struct vlist_config * VLIST_INIT_CONFIG() {
+struct vlist_config * VLIST_INIT_CONFIG(int per, int max) {
   struct vlist_config *config = (struct vlist_config*)malloc(sizeof(struct vlist_config));
 
-  config->max = 32;
+  config->max = max;
   config->len = 0;
   config->cur = -1;
-  config->per = 5;
+  config->per = per;
   config->scrollMax = 1;
   config->scroll = 0;
   config->refs = (gslc_tsElemRef**)malloc(config->per * sizeof(struct gslc_tsElemRef*));
 
   return config;
+}
+
+void VLIST_UPDATE_CONFIG(struct vlist_config *config) {
+  config->scrollMax = ceil(config->len / config->per);
+  if (config->scrollMax < 1) { config->scrollMax = 1; }
 }
 
 // Clear Judgement Data and Scorecard Marks
@@ -73,6 +79,12 @@ void vlist_clickBtn(struct vlist_config *config, int i) {
 ///////////////////////////////
 // Slider Display Updates
 
+void vlist_sliderUpdate(gslc_tsGui *pGui, struct vlist_config *config) {
+  gslc_tsElem* pElem = gslc_GetElemFromRef(pGui, config->sliderEl);
+  gslc_tsXSlider* pSlider = (gslc_tsXSlider*)(pElem->pXData);
+  pSlider->nPosMax = config->scrollMax;
+}
+
 // Updated Scorecard Slider Position
 void vlist_sliderChangeCurPos(gslc_tsGui *pGui, struct vlist_config *config, int amt) {
   // Save Current Slider POS as i_slot_old
@@ -118,14 +130,16 @@ void vlist_sliderMessage(gslc_tsGui *pGui, struct vlist_config *config, char* ms
   gslc_ElemSetTxtStr(pGui, config->refs[0], msg);
 }
 
-void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list) {
+void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list, int maxLen) {
   int pgAdd = config->scroll * config->per;
 
   for (int i = 0; i < config->per; ++i) {
     int iPg = i + pgAdd;
 
     if (iPg < config->len) {
-      gslc_ElemSetTxtStr(pGui, config->refs[i], list[iPg]);
+      char str[maxLen];
+      strlcpy(str, list[iPg], maxLen);
+      gslc_ElemSetTxtStr(pGui, config->refs[i], str);
     } else {
       gslc_ElemSetTxtStr(pGui, config->refs[i], (char*)" ");
     }

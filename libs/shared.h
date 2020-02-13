@@ -34,6 +34,15 @@ struct string {
   size_t len;
 };
 
+struct fileStruct {
+  char *name;
+  char *path;
+  int mode;
+  size_t size;
+  size_t atime;
+  size_t mtime;
+  size_t ctime;
+};
 
 #ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t size);
@@ -53,16 +62,17 @@ void clearsocket(int fd);
 int sgetline(int fd, char ** out);
 void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz, size_t cnt));
 
-int cmp_strcmp(const void *lhs, const void *rhs);
-int cmp_atoi(const void *a, const void *b);
 int time_to_secs(char* timestamp);
 void secs_to_time(int millisecs, char *retFormat, int retLen);
 int jsoneq(const char *json, jsmntok_t *tok, const char *s);
 int ta_json_parse(char *json, char* prop, char ** ret_var);
 int parseTabbedData(const char *s, char *data[], size_t n);
 
-size_t file_list(const char *path, char ***ls);
-size_t folder_list(const char *path, char ***ls);
+int cstring_cmp(const void *a, const void *b);
+int cint_cmp(const void *a, const void *b);
+char *file_ext(char *filename);
+int fileStruct_cmpName(const void *a, const void *b);
+size_t file_list(const char *path, struct fileStruct ***ls, int type);
 
 char * calculateSize(uint64_t size);
 // void run_system_cmd(char *fullpath);

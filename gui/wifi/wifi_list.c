@@ -38,6 +38,7 @@ int pg_wifi_list_addNetworkList(struct pg_wifi_networkStruct *ptr) {
   }
   pg_wifi_list_networkList[pg_wifi_list_networkConfig->len] = ptr;
   pg_wifi_list_networkConfig->len += 1;
+  VLIST_UPDATE_CONFIG(pg_wifi_list_networkConfig);
   return (pg_wifi_list_networkConfig->len - 1);
 }
 
@@ -45,6 +46,7 @@ void pg_wifi_list_setNetworkList(struct pg_wifi_networkStruct **ptrs, int len) {
   // VLIST_CLEAR_CONFIG(pg_wifi_list_networkConfig);
   pg_wifi_list_networkConfig->len = len;
   pg_wifi_list_networkList = ptrs;
+  VLIST_UPDATE_CONFIG(pg_wifi_list_networkConfig);
 }
 
 void pg_wifi_list_resetNetworkList() {
@@ -57,6 +59,7 @@ void pg_wifi_list_wpaEvent(char* event) {
   if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
     pg_wifi_updateAvailableNetworks();
     pg_wifi_list_setNetworkList(pg_wifi_nets_available->ptrs, pg_wifi_nets_available->len);
+    vlist_sliderUpdate(&m_gui, pg_wifi_list_networkConfig);
     gslc_ElemSetRedraw(&m_gui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   } else
   if (strcmp(event, "CTRL-EVENT-SCAN-STARTED ") == 0) {
@@ -221,7 +224,7 @@ bool pg_wifi_list_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRed
     for (int l = 0; l < pg_wifi_list_networkConfig->len; ++l) {
       list[l] = pg_wifi_list_networkList[l]->ssid;
     }
-    vlist_sliderDraw(pGui, pg_wifi_list_networkConfig, list);
+    vlist_sliderDraw(pGui, pg_wifi_list_networkConfig, list, 28);
     free(list);
   }
 
@@ -308,7 +311,7 @@ int pg_wifi_list_guiInit(gslc_tsGui *pGui)
   pg_wifi_list_networkConfig->sliderEl = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO, ePage, &pg_wifi_list_networkSlider,
       (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y + 35, rFullscreen.w - (rListBox.x + rListBox.w) - 5, rListBox.h - 70},
       0, pg_wifi_list_networkConfig->scrollMax, 0, 10, true);
-      pg_wifi_list_networkConfig->slider = pg_wifi_list_networkSlider;
+      pg_wifi_list_networkConfig->slider = &pg_wifi_list_networkSlider;
 
   gslc_ElemSetCol(pGui, pg_wifi_list_networkConfig->sliderEl, GSLC_COL_BLUE_LT1, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemXSliderSetStyle(pGui, pg_wifi_list_networkConfig->sliderEl, true, GSLC_COL_BLUE_DK1, 0, 0, GSLC_COL_BLACK);
@@ -388,7 +391,7 @@ void pg_wifi_list_init(gslc_tsGui *pGui) {
   pg_wifiListEl = (gslc_tsElemRef **)malloc(pg_wifiListElTotal * sizeof(gslc_tsElemRef*));
 
   // Initialize Network list
-  pg_wifi_list_networkConfig = VLIST_INIT_CONFIG();
+  pg_wifi_list_networkConfig = VLIST_INIT_CONFIG(5, 32);
 
   pg_wifi_wpaSendCmd("SCAN");
   pg_wifi_wpaScanning = 1;

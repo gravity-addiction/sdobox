@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+
 #include "skydiveorbust_videolist.h"
 
 #include "buttons/buttons.h"
@@ -11,7 +13,7 @@
 
 
 void pg_sdboVideoListGetFiles(char* path) {
-  char **files;
+  struct fileStruct **files;
   int i = 0;
 
   // Clear Files List
@@ -21,20 +23,21 @@ void pg_sdboVideoListGetFiles(char* path) {
 
   // Get Recent List Of Files
   sdob_files->size = 0;
-  size_t files_count = file_list(path, &files);
-  qsort(files, files_count, sizeof(char *), cmp_atoi);
+  size_t files_count = file_list(path, &files, S_IFREG);
+  qsort(files, files_count, sizeof(char *), cint_cmp);
   for (i = 0; i < files_count; i++) {
     if (
-      strcmp(files[i], ".DS_Store") == 0
+      strcmp(files[i]->name, ".DS_Store") == 0
       // || strcmp(files[i], ".."
     ) { continue; }
-    strlcpy(sdob_files->list[sdob_files->size], files[i], sdob_files->len);
+    strlcpy(sdob_files->list[sdob_files->size], files[i]->name, strlen(files[i]->name) + 1);
     ++sdob_files->size;
   }
+  free(files);
 }
 
 void pg_sdboVideoListGetFolders(char* path) {
-  char **folder;
+  struct fileStruct **folder;
   int i = 0;
 
   // Clear Folder List
@@ -44,11 +47,11 @@ void pg_sdboVideoListGetFolders(char* path) {
 
   // Get Recent List Of Folders
   sdob_folders->size = 0;
-  size_t folder_count = folder_list(path, &folder);
-  qsort(folder, folder_count, sizeof(char *), cmp_atoi);
+  size_t folder_count = file_list(path, &folder, S_IFDIR);
+  qsort(folder, folder_count, sizeof(char *), cint_cmp);
   for (i = 0; i < folder_count; i++) {
-    if (strcmp(folder[i], ".") == 0 || strcmp(folder[i], "..") == 0) { continue; }
-    strlcpy(sdob_folders->list[sdob_folders->size], folder[i], sdob_folders->len);
+    if (strcmp(folder[i]->name, ".") == 0 || strcmp(folder[i]->name, "..") == 0) { continue; }
+    strlcpy(sdob_folders->list[sdob_folders->size], folder[i]->name, strlen(folder[i]->name));
     ++sdob_folders->size;
   }
 }
@@ -103,13 +106,13 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   // Load File (Temp)
-  char* tmpMeet = "MEET2020";
+  char* tmpMeet = "skydiveorbust/MEET2020";
   char* tmpFile = "Group1-12_2.mp4";
   pg_sdobUpdateMeet(pGui, tmpMeet);
   pg_sdobUpdateVideoDesc(pGui, tmpFile);
   pg_sdobUpdateVideoRate(pGui, mpv_speed(1.0));
 
-  mpv_loadfile("skydiveorbust", tmpMeet, tmpFile, "replace", "fullscreen=yes");
+  mpv_loadfile(tmpMeet, tmpFile, "replace", "fullscreen=yes");
 
   pg_sdob_pl_sliderForceUpdate = 1;
 

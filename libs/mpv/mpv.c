@@ -61,16 +61,16 @@ int mpv_init(gslc_tsGui *pGui) {
   // printf("%s\n", "MPV Init");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
-  
+
   // if (!mpv_socket_fd) {
   //  mpv_socket_fd = mpv_socket_conn();
   //}
-  
+
   mpv_socket_fdSelect = -1;
 
   mpv_stop();
   mpv_playlist_clear();
-  
+
   m_is_video_playing = 0;
   mi_video_fps_frame = 0;
 
@@ -171,7 +171,7 @@ int mpv_fd_check(int fd) {
     mpv_socket_close(fd);
     return 0;
   }
-  
+
   // Check Socket is in good standing
   if (fd > -1) {
     int error = 0;
@@ -207,7 +207,7 @@ int mpv_fd_write(char *data) {
     /* Initialize the file descriptor set. */
     FD_ZERO (&mpv_socket_set);
     FD_SET (mpv_socket_fdSelect, &mpv_socket_set);
-    
+
     /* Initialize the timeout data structure. */
     mpv_socket_timeout.tv_sec = 2;
     mpv_socket_timeout.tv_usec = 0;
@@ -253,16 +253,16 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
     int result = -1;
 
     pthread_mutex_lock(&mpvSocketAccessLock);
-  
+
     /* set the timeout data structure. */
     mpv_socket_timeout.tv_sec = 2;
     mpv_socket_timeout.tv_usec = 0;
-  
+
     if (!mpv_fd_write(data)) {
         goto cleanup;
     }
     free(data);
-  
+
     while (1) {
         /* select returns 0 if timeout, 1 if input available, -1 if error. */
         int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
@@ -432,12 +432,12 @@ void mpv_playlist_clear() {
   mpv_cmd(cmdClear);
 }
 
-int mpv_loadfile(char* app, char* folder, char* filename, char* flag, char* opts) {
-  char* data_tmp = "loadfile %s/%s/%s %s %s\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, app, folder, filename, flag, opts) + 1;
+int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
+  char* data_tmp = "loadfile %s/%s %s %s\n";
+  size_t dataSz = snprintf(NULL, 0, data_tmp, folder, filename, flag, opts) + 1;
   char *data = (char*)calloc(dataSz, sizeof(char));
   if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, app, folder, filename, flag);
+  snprintf(data, dataSz, data_tmp, folder, filename, flag);
   return mpv_cmd(data);
 }
 

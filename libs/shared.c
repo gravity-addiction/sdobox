@@ -250,23 +250,6 @@ void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz,
 }
 
 
-
-int cmp_strcmp(const void *lhs, const void *rhs)
-{
-  return strcmp(lhs, rhs);
-}
-
-int cmp_atoi(const void *a, const void *b)
-{
-  const char **ia = (const char **)a;
-  const char **ib = (const char **)b;
-
-  int _ia = atoi(*ia);
-  int _ib = atoi(*ib);
-
-  return (_ia > _ib) ? 1 : 0;
-}
-
 // Define debug message function for GUIslice
 
 int time_to_secs(char* timestamp) {
@@ -345,7 +328,7 @@ int ta_json_parse(char *json, char* prop, char ** ret_var) {
       /* We may use strndup() to fetch string value */
       size_t bufferSz = snprintf(NULL, 0, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
       *ret_var = (char*)calloc(bufferSz + 1, sizeof(char));
-      snprintf(*ret_var, bufferSz + 1, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);      
+      snprintf(*ret_var, bufferSz + 1, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
       free(buffer);
       return bufferSz;
     }
@@ -380,11 +363,59 @@ int parseTabbedData(const char *s, char *data[], size_t n) {
 }
 
 
+int cstring_cmp(const void *a, const void *b)
+{
+  const char **ia = (const char **)a;
+  const char **ib = (const char **)b;
+  return strcasecmp(*ia, *ib);
+}
+
+int cint_cmp(const void *a, const void *b)
+{
+  const char **ia = (const char **)a;
+  const char **ib = (const char **)b;
+
+  int _ia = atoi(*ia);
+  int _ib = atoi(*ib);
+
+  return (_ia > _ib) ? 1 : 0;
+}
+
+
+
+int fileStruct_cmpName(const void *a, const void *b)
+{
+  const struct fileStruct **ia = (const struct fileStruct **)a, **ib = (const struct fileStruct **)b;
+  return strcasecmp((*ia)->name, (*ib)->name);
+}
+
+struct fileStruct * INIT_FILESTRUCT(struct dirent *ep, struct stat s) {
+  struct fileStruct *file = (struct fileStruct*)malloc(sizeof(struct fileStruct));
+  file->name = strdup(ep->d_name);
+
+  file->mode = s.st_mode;
+  file->size = s.st_size; // size of file in bytes
+  file->atime = s.st_atime; // time of last access
+  file->mtime = s.st_mtime; // time of last modification
+  file->ctime = s.st_ctime; // time of last status change
+
+  return file;
+}
+
+char *file_ext(char *filename) {
+  char *dot = strrchr(filename, '.');
+  if(!dot || dot == filename) return "";
+  return dot + 1;
+}
+
 // Create list of files from folder, loop twice first for count and second for data
-size_t file_list(const char *path, char ***ls) {
+size_t file_list(const char *path, struct fileStruct ***ls, int type) {
   size_t count = 0;
   DIR *dp = NULL;
   struct dirent *ep = NULL;
+
+  size_t lsMax = 128;
+  *ls = (struct fileStruct **)calloc(lsMax, sizeof(struct fileStruct*));
 
   dp = opendir(path);
   if(NULL == dp) {
@@ -392,33 +423,36 @@ size_t file_list(const char *path, char ***ls) {
       return 0;
   }
 
-  *ls = NULL;
   ep = readdir(dp);
-  while(NULL != ep){
-    struct stat s;
+  while(NULL != ep) {
+    // Hide dotfiles
+    if (strncmp(ep->d_name, ".", 1) == 0) {
+      ep = readdir(dp);
+      continue;
+    }
+
     size_t fullpathSz = snprintf(NULL, 0, "%s/%s", path, ep->d_name) + 1;
     char *fullpath = (char*)calloc(fullpathSz, sizeof(char));
     snprintf(fullpath, fullpathSz, "%s/%s", path, ep->d_name);
-    if (stat(fullpath, &s) == 0 && (s.st_mode & S_IFREG)) {
+
+    struct stat s;
+    if (stat(fullpath, &s) == 0 &&
+        (
+        (type == -1 && ((s.st_mode & S_IFREG) || (s.st_mode & S_IFDIR))) ||
+        (s.st_mode & type)
+        )
+    ) {
+      // Add more space for filenames
+      if (count > lsMax) {
+        lsMax += 128;
+        struct fileStruct **newLs = (struct fileStruct **)realloc(*ls, lsMax * sizeof(struct fileStruct *));
+        *ls = newLs;
+      }
+      (*ls)[count] = INIT_FILESTRUCT(ep, s);
+      (*ls)[count]->path = (char*)path;
       count++;
     }
-    free(fullpath);
-    ep = readdir(dp);
-  }
 
-  rewinddir(dp);
-  *ls = calloc(count, sizeof(char));
-
-  count = 0;
-  ep = readdir(dp);
-  while(NULL != ep){
-    struct stat s;
-    size_t fullpathSz = snprintf(NULL, 0, "%s/%s", path, ep->d_name) + 1;
-    char *fullpath = (char*)calloc(fullpathSz, sizeof(char));
-    snprintf(fullpath, fullpathSz, "%s/%s", path, ep->d_name);
-    if (stat(fullpath, &s) == 0 && (s.st_mode & S_IFREG)) {
-      (*ls)[count++] = strdup(ep->d_name);
-    }
     free(fullpath);
     ep = readdir(dp);
   }
@@ -427,61 +461,6 @@ size_t file_list(const char *path, char ***ls) {
   return count;
 }
 
-
-// Create list of files from folder, loop twice first for count and second for data
-size_t folder_list(const char *path, char ***ls) {
-  size_t count = 0;
-  DIR *dp = NULL;
-  struct dirent *ep = NULL;
-
-  dp = opendir(path);
-  if(NULL == dp) {
-      fprintf(stderr, "no such directory: '%s'", path);
-      return 0;
-  }
-
-  *ls = NULL;
-  ep = readdir(dp);
-  while(NULL != ep){
-    /*if (strcmp(ep->d_name, ".") == 0 || strcmp(ep->d_name, "..")) {
-      ep = readdir(dp);
-      continue;
-    }*/
-    struct stat s;
-    size_t fullpathSz = snprintf(NULL, 0, "%s/%s", path, ep->d_name) + 1;
-    char *fullpath = (char*)calloc(fullpathSz, sizeof(char));
-    snprintf(fullpath, fullpathSz, "%s/%s", path, ep->d_name);
-    if (stat(fullpath, &s) == 0 && (s.st_mode & S_IFDIR)) {
-      count++;
-    }
-    free(fullpath);
-    ep = readdir(dp);
-  }
-
-  rewinddir(dp);
-  *ls = calloc(count, sizeof(char));
-
-  count = 0;
-  ep = readdir(dp);
-  while(NULL != ep){
-    /*if (strcmp(ep->d_name, ".") == 0 || strcmp(ep->d_name, "..")) {
-      ep = readdir(dp);
-      continue;
-    }*/
-    struct stat s;
-    size_t fullpathSz = snprintf(NULL, 0, "%s/%s", path, ep->d_name) + 1;
-    char *fullpath = (char*)calloc(fullpathSz, sizeof(char));
-    snprintf(fullpath, fullpathSz, "%s/%s", path, ep->d_name);
-    if (stat(fullpath, &s) == 0 && (s.st_mode & S_IFDIR)) {
-      (*ls)[count++] = strdup(ep->d_name);
-    }
-    free(fullpath);
-    ep = readdir(dp);
-  }
-
-  closedir(dp);
-  return count;
-}
 
 char * calculateSize(uint64_t size)
 {

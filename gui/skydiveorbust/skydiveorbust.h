@@ -288,6 +288,7 @@ void pg_sdob_mpv_timepos_thread();
 int pg_sdobThreadStart();
 void pg_sdobThreadStop();
 
+void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file);
 void pg_skydiveorbust_init(gslc_tsGui *pGui);
 void pg_skydiveorbust_open(gslc_tsGui *pGui);
 

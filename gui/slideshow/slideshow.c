@@ -122,7 +122,7 @@ void pg_slideshow_ctrlZoomOut() {
 bool pg_slideshow_cbBtn_close(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   touchscreenPageClose(pGui, E_PG_SLIDESHOW);
   touchscreenPageOpen(pGui, E_PG_MAIN);
   return true;
@@ -131,7 +131,7 @@ bool pg_slideshow_cbBtn_close(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
 bool pg_slideshow_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   if (!fbcp_toggle()) {
     gslc_PageRedrawSet(pGui, true);
   }
@@ -220,7 +220,7 @@ bool pg_slideshowCbBtn(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t n
 void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   pg_slideshowPgPointed = 1;
   int ePage = E_PG_SLIDESHOW;
-  
+
   gslc_PageAdd(pGui, E_PG_SLIDESHOW, pg_slideshowElem, MAX_ELEM_PG_SLIDESHOW_RAM,
                pg_slideshowElemRef, MAX_ELEM_PG_SLIDESHOW);
   // gslc_SetBkgndColor(pGui, GSLC_COL_GRAY_DK2);
@@ -232,7 +232,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD], true);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD], true);
-  
+
   // Touchpad Up
   pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {160,0,160,100},
@@ -243,8 +243,8 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], true);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_UP], true);
-  
-  
+
+
   // Touchpad Down
   pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {160,220,160,100},
@@ -255,7 +255,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], true);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_DOWN], true);
-  
+
   // Touchpad Left
   pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {0,100,160,120},
@@ -266,8 +266,8 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], true);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_LEFT], true);
-  
-  
+
+
   // Touchpad Right
   pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {320,100,160,120},
@@ -278,10 +278,10 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], true);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD_RIGHT], true);
-  
-  
 
-  
+
+
+
   // Close Key
   pg_slideshowEl[E_SLIDESHOW_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {370,270,110,50},
@@ -292,7 +292,7 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], false);
   gslc_ElemSetGlowEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], false);
   gslc_ElemSetFrameEn(pGui, pg_slideshowEl[E_SLIDESHOW_EL_CLOSE], true);
-  
+
   // FBCP Key
   pg_slideshowEl[E_SLIDESHOW_EL_FBCP] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {0,270,110,50},
@@ -410,7 +410,7 @@ void pg_slideshowButtonRotaryPressed() {
     pg_slideshowPanY = 0;
     pg_slideshowPanX = 0;
     // reset image to auto zoom size
-   
+
     mpv_set_prop_double("video-pan-x", pg_slideshowPanX);
     mpv_set_prop_double("video-pan-y", pg_slideshowPanY);
     mpv_set_prop_double("video-zoom", pg_slideshowZoom);
@@ -440,7 +440,7 @@ void pg_slideshowButtonRightHeld() {
   // printf("%s\n", "Right Held Slideshow");
   mpv_stop();
   mpv_playlist_clear();
-  char* plFile = "/home/pi/shared/slideshow/playlist.txt";
+  char* plFile = "/home/pi/shared/ssoa/playlist.txt";
   size_t cmdSz = snprintf(NULL, 0, "loadlist \"%s\"\n", plFile) + 1;
   char *cmd = (char*)malloc(cmdSz * sizeof(char));
   snprintf(cmd, cmdSz, "loadlist \"%s\"\n", plFile);
@@ -657,7 +657,7 @@ PI_THREAD (pg_slideshowMpvSocketThread)
       // MPV Start File
       else if (strcmp(json_event, "start-file") == 0) {
 
-        
+
       }
       // Meta Updated
       else if (strcmp(json_event, "metadata-update") == 0) {
@@ -737,18 +737,11 @@ void pg_slideshow_init(gslc_tsGui *pGui) {
   pg_slideshowPanY = 0;
   pg_slideshowPanX = 0;
   pg_slideshowVimLock = 0;
-  
+
   pg_slideshowIsPicture = 0;
 
   mpv_init(pGui);
   pg_slideshowGuiInit(pGui);
-
-  char* plFile = "/home/pi/shared/slideshow/playlist.txt";
-  size_t cmdSz = snprintf(NULL, 0, "loadlist \"%s\"\n", plFile) + 1;
-  char *cmd = (char*)malloc(cmdSz * sizeof(char));
-  snprintf(cmd, cmdSz, "loadlist \"%s\"\n", plFile);
-  mpv_cmd(cmd);
-  
 
   cbInit[E_PG_SLIDESHOW] = NULL;
 }
@@ -760,7 +753,7 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
   char tmp_inotify_ret[1024];
   while (fgets(tmp_inotify_ret, sizeof(tmp_inotify_ret)-1, pg_slideshowFD) != NULL) {
     printf("SLIDESHOW--:%s:--\n", tmp_inotify_ret);
-	  
+
   }
   return 0;
 }
@@ -771,11 +764,11 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
 void pg_slideshow_open(gslc_tsGui *pGui) {
   printf("%s\n", "Slideshow Setting Button Functions");
   pg_slideshowButtonSetFuncs();
-  
+
   pg_slideshowMpvSocketThreadStart();
 
 /*
-  if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/slideshow/", "w"))){
+  if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/", "w"))){
     // debug_print("%s\n", "Cannot Open image folder");
   } else {
     int d = fileno(pg_slideshowFD);
@@ -796,9 +789,9 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
 void pg_slideshow_close(gslc_tsGui *pGui) {
   fbcp_stop();
-  
+
   pg_slideshowMpvSocketThreadStop();
-  
+
   //-/ system("killall fim");
   //-/ fflush(pg_slideshowFD);
   //-/ pclose(pg_slideshowFD);

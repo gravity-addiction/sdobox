@@ -303,7 +303,12 @@ void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char* str) {
 }
 
 void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
-  strlcpy(sdob_judgement->meet, str, 64);
+  char *dot = strrchr(str, '/');
+  if(!dot || dot == str) {
+    strlcpy(sdob_judgement->meet, str, 64);
+  } else {
+    strlcpy(sdob_judgement->meet, dot + 1, 64);
+  }
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], sdob_judgement->meet);
 }
 
@@ -480,7 +485,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   int i_slot = 0; // Index for slot on display line
   int i_start_mark = i_line_start * pg_sdob_slot_max; // initial point for top left slot
   int i_start_disp = 0; // 0; added to display, use 1; for counting sowt as first point
-  int i_max = pg_sdob_line_max * pg_sdob_slot_max;
+ //  int i_max = pg_sdob_line_max * pg_sdob_slot_max;
 
   // Typecast the parameters to match the GUI and element types
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
@@ -691,7 +696,7 @@ bool pg_sdobCbBtnScCount(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
 bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
 /*
   struct queue_head *item = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(item);
@@ -707,7 +712,7 @@ bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 bool pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   if (!fbcp_toggle()) {
     gslc_PageRedrawSet(pGui, true);
   }
@@ -1142,7 +1147,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_BTN_SUBMIT], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_BTN_SUBMIT], true);
   }
-  
+
  // Mirror Button
   if ((
     pg_sdobEl[E_SDOB_EL_BTN_MIRROR] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1890,6 +1895,18 @@ void pg_sdobMpvSocketThreadStop() {
 }
 
 
+void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file) {
+  pg_sdobUpdateTeam(pGui, "");
+  pg_sdobUpdateRound(pGui, "");
+
+  pg_sdob_scorecard_clear(pGui);
+
+  mpv_loadfile(meet, file, "replace", "fullscreen=yes");
+  pg_sdobUpdateMeet(pGui, meet);
+  pg_sdobUpdateVideoDesc(pGui, file);
+  pg_sdob_pl_sliderForceUpdate = 1;
+}
+
 /////////////////////////////////////////////
 // Initialization
 //
@@ -1903,7 +1920,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdobElem = (gslc_tsElem *)malloc(pg_sdobElTotal * sizeof(gslc_tsElem));
   // pg_sdobElemRef = (gslc_tsElemRef*)calloc(pg_sdobElTotal, sizeof(gslc_tsElemRef));
   pg_sdobEl = (gslc_tsElemRef **)malloc(pg_sdobElTotal * sizeof(gslc_tsElemRef*));
-  
+
 
   //////////////////////////////
   // Queue Initializer
@@ -1989,21 +2006,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdobUpdateVideoRate(pGui, mpv_video_rate);
   pg_sdobUpdateUserDefinedVideoRate(pGui, pg_sdob_player_playback_slow);
 
-
-  // Load File (Temp)
-  // char* tmpApp = "http:/";
-  // char* tmpMeet = "192.168.126.86/videos";
-  // char* tmpFile = "Group1-12_2.mp4";
-  
-  char* tmpApp = "/home/pi";
-  char* tmpMeet = "Videos";
-  char* tmpFile = "XP.mpg";
-  
-  mpv_loadfile(tmpApp, tmpMeet, tmpFile, "replace", "fullscreen=yes");
-  pg_sdobUpdateMeet(pGui, tmpMeet);
-  pg_sdobUpdateVideoDesc(pGui, tmpFile);
-
-  pg_sdob_pl_sliderForceUpdate = 1;
+  // pg_skydiveorbust_loadvideo(pGui, "/home/pi/Videos", "XP.mpg");
 
   //////////////////////////////
   // Finish up

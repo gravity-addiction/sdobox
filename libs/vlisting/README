@@ -8,12 +8,15 @@ int pg_default_addList(struct pg_default_listStruct *ptr) {
   }
   pg_default_list[pg_default_listConfig->len] = ptr;
   pg_default_listConfig->len += 1;
+  VLIST_UPDATE_CONFIG(pg_default_listConfig);
+  vlist_sliderUpdate(pGui, pg_default_listConfig);
   return (pg_default_listConfig->len - 1);
 }
 
 void pg_default_setList(struct pg_default_listStruct **ptrs, int len) {
   pg_default_listConfig->len = len;
   pg_default_list = ptrs;
+  VLIST_UPDATE_CONFIG(pg_default_listConfig);
 }
 
 void pg_default_resetList() {
@@ -28,7 +31,6 @@ repeat elA, elB, elC for each button list element
 ```
 bool pg_default_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_default_listConfig, 0);
@@ -59,13 +61,9 @@ bool pg_default_cbBtn_sliderPos(void* pvGui, void* pvElemRef, int16_t nPos)
   }
   return true;
 }
-```
 
-## callback for slider up arrow
-```c
 bool pg_default_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_sliderChangeCurPos(pGui, pg_default_listConfig, -1);
@@ -73,13 +71,9 @@ bool pg_default_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch
 
   return true;
 }
-```
 
-#callback for slider down arrow
-```c
 bool pg_default_cbBtn_sliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_sliderChangeCurPos(pGui, pg_default_listConfig, 1);
@@ -102,17 +96,14 @@ bool pg_default_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   // Start Drawing
   gslc_DrawFillRect(pGui,pRect,pElem->colElemFill);
 
-  if (pg_wifi_wpaScanning == 1) {
-    vlist_sliderMessage(pGui, pg_default_listConfig, (char*)"... Scanning Wifi Networks ...");
-  } else {
-    // Generate list of items based on default list info
-    char **list = (char**)malloc(pg_default_listConfig->len * sizeof(char*));
-    for (int l = 0; l < pg_default_listConfig->len; ++l) {
-      list[l] = pg_default_list[l]->txt;
-    }
-    vlist_sliderDraw(pGui, pg_default_listConfig, list);
-    free(list);
+  // Generate list of items based on default list info
+  char **list = (char**)malloc(pg_default_listConfig->len * sizeof(char*));
+  for (int l = 0; l < pg_default_listConfig->len; ++l) {
+    list[l] = pg_default_list[l]->txt;
   }
+  vlist_sliderDraw(pGui, pg_default_listConfig, list, 28);
+  free(list);
+
 
   // Stop Drawing
   gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
@@ -172,14 +163,14 @@ int pg_default_guiInit(gslc_tsGui *pGui)
   pg_default_listConfig->slider = pg_default_listSlider;
   gslc_ElemSetCol(pGui, pg_default_listConfig->sliderEl, GSLC_COL_BLUE_LT1, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemXSliderSetStyle(pGui, pg_default_listConfig->sliderEl, true, GSLC_COL_BLUE_DK1, 0, 0, GSLC_COL_BLACK);
-  gslc_ElemXSliderSetPosFunc(pGui, pg_default_listConfig->sliderEl, &pg_wifi_list_cbBtn_sliderPos);
+  gslc_ElemXSliderSetPosFunc(pGui, pg_default_listConfig->sliderEl, &pg_default_cbBtn_sliderPos);
 
 
   //////////////////////////////////////////
   // Create vertical scrollbar Up Arrow
   pg_default_listConfig->sliderUpEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
       ePage, (gslc_tsRect){(rListBox.x + rListBox.w) + 5, rListBox.y, rFullscreen.w - (rListBox.x + rListBox.w) - 5, 30}, (char*)"^",
-      0, E_FONT_MONO18, &pg_wifi_list_cbBtn_sliderUp);
+      0, E_FONT_MONO18, &pg_default_cbBtn_sliderUp);
   gslc_ElemSetTxtCol(pGui, pg_default_listConfig->sliderUpEl, GSLC_COL_GREEN);
   gslc_ElemSetCol(pGui, pg_default_listConfig->sliderUpEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetFrameEn(pGui, pg_default_listConfig->sliderUpEl, true);
@@ -190,7 +181,7 @@ int pg_default_guiInit(gslc_tsGui *pGui)
   // Create vertical scrollbar Down Arrow
   pg_default_listConfig->sliderDownEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
       ePage, (gslc_tsRect){(rListBox.x + rListBox.w) + 5, (rListBox.y + rListBox.h) - 30, rFullscreen.w - (rListBox.x + rListBox.w) - 5, 30}, (char*)"v",
-      0, E_FONT_MONO18, &pg_wifi_list_cbBtn_sliderDown);
+      0, E_FONT_MONO18, &pg_default_cbBtn_sliderDown);
   gslc_ElemSetTxtCol(pGui, pg_default_listConfig->sliderDownEl, GSLC_COL_GREEN);
   gslc_ElemSetCol(pGui, pg_default_listConfig->sliderDownEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetFrameEn(pGui, pg_default_listConfig->sliderDownEl, true);
@@ -208,7 +199,7 @@ int pg_default_guiInit(gslc_tsGui *pGui)
 // GUI Init
 void pg_default_init(gslc_tsGui *pGui) {
   // Initialize Network list
-  pg_default_listConfig = VLIST_INIT_CONFIG();
+  pg_default_listConfig = VLIST_INIT_CONFIG(5, 32);
 }
 ```
 

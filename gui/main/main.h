@@ -24,24 +24,25 @@ enum {
   E_MAIN_EL_TXT_TMP,
   E_MAIN_EL_BTN_TMP,
   E_MAIN_EL_BTN_TMPKB,
-  
+
   E_MAIN_EL_PLAYLIST,
   E_MAIN_EL_PLAYLIST_UL,
-  
-  E_MAIN_EL_BTN_FOLDER_A,
-  E_MAIN_EL_BTN_FOLDER_AA,
-  
 
   E_MAIN_EL_MAX
 };
 
-#define MAX_ELEM_PG_MAIN      E_MAIN_EL_MAX
+#define MAX_ELEM_PG_MAIN      E_MAIN_EL_MAX + 11
 #define MAX_ELEM_PG_MAIN_RAM  MAX_ELEM_PG_MAIN
 
 gslc_tsElem m_asPgMainElem[MAX_ELEM_PG_MAIN_RAM];
 gslc_tsElemRef m_asPgMainElemRef[MAX_ELEM_PG_MAIN];
 
 gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
+
+struct vlist_config *pg_main_listConfig;
+struct fileStruct **pg_main_list;
+struct fileStruct **pg_main_listFolders;
+gslc_tsXSlider pg_main_listSlider;
 
 void pg_mainButtonRotaryCW();
 void pg_mainButtonRotaryCCW();
