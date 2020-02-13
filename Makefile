@@ -1,6 +1,7 @@
 HOME = /home/pi
 DEBUG = -O1 -g
-CC = clang
+CC = clang -fsanitize=address
+# CC = gcc
 INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib 
@@ -69,7 +70,7 @@ wpa/os_unix.o:
 
 touchapp: $(TOUCHAPP_OBJS)
 	@echo [Building $@]
-	$(CC) $(CFLAGS) -fsanitize=address -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
 
 tags:
 	etags $(TOUCHAPP_SRCS) *.h $(shell find GUIslice -name '*.h') $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
