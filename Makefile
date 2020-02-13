@@ -1,10 +1,11 @@
 HOME = /home/pi
 DEBUG = -O1 -g
-CC = clang -fsanitize=address
-# CC = gcc
+# CC = clang -fsanitize=address
+# CC = clang -fsanitize=leak
+CC = gcc
 INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
-LDFLAGS = -L/usr/local/lib -L/opt/vc/lib 
+LDFLAGS = -L/usr/local/lib -L/opt/vc/lib
 LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread
 
 GSLC_CORE := GUIslice/GUIslice.c $(wildcard GUIslice/elem/*.c) #GUIslice/GUIslice_config.h
@@ -73,4 +74,4 @@ touchapp: $(TOUCHAPP_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
 
 tags:
-	etags $(TOUCHAPP_SRCS) *.h $(shell find GUIslice -name '*.h') $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
+	etags $(TOUCHAPP_SRCS) *.h GUIslice/GUIslice_config.h $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
