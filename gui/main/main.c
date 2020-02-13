@@ -60,6 +60,15 @@ bool pg_main_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t 
   return true;
 }
 
+bool pg_main_cbBtn_root(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_loadFolder(pGui, "/home/pi/shared");
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
 bool pg_main_cbBtn_system(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
@@ -80,6 +89,12 @@ int pg_main_addList(struct fileStruct *ptr) {
 }
 
 void pg_main_setList(struct fileStruct **ptrs, int len) {
+  for (int i = 0; i < pg_main_listConfig->len; ++i) {
+    free(pg_main_list[i]->name);
+    free(pg_main_list[i]);
+  }
+  free(pg_main_list);
+
   pg_main_listConfig->len = len;
   pg_main_list = ptrs;
 }
@@ -121,10 +136,25 @@ bool pg_main_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
   // Generate list of items based on default list info
   char **list = (char**)malloc(pg_main_listConfig->len * sizeof(char*));
   for (int l = 0; l < pg_main_listConfig->len; ++l) {
-    list[l] = pg_main_list[l]->name;
+    if (pg_main_list[l]->mode & S_IFDIR) {
+      size_t nameSz = snprintf(NULL, 0, "%s/", pg_main_list[l]->name) + 1;
+      list[l] = (char *)malloc(nameSz * sizeof(char));
+      snprintf(list[l], nameSz, "%s/", pg_main_list[l]->name);
+    } else {
+      size_t nameSz = snprintf(NULL, 0, "%s", pg_main_list[l]->name) + 1;
+      list[l] = (char *)malloc(nameSz * sizeof(char));
+      snprintf(list[l], nameSz, "%s", pg_main_list[l]->name);
+    }
+
   }
-  // qsort(list, pg_main_listConfig->len, sizeof(char *), cstring_cmp);
+
+  // Use new List
   vlist_sliderDraw(pGui, pg_main_listConfig, list, 29);
+
+  // Clean list
+  for (int l = 0; l < pg_main_listConfig->len; ++l) {
+    free(list[l]);
+  }
   free(list);
 
 
@@ -132,12 +162,22 @@ bool pg_main_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
   return true;
 }
 
+void pg_main_gotoFolderCheck(gslc_tsGui *pGui) {
+  if (pg_main_list[pg_main_listConfig->cur]->mode & S_IFDIR) {
+    size_t filepathSz = snprintf(NULL, 0, "%s/%s", pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name) + 1;
+    char *filePath = (char *)malloc(filepathSz * sizeof(char));
+    snprintf(filePath, filepathSz, "%s/%s", pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
+    pg_main_loadFolder(pGui, filePath);
+  }
+}
 // A
 bool pg_main_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 0);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -148,6 +188,8 @@ bool pg_main_cbBtn_elB(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 1);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -158,6 +200,8 @@ bool pg_main_cbBtn_elC(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 2);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -168,6 +212,8 @@ bool pg_main_cbBtn_elD(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 3);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -178,6 +224,8 @@ bool pg_main_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 4);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -188,6 +236,8 @@ bool pg_main_cbBtn_elF(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 5);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -198,6 +248,8 @@ bool pg_main_cbBtn_elG(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   vlist_clickBtn(pg_main_listConfig, 6);
+  pg_main_gotoFolderCheck(pGui);
+
   // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
@@ -302,9 +354,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   }
   // Button C
   if ((
-    pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+    pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 115, 100, 50},
-            " ", 0, E_FONT_MONO14)
+            "Root", 0, E_FONT_MONO14, &pg_main_cbBtn_root)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -638,6 +690,13 @@ void pg_mainButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_mainButtonDoubleHeld);
 }
 
+void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath) {
+  VLIST_CLEAR_CONFIG(pg_main_listConfig);
+  pg_main_listConfig->len = file_list(folderPath, &pg_main_list, -1);
+  qsort(pg_main_list, pg_main_listConfig->len, sizeof(char *), fileStruct_cmpName);
+  VLIST_UPDATE_CONFIG(pg_main_listConfig);
+  vlist_sliderUpdate(pGui, pg_main_listConfig);
+}
 
 // GUI Init
 void pg_main_init(gslc_tsGui *pGui) {
@@ -646,11 +705,7 @@ void pg_main_init(gslc_tsGui *pGui) {
 
   pg_mainGuiInit(pGui);
 
-  pg_main_listConfig->len = file_list("/home/pi/shared", &pg_main_list, -1);
-
-  qsort(pg_main_list, pg_main_listConfig->len, sizeof(char *), fileStruct_cmpName);
-  VLIST_UPDATE_CONFIG(pg_main_listConfig);
-  vlist_sliderUpdate(pGui, pg_main_listConfig);
+  pg_main_loadFolder(pGui, "/home/pi/shared");
 
   // Cleanup so Init is only ran once
   cbInit[E_PG_MAIN] = NULL;
@@ -668,6 +723,7 @@ void pg_main_open(gslc_tsGui *pGui) {
 // GUI Destroy
 void pg_main_destroy(gslc_tsGui *pGui) {
   for (int i = 0; i < pg_main_listConfig->len; ++i) {
+    free(pg_main_list[i]->name);
     free(pg_main_list[i]);
   }
   free(pg_main_list);

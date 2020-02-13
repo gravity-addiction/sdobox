@@ -55,6 +55,8 @@ void pg_mainButtonRotaryHeld();
 void pg_mainButtonDoubleHeld();
 void pg_mainButtonSetFuncs();
 
+void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath);
+
 void pg_main_init(gslc_tsGui *pGui);
 void pg_main_open(gslc_tsGui *pGui);
 void pg_main_destroy(gslc_tsGui *pGui);

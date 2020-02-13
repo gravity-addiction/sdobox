@@ -2388,6 +2388,8 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
   pg_sdobMpvSocketThreadStop();
   // // debug_print("%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
+
+  fbcp_stop();
 }
 
 // GUI Destroy
