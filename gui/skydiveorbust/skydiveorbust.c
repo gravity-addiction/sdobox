@@ -313,7 +313,7 @@ void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
 }
 
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
-  strlcpy(sdob_judgement->video_file, str, 64);
+  strlcpy(sdob_judgement->video_file, str, 256);
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC], sdob_judgement->video_file);
 }
 
