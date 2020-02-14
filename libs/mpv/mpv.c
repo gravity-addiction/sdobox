@@ -432,13 +432,54 @@ void mpv_playlist_clear() {
   mpv_cmd(cmdClear);
 }
 
+//
+// Transform folder & filenames that might have double-quotes or
+// back-quotes in them so that we can safely wrap the whole path in
+// double-quotes.
+//
+static char* quotify(char* original, char** saved_replacement) {
+  if (strchr(original, '"') == NULL && strchr(original, '\\') == NULL) {
+    return original;
+  }
+  else {
+    char* dst = *saved_replacement = malloc(strlen(original) * 2 + 1);
+    char* src = original;
+    while(*src) {
+      if (*src == '"' || *src == '\\')
+        *dst++ = '\\';
+
+      *dst++ = *src++;
+    }
+    *dst++ = 0;
+    return *saved_replacement;
+  }
+}
+
 int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
-  char* data_tmp = "loadfile %s/%s %s %s\n";
+
+  char * qfolder = NULL;
+  char * qfilename = NULL;
+  folder = quotify(folder,&qfolder);
+  filename = quotify(filename,&qfilename);
+  int result = -1;
+
+  char* data_tmp = "loadfile \"%s/%s\" %s %s\n";
   size_t dataSz = snprintf(NULL, 0, data_tmp, folder, filename, flag, opts) + 1;
   char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
+
+  if (data == NULL) {
+    goto cleanup;
+  }
+
   snprintf(data, dataSz, data_tmp, folder, filename, flag);
-  return mpv_cmd(data);
+  result = mpv_cmd(data);
+
+ cleanup:
+  // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
+  free(qfolder);
+  free(qfilename);
+
+  return result;
 }
 
 void mpv_quit() {
