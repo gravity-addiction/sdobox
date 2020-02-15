@@ -832,17 +832,8 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
 
   if (timePos > 0) {
     timePos += (-1.5 * mpvSpeed);
-
-    size_t cmdSz = strlen("show-text \"Seeking\" 750\n") + 1;
-    char *cmd = (char*)malloc(cmdSz * sizeof(char));
-    strlcpy(cmd, "show-text \"Seeking\" 750\n", cmdSz);
-    mpv_cmd(cmd);
-
-    size_t cmdSeekSz = snprintf(NULL, 0, "seek %f %s\n", timePos, "absolute+exact") + 1;
-    char *cmdSeek = (char*)malloc(cmdSeekSz * sizeof(char));
-    snprintf(cmdSeek, cmdSeekSz, "seek %f %s\n", timePos, "absolute+exact");
-    mpv_cmd(cmdSeek);
-
+    mpv_fmt_cmd("show-text \"Seeking\" 750\n"
+                "seek %f %s\n", timePos, "absolute+exact");
   }
   return true;
 }
@@ -1365,45 +1356,35 @@ void pg_skydiveorbustButtonRotaryCW() {
   struct queue_head *item;
 
   char* cmdFSTxt = "frame-step\n";
-  size_t cmdFSSz = strlen(cmdFSTxt) + 1;
+  // size_t cmdFSSz = strlen(cmdFSTxt) + 1;
 
   if (pg_sdob_change_video_rate) {
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_VIDEO_RATE_ADJUST;
     item->amt = .05;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    struct queue_head *itemUser = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(itemUser);
+    struct queue_head *itemUser = new_qhead();
     itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
 
   } else if (sdob_judgement->marks->selected == 0) {
     // Adjust SOWT Framestep
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
-    if (cmdFSSz > 0) {
-      item->cmd = (char*)malloc(cmdFSSz * sizeof(char));
-      strlcpy(item->cmd, cmdFSTxt, cmdFSSz);
-      queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    }
+    item->cmd = strdup(cmdFSTxt);
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else if (sdob_judgement->marks->selected < 0) {
     // Framestep
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
-    if (cmdFSSz > 0) {
-      item->cmd = (char*)malloc(cmdFSSz * sizeof(char));
-      strlcpy(item->cmd, cmdFSTxt, cmdFSSz);
-      queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    }
+    item->cmd = strdup(cmdFSTxt);
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
   } else {
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     item->amt = 1;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1416,20 +1397,17 @@ void pg_skydiveorbustButtonRotaryCCW() {
   size_t cmdFBSSz = strlen(cmdFBSTxt) + 1;
 
   if (pg_sdob_change_video_rate) {
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_VIDEO_RATE_ADJUST;
     item->amt = -.05;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    struct queue_head *itemUser = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(itemUser);
+    struct queue_head *itemUser = new_qhead();
     itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
   } else if (sdob_judgement->marks->selected == 0) {
     // Adjust SOWT Framestep
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
     if (cmdFBSSz > 0) {
       item->cmd = (char*)malloc(cmdFBSSz * sizeof(char));
@@ -1438,8 +1416,7 @@ void pg_skydiveorbustButtonRotaryCCW() {
     }
 
   } else if (sdob_judgement->marks->selected < 0) {
-    struct queue_head *itemTxt = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(itemTxt);
+    struct queue_head *itemTxt = new_qhead();
     itemTxt->action = E_Q_ACTION_MPV_COMMAND;
     size_t cmdSeekSz = strlen("show-text \"Seeking\" 750\n") + 1;
     if (cmdSeekSz > 0) {
@@ -1449,8 +1426,7 @@ void pg_skydiveorbustButtonRotaryCCW() {
     }
 
     // Framestep
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
     if (cmdFBSSz > 0) {
       item->cmd = (char*)malloc(cmdFBSSz * sizeof(char));
@@ -1459,8 +1435,7 @@ void pg_skydiveorbustButtonRotaryCCW() {
     }
 
   } else {
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     item->amt = -1;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1479,8 +1454,7 @@ void pg_skydiveorbustButtonLeftPressed() {
       markTime = atof(retTimePos);
       free(retTimePos);
       sdob_judgement->marks->arrScorecardTimes[0] = markTime;
-      struct queue_head *itemSOWT = malloc(sizeof(struct queue_head));
-      INIT_QUEUE_HEAD(itemSOWT);
+      struct queue_head *itemSOWT = new_qhead();
       itemSOWT->action = E_Q_SCORECARD_SCORING_SOWT;
       itemSOWT->time = markTime;
       queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1490,16 +1464,14 @@ void pg_skydiveorbustButtonLeftPressed() {
 
   } else if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_BUST;
     item->milli = millis();
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_UPDATE_MARK;
     item->selected = sdob_judgement->marks->selected;
     item->mark = E_SCORES_BUST;
@@ -1521,8 +1493,7 @@ void pg_skydiveorbustButtonRightPressed() {
       markTime = atof(retTimePos);
       free(retTimePos);
       sdob_judgement->marks->arrScorecardTimes[0] = markTime;
-      struct queue_head *itemSOWT = malloc(sizeof(struct queue_head));
-      INIT_QUEUE_HEAD(itemSOWT);
+      struct queue_head *itemSOWT = new_qhead();
       itemSOWT->action = E_Q_SCORECARD_SCORING_SOWT;
       itemSOWT->time = markTime;
       queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1530,16 +1501,14 @@ void pg_skydiveorbustButtonRightPressed() {
     }
   } else if (sdob_judgement->marks->selected < 0) {
     // Insert Mark, E_SCORES_BUST
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_POINT;
     item->milli = millis();
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
-    item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    item = new_qhead();
     item->action = E_Q_SCORECARD_UPDATE_MARK;
     item->selected = sdob_judgement->marks->selected;
     item->mark = E_SCORES_POINT;
@@ -1554,8 +1523,7 @@ void pg_skydiveorbustButtonRotaryPressed() {
   } else if (sdob_judgement->marks->selected < 0) {
 
   } else {
-    struct queue_head *itemSeek = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(itemSeek);
+    struct queue_head *itemSeek = new_qhead();
     itemSeek->action = E_Q_ACTION_MPV_COMMAND;
 
     double timePos = sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected];
@@ -1566,8 +1534,7 @@ void pg_skydiveorbustButtonRotaryPressed() {
       queue_put(itemSeek, pg_sdobQueue, &pg_sdobQueueLen);
     }
 
-    // struct queue_head *itemMove = malloc(sizeof(struct queue_head));
-    // INIT_QUEUE_HEAD(itemMove);
+    // struct queue_head *itemMove = new_qhead();
     // itemMove->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     // // Clear Selection
     // // itemMove->selected = -1;
@@ -1577,8 +1544,7 @@ void pg_skydiveorbustButtonRotaryPressed() {
 
 void pg_skydiveorbustButtonLeftHeld() {
   if (sdob_judgement->marks->selected >= 0) {
-    struct queue_head *item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_DELETE_MARK;
     item->selected = sdob_judgement->marks->selected;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1589,8 +1555,7 @@ void pg_skydiveorbustButtonLeftHeld() {
 
 void pg_skydiveorbustButtonRightHeld() {
   if (sdob_judgement->marks->selected >= 0) {
-    struct queue_head *item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->selected = sdob_judgement->marks->selected;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1601,8 +1566,7 @@ void pg_skydiveorbustButtonRightHeld() {
 
 void pg_skydiveorbustButtonRotaryHeld() {
   if (sdob_judgement->marks->selected >= 0) {
-    struct queue_head *item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_UPDATE_MARK;
     item->mark = E_SCORES_OMISSION;
     item->selected = sdob_judgement->marks->selected;
@@ -1800,21 +1764,18 @@ PI_THREAD (pg_sdobMpvSocketThread)
 
       if (strcmp(json_event, "seek") == 0
           || strcmp(json_event, "playback-restart") == 0
-      ) {
-        struct queue_head *itemA = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(itemA);
+          ) {
+        struct queue_head *itemA = new_qhead();
         itemA->action = E_Q_PLAYER_VIDEO_CHECKPAUSE;
         queue_put(itemA, pg_sdobQueue, &pg_sdobQueueLen);
 
-        struct queue_head *itemB = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(itemB);
+        struct queue_head *itemB = new_qhead();
         itemB->action = E_Q_PLAYER_SLIDER_UPDATE;
         queue_put(itemB, pg_sdobQueue, &pg_sdobQueueLen);
 
       }
       else if (strcmp(json_event, "pause") == 0) {
-        struct queue_head *item = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(item);
+        struct queue_head *item = new_qhead();
         item->action = E_Q_PLAYER_VIDEO_SETPAUSE;
         item->mark = 1;
         queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1822,8 +1783,7 @@ PI_THREAD (pg_sdobMpvSocketThread)
       }
       // else if (strcmp(json_event, "unpause") == 0) {
       else if (strcmp(json_event, "unpause") == 0) {
-        struct queue_head *item = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(item);
+        struct queue_head *item = new_qhead();
         item->action = E_Q_PLAYER_VIDEO_SETPAUSE;
         item->mark = 0;
         queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
@@ -1837,15 +1797,13 @@ PI_THREAD (pg_sdobMpvSocketThread)
       // Meta Updated
       else if (strcmp(json_event, "metadata-update") == 0) {
         // printf("Meta update\n");
-        struct queue_head *item = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(item);
+        struct queue_head *item = new_qhead();
         item->action = E_Q_PLAYER_VIDEO_INFO;
         queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
       }
       // Chapter Changed
       else if (strcmp(json_event, "chapter-change") == 0) {
-        struct queue_head *item = malloc(sizeof(struct queue_head));
-        INIT_QUEUE_HEAD(item);
+        struct queue_head *item = new_qhead();
         item->action = E_Q_PLAYER_CHAPTER_CHANGED;
         queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -2394,10 +2352,8 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
 
 // GUI Destroy
 void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
-  size_t cmdStopSz = snprintf(NULL, 0, "%s\n", "stop") + 1;
-  char *cmdStop = (char*)malloc(cmdStopSz * sizeof(char));
-  snprintf(cmdStop, cmdStopSz, "%s\n", "stop");
-  mpv_cmd(cmdStop);
+
+  mpv_fmt_cmd("stop\n");
 
   // Free Judgement Info
   free(sdob_judgement->judge);

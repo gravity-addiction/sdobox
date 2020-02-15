@@ -53,8 +53,10 @@ int mpvSocketSinglet(char* prop, char ** json_prop);
 // void mpv_setCallbackDouble(int evt, void (*function)(double));
 // void mpv_runCallbackDouble(int evt, double spd);
 
-int mpv_cmd(char *cmd_string);
-int mpv_cmd_str(char* cmd_string);
+int mpv_cmd(char *cmd_string);  /* sends and frees argument */
+
+int mpv_fmt_cmd(char* fmt, ...); /* formats and sends, nothing passed in is freed */
+
 int mpv_set_prop_char(char* prop, char* prop_val);
 int mpv_set_prop_int(char* prop, int prop_val);
 int mpv_set_prop_double(char* prop, double prop_val);
@@ -74,9 +76,6 @@ void mpv_playlist_clear();
 int mpv_loadfile(char* folder, char* filename, char* flag, char* opts);
 void mpv_quit();
 void stop_video();
-
-
-
 
 // https://mpv.io/manual/stable/#terminal-status-line
 // The audio/video sync as A-V:  0.000. This is the difference between audio

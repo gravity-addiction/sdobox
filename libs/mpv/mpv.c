@@ -303,78 +303,69 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
 }
 
 
+/*
+ * mpv_fmt_cmd -- like printf.  Takes a format string and variable arguments, formats
+ * the message and sends via mpv_cmd.
+ */
+int mpv_fmt_cmd(char* fmt, ...) {
+  va_list ap;
+  char* p = NULL;
+  int size = 0;
 
+  va_start(ap, fmt);
+  size = vsnprintf(p, size, fmt, ap);
+  va_end(ap);
+
+  if (size < 0)
+    return -1;
+
+  ++size;                       /* for '\0' */
+  p = malloc(size);
+  if (!p)
+    return -1;
+
+  va_start(ap, fmt);
+  size = vsnprintf(p,size,fmt,ap);
+  va_end(ap);
+
+  if (size < 0) {
+    free(p);
+    return -1;
+  }
+
+  return mpv_cmd(p);
+}
 
 int mpv_set_prop_char(char* prop, char* prop_val) {
-  char* data_tmp = "set %s %s\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, prop, prop_val) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, prop, prop_val);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("set %s %s\n", prop, prop_val);
 }
 
 int mpv_set_prop_int(char* prop, int prop_val) {
-  char* data_tmp = "set %s %d\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, prop, prop_val) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, prop, prop_val);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("set %s %d\n", prop, prop_val);
 }
 
 int mpv_set_prop_double(char* prop, double prop_val) {
-  char* data_tmp = "set %s %f\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, prop, prop_val) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, prop, prop_val);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("set %s %f\n", prop, prop_val);
 }
 
 int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
-  char* data_tmp = "%s %s %f\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, cmd, prop, prop_val) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, cmd, prop, prop_val);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("%s %s %f\n", cmd, prop, prop_val);
 }
 
-
-
 int mpv_seek(double distance) {
-  char* data_tmp = "seek %f\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, distance) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, distance);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("seek %f\n", distance);
 }
 
 int mpv_seek_arg(double distance, char* flags) {
-  char* data_tmp = "seek %f %s\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, distance, flags) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  if (data == NULL) { return -1; }
-  snprintf(data, dataSz, data_tmp, distance, flags);
-  return mpv_cmd(data);
+  return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
 
-
-
 int mpv_pause() {
-  size_t cmdSz = strlen("set pause yes\n") + 1;
-  char *cmd = (char*)malloc(cmdSz * sizeof(char));
-  strlcpy(cmd, "set pause yes\n", cmdSz);
-  return mpv_cmd(cmd);
+  return mpv_fmt_cmd("set pause yes\n");
 }
 
 int mpv_play() {
-  size_t cmdSz = strlen("set pause no\n") + 1;
-  char *cmd = (char*)malloc(cmdSz * sizeof(char));
-  strlcpy(cmd, "set pause no\n", cmdSz);
-  return mpv_cmd(cmd);
+  return mpv_fmt_cmd("set pause no\n");
 }
 
 
@@ -416,20 +407,12 @@ double mpv_speed_adjust(double spd) {
 }
 
 
-
-
 void mpv_stop() {
-  int cmdStopSz = strlen("stop\n") + 1;
-  char *cmdStop = malloc(cmdStopSz);
-  strlcpy(cmdStop, "stop\n", cmdStopSz);
-  mpv_cmd(cmdStop);
+  mpv_fmt_cmd("stop\n");
 }
 
 void mpv_playlist_clear() {
-  int cmdClearSz = strlen("playlist-clear\n") + 1;
-  char *cmdClear = malloc(cmdClearSz);
-  strlcpy(cmdClear, "playlist-clear\n", cmdClearSz);
-  mpv_cmd(cmdClear);
+  mpv_fmt_cmd("playlist-clear\n");
 }
 
 //
@@ -461,20 +444,9 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   char * qfilename = NULL;
   folder = quotify(folder,&qfolder);
   filename = quotify(filename,&qfilename);
-  int result = -1;
 
-  char* data_tmp = "loadfile \"%s/%s\" %s %s\n";
-  size_t dataSz = snprintf(NULL, 0, data_tmp, folder, filename, flag, opts) + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
+  int result = mpv_fmt_cmd("loadfile \"%s/%s\" %s %s\n", folder, filename, flag, opts);
 
-  if (data == NULL) {
-    goto cleanup;
-  }
-
-  snprintf(data, dataSz, data_tmp, folder, filename, flag);
-  result = mpv_cmd(data);
-
- cleanup:
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
   free(qfilename);
@@ -483,10 +455,7 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
 }
 
 void mpv_quit() {
-  size_t dataSz = strlen("quit\n") + 1;
-  char *data = (char*)calloc(dataSz, sizeof(char));
-  strlcpy(data, "quit\n", dataSz);
-  mpv_cmd(data);
+  mpv_fmt_cmd("quit\n");
   mpv_socket_close(mpv_socket_fd);
 }
 
@@ -494,10 +463,6 @@ void stop_video() {
   // mpv_quit();
   // m_bPosThreadStop = 1;
 }
-
-
-
-
 
 /*
 
