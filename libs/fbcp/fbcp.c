@@ -98,9 +98,11 @@ SOFTWARE.
       return NULL;
   }
 
-  syslog(LOG_INFO, "Second display is %d x %d %dbps\n", vinfo.xres, vinfo.yres, vinfo.bits_per_pixel);
+  int32_t fbWidth = vinfo.xres;
+  int32_t fbHeight = vinfo.yres;
+  syslog(LOG_INFO, "Second display is %d x %d %dbps\n", fbWidth, fbHeight, vinfo.bits_per_pixel);
 
-  screen_resource = vc_dispmanx_resource_create(VC_IMAGE_RGB565, vinfo.xres, vinfo.yres, &image_prt);
+  screen_resource = vc_dispmanx_resource_create(VC_IMAGE_RGB565, fbWidth, fbHeight, &image_prt);
   if (!screen_resource) {
       syslog(LOG_ERR, "Unable to create screen buffer");
       close(fbfd);
@@ -117,14 +119,64 @@ SOFTWARE.
       return NULL;
   }
 
-  vc_dispmanx_rect_set(&rect1, 0, 0, vinfo.xres, vinfo.yres);
+  vc_dispmanx_rect_set(&rect1, 0, 0, fbWidth, fbHeight);
+
+  int32_t fbBytesPerPixel = vinfo.bits_per_pixel / 8;
+  int32_t fbPitch = fbWidth * fbBytesPerPixel;
+  size_t fbSize = finfo.smem_len;
+  void *fbImagePtr = malloc(fbSize);
+  if (fbImagePtr == NULL)
+  {
+    syslog(LOG_ERR, "unable to allocated image buffer");
+    close(fbfd);
+    ret = vc_dispmanx_resource_delete(screen_resource);
+    vc_dispmanx_display_close(display);
+    return NULL;
+  }
+  void *tsImagePtr = malloc(fbSize);
+  if (tsImagePtr == NULL)
+  {
+    syslog(LOG_ERR, "unable to allocated image buffer");
+    close(fbfd);
+    ret = vc_dispmanx_resource_delete(screen_resource);
+    vc_dispmanx_display_close(display);
+    return NULL;
+  }
 
   while (!fbcpThreadKill) {
-      ret = vc_dispmanx_snapshot(display, screen_resource, 0);
-      vc_dispmanx_resource_read_data(screen_resource, &rect1, fbp, vinfo.xres * vinfo.bits_per_pixel / 8);
-      
-      usleep(16666); // double desired framerate (1 / 60) * 1000000 
+    ret = vc_dispmanx_snapshot(display, screen_resource, DISPMANX_NO_ROTATE);
+
+    // Rotate Image 180 when HDMI is upside down
+    if (display_info.transform == 2) {
+      vc_dispmanx_resource_read_data(screen_resource, &rect1, fbImagePtr, fbPitch);
+      // Rotate Image 180
+      int32_t j = 0;
+      for (j = 0 ; j < fbHeight ; j++)
+      {
+        int32_t fbYoffset = (fbHeight - j - 1) * fbPitch;
+        int32_t i = 0;
+        for (i = 0 ; i < fbWidth ; i++)
+        {
+          int32_t fbXoffset = (fbWidth - i - 1) * fbBytesPerPixel;
+
+          uint8_t *tsPixelPtr = tsImagePtr + (i * fbBytesPerPixel) + (j * fbPitch);
+          uint8_t *fbPixelPtr = fbImagePtr + fbXoffset + fbYoffset;
+          memcpy(tsPixelPtr, fbPixelPtr, fbBytesPerPixel);
+        }
+      }
+      memcpy(fbp, tsImagePtr, fbSize);
+    } else {
+      // No Rotation
+      vc_dispmanx_resource_read_data(screen_resource, &rect1, fbp, fbPitch);
+    }
+
+    usleep(16666); // double desired framerate (1 / 60) * 1000000
   }
+
+  free(fbImagePtr);
+  fbImagePtr = NULL;
+  free(tsImagePtr);
+  tsImagePtr = NULL;
 
   munmap(fbp, finfo.smem_len);
   close(fbfd);
