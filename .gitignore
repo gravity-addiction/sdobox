@@ -3,3 +3,4 @@ touchapp
 *.o
 *.dep
 TAGS
+*~

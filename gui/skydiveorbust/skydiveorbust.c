@@ -17,6 +17,7 @@
 #include "queue/queue.h"
 #include "mpv/mpv.h"
 #include "fbcp/fbcp.h"
+#include "dbg/dbg.h"
 
 #include "gui/keyboard/keyboard.h"
 
@@ -1753,7 +1754,7 @@ PI_THREAD (pg_sdobMpvSocketThread)
     // int rc = getline(&mpv_event_ret, 256, pg_sdob_player_mpv_fd);
     int rc = sgetline(pg_sdob_player_mpv_fd, &mpv_event_ret);
     if (rc > 0) {
-      //printf("Got Back: '%s'\n", mpv_event_ret);
+      dbgprintf(DBG_MPV_EVENT, "mpvevent: '%s'\n", mpv_event_ret);
 
       char* json_event; // = malloc(128);
       int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);

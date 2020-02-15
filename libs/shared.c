@@ -11,9 +11,11 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/kd.h>
+#include <assert.h>
 
 #include "shared.h"
 #include "jsmn/jsmn.h"
+#include "dbg/dbg.h"
 
 #define DIM(x) (sizeof(x)/sizeof((x)))
 
@@ -160,8 +162,23 @@ int sgetline(int fd, char ** out)
     ret = read(fd, &ch, 1);
     if (ret < 1)
     {
+      if (errno == EAGAIN && in_buf == 0) {
+        // ok, no problem, socket is non-blocking and there's nothing to read,
+        // we haven't allocated anything yet either.
+        assert(!buffer);
+        return 0;
+      }
       // error or disconnect
-      if (buffer != NULL) { free(buffer); }
+      if (in_buf) {
+        char* tmp = strndup(buffer, in_buf);
+        dbgprintf(DBG_MPV_READ, "sgetline from %d, got error '%s'"
+                  " after having read an incomplete line '%s'\n", fd, strerror(errno), tmp);
+        free(tmp);
+      }
+      else
+        dbgprintf(DBG_MPV_READ, "sgetline from %d, got error '%s'\n", fd, strerror(errno));
+
+      free(buffer);
       return 0;
     }
 
@@ -176,8 +193,8 @@ int sgetline(int fd, char ** out)
 
       if (!new_buffer)
       {
-        if (buffer != NULL) { free(buffer); }
-        // debug_print("%s\n", "Couldn't Reset Buffer1");
+        free(buffer);
+        dbgprintf(DBG_MPV_READ, "sgetline from %d, could not reset buffer\n", fd);
         return -1;
       }
 
@@ -201,8 +218,8 @@ int sgetline(int fd, char ** out)
 
     if (!new_buffer)
     {
-      if (buffer != NULL) { free(buffer); }
-      // debug_print("%s\n", "Couldn't Reset Buffer2");
+      free(buffer);
+      dbgprintf(DBG_MPV_READ, "sgetline from %d, could not reset buffer (2)\n", fd);
       return -1;
     }
 

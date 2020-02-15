@@ -34,6 +34,7 @@
 #include "buttons/buttons.h"
 #include "flightgroups/flightgroups.h"
 #include "fbcp/fbcp.h"
+#include "dbg/dbg.h"
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
 // #include "gui/wifi/wifi.h"
@@ -44,15 +45,15 @@
 
 // SIGINT handler
 void signal_sigint(int sig) { // can be called asynchronously
-  // printf("SigInt Read! %d\n", m_bQuit);
+  dbgprintf(DBG_DEBUG, "SIGINT: current m_bQuit value = %d\n", m_bQuit);
   if (m_bQuit > 1) {
-    // debug_print("\n%s\n", "fuck it, exit now!");
+    dbgprintf(DBG_DEBUG, "Forcibly exiting now!\n");
     _exit(1);                   /* do NOT call atexit functions */
   } else if (m_bQuit > 0) {
-    // debug_print("\n%s\n", "Alright, We'll fast track this shut down!");
+    dbgprintf(DBG_DEBUG, "Turning up the shutdown heat...\n");
     ++m_bQuit;
   } else {
-    // debug_print("\n\n%s\n", "Hold on there fella, we gotta shut some shit down first!");
+    dbgprintf(DBG_DEBUG, "Requesting shut-down...\n");
     m_bSigInt = sig;
     m_bQuit = 1;
   }
@@ -79,7 +80,7 @@ void get_config_settings()
   // Read the file. If there is an error, report it and exit.
   if(access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path))
   {
-    // debug_print("Cannot Find config_path: %s\n", config_path);
+    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
     config_destroy(&cfg);
     return;
   }
@@ -131,6 +132,9 @@ int main( int argc, char* args[] )
   // ------------------------------------------------
   // Main Quitter flag, 1 quits, 2 hurrys up quitting, and 3 quits rtfn
   m_bQuit = 0;
+
+  // Debug printing support
+  init_dbg();
 
   // Touchapp Environment
   get_config_settings();
@@ -224,10 +228,10 @@ int main( int argc, char* args[] )
       m_bSleep = 1; // reset flag to next loop
     }
 
-  gslc_Update(&m_gui);
+    gslc_Update(&m_gui);
   } // bQuit
 
-  // debug_print("%s\n", "Shutting Down!");
+  dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
 
 
   // Quit GUIslice

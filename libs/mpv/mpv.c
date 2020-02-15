@@ -13,6 +13,8 @@
 #include "shared.h"
 #include "mpv.h"
 
+#include "dbg/dbg.h"
+
 #include "queue/queue.h"
 
 
@@ -23,12 +25,12 @@ int mpv_socket_conn() {
   struct sockaddr_un addr;
   // Wait for socket to arrive
   if (access(mpv_socket_path, R_OK) == -1) {
-    printf("No Socket Available for Singlet %s\n", mpv_socket_path);
+    dbgprintf(DBG_ERROR, "No Socket Available for Singlet %s\n", mpv_socket_path);
     return -1;
   }
 
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    printf("%s\n", "MPV Socket Error");
+    dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
     return -1;
   }
 
@@ -45,7 +47,7 @@ int mpv_socket_conn() {
   }
 
   if (connect(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
-    printf("%s\n%s\n", "MPV Singlett Connect Error", strerror(errno));
+    dbgprintf(DBG_ERROR, "%s\n%s\n", "MPV Singlet Connect Error", strerror(errno));
     return -1;
   }
   return fd;
@@ -58,7 +60,7 @@ void mpv_socket_close(int fd) {
 
 
 int mpv_init(gslc_tsGui *pGui) {
-  // printf("%s\n", "MPV Init");
+  dbgprintf(DBG_MPV_WRITE, "MPV Init\n");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
 
@@ -168,6 +170,7 @@ int mpv_create_player(char* filePath) {
 int mpv_fd_check(int fd) {
   // Reset socket if more than 10 seconds since last reconnection
   if (millis() - mpv_socket_lastConn > 10000) {
+    dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "Proactively closing MPV socket\n");
     mpv_socket_close(fd);
     return 0;
   }
@@ -180,14 +183,14 @@ int mpv_fd_check(int fd) {
 
     if (retval != 0) {
       /* there was a problem getting the error code */
-      printf("error getting socket error code: %s\n", strerror(retval));
+      dbgprintf(DBG_ERROR, "error getting socket error code: %s\n", strerror(retval));
       mpv_socket_close(fd);
       return 0;
     }
 
     if (error != 0) {
       /* socket has a non zero error status */
-      printf("socket error: %s\n", strerror(error));
+      dbgprintf(DBG_ERROR, "socket error: %s\n", strerror(error));
       mpv_socket_close(mpv_socket_fdSelect);
       return 0;
     }
@@ -214,11 +217,12 @@ int mpv_fd_write(char *data) {
   }
 
 
-  // printf("Write: %s\n", data);
+  dbgprintf(DBG_MPV_WRITE,
+            (data[strlen(data)-1] == '\n' ? "mpvwrite: %s" : "mpvwrite: %s\n"),
+            data);
   int writeSz = write(mpv_socket_fdSelect, data, strlen(data));
-  // printf("Write Size: %d\n", writeSz);
   if (writeSz != strlen(data)) {
-    printf("Bad MPV Write\n");
+    dbgprintf(DBG_ERROR, "Bad MPV Write\n");
     // mpv_socket_fdSelect = -1;
     // mpv_fd_write(char *data)
     return 0;
@@ -239,13 +243,13 @@ int mpv_cmd(char *cmd_string) {
 }
 
 int mpvSocketSinglet(char* prop, char ** json_prop) {
-    // printf("MPV Singlet: %s\n", prop);
+    // dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "mpvsinglet: %s\n", prop);
 
     char* data_tmp = "{ \"command\": [\"get_property\", \"%s\"] }\n";
     size_t len = snprintf(NULL, 0, data_tmp, prop) + 1;
     char *data = (char*)malloc(len * sizeof(char));
     if (data == NULL) {
-        printf("%s\n%s\n", "Error!, No Memory", strerror(errno));
+        dbgprintf(DBG_ERROR, "%s\n%s\n", "Error!, No Memory", strerror(errno));
         return -1;
     }
     snprintf(data, len, data_tmp, prop);
@@ -267,7 +271,7 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
         /* select returns 0 if timeout, 1 if input available, -1 if error. */
         int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
         if (selT == -1) {
-            printf("%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
+            dbgprintf(DBG_ERROR, "%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
             mpv_socket_close(mpv_socket_fdSelect);
             mpv_socket_fdSelect = -1;
             goto cleanup;
@@ -277,16 +281,20 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
             if (rc > 0 && mpv_rpc_ret != NULL) {
                 // error response
                 if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
-                    printf("%s\n%s\n%s\n","Error!", mpv_rpc_ret, strerror(errno));
+                    dbgprintf(DBG_MPV_READ|DBG_ERROR,
+                              "Error after requesting property %s, %s\n",
+                              prop, mpv_rpc_ret);
                     free(mpv_rpc_ret);
                     goto cleanup;
                     // data response
                 } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
+                    dbgprintf(DBG_MPV_READ, "mpvread: '%s'\n", mpv_rpc_ret);
                     result = ta_json_parse(mpv_rpc_ret, "data", json_prop);
                     free(mpv_rpc_ret);
                     goto cleanup;
                     // every other response
                 } else {
+                    dbgprintf(DBG_MPV_READ, "mpvread - ignoring: '%s'\n", mpv_rpc_ret);
                     free(mpv_rpc_ret);
                     // ...and try again
                 }
