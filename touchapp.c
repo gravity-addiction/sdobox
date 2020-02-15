@@ -16,10 +16,9 @@
 #include <signal.h> // catching ctrl-c signal to quit
 #include <pthread.h> // threading
 #include <time.h> // system time clocks
-#include <math.h> // millis()
 
 #include <curl/curl.h> // curl
-#include <wiringPi.h> // Gordons Wiring Pi
+#include <wiringPi.h> // Gordons Wiring Pi, millis()
 #include <libconfig.h> // Config files ~/.config/touchapp/touchapp.conf
 #include <sqlite3.h> // SQLite3 Database
 

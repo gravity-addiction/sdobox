@@ -2,13 +2,13 @@
 // Headers to include
 // ------------------------------------------------
 
-#include <stdio.h> 
-#include <string.h> 
-#include <fcntl.h> 
+#include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
 #include <dirent.h>
-#include <sys/stat.h> 
-#include <sys/types.h> 
-#include <unistd.h> 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <libgen.h> // dirname
 #include <limits.h>       //For PATH_MAX
 
@@ -18,12 +18,11 @@
 #include <signal.h> // catching ctrl-c signal to quit
 #include <pthread.h> // threading
 #include <time.h> // system time clocks
-#include <math.h> // millis()
 
 #include "config.h"
 #include "advert.h"
 
-#include <wiringPi.h> // Gordons Wiring Pi
+#include <wiringPi.h> // Gordons Wiring Pi, millis()
 #include <libconfig.h> // Config files /home/pi/shared/config/config.txt
 // Include any extended elements
 
@@ -283,7 +282,7 @@ size_t file_list(const char *path, char ***ls) {
     while(NULL != ep){
       struct stat s;
       char *fullpath = malloc(strlen(path) + strlen(ep->d_name) + 2);
-      sprintf(fullpath, "%s/%s", path, ep->d_name);      
+      sprintf(fullpath, "%s/%s", path, ep->d_name);
       if (stat(fullpath, &s) == 0 && (s.st_mode & S_IFREG)) {
         count++;
       }
@@ -313,21 +312,21 @@ size_t file_list(const char *path, char ***ls) {
 
 
 
-int cstring_cmp(const void *a, const void *b) 
-{ 
+int cstring_cmp(const void *a, const void *b)
+{
   const char **ia = (const char **)a;
   const char **ib = (const char **)b;
 
   int _ia = atoi(*ia);
-  int _ib = atoi(*ib);  
+  int _ib = atoi(*ib);
 
   return (_ia > _ib) ? 1 : 0;
-} 
+}
 
 void update_filelist() {
   // Clean Crappy Dot Files
   run_system_cmd(m_clean_dotfiles);
-  
+
   int i;
   file_count = file_list("/home/pi/shared", &files);
   qsort(files, file_count, sizeof(char *), cstring_cmp);
@@ -366,7 +365,7 @@ void* tmp_inotify(void *arg)
       // debug_print(" %s\n", ptr);
       filename = ptr;
     }
-    
+
     // Not Dotfiles.. macbooks are bad about these
     if (filename[0] != '.') {
       // debug_print("Update Set For %s\n", filename);
@@ -411,10 +410,10 @@ void lib_buttonsRotaryInterrupt(void) {
 
   r_seq_a <<= 1;
   r_seq_a |= r_a;
-    
+
   r_seq_b <<= 1;
   r_seq_b |= r_b;
-   
+
   // Mask the MSB four bits
   r_seq_a &= 0b00001111;
   r_seq_b &= 0b00001111;
@@ -459,7 +458,7 @@ void lib_buttonsLeftBtnInterrupt(void) {
 // Actions in main() loop
 void lib_buttonsRightBtnInterrupt(void) {
   r_r = digitalRead(RIGHT_PIN_BTN);
-  
+
   int mi = millis();
   if (!r_r) {
     r_r_hold = mi;
@@ -486,7 +485,7 @@ int main( int argc, char* args[] )
   m_bQuit = 0;
 
   // Register Signals
-  signal(SIGINT, signal_sigint); 
+  signal(SIGINT, signal_sigint);
   signal(SIGTERM, signal_sigint);
 
   if (wiringPiSetup () == -1) {
@@ -537,7 +536,7 @@ int main( int argc, char* args[] )
       ss_delay = 0;
       next_image();
     }
-    
+
     if (c_rotary != 0 && c_rotary < mi) {
       int file_mod = 0;
       c_rotary = 0;
