@@ -69,6 +69,24 @@ bool pg_main_cbBtn_root(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t 
   return true;
 }
 
+bool pg_main_cbBtn_usb(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_loadFolder(pGui, "/media");
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
+bool pg_main_cbBtn_network(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_loadFolder(pGui, "network:///");
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
 bool pg_main_cbBtn_system(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
@@ -366,9 +384,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   }
   // Button D
   if ((
-    pg_mainEl[E_MAIN_EL_BTN_D] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+    pg_mainEl[E_MAIN_EL_BTN_D] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 165, 100, 50},
-            " ", 0, E_FONT_MONO14)
+            "USB", 0, E_FONT_MONO14, &pg_main_cbBtn_usb)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -378,9 +396,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   }
   // Button E
   if ((
-    pg_mainEl[E_MAIN_EL_BTN_E] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+    pg_mainEl[E_MAIN_EL_BTN_E] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 215, 100, 50},
-            " ", 0, E_FONT_MONO14)
+            "Network", 0, E_FONT_MONO14, &pg_main_cbBtn_network)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
