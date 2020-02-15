@@ -123,6 +123,15 @@ SOFTWARE.
 
   int32_t fbBytesPerPixel = vinfo.bits_per_pixel / 8;
   int32_t fbPitch = fbWidth * fbBytesPerPixel;
+  // Check calculated display_info image size equal fixed buffer memory size
+  if ((fbPitch * fbHeight) != finfo.smem_len) {
+    syslog(LOG_ERR, "display_info image size does not match fixed buffer smem_len");
+    close(fbfd);
+    ret = vc_dispmanx_resource_delete(screen_resource);
+    vc_dispmanx_display_close(display);
+    return NULL;
+  }
+
   size_t fbSize = finfo.smem_len;
   void *fbImagePtr = malloc(fbSize);
   if (fbImagePtr == NULL)
@@ -151,12 +160,10 @@ SOFTWARE.
       vc_dispmanx_resource_read_data(screen_resource, &rect1, fbImagePtr, fbPitch);
       // Rotate Image 180
       int32_t j = 0;
-      for (j = 0 ; j < fbHeight ; j++)
-      {
+      for (j = 0; j < fbHeight; ++j) {
         int32_t fbYoffset = (fbHeight - j - 1) * fbPitch;
         int32_t i = 0;
-        for (i = 0 ; i < fbWidth ; i++)
-        {
+        for (i = 0; i < fbWidth; ++i) {
           int32_t fbXoffset = (fbWidth - i - 1) * fbBytesPerPixel;
 
           uint8_t *tsPixelPtr = tsImagePtr + (i * fbBytesPerPixel) + (j * fbPitch);
