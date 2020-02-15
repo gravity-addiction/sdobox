@@ -233,7 +233,7 @@ void pg_sdobPlayerVideoRateChanging(gslc_tsGui *pGui, int changable) {
 
 // Update Scorecard Count
 void pg_sdobUpdateCount(gslc_tsGui *pGui, gslc_tsElemRef *pElem) {
-  int omission_cost = -2;
+  const int omission_cost = -3;
   int score = 0, totalScore = sdob_judgement->marks->size, sLen = totalScore;
 
   for (size_t s = 0; s < sLen; s++) {
