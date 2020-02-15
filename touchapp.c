@@ -47,7 +47,7 @@ void signal_sigint(int sig) { // can be called asynchronously
   // printf("SigInt Read! %d\n", m_bQuit);
   if (m_bQuit > 1) {
     // debug_print("\n%s\n", "fuck it, exit now!");
-    exit(1);
+    _exit(1);                   /* do NOT call atexit functions */
   } else if (m_bQuit > 0) {
     // debug_print("\n%s\n", "Alright, We'll fast track this shut down!");
     ++m_bQuit;
