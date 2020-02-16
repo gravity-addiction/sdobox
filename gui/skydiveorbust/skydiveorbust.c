@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <wiringPi.h> // Gordons Wiring Pi
+#include <regex.h>
+#include <assert.h>
 
 #include "skydiveorbust.h"
 #include "gui/pages.h"
@@ -96,6 +98,138 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
   CLEAR(judgement->scoreStr, 32);
   PG_SDOB_SCORECARD_CLEAR_MARKS(judgement->marks);
 }
+
+////////////////////////////////////////////////////////////////
+
+// All code related to video rounds processing - the parsing of the
+// video filename into a list of candidate event/team/rounds.
+
+// Possible matching filenames:
+//  USIS2020_(8_801_1)_(8_802_1).mpg
+//  USIS2020_(4_401_10)_(4_GK4_9)_(4J_317_8)_(4J_317_8).mpg
+
+// No set limit on how many rounds are present.
+// The first field of a round is an event descriptor used to trigger
+// a change in default working time (to 50.0 if it starts with '8').
+
+// The full pattern is mainly just used to decide initially if the
+// filename obeys the desired pattern, and to give the first subpattern
+// to strip the "mee name" descriptor.
+#define SVR_WHOLENAME "^\\([^_]\\+\\)\\(_([^_]\\+_[^_]\\+_[^_]\\+)\\)\\+\\.[a-z]\\+$"
+
+// Used to extract a event,team,round from the string, one by one
+#define SVR_PARTIAL   "^_(\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\))"
+
+static regex_t r_svr_wholefilename, r_svr_partial;
+static double default_working_time = 35.0;
+static char svr_parsed_meet[64];
+
+static void regexcompfail(char* msg, char* expression, int status, regex_t* rptr) {
+  char buffer[256];
+  size_t len = sizeof(buffer);
+  regerror(status, rptr, buffer, len);
+  dbgprintf(DBG_ERROR, "Failed to compile %s %s, %s\n", msg, expression, buffer);
+  abort();
+}
+
+static void init_svr_regexp() {
+  int compstate = regcomp(&r_svr_wholefilename, SVR_WHOLENAME, 0);
+  if (compstate)
+    regexcompfail("wholename", SVR_WHOLENAME, compstate, &r_svr_wholefilename);
+
+  compstate = regcomp(&r_svr_partial, SVR_PARTIAL, 0);
+  if (compstate)
+    regexcompfail("partial", SVR_PARTIAL, compstate, &r_svr_partial);
+}
+
+static void destroy_svr_regexp() {
+  regfree(&r_svr_wholefilename);
+  regfree(&r_svr_partial);
+}
+
+static void destroy_sdob_video_rounds() {
+  for(size_t i=0;i<sdob_num_current_rounds;++i) {
+    free(sdob_current_rounds[i].eventname);
+    free(sdob_current_rounds[i].teamnumber);
+    free(sdob_current_rounds[i].round);
+  }
+  free(sdob_current_rounds);
+  sdob_current_rounds = NULL;
+  sdob_num_current_rounds = 0;
+}
+
+static void parse_video_rounds(char* vfilename) {
+
+  regmatch_t matches[4];
+
+  // First nuke any prior state:
+  destroy_sdob_video_rounds();
+
+  int m = regexec(&r_svr_wholefilename, vfilename, 2, matches, 0);
+  if (m) {
+    // not a match, restore default working time
+    dbgprintf(DBG_SVR|DBG_INFO, "video filename does not match svr pattern\n");
+    default_working_time = 35.0;
+    return;
+  }
+
+  // Store the meet name
+  memset(svr_parsed_meet,0,sizeof(svr_parsed_meet));
+  strncpy(svr_parsed_meet, vfilename, MIN(63,matches[1].rm_eo));
+  dbgprintf(DBG_INFO|DBG_SVR, "SVR: meet = %s\n", svr_parsed_meet);
+
+  char* subline = vfilename + matches[1].rm_eo;
+  int sublinelength = strlen(vfilename) - matches[1].rm_eo;
+  // first pass count up:
+  while(sublinelength > 0) {
+    m = regexec(&r_svr_partial, subline, 1, matches, 0);
+    if (m)
+      break;
+    ++sdob_num_current_rounds;
+    subline += matches[0].rm_eo;
+    sublinelength -= matches[0].rm_eo;
+  }
+
+  dbgprintf(DBG_INFO|DBG_SVR, "SVR: sdob_num_current_rounds=%u\n", sdob_num_current_rounds);
+
+  sdob_current_rounds = malloc(sdob_num_current_rounds
+                               * sizeof(struct pg_sdob_video_round_record));
+  subline = vfilename + matches[1].rm_eo;
+  for(size_t i=0;i<sdob_num_current_rounds;++i) {
+    m = regexec(&r_svr_partial, subline, 4, matches, 0);
+    assert(m == 0);
+    sdob_current_rounds[i].eventname =
+      strndup(subline+matches[1].rm_so,
+              matches[1].rm_eo - matches[1].rm_so);
+    sdob_current_rounds[i].teamnumber =
+      strndup(subline+matches[2].rm_so,
+              matches[2].rm_eo - matches[2].rm_so);
+    sdob_current_rounds[i].round =
+      strndup(subline+matches[3].rm_so,
+              matches[3].rm_eo - matches[3].rm_so);
+
+    dbgprintf(DBG_SVR|DBG_INFO, "SVR: [%d] event=%s, team=%s, round=%s\n",
+              i, sdob_current_rounds[i].eventname,
+              sdob_current_rounds[i].teamnumber,
+              sdob_current_rounds[i].round);
+
+    subline += matches[0].rm_eo;
+  }
+
+  // The pattern only permits patterns with at least ONE of these records
+  assert(sdob_num_current_rounds > 0);
+
+  // Extreme hack -- but it's the only way to configure this
+  if (sdob_current_rounds[0].eventname[0] == '8')
+    default_working_time = 50.0;
+  else
+    default_working_time = 35.0;
+
+  dbgprintf(DBG_SVR|DBG_INFO, "SVR: working time set to %.1f\n", default_working_time);
+
+}
+
+////////////////////////////////////////////////////////////////
 
 // Initialize Player Data
 struct pg_sdob_player_data * PG_SDOB_INIT_PLAYER() {
@@ -304,11 +438,11 @@ void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char* str) {
 }
 
 void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
-  char *dot = strrchr(str, '/');
-  if(!dot || dot == str) {
+  char *lastslash = strrchr(str, '/');
+  if(!lastslash || lastslash == str) {
     strlcpy(sdob_judgement->meet, str, 64);
   } else {
-    strlcpy(sdob_judgement->meet, dot + 1, 64);
+    strlcpy(sdob_judgement->meet, lastslash + 1, 64);
   }
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], sdob_judgement->meet);
 }
@@ -316,6 +450,14 @@ void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
   strlcpy(sdob_judgement->video_file, str, 256);
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC], sdob_judgement->video_file);
+
+  parse_video_rounds(str);
+
+  if (sdob_num_current_rounds) {
+    pg_sdobUpdateMeet(pGui, svr_parsed_meet);
+    pg_sdobUpdateTeam(pGui, sdob_current_rounds[0].teamnumber);
+    pg_sdobUpdateRound(pGui, sdob_current_rounds[1].round);
+  }
 }
 
 
@@ -1915,7 +2057,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   sdob_judgement = PG_SDOB_INIT_JUDGEMENT();
 
-
+  sdob_current_rounds = NULL;
+  sdob_num_current_rounds = 0;
 
   // GUI Init
   gslc_tsRect rScores = {0,110,440,130};
@@ -2132,7 +2275,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         break;
 
         case E_Q_SCORECARD_SCORING_SOWT:
-          pg_sdob_scorecard_score_sowt(pGui, item->time, 35.0);
+          pg_sdob_scorecard_score_sowt(pGui, item->time, default_working_time);
         break;
 
         case E_Q_SCORECARD_SUBMIT_SCORECARD:
@@ -2377,6 +2520,8 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   free(sdob_judgement->marks);
   free(sdob_judgement);
 
+  destroy_sdob_video_rounds();
+
   // Free Player
   free(sdob_player->pbrateStr);
   free(sdob_player->pbrateUserStr);
@@ -2416,9 +2561,10 @@ void __attribute__ ((constructor)) pg_skydiveorbust_constructor(void) {
   cbThread[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_thread;
   cbClose[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_close;
   cbDestroy[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_destroy;
+  init_svr_regexp();
 }
 
 void __attribute__ ((destructor)) pg_skydiveorbust_destructor(void) {
-
+  destroy_svr_regexp();
 }
 

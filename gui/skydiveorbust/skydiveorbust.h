@@ -90,6 +90,15 @@ struct pg_sdob_judgement_data {
 };
 struct pg_sdob_judgement_data *sdob_judgement;
 
+struct pg_sdob_video_round_record {
+  char* eventname;
+  char* teamnumber;
+  char* round;
+};
+
+struct pg_sdob_video_round_record* sdob_current_rounds;
+size_t sdob_num_current_rounds;
+
 struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS();
 void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc);
 struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT();
