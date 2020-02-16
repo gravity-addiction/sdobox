@@ -401,7 +401,7 @@ bool pg_sdobPlayerCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
     // || pSlider->eTouch == GSLC_TOUCH_UP_IN
   ) {
     double move_tmp = (double)((double)gslc_ElemXSliderGetPos(pGui,pElemRef) * .1);
-    // printf("Moved Slider %f, Event: %d\n", move_tmp, pSlider->eTouch);
+    dbgprintf(DBG_SLIDER, "Moved Slider %f, Event: %d\n", move_tmp, pSlider->eTouch);
 
     if (move_tmp < 3) { move_tmp = 0;
     } else if (move_tmp > 997) { move_tmp = 1000;
@@ -781,7 +781,7 @@ bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
     mpvSpeed = atof(retSpeed);
     free(retSpeed);
     if (mpvSpeed == 0) {
-      // printf("Bad Speed: %s", retSpeed);
+      dbgprintf(DBG_DEBUG, "Bad Speed: %s", retSpeed);
       return true;
     }
 
@@ -889,7 +889,7 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
           sdob_judgement->marks->selected = -1;
         }
 
-        // // debug_print("Sel: %d, T: %f\n", i, sdob_judgement->marks->arrScorecardTimes[i]);
+        dbgprintf(DBG_DEBUG, "Sel: %d, T: %f\n", i, sdob_judgement->marks->arrScorecardTimes[i]);
         gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
         // if (sdob_judgement->marks->selected == 0) {
@@ -1152,7 +1152,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], true);
   }
 
-//  printf("Slot Max: %d, Line Max: %d\n", pg_sdob_slot_max, pg_sdob_line_max);
+  dbgprintf(DBG_DEBUG, "Slot Max: %d, Line Max: %d\n", pg_sdob_slot_max, pg_sdob_line_max);
 
   //////////////////////////////////////////
   // Create Scorecard Box
@@ -1181,7 +1181,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
       iY = (120 + (i_line * i_ySpace));
       iH = 26;
 
-//      printf("Id: %d, Slot %d, Line: %d, Slot Max: %d - X: %d\n", iXCnt, i_slot, i_line, pg_sdob_slot_max, iX);
+      dbgprintf(DBG_DEBUG, "Id: %d, Slot %d, Line: %d, Slot Max: %d - X: %d\n", iXCnt, i_slot, i_line, pg_sdob_slot_max, iX);
 
 
       // Point #
@@ -1446,6 +1446,8 @@ void pg_skydiveorbustButtonRotaryCCW() {
 void pg_skydiveorbustButtonLeftPressed() {
   struct queue_head *item;
 
+  dbgprintf(DBG_DEBUG, "Left Pressed: %d\n", sdob_judgement->marks->selected);
+
   // Scorecard Clicks
   if (sdob_judgement->marks->selected == 0) {
     // Reset SOWT
@@ -1483,7 +1485,7 @@ void pg_skydiveorbustButtonLeftPressed() {
 void pg_skydiveorbustButtonRightPressed() {
   struct queue_head *item;
 
-// printf("Right Pressed: %d", sdob_judgement->marks->selected);
+  dbgprintf(DBG_DEBUG, "Right Pressed: %d\n", sdob_judgement->marks->selected);
   // Scorecard Clicks
   if (sdob_judgement->marks->selected == 0) {
     // Reset SOWT
@@ -1630,18 +1632,18 @@ void pg_sdob_mpv_timepos_thread() {
 PI_THREAD (pg_sdobMpvTimeposThread)
 {
   if (pg_sdobMpvTimeposThreadRunning) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Already Started");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Already Started");
     return NULL;
   }
   pg_sdobMpvTimeposThreadRunning = 1;
 
   if (pg_sdobMpvTimeposThreadKill) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
     pg_sdobMpvTimeposThreadRunning = 0;
     return NULL;
   }
 
-  // debug_print("%s\n", "Starting MPV TimePos Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos Thread");
 
 
   while (!pg_sdobMpvTimeposThreadKill) {
@@ -1650,24 +1652,24 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     if (!pg_sdobMpvTimeposThreadKill) { usleep(1000000); }
   }
 
-  // printf("%s\n", "Closing TimePos Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Closing TimePos Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
   return NULL;
 }
 
 
 int pg_sdobMpvTimeposThreadStart() {
-  // debug_print("%s\n", "pg_sdobMpvTimeposThreadStart()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvTimeposThreadStart()");
   if (pg_sdobMpvTimeposThreadRunning) { return 0; }
 
   pg_sdob_pl_sliderForceUpdate = 1;
-  // debug_print("SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobMpvTimeposThreadRunning);
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobMpvTimeposThreadRunning);
   pg_sdobMpvTimeposThreadKill = 0;
   return piThreadCreate(pg_sdobMpvTimeposThread);
 }
 
 void pg_sdobMpvTimeposThreadStop() {
-  // debug_print("%s\n", "pg_sdobMpvTimeposThreadStop()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvTimeposThreadStop()");
   // Shutdown MPV FIFO Thread
   if (pg_sdobMpvTimeposThreadRunning) {
     pg_sdobMpvTimeposThreadKill = 1;
@@ -1676,7 +1678,7 @@ void pg_sdobMpvTimeposThreadStop() {
       usleep(100000);
       shutdown_cnt++;
     }
-    // debug_print("SkydiveOrBust MPV TimePos Thread Shutdown %d\n", shutdown_cnt);
+    dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos Thread Shutdown %d\n", shutdown_cnt);
   }
 }
 
@@ -1691,31 +1693,31 @@ void pg_sdobMpvTimeposThreadStop() {
 PI_THREAD (pg_sdobMpvSocketThread)
 {
   if (pg_sdobMpvSocketThreadRunning) {
-    // debug_print("%s\n", "Not Starting MPV Event Thread, Already Started");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV Event Thread, Already Started");
     return NULL;
   }
   pg_sdobMpvSocketThreadRunning = 1;
 
   if (pg_sdobMpvSocketThreadKill) {
-    // debug_print("%s\n", "Not Starting MPV Event Thread, Stop Flag Set");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV Event Thread, Stop Flag Set");
     pg_sdobMpvSocketThreadRunning = 0;
     return NULL;
   }
 
-  // debug_print("%s\n", "Starting MPV Event Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV Event Thread");
 
   struct sockaddr_un addr;
   int socket_try = 0;
 
   // Wait for socket to arrive
   while (!pg_sdobMpvSocketThreadKill && socket_try < 10 && access(mpv_socket_path, R_OK) == -1) {
-    // debug_print("Waiting to See %s\n", mpv_socket_path);
+    dbgprintf(DBG_DEBUG, "Waiting to See %s\n", mpv_socket_path);
     socket_try++;
     usleep(1000000);
   }
 
   if ((pg_sdob_player_mpv_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    // debug_print("%s\n", "MPV Socket Error");
+    dbgprintf(DBG_DEBUG, "%s\n", "MPV Socket Error");
     pg_sdobMpvSocketThreadKill = 1;
   }
   // Set Socket Non-Blocking
@@ -1824,23 +1826,23 @@ PI_THREAD (pg_sdobMpvSocketThread)
     }
   }
   // close
-  // debug_print("%s\n", "Closing MPV RPC");
+  dbgprintf(DBG_DEBUG, "%s\n", "Closing MPV RPC");
   pg_sdobMpvSocketThreadRunning = 0;
   return NULL;
 }
 
 
 int pg_sdobMpvSocketThreadStart() {
-  // debug_print("%s\n", "pg_sdobMpvSocketThreadStart()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvSocketThreadStart()");
   if (pg_sdobMpvSocketThreadRunning) { return 0; }
 
-  // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", pg_sdobMpvSocketThreadRunning);
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV Socket Thread Spinup: %d\n", pg_sdobMpvSocketThreadRunning);
   pg_sdobMpvSocketThreadKill = 0;
   return piThreadCreate(pg_sdobMpvSocketThread);
 }
 
 void pg_sdobMpvSocketThreadStop() {
-  // debug_print("%s\n", "pg_sdobMpvSocketThreadStop()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvSocketThreadStop()");
   // Shutdown MPV Socket Thread
   if (pg_sdobMpvSocketThreadRunning) {
     pg_sdobMpvSocketThreadKill = 1;
@@ -1849,7 +1851,7 @@ void pg_sdobMpvSocketThreadStop() {
       usleep(100000);
       shutdown_cnt++;
     }
-    // debug_print("SkydiveOrBust MPV Socket Thread Shutdown %d\n", shutdown_cnt);
+    dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV Socket Thread Shutdown %d\n", shutdown_cnt);
   }
 }
 
@@ -1872,7 +1874,7 @@ void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file) {
 
 // GUI init
 void pg_skydiveorbust_init(gslc_tsGui *pGui) {
-  // debug_print("%s\n", "Page SkydiveOrBust Init");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Init");
 
   // Dynamically Allocate Page Elements
   pg_sdobElTotal = E_SDOB_EL_MAX + 150;
@@ -2212,12 +2214,12 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     if (bSliderDelay) {
       nSliderPosLastFired = millis();
       if (m_video_percent_new >= 0) {
-        // debug_print("Setting Pos Percent New %f\n", m_video_percent_new);
+        dbgprintf(DBG_DEBUG, "Setting Pos Percent New %f\n", m_video_percent_new);
         mpv_seek_arg(m_video_percent_new, "absolute-percent+exact");
         m_video_percent_tmp = -1;
         m_video_percent_new = -2;
       } else {
-        // debug_print("Setting Pos Percent Tmp %f\n", m_video_percent_tmp);
+        dbgprintf(DBG_DEBUG, "Setting Pos Percent Tmp %f\n", m_video_percent_tmp);
         mpv_seek_arg(m_video_percent_tmp, "absolute-percent");
         m_video_percent_tmp = -1;
       }
@@ -2264,18 +2266,18 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 PI_THREAD (pg_sdobThread)
 {
   if (pg_sdobThreadRunning) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Already Started");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Already Started");
     return NULL;
   }
   pg_sdobThreadRunning = 1;
 
   if (pg_sdobThreadKill) {
-    // debug_print("%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
     pg_sdobThreadRunning = 0;
     return NULL;
   }
 
-  // debug_print("%s\n", "Starting MPV TimePos Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos Thread");
 
 
   while (!pg_sdobThreadKill) {
@@ -2284,14 +2286,14 @@ PI_THREAD (pg_sdobThread)
     }
   }
 
-  // debug_print("%s\n", "Closing MPV Fifo");
+  dbgprintf(DBG_DEBUG, "%s\n", "Closing MPV Fifo");
   pg_sdobThreadRunning = 0;
   return NULL;
 }
 
 
 int pg_sdobThreadStart() {
-  // debug_print("%s\n", "pg_sdobThreadStart()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStart()");
   if (pg_sdobThreadRunning) { return 0; }
 
   pg_sdob_pl_sliderForceUpdate = 1;
@@ -2301,7 +2303,7 @@ int pg_sdobThreadStart() {
 }
 
 void pg_sdobThreadStop() {
-  // debug_print("%s\n", "pg_sdobThreadStop()");
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStop()");
   // Shutdown MPV FIFO Thread
   if (pg_sdobThreadRunning) {
     pg_sdobThreadKill = 1;
@@ -2319,21 +2321,21 @@ void pg_sdobThreadStop() {
 // GUI Open
 void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
-  // debug_print("%s\n", "Page SkydiveOrBust Setting Button Functions");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
   ////////////////////////////
   // Start SDOB Thread
-  // // debug_print("%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStart();
-  // // debug_print("%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
   pg_sdobMpvSocketThreadStart();
-  // // debug_print("%s\n", "Page SkydiveOrBust Starting Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
   //-/ pg_sdobThreadStart();
 
   // Reset Scorecard Slider to Top
   // pg_sdobSliderResetCurPos(pGui);
 
-  // debug_print("%s\n", "Page SkydiveOrBust Started");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Started");
 }
 
 
@@ -2341,11 +2343,11 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 void pg_skydiveorbust_close(gslc_tsGui *pGui) {
   ////////////////////////////
   // Stop SDOB Thread
-  // // debug_print("%s\n", "Page SkydiveOrBust Stopping Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
   //-/ pg_sdobThreadStop();
-  // // debug_print("%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
   pg_sdobMpvSocketThreadStop();
-  // // debug_print("%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
 
   fbcp_stop();

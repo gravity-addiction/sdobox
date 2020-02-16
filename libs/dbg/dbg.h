@@ -14,6 +14,7 @@ typedef unsigned long dbgmask_t;
 #define DBG_MPV_READ  (1UL<<3)
 #define DBG_MPV_EVENT (1UL<<4)
 #define DBG_QUEUE     (1UL<<5)
+#define DBG_SLIDER    (1UL<<6)
 
 void init_dbg();
 
