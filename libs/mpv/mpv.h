@@ -5,9 +5,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
-#include "GUIslice-wrapper/GUIslice-wrapper.h"
-
 char* mpv_socket_path;
 char* mpv_fifo_path;
 int mpv_socket_fd;
@@ -44,7 +41,7 @@ unsigned int mpv_socket_lastConn;
 
 int mpv_socket_conn();
 void mpv_socket_close(int fd);
-int mpv_init(gslc_tsGui *pGui);
+int mpv_init();
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);

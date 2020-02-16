@@ -59,7 +59,7 @@ void mpv_socket_close(int fd) {
 
 
 
-int mpv_init(gslc_tsGui *pGui) {
+int mpv_init() {
   dbgprintf(DBG_MPV_WRITE, "MPV Init\n");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
@@ -168,8 +168,11 @@ int mpv_create_player(char* filePath) {
 }
 
 int mpv_fd_check(int fd) {
+
+  // 16-Feb-2020 - disabling this -- after the synchonization fix
+  // applied last week, this really serves no purpose.
   // Reset socket if more than 10 seconds since last reconnection
-  if (millis() - mpv_socket_lastConn > 10000) {
+  if (0 && millis() - mpv_socket_lastConn > 10000) {
     dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "Proactively closing MPV socket\n");
     mpv_socket_close(fd);
     return 0;
