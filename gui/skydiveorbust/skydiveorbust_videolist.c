@@ -6,11 +6,12 @@
 #include "mpv/mpv.h"
 #include "queue/queue.h"
 #include "gui/pages.h"
+#include "dbg/dbg.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
 #include "gui/keyboard/keyboard.h"
 
-
+#define VIDEOS_BASEPATH "/home/pi/shared"
 
 void pg_sdboVideoListGetFiles(char* path) {
   struct fileStruct **files;
@@ -26,10 +27,6 @@ void pg_sdboVideoListGetFiles(char* path) {
   size_t files_count = file_list(path, &files, S_IFREG);
   qsort(files, files_count, sizeof(char *), cint_cmp);
   for (i = 0; i < files_count; i++) {
-    if (
-      strcmp(files[i]->name, ".DS_Store") == 0
-      // || strcmp(files[i], ".."
-    ) { continue; }
     strlcpy(sdob_files->list[sdob_files->size], files[i]->name, strlen(files[i]->name) + 1);
     ++sdob_files->size;
   }
@@ -50,7 +47,6 @@ void pg_sdboVideoListGetFolders(char* path) {
   size_t folder_count = file_list(path, &folder, S_IFDIR);
   qsort(folder, folder_count, sizeof(char *), cint_cmp);
   for (i = 0; i < folder_count; i++) {
-    if (strcmp(folder[i]->name, ".") == 0 || strcmp(folder[i]->name, "..") == 0) { continue; }
     strlcpy(sdob_folders->list[sdob_folders->size], folder[i]->name, strlen(folder[i]->name));
     ++sdob_folders->size;
   }
@@ -75,11 +71,11 @@ bool pg_sdobVideoListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 bool pg_sdobVideoListCbBtnFolder(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  printf("Fetching Folders\n");
-  pg_sdboVideoListGetFolders("/home/pi/Videos/");
-  printf("Got Cnt: %d\n", sdob_folders->size);
+  dbgprintf(DBG_INFO|DBG_VIDEOLIST,"Fetching Folders\n");
+  pg_sdboVideoListGetFolders(VIDEOS_BASEPATH);
+  dbgprintf(DBG_INFO|DBG_VIDEOLIST, "Got folder count: %d\n", sdob_folders->size);
   for (int i = 0; i < sdob_folders->size; ++i) {
-    printf("Folder: %s\n", sdob_folders->list[i]);
+    dbgprintf(DBG_INFO|DBG_VIDEOLIST, "Folder: %s\n", sdob_folders->list[i]);
   }
 
   return true;
@@ -100,8 +96,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // Clear Scorecard
-  struct queue_head *item = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(item);
+  struct queue_head *item = new_qhead();
   item->action = E_Q_SCORECARD_CLEAR;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -317,16 +312,15 @@ void pg_sdobVideoList_open(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_TXT_TMP], "Video List");
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], sdob_judgement->meet);
 
-  size_t fullpathSz = snprintf(NULL, 0, "/home/pi/Videos/%s/", sdob_judgement->meet) + 1;
+  size_t fullpathSz = snprintf(NULL, 0, VIDEOS_BASEPATH "/%s/", sdob_judgement->meet) + 1;
   if (fullpathSz > 0) {
     char *fullpath = (char*)malloc(fullpathSz + sizeof(char));
-    snprintf(fullpath, fullpathSz, "/home/pi/Videos/%s/", sdob_judgement->meet);
+    snprintf(fullpath, fullpathSz, VIDEOS_BASEPATH "/%s/", sdob_judgement->meet);
     pg_sdboVideoListGetFiles(fullpath);
-    printf("Got File Cnt: %d\n", sdob_files->size);
+    dbgprintf(DBG_INFO|DBG_VIDEOLIST, "Got File Cnt: %d\n", sdob_files->size);
     for (int i = 0; i < sdob_files->size; ++i) {
-      printf("File: %s\n", sdob_files->list[i]);
+      dbgprintf(DBG_INFO|DBG_VIDEOLIST, "File: %s\n", sdob_files->list[i]);
     }
-
   }
 }
 
