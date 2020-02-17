@@ -1,0 +1,20 @@
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head>
+    <title>SDBOX Repository</title>
+</head>
+<body>
+  <h1>This is repository for sdobox.</h1>
+  <p><pre>
+To install sdobox, add new repository to /etc/apt/sources.list:
+
+deb http://sdobox.skydiveorbust.com/ sdobox main
+
+
+And import key that is used to sign the release:
+
+wget -qO - http://sdobox.skydiveorbust.com/pubkey.txt | sudo apt-key add -
+sudo apt update
+sudo apt install sdobox
+  </pre></p>
+</body>
+</html>

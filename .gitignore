@@ -4,3 +4,4 @@ touchapp
 *.dep
 TAGS
 *~
+dist/sdobox_*
