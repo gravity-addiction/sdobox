@@ -6,7 +6,7 @@
 #include "gui/keyboard/keyboard.h"
 
 // Debugging Printout helper
-#ifdef DEBUG
+#if defined(DEBUG) || 1
     static int16_t DebugOut(char ch) { fputc(ch, stderr); return 0; }
 #else
     static int16_t DebugOut(char ch) { return 0; }

@@ -22,13 +22,15 @@ typedef unsigned long dbgmask_t;
 
 void init_dbg();
 
-void dbgprintf(dbgmask_t fl, char* fmt, ...);
-void sigprintf(char* fmt, ...); /* same as fprintf(stderr, fmt, ...), but safe from signal handler */
+void dbgprintf(dbgmask_t fl, const char* fmt, ...);
+void sigprintf(const char* fmt, ...); /* same as fprintf(stderr, fmt, ...), but safe from signal handler */
 
 // Returns 1 if the given mask overlaps with the configured mask,
 // 0 otherwise.
 int dbg_enabled_p(dbgmask_t);
 
+// From GUISlice, returns 0 for no output, 1 for errors, 2 for errors & debug info
+int get_debug_err();
 
 #ifdef __cplusplus
 }
