@@ -2095,7 +2095,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdobUpdateTeam(pGui, "");
 
   // Round
-  pg_sdobUpdateRound(pGui, "1");
+  pg_sdobUpdateRound(pGui, "");
 
   // Video Desc
   pg_sdobUpdateVideoDesc(pGui, "");
@@ -2226,8 +2226,8 @@ void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
   PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
 
   // // UNREM TO CLEAN TEAM AND ROUND
-  // pg_sdobUpdateTeam(pGui, "");
-  // pg_sdobUpdateRound(pGui, "");
+  pg_sdobUpdateTeam(pGui, "");
+  pg_sdobUpdateRound(pGui, "");
 
   // Reset Scorecard Scroller
   pg_sdobSliderResetCurPos(pGui);
@@ -2300,6 +2300,12 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
         case E_Q_SCORECARD_SCORING_SOWT:
           pg_sdob_scorecard_score_sowt(pGui, item->time, default_working_time);
+          if (sdob_current_rounds && sdob_num_current_rounds > 1
+              && (!strcmp(sdob_judgement->team, "") || !strcmp(sdob_judgement->round, ""))
+          ) {
+            pg_sdob_player_pause(1);
+            touchscreenPageOpen(pGui, E_PG_SDOB_ROUNDLIST);
+          }
         break;
 
         case E_Q_SCORECARD_SUBMIT_SCORECARD:
