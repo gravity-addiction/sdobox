@@ -106,7 +106,7 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 
 // Possible matching filenames:
 //  USIS2020_(8_801_1)_(8_802_1).mpg
-//  USIS2020_(4_401_10)_(4_GK4_9)_(4J_317_8)_(4J_317_8).mpg
+//  USIS2020_(4_401_10)_(4_GK4_9)_(4J_317_8)_(4J_317_8).30fps.4k.mp4
 
 // No set limit on how many rounds are present.
 // The first field of a round is an event descriptor used to trigger
@@ -115,7 +115,8 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 // The full pattern is mainly just used to decide initially if the
 // filename obeys the desired pattern, and to give the first subpattern
 // to strip the "mee name" descriptor.
-#define SVR_WHOLENAME "^\\([^_]\\+\\)\\(_([^_]\\+_[^_]\\+_[^_]\\+)\\)\\+\\.[a-z]\\+$"
+// Anything after the first period (dot) is ignored.
+#define SVR_WHOLENAME "^\\([^_]\\+\\)\\(_([^_]\\+_[^_]\\+_[^_]\\+)\\)\\+\\."
 
 // Used to extract a event,team,round from the string, one by one
 #define SVR_PARTIAL   "^_(\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\))"
