@@ -1,14 +1,16 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <unistd.h>
-#include "gui/pages.h"
+#include <stdlib.h>             /* malloc */
+#include <unistd.h>             /* useconds_t */
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-int queue_size;
+//
+// This is a queue element, populated with varied useful fields.
+//
 
 struct queue_head {
   struct queue_head *next;
@@ -37,21 +39,6 @@ void queue_put(struct queue_head *new,
 
 struct queue_head *queue_get(struct queue_root *root, size_t *len);
 struct queue_head *queue_get_wtimeout(struct queue_root *root, size_t *len, useconds_t usecs);
-
-// queue.pages.c
-struct queue_root *m_queue_pages[MAX_PAGES];
-size_t *m_queue_len[MAX_PAGES];
-void queueInitPageQueue();
-void queueAddPageQueue(struct queue_head *new, int ePage);
-struct queue_head *queueGetPageQueue(int ePage);
-
-
-// queue.thread.c
-int m_bQueueThreadStop; //  = 0; // Stopping mpvRpcSocket
-int m_bQueueThreadRunning; // = 0; // Running flag for Mpv RPC
-
-int queueThreadStart();
-void queueThreadStop();
 
 #ifdef __cplusplus
 }

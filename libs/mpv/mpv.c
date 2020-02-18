@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <wiringPi.h>           /* millis() */
 
 // #include <mpv/client.h>
 #include "shared.h"

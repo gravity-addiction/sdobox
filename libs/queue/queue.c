@@ -5,14 +5,13 @@
 #include <errno.h>
 
 #include "queue.h"
+#include "shared.h"             /* m_bQuit */
 
 // #define QUEUE_DEBUG_P
 
 // original source @ https://idea.popcount.org/2012-09-11-concurrent-queue-in-c/
 
 #define QUEUE_POISON1 ((void*)0xCAFEBAB5)
-
-// int queue_size = 0;
 
 struct queue_root {
   struct queue_head head;     /* base of doubly-linked circular list */
