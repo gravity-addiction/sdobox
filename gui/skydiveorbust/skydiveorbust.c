@@ -168,7 +168,7 @@ static void parse_video_rounds(char* vfilename) {
   int m = regexec(&r_svr_wholefilename, vfilename, 2, matches, 0);
   if (m) {
     // not a match, restore default working time
-    dbgprintf(DBG_SVR|DBG_INFO, "video filename does not match svr pattern\n");
+    dbgprintf(DBG_SVR|DBG_INFO, "video filename '%s' does not match svr pattern\n", vfilename);
     default_working_time = 35.0;
     return;
   }
@@ -219,14 +219,7 @@ static void parse_video_rounds(char* vfilename) {
   // The pattern only permits patterns with at least ONE of these records
   assert(sdob_num_current_rounds > 0);
 
-  // Extreme hack -- but it's the only way to configure this
-  if (sdob_current_rounds[0].eventname[0] == '8')
-    default_working_time = 50.0;
-  else
-    default_working_time = 35.0;
-
   dbgprintf(DBG_SVR|DBG_INFO, "SVR: working time set to %.1f\n", default_working_time);
-
 }
 
 ////////////////////////////////////////////////////////////////
@@ -447,19 +440,29 @@ void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], sdob_judgement->meet);
 }
 
+void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
+
+  pg_sdobUpdateMeet(pGui, svr_parsed_meet);
+  pg_sdobUpdateTeam(pGui, sdob_current_rounds[roundIndex].teamnumber);
+  pg_sdobUpdateRound(pGui, sdob_current_rounds[roundIndex].round);
+
+  // Extreme hack -- but it's the only way to configure this
+  if (sdob_current_rounds[roundIndex].eventname[0] == '8')
+    default_working_time = 50.0;
+  else
+    default_working_time = 35.0;
+}
+
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
   strlcpy(sdob_judgement->video_file, str, 256);
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC], sdob_judgement->video_file);
 
   parse_video_rounds(str);
 
-  if (sdob_num_current_rounds) {
-    pg_sdobUpdateMeet(pGui, svr_parsed_meet);
-    pg_sdobUpdateTeam(pGui, sdob_current_rounds[0].teamnumber);
-    pg_sdobUpdateRound(pGui, sdob_current_rounds[1].round);
+  if (sdob_current_rounds && sdob_num_current_rounds > 0) {
+    sdob_selectEventTeamRound(pGui, 0);
   }
 }
-
 
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char* str) {
   size_t dispSz = snprintf(NULL, 0, "T:%s", str) + 1;
@@ -802,7 +805,17 @@ bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_keyboard_show(pGui, 6, sdob_judgement->team, &pg_sdobUpdateTeam);
+  if (sdob_current_rounds) {
+    if (sdob_num_current_rounds > 1) {
+      // Automated mode if file declares the triplets
+      touchscreenPageOpen(pvGui, E_PG_SDOB_ROUNDLIST);
+    }
+  }
+  else {
+    // Manual mode w/keyboard
+    pg_keyboard_show(pGui, 6, sdob_judgement->team, &pg_sdobUpdateTeam);
+  }
+
 //  setKeyboardCallbackFunc(&pg_sdobUpdateTeam);
 //  strcpy(keyboardInput, sdob_judgement->team);
 //  m_show_keyboard = 6;
@@ -816,7 +829,17 @@ bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_keyboard_show(pGui, 3, sdob_judgement->round, &pg_sdobUpdateRound);
+  if (sdob_current_rounds) {
+    if (sdob_num_current_rounds > 1) {
+      // Automated mode if file declares the triplets
+      touchscreenPageOpen(pvGui, E_PG_SDOB_ROUNDLIST);
+    }
+  }
+  else {
+    // Manual mode w/keyboard
+    pg_keyboard_show(pGui, 3, sdob_judgement->round, &pg_sdobUpdateRound);
+  }
+
 //  setKeyboardCallbackFunc(&pg_sdobUpdateRound);
 //  strcpy(keyboardInput, sdob_judgement->round);
 //  m_show_keyboard = 3;
