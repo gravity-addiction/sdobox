@@ -623,7 +623,7 @@ void gslc_Update(gslc_tsGui* pGui)
         eInputEvent = GSLC_INPUT_PIN_ASSERT;
         nInputVal = nPinNum;
       }
-    } 
+    }
     #endif // GSLC_FEATURE_INPUT
 
     // --------------------------------------------------------------
@@ -1749,7 +1749,7 @@ void gslc_DrawFillSectorBase(gslc_tsGui* pGui, int16_t nQuality, int16_t nMidX, 
     nSegInd = (bClockwise)? (nSegStart + nStepInd) : (nSegStart - nStepInd - 1);
 
     nAng64 = (int32_t)(nSegInd * nStep64) % (int32_t)(360 * 64);
-	
+
     #if defined(DBG_REDRAW)
     GSLC_DEBUG2_PRINT("FillSector:  StepInd=%d SegInd=%d (%d..%d) Ang64=%d\n", nStepInd, nSegInd, nSegStart, nSegEnd, nAng64);
     #endif
@@ -1774,7 +1774,7 @@ void gslc_DrawFillSectorBase(gslc_tsGui* pGui, int16_t nQuality, int16_t nMidX, 
       // Flat coloring
       colSeg = cArcStart;
     }
-    
+
     gslc_DrawFillQuad(pGui, anPts, colSeg);
   }
 }
@@ -1812,7 +1812,7 @@ bool gslc_FontSetBase(gslc_tsGui* pGui, uint8_t nFontInd, int16_t nFontId, gslc_
     //         return NULL in ADAGFX mode for some font types.
 
     gslc_ResetFont(&(pGui->asFont[nFontInd]));
-  
+
     pGui->asFont[nFontInd].eFontRefType = eFontRefType;
     // TODO: Support specification of mode via FontAdd() API?
     pGui->asFont[nFontInd].eFontRefMode = GSLC_FONTREF_MODE_DEFAULT;
@@ -2287,7 +2287,7 @@ void gslc_PageRedrawGo(gslc_tsGui* pGui)
 
   // Reset the invalidated regions
   gslc_InvalidateRgnReset(pGui);
- 
+
   // Restore the clipping region to the entire display
   gslc_SetClipRect(pGui, NULL);
 
@@ -4307,9 +4307,9 @@ gslc_tsElem gslc_ElemCreate(gslc_tsGui* pGui,int16_t nElemId,int16_t nPageId,
   } else {
     #if (GSLC_LOCAL_STR)
       // NOTE: Assume the string buffer pointer is located in RAM and not PROGMEM
-      strncpy(sElem.pStrBuf,pStrBuf,GSLC_LOCAL_STR_LEN-1);
-      sElem.pStrBuf[GSLC_LOCAL_STR_LEN-1] = '\0';  // Force termination
-      sElem.nStrBufMax = GSLC_LOCAL_STR_LEN;
+      sElem.nStrBufMax = (nStrBufMax == 0) ? GSLC_LOCAL_STR_LEN : nStrBufMax;
+      strncpy(sElem.pStrBuf,pStrBuf,sElem.nStrBufMax-1);
+      sElem.pStrBuf[sElem.nStrBufMax-1] = '\0';  // Force termination
       sElem.eTxtFlags  = (sElem.eTxtFlags & ~GSLC_TXT_ALLOC) | GSLC_TXT_ALLOC_INT;
     #else
       // No need to copy locally; instead, we are going to retain
