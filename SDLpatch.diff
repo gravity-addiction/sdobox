@@ -1,0 +1,115 @@
+--- dev/SDL-1.2.15/src/video/fbcon/SDL_fbevents.c	2012-01-18 22:30:06.000000000 -0800
++++ SDL-1.2.15/src/video/fbcon/SDL_fbevents.c	2020-02-18 20:48:26.714521915 -0800
+@@ -173,20 +173,24 @@
+ 
+ 		/* Set the terminal input mode */
+ 		if ( tcgetattr(keyboard_fd, &saved_kbd_termios) < 0 ) {
++			/*
+ 			SDL_SetError("Unable to get terminal attributes");
+ 			if ( keyboard_fd > 0 ) {
+ 				close(keyboard_fd);
+ 			}
+ 			keyboard_fd = -1;
+ 			return(-1);
++			*/
+ 		}
+ 		if ( ioctl(keyboard_fd, KDGKBMODE, &saved_kbd_mode) < 0 ) {
++			/*
+ 			SDL_SetError("Unable to get current keyboard mode");
+ 			if ( keyboard_fd > 0 ) {
+ 				close(keyboard_fd);
+ 			}
+ 			keyboard_fd = -1;
+ 			return(-1);
++			*/
+ 		}
+ 		keyboard_termios = saved_kbd_termios;
+ 		keyboard_termios.c_lflag &= ~(ICANON | ECHO | ISIG);
+@@ -200,14 +204,18 @@
+ 		}
+ 		/* This will fail if we aren't root or this isn't our tty */
+ 		if ( ioctl(keyboard_fd, KDSKBMODE, K_MEDIUMRAW) < 0 ) {
++			/*
+ 			FB_CloseKeyboard(this);
+ 			SDL_SetError("Unable to set keyboard in raw mode");
+ 			return(-1);
++			*/
+ 		}
+ 		if ( ioctl(keyboard_fd, KDSETMODE, KD_GRAPHICS) < 0 ) {
++			/*
+ 			FB_CloseKeyboard(this);
+ 			SDL_SetError("Unable to set keyboard in graphics mode");
+ 			return(-1);
++			*/
+ 		}
+ 		/* Prevent switching the virtual terminal */
+ 		ioctl(keyboard_fd, VT_LOCKSWITCH, 1);
+@@ -260,7 +268,7 @@
+ 		}
+ 		ioctl(tty0_fd, VT_OPENQRY, &current_vt);
+ 		close(tty0_fd);
+-		if ( (geteuid() == 0) && (current_vt > 0) ) {
++		if ( /* (geteuid() == 0) && */ (current_vt > 0) ) {
+ 			for ( i=0; vcs[i] && (keyboard_fd < 0); ++i ) {
+ 				char vtpath[12];
+ 
+@@ -303,9 +311,11 @@
+ 		/* Make sure that our input is a console terminal */
+ 		{ int dummy;
+ 		  if ( ioctl(keyboard_fd, KDGKBMODE, &dummy) < 0 ) {
++			/*
+ 			close(keyboard_fd);
+ 			keyboard_fd = -1;
+ 			SDL_SetError("Unable to open a console terminal");
++			*/
+ 		  }
+ 		}
+ 
+@@ -383,7 +393,7 @@
+ 	char args[PATH_MAX], *arg;
+ 
+ 	/* Don't bother looking if the fifo isn't there */
+-#ifdef DEBUG_MOUSE 
++#ifdef DEBUG_MOUSE
+ 	fprintf(stderr,"testing gpm\n");
+ #endif
+ 	if ( access(GPM_NODE_FIFO, F_OK) < 0 ) {
+@@ -403,7 +413,7 @@
+ 				arg = args;
+ 				while ( len > 0 ) {
+ 					arglen = SDL_strlen(arg)+1;
+-#ifdef DEBUG_MOUSE 
++#ifdef DEBUG_MOUSE
+ 				        fprintf(stderr,"gpm arg %s len %d\n",arg,arglen);
+ #endif
+ 					if ( SDL_strcmp(arg, "-t") == 0) {
+@@ -771,7 +781,7 @@
+ 	int dx = 0, dy = 0;
+ 	int packetsize = 0;
+ 	int realx, realy;
+-	
++
+ 	/* Figure out the mouse packet size */
+ 	switch (mouse_drv) {
+ 		case MOUSE_NONE:
+@@ -807,9 +817,9 @@
+ 
+ 	/* Special handling for the quite sensitive ELO controller */
+ 	if (mouse_drv == MOUSE_ELO) {
+-	
++
+ 	}
+-	
++
+ 	/* Read as many packets as possible */
+ 	nread = read(mouse_fd, &mousebuf[start], BUFSIZ-start);
+ 	if ( nread < 0 ) {
+@@ -1204,7 +1214,7 @@
+ 	    case K_PAUSE: keymap[i] = SDLK_PAUSE;     break;
+ 
+ 	    case 127: keymap[i] = SDLK_BACKSPACE; break;
+-	     
++
+ 	    default: break;
+ 	  }
+ 	}

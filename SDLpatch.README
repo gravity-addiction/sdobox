@@ -1,0 +1,13 @@
+// Download, Patch & Install SDL1.2 Libraries
+cd ~/dev
+wget https://www.libsdl.org/release/SDL-1.2.15.tar.gz
+tar -xvf SDL-1.2.15.tar.gz
+cd SDL-1.2.15
+
+// copy SDLpatch.diff from from sdobox root to this SDL-1.2.15 folder
+patch -p1 < SDLpatch.diff
+./autogen.sh
+./configure --prefix=/usr
+make -j4
+sudo make install
+sudo cp /usr/lib/libSDL* /usr/lib/arm-linux-gnueabihf/
