@@ -145,6 +145,11 @@ int main( int argc, char* args[] )
   signal(SIGINT, signal_sigint);
   // signal(SIGTERM, signal_sigint);
 
+  // For running as a daemon
+  if (sigignore(SIGHUP)) {
+    dbgprintf(DBG_ERROR, "attempt to ignore SIGHUP failed: %s\n", strerror(errno));
+    abort();
+  }
 
   // ------------------------------------------------
   // Initialize workers

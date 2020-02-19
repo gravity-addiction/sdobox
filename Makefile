@@ -4,7 +4,7 @@ DEBUG = -O1 -g
 # CC = clang -fsanitize=leak
 CC = gcc
 INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
-CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread
+CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib
 LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread
 
