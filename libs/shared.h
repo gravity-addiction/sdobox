@@ -13,7 +13,7 @@ extern "C" {
 #define	COUNT_KEY	0
 
 #define JSMN_HEADER
-#include "jsmn.h" // JSON Parsing
+#include "jsmn/jsmn.h" // JSON Parsing
 
 #define DEBUG 0
 #define CLEAR(x, y) memset(x,'\0',y)

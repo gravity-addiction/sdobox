@@ -6,7 +6,7 @@ CC = gcc
 INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib
-LDLIB_EXTRA = -lwiringPi -lconfig -ljsmn -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread
+LDLIB_EXTRA = -lwiringPi -lconfig -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos -lvchiq_arm -lpthread -Llibs/jsmn -ljsmn
 
 GSLC_CORE := GUIslice/GUIslice.c $(wildcard GUIslice/elem/*.c) #GUIslice/GUIslice_config.h
 GSLC_INCLUDES = -I./GUIslice
@@ -34,7 +34,7 @@ endif
 ifeq (SDL1,${GSLC_DRV})
   GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
   # - Add extra linker libraries if needed
-  LDLIBS = -lSDL -lSDL_ttf ${GSLC_LDLIB_EXTRA}
+  LDLIBS = -Llibs/SDL -lSDL -lSDL_ttf ${GSLC_LDLIB_EXTRA}
 endif
 
 ## === SDL2.0 ===

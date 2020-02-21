@@ -14,7 +14,8 @@
 #include <assert.h>
 
 #include "shared.h"
-#include "jsmn/jsmn.h"
+#define JSMN_HEADER
+#include "jsmn/jsmn.h" // JSON Parsing
 #include "dbg/dbg.h"
 
 #define DIM(x) (sizeof(x)/sizeof((x)))

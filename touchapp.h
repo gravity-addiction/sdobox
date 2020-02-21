@@ -6,7 +6,7 @@ extern "C" {
 #endif // __cplusplus
 
 #define JSMN_HEADER
-#include "jsmn.h" // JSON Parsing
+#include "jsmn/jsmn.h" // JSON Parsing
 
 char*    config_path = "/home/pi/.config/touchapp/touchapp.conf";
 // int      m_bQuit = 0; // Runs main() while loop while(!m_bQuit) {}
