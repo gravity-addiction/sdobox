@@ -18,15 +18,15 @@ TOUCHAPP_CORE := $(wildcard libs/*.c) $(wildcard libs/**/*.c) $(wildcard gui/*.c
 APP_GUI =
 APP_MODULES =
 
-GSLC_DRV := SDL1
+GSLC_DRV = SDL1
 
 ifndef GSLC_TOUCH
-  GSLC_LDLIB_EXTRA := -lm -lts
+  GSLC_LDLIB_EXTRA = -lm -lts
 else
   ifeq (TSLIB,${GSLC_TOUCH})
-    GSLC_LDLIB_EXTRA := -lm -lts
+    GSLC_LDLIB_EXTRA = -lm -lts
   else
-    GSLC_LDLIB_EXTRA := -lm
+    GSLC_LDLIB_EXTRA = -lm
   endif
 endif
 
@@ -34,7 +34,7 @@ endif
 ifeq (SDL1,${GSLC_DRV})
   GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
   # - Add extra linker libraries if needed
-  LDLIBS = -Llibs/SDL -lSDL -lSDL_ttf ${GSLC_LDLIB_EXTRA}
+  LDLIBS = libs/SDL/libSDL.a -ldl -lSDL_ttf ${GSLC_LDLIB_EXTRA}
 endif
 
 ## === SDL2.0 ===
