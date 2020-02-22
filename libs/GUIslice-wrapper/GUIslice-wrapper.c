@@ -17,7 +17,24 @@
 void UserInitEnv()
 {
   // setenv((char*)"FRAMEBUFFER",GSLC_DEV_FB,1);
-  setenv((char*)"SDL_FBDEV",GSLC_DEV_FB,1);
+
+  // Honor whatever the user may have set in the environment already
+  if (!getenv("SDL_FBDEV")) {
+    // Auto-detect the right fbdev
+    FILE* input = popen("/bin/sh -c \"grep fb_ili9486 /proc/fb | head -1 | awk '{printf \\\"/dev/fb%d\\\",\\$1}'\"", "r");
+    char result[16];		/* more than enough for "/dev/fb#" */
+    char* got = fgets(result, sizeof(result), input);
+    if (got && strlen(got) > 0) {
+      dbgprintf(DBG_INFO, "GUISlice-wrapper: autodetected fbdev at %s\n", got);
+      setenv("SDL_FBDEV",got,0);
+    }
+    else {
+      // Nothing auto-detected, use GSLC_DEV_FB
+      dbgprintf(DBG_DEBUG, "GUISlice-wrapper: failed to locate touchscreen, defaulting to %s\n", GSLC_DEV_FB);
+      setenv("SDL_FBDEV",GSLC_DEV_FB,1);
+    }
+    fclose(input);
+  }
   setenv((char*)"SDL_VIDEODRIVER",GSLC_DEV_VID_DRV,1);
   setenv((char*)"TSLIB_FBDEVICE",GSLC_DEV_FB,1);
   setenv((char*)"TSLIB_TSDEVICE",GSLC_DEV_TOUCH,1);
