@@ -1522,9 +1522,6 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
 void pg_skydiveorbustButtonRotaryCW() {
   struct queue_head *item;
 
-  char* cmdFSTxt = "frame-step\n";
-  // size_t cmdFSSz = strlen(cmdFSTxt) + 1;
-
   if (pg_sdob_change_video_rate) {
     item = new_qhead();
     item->action = E_Q_ACTION_VIDEO_RATE_ADJUST;
@@ -1536,15 +1533,21 @@ void pg_skydiveorbustButtonRotaryCW() {
     queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
 
-  } else if (sdob_judgement->marks->selected == 0) {
-    // Adjust SOWT Framestep
-    item = new_qhead();
-    item->action = E_Q_ACTION_MPV_COMMAND;
-    item->cmd = strdup(cmdFSTxt);
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
-  } else if (sdob_judgement->marks->selected < 0) {
+  } else if (sdob_judgement->marks->selected <= 0) {
     // Framestep
+    //
+    // It has been observed that the "frame-step" function in mpv
+    // applies the latest speed setting to the single-frame playback.
+    // This means a spin of the frame-forward knob can be slow if the
+    // speed had been set to a low value.  Change the speed setting
+    // here to 10x.  The next thing that resumes playing has to re-set
+    // the speed no matter what.
+    //
+    static const char cmdFSTxt[] =
+      "set speed 10.0\n"
+      "show-text \"\"\n"          /* clears the "Speed: 10.00" on the OSD */
+      "frame-step\n";
+
     item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
     item->cmd = strdup(cmdFSTxt);
