@@ -1004,9 +1004,9 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   }
 
   if (timePos > 0) {
-    timePos += (-1.5 * mpvSpeed);
-    mpv_fmt_cmd("show-text \"Seeking\" 750\n"
-                "seek %f %s\n", timePos, "absolute+exact");
+    // timePos += (-1.5 * mpvSpeed);
+    mpv_fmt_cmd(/* "show-text \"Seeking\" 750\n" */
+                "seek %f relative+keyframes\n", -5.0);
   }
   return true;
 }
