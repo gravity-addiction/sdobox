@@ -22,11 +22,19 @@ enum {
   E_SDOB_VIDEOLIST_EL_MAX
 };
 
+#define MAX_ELEM_SDOB_VIDEOLIST      E_SDOB_VIDEOLIST_EL_MAX + 11
 
-gslc_tsElem m_asPgSdobVideolistElem[E_SDOB_VIDEOLIST_EL_MAX];
-gslc_tsElemRef m_asPgSdobVideolistElemRef[E_SDOB_VIDEOLIST_EL_MAX];
+gslc_tsElem m_asPgSdobVideolistElem[MAX_ELEM_SDOB_VIDEOLIST];
+gslc_tsElemRef m_asPgSdobVideolistElemRef[MAX_ELEM_SDOB_VIDEOLIST];
 
 gslc_tsElemRef* pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_MAX];
+
+struct vlist_config *pg_sdobVideo_listConfig;
+struct fileStruct **pg_sdobVideo_list;
+gslc_tsXSlider pg_sdobVideo_listSlider;
+
+void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath);
+
 
 void pg_sdobVideoListButtonRotaryCW();
 void pg_sdobVideoListButtonRotaryCCW();

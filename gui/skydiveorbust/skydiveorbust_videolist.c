@@ -6,6 +6,7 @@
 #include "mpv/mpv.h"
 #include "queue/queue.h"
 #include "gui/pages.h"
+#include "vlisting/vlisting.h"
 #include "dbg/dbg.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
@@ -58,16 +59,20 @@ void pg_sdobVideoListClose(gslc_tsGui *pGui) {
   touchscreenPageOpen(pGui, m_page_previous);
 }
 
-////////////////
-// Button Callback
-bool pg_sdobVideoListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+void pg_sdobVideoList_gotoFolderCheck(gslc_tsGui *pGui) {
+  if (pg_sdobVideo_listConfig->cur < 0) { return; }
+  if (pg_sdobVideo_listConfig->cur >= pg_sdobVideo_listConfig->len) { return; }
 
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  pg_sdobVideoListClose(pGui);
-  return true;
+  if (pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->mode & S_IFDIR) {
+    size_t filepathSz = snprintf(NULL, 0, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    char *filePath = (char *)malloc(filepathSz * sizeof(char));
+    snprintf(filePath, filepathSz, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    pg_sdobVideoList_loadFolder(pGui, filePath);
+  }
 }
 
+////////////////
+// Button Callback
 bool pg_sdobVideoListCbBtnFolder(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
@@ -81,12 +86,12 @@ bool pg_sdobVideoListCbBtnFolder(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
   return true;
 }
 
-bool pg_sdobVideoListCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+bool pg_sdobVideoListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  // Close Submit Menu
+  // Close Menu
   pg_sdobVideoListClose(pGui);
   return true;
 }
@@ -100,19 +105,21 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   item->action = E_Q_SCORECARD_CLEAR;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-  // Load File (Temp)
-  char* tmpMeet = "skydiveorbust/MEET2020";
-  char* tmpFile = "Group1-12_2.mp4";
-  pg_sdobUpdateMeet(pGui, tmpMeet);
-  pg_sdobUpdateVideoDesc(pGui, tmpFile);
-  pg_sdobUpdateVideoRate(pGui, mpv_speed(1.0));
+  char* fileExt = file_ext(pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
 
-  mpv_loadfile(tmpMeet, tmpFile, "replace", "fullscreen=yes");
+  if (strcasecmp(fileExt, "mpg") == 0) {
+    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+  } else if (strcasecmp(fileExt, "mov") == 0) {
+    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+  } else if (strcasecmp(fileExt, "mp4") == 0) {
+    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+  } else if (strcasecmp(fileExt, "wmv") == 0) {
+    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+  }
 
-  pg_sdob_pl_sliderForceUpdate = 1;
-
-  // Close Submit Menu
+  // Close Menu
   pg_sdobVideoListClose(pGui);
+
   return true;
 }
 
@@ -121,7 +128,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
 
 //////////////////
 // Box Drawing
-bool pg_sdobVideoListCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
+bool pg_sdobVideolist_cbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
 {
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
   gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
@@ -130,13 +137,137 @@ bool pg_sdobVideoListCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRed
 
   // Clean our rectangle with default background color
   gslc_DrawFillRect(pGui, pRect, pElem->colElemFill);
-  gslc_DrawLine(pGui, pRect.x, pRect.y + 60, pRect.x + pRect.w, pRect.y + 60, GSLC_COL_GRAY);
+
+  // Generate list of items based on default list info
+  char **list = (char**)malloc(pg_sdobVideo_listConfig->len * sizeof(char*));
+  for (int l = 0; l < pg_sdobVideo_listConfig->len; ++l) {
+    if (pg_sdobVideo_list[l]->mode & S_IFDIR) {
+      size_t nameSz = snprintf(NULL, 0, "%s/", pg_sdobVideo_list[l]->name) + 1;
+      list[l] = (char *)malloc(nameSz * sizeof(char));
+      snprintf(list[l], nameSz, "%s/", pg_sdobVideo_list[l]->name);
+    } else {
+      size_t nameSz = snprintf(NULL, 0, "%s", pg_sdobVideo_list[l]->name) + 1;
+      list[l] = (char *)malloc(nameSz * sizeof(char));
+      snprintf(list[l], nameSz, "%s", pg_sdobVideo_list[l]->name);
+    }
+
+  }
+
+  // Use new List
+  vlist_sliderDraw(pGui, pg_sdobVideo_listConfig, list, 29);
+
+  // Clean list
+  for (int l = 0; l < pg_sdobVideo_listConfig->len; ++l) {
+    free(list[l]);
+  }
+  free(list);
+
 
   gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
   return true;
 }
 
 
+// A
+bool pg_sdobVideolist_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_clickBtn(pg_sdobVideo_listConfig, 0);
+  pg_sdobVideoList_gotoFolderCheck(pGui);
+
+  // Update GUI list Box
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+// B
+bool pg_sdobVideolist_cbBtn_elB(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_clickBtn(pg_sdobVideo_listConfig, 1);
+  pg_sdobVideoList_gotoFolderCheck(pGui);
+
+  // Update GUI list Box
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+// C
+bool pg_sdobVideolist_cbBtn_elC(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_clickBtn(pg_sdobVideo_listConfig, 2);
+  pg_sdobVideoList_gotoFolderCheck(pGui);
+
+  // Update GUI list Box
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+// D
+bool pg_sdobVideolist_cbBtn_elD(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_clickBtn(pg_sdobVideo_listConfig, 3);
+  pg_sdobVideoList_gotoFolderCheck(pGui);
+
+  // Update GUI list Box
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+// E
+bool pg_sdobVideolist_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_clickBtn(pg_sdobVideo_listConfig, 4);
+  pg_sdobVideoList_gotoFolderCheck(pGui);
+
+  // Update GUI list Box
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
+bool pg_sdobVideolist_cbBtn_sliderPos(void* pvGui, void* pvElemRef, int16_t nPos)
+{
+  gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
+  gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
+  gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
+  gslc_tsXSlider* pSlider   = (gslc_tsXSlider*)(pElem->pXData);
+
+  // Fetch the new RGB component from the slider
+  if (pSlider->eTouch == GSLC_TOUCH_DOWN_IN ||
+      pSlider->eTouch == GSLC_TOUCH_MOVE_IN ||
+      pSlider->eTouch == GSLC_TOUCH_MOVE_OUT
+  ) {
+    // Set slider config
+    vlist_sliderSetPos(pGui, pg_sdobVideo_listConfig, gslc_ElemXSliderGetPos(pGui, pElemRef));
+    // Update Visual List
+    gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+  }
+  return true;
+}
+
+bool pg_sdobVideolist_cbBtn_sliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_sliderChangeCurPos(pGui, pg_sdobVideo_listConfig, -1);
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+
+  return true;
+}
+
+bool pg_sdobVideolist_cbBtn_sliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  vlist_sliderChangeCurPos(pGui, pg_sdobVideo_listConfig, 1);
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+
+  return true;
+}
 
 
 /////////////////////
@@ -147,7 +278,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
   int ePage = E_PG_SDOB_VIDEOLIST;
 
   // Create Page in guislice
-  gslc_PageAdd(pGui, ePage, m_asPgSdobVideolistElem, E_SDOB_VIDEOLIST_EL_MAX, m_asPgSdobVideolistElemRef, E_SDOB_VIDEOLIST_EL_MAX);
+  gslc_PageAdd(pGui, ePage, m_asPgSdobVideolistElem, MAX_ELEM_SDOB_VIDEOLIST, m_asPgSdobVideolistElemRef, MAX_ELEM_SDOB_VIDEOLIST);
 
   // Create Fullscreen Draw Box
   // Must use a box so redrawing between pages functions correctly
@@ -155,7 +286,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen)
   ) != NULL) {
     gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_COL_GRAY,GSLC_COL_BLACK,GSLC_COL_BLACK);
-    gslc_ElemSetDrawFunc(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], &pg_sdobVideoListCbDraw);
+    gslc_ElemSetDrawFunc(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], &pg_sdobVideolist_cbDraw);
   }
 
 
@@ -176,32 +307,101 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_TXT_TMP], false);
   }
 
-  // Meet Button Element
-  if ((
-    pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect){(rFullscreen.x + 150), rFullscreen.y, rFullscreen.w - 150, 60},
-          (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideoListCbBtnFolder)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_ALIGN_MID_RIGHT);
-    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], true);
-    gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], false);
-  }
 
-/*
-  if ((
-    pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect){(rFullscreen.x + 150), rFullscreen.y, rFullscreen.w - 150, 60},
-          (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideoListCbBtnFolder)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], GSLC_ALIGN_MID_RIGHT);
-    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], true);
-    gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], false);
-  }
-*/
+  int xHei = 40;
+  gslc_tsRect rListBox = {0,40,420,210};
+  // Main View Box
+  pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rListBox);
+  gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_COL_GRAY, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  // Set the callback function to handle all drawing for the element
+  gslc_ElemSetDrawFunc(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], &pg_sdobVideolist_cbDraw);
+
+  // Button A
+  pg_sdobVideo_listConfig->refs[0] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+        (gslc_tsRect) {rListBox.x, (rListBox.y + (0 * xHei)), rListBox.w, xHei},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_elA);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->refs[0], GSLC_COL_WHITE);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->refs[0], GSLC_ALIGN_MID_LEFT);
+  gslc_ElemSetTxtMarginXY(pGui, pg_sdobVideo_listConfig->refs[0], 10, 0);
+  gslc_ElemSetFillEn(pGui, pg_sdobVideo_listConfig->refs[0], false);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->refs[0], true);
+
+  // Button B
+  pg_sdobVideo_listConfig->refs[1] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+        (gslc_tsRect) {rListBox.x, (rListBox.y + (1 * xHei)), rListBox.w, xHei},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_elB);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->refs[1], GSLC_COL_WHITE);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->refs[1], GSLC_ALIGN_MID_LEFT);
+  gslc_ElemSetTxtMarginXY(pGui, pg_sdobVideo_listConfig->refs[1], 10, 0);
+  gslc_ElemSetFillEn(pGui, pg_sdobVideo_listConfig->refs[1], false);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->refs[1], true);
+
+  // Button C
+  pg_sdobVideo_listConfig->refs[2] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+        (gslc_tsRect) {rListBox.x, (rListBox.y + (2 * xHei)), rListBox.w, xHei},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_elC);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->refs[2], GSLC_COL_WHITE);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->refs[2], GSLC_ALIGN_MID_LEFT);
+  gslc_ElemSetTxtMarginXY(pGui, pg_sdobVideo_listConfig->refs[2], 10, 0);
+  gslc_ElemSetFillEn(pGui, pg_sdobVideo_listConfig->refs[2], false);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->refs[2], true);
+
+  // Button D
+  pg_sdobVideo_listConfig->refs[3] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+        (gslc_tsRect) {rListBox.x, (rListBox.y + (3 * xHei)), rListBox.w, xHei},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_elD);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->refs[3], GSLC_COL_WHITE);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->refs[3], GSLC_ALIGN_MID_LEFT);
+  gslc_ElemSetTxtMarginXY(pGui, pg_sdobVideo_listConfig->refs[3], 10, 0);
+  gslc_ElemSetFillEn(pGui, pg_sdobVideo_listConfig->refs[3], false);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->refs[3], true);
+
+  // Button E
+  pg_sdobVideo_listConfig->refs[4] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+        (gslc_tsRect) {rListBox.x, (rListBox.y + (4 * xHei)), rListBox.w, xHei},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_elE);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->refs[4], GSLC_COL_WHITE);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->refs[4], GSLC_ALIGN_MID_LEFT);
+  gslc_ElemSetTxtMarginXY(pGui, pg_sdobVideo_listConfig->refs[4], 10, 0);
+  gslc_ElemSetFillEn(pGui, pg_sdobVideo_listConfig->refs[4], false);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->refs[4], true);
+
+
+  //////////////////////////////////////////
+  // Create vertical scrollbar
+  pg_sdobVideo_listConfig->sliderEl = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO,
+      ePage, &pg_sdobVideo_listSlider, (gslc_tsRect){(rListBox.x + rListBox.w) + 2, rListBox.y + 55, rFullscreen.w - (rListBox.x + rListBox.w) - 2, rListBox.h - 110},
+      0, pg_sdobVideo_listConfig->scrollMax, 0, 10, true);
+  pg_sdobVideo_listConfig->slider = &pg_sdobVideo_listSlider; // Assign to listConfig for later access
+
+  gslc_ElemSetCol(pGui, pg_sdobVideo_listConfig->sliderEl, GSLC_COL_BLUE_LT1, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemXSliderSetStyle(pGui, pg_sdobVideo_listConfig->sliderEl, true, GSLC_COL_BLUE_DK1, 0, 0, GSLC_COL_BLACK);
+  gslc_ElemXSliderSetPosFunc(pGui, pg_sdobVideo_listConfig->sliderEl, &pg_sdobVideolist_cbBtn_sliderPos);
+
+
+
+  //////////////////////////////////////////
+  // Create vertical scrollbar Up Arrow
+  pg_sdobVideo_listConfig->sliderUpEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+      ePage, (gslc_tsRect){(rListBox.x + rListBox.w) + 2, rListBox.y, rFullscreen.w - (rListBox.x + rListBox.w) - 2, 50}, (char*)"^",
+      0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_sliderUp);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->sliderUpEl, GSLC_COL_GREEN);
+  gslc_ElemSetCol(pGui, pg_sdobVideo_listConfig->sliderUpEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->sliderUpEl, true);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->sliderUpEl, GSLC_ALIGN_MID_MID);
+
+
+  //////////////////////////////////////////
+  // Create vertical scrollbar Down Arrow
+  pg_sdobVideo_listConfig->sliderDownEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+      ePage, (gslc_tsRect){(rListBox.x + rListBox.w) + 2, (rListBox.y + rListBox.h) - 50, rFullscreen.w - (rListBox.x + rListBox.w) - 2, 50}, (char*)"v",
+      0, E_FONT_MONO18, &pg_sdobVideolist_cbBtn_sliderDown);
+  gslc_ElemSetTxtCol(pGui, pg_sdobVideo_listConfig->sliderDownEl, GSLC_COL_GREEN);
+  gslc_ElemSetCol(pGui, pg_sdobVideo_listConfig->sliderDownEl, GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetFrameEn(pGui, pg_sdobVideo_listConfig->sliderDownEl, true);
+  gslc_ElemSetTxtAlign(pGui, pg_sdobVideo_listConfig->sliderDownEl, GSLC_ALIGN_MID_MID);
+  pg_sdobVideo_listConfig->sliderDownEl = pg_sdobVideo_listConfig->sliderDownEl;
+
 
 
 
@@ -209,26 +409,13 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {rFullscreen.x, (rFullscreen.y + rFullscreen.h) - 60, 100, 60},
-            "Cancel", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnCancel)
+            "Close", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnCancel)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], false);
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], true);
-  }
-
-  // Clear Scorecard Button
-  if ((
-    pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {(rFullscreen.x + rFullscreen.w) - 100, (rFullscreen.y + rFullscreen.h) - 60, 100, 60},
-            "Clear", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnClear)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR], GSLC_COL_PURPLE, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR], GSLC_ALIGN_MID_MID);
-    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR], false);
-    gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CLEAR], true);
   }
 
   // Change Button
@@ -290,9 +477,18 @@ void pg_sdobVideoListButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_sdobVideoListButtonDoubleHeld);
 }
 
+void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath) {
+  VLIST_CLEAR_CONFIG(pg_sdobVideo_listConfig);
+  pg_sdobVideo_listConfig->len = file_list(folderPath, &pg_sdobVideo_list, -1);
+  qsort(pg_sdobVideo_list, pg_sdobVideo_listConfig->len, sizeof(char *), fileStruct_cmpName);
+  VLIST_UPDATE_CONFIG(pg_sdobVideo_listConfig);
+  vlist_sliderUpdate(pGui, pg_sdobVideo_listConfig);
+}
 
 // GUI Init
 void pg_sdobVideoList_init(gslc_tsGui *pGui) {
+  pg_sdobVideo_listConfig = VLIST_INIT_CONFIG(5, 32);
+
   pg_sdobVideoListGuiInit(pGui);
 
   // Cleanup so Init is only ran once
@@ -303,25 +499,12 @@ void pg_sdobVideoList_init(gslc_tsGui *pGui) {
 // GUI Open
 void pg_sdobVideoList_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
-  // pg_sdobVideoListButtonSetFuncs();
+  pg_sdobVideoListButtonSetFuncs();
 
-  // // Clear File and Folder lists
-  // for (i = 0; i < sdob_folders->max; ++i) { CLEAR(sdob_folders->list[i], sdob_folders->len); }
-  // for (i = 0; i < sdob_files->max; ++i) { CLEAR(sdob_files->list[i], sdob_files->len); }
+  pg_sdobVideoList_loadFolder(pGui, "/home/pi/shared");
 
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_TXT_TMP], "Video List");
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], sdob_judgement->meet);
-
-  size_t fullpathSz = snprintf(NULL, 0, VIDEOS_BASEPATH "/%s/", sdob_judgement->meet) + 1;
-  if (fullpathSz > 0) {
-    char *fullpath = (char*)malloc(fullpathSz + sizeof(char));
-    snprintf(fullpath, fullpathSz, VIDEOS_BASEPATH "/%s/", sdob_judgement->meet);
-    pg_sdboVideoListGetFiles(fullpath);
-    dbgprintf(DBG_INFO|DBG_VIDEOLIST, "Got File Cnt: %d\n", sdob_files->size);
-    for (int i = 0; i < sdob_files->size; ++i) {
-      dbgprintf(DBG_INFO|DBG_VIDEOLIST, "File: %s\n", sdob_files->list[i]);
-    }
-  }
 }
 
 
