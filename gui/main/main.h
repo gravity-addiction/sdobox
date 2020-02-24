@@ -42,6 +42,7 @@ gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
 struct vlist_config *pg_main_listConfig;
 struct fileStruct **pg_main_list;
 struct fileStruct **pg_main_listFolders;
+char* pg_main_currentFolderPath;
 gslc_tsXSlider pg_main_listSlider;
 
 void pg_mainButtonRotaryCW();

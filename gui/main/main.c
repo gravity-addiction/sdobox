@@ -702,13 +702,20 @@ void pg_mainButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_mainButtonDoubleHeld);
 }
 
-void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath) {
+void pg_main_refreshCurrentFolder(gslc_tsGui* pGui) {
   VLIST_CLEAR_CONFIG(pg_main_listConfig);
-  pg_main_listConfig->len = file_list(folderPath, &pg_main_list, -1);
+  pg_main_listConfig->len = file_list(pg_main_currentFolderPath, &pg_main_list, -1);
   qsort(pg_main_list, pg_main_listConfig->len, sizeof(char *), fileStruct_cmpName);
   VLIST_UPDATE_CONFIG(pg_main_listConfig);
   vlist_sliderUpdate(pGui, pg_main_listConfig);
 }
+
+void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath) {
+  free(pg_main_currentFolderPath);
+  pg_main_currentFolderPath = strdup(folderPath);
+  pg_main_refreshCurrentFolder(pGui);
+}
+
 
 // GUI Init
 void pg_main_init(gslc_tsGui *pGui) {
@@ -716,6 +723,8 @@ void pg_main_init(gslc_tsGui *pGui) {
   pg_main_listConfig = VLIST_INIT_CONFIG(7, 32);
 
   pg_mainGuiInit(pGui);
+
+  pg_main_currentFolderPath = NULL;
 
   pg_main_loadFolder(pGui, "/home/pi/shared");
 
@@ -729,6 +738,7 @@ void pg_main_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
 
+  pg_main_refreshCurrentFolder(pGui);
 }
 
 
@@ -741,6 +751,7 @@ void pg_main_destroy(gslc_tsGui *pGui) {
   free(pg_main_list);
   free(pg_main_listConfig->refs);
   free(pg_main_listConfig);
+  free(pg_main_currentFolderPath);
 }
 
 // Setup Constructor
