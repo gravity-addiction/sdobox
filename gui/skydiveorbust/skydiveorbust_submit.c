@@ -7,30 +7,6 @@
 #include "gui/skydiveorbust/skydiveorbust.h"
 #include "gui/keyboard/keyboard.h"
 
-
-
-void PG_SDOB_SUBMIT_CLEAR_INFO(struct pg_sdob_submit_info *si)
-{
-  CLEAR(si->chapterStr, 32);
-  CLEAR(si->teamStr, 32);
-  CLEAR(si->roundStr, 32);
-  CLEAR(si->scoreStr, 32);
-}
-
-
-// Initialize scorecard marks
-struct pg_sdob_submit_info * PG_SDOB_SUBMIT_INIT_INFO()
-{
-  struct pg_sdob_submit_info *si = (struct pg_sdob_submit_info*)malloc(sizeof(struct pg_sdob_submit_info));
-
-  si->chapterStr = (char*)calloc(32, sizeof(char));
-  si->teamStr = (char*)calloc(32, sizeof(char));
-  si->roundStr = (char*)calloc(32, sizeof(char));
-  si->scoreStr = (char*)calloc(32, sizeof(char));
-
-  return si;
-}
-
 void pg_sdobSubmitClose(gslc_tsGui *pGui) {
   touchscreenPageClose(pGui, E_PG_SDOB_SUBMIT);
   touchscreenPageOpen(pGui, m_page_previous);
@@ -52,8 +28,7 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 
   if (pg_sdob_submit_clearCheck == 1) {
     // Clear Scorecard
-    struct queue_head *item = malloc(sizeof(struct queue_head));
-    INIT_QUEUE_HEAD(item);
+    struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_CLEAR;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // Close Submit Menu
@@ -70,8 +45,7 @@ bool pg_sdobSubmitCbBtnSubmitScore(void* pvGui,void *pvElemRef,gslc_teTouch eTou
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   // Submit Scorecard
-  struct queue_head *item = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(item);
+  struct queue_head *item = new_qhead();
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -101,20 +75,20 @@ bool pg_sdobSubmitCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw
 
   size_t chapterSz = snprintf(NULL, 0, "Chapter: %d", (sdob_chapters->cur + 1)) + 1;
   if (chapterSz > 0 && chapterSz <= 32) {
-    snprintf(sdob_submit_info->chapterStr, chapterSz, "Chapter: %d", (sdob_chapters->cur + 1));
-    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_CHAPTER], sdob_submit_info->chapterStr);
+    snprintf(sdob_submit_info.chapterStr, chapterSz, "Chapter: %d", (sdob_chapters->cur + 1));
+    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_CHAPTER], sdob_submit_info.chapterStr);
   }
 
   size_t teamSz = snprintf(NULL, 0, "Team: %s", sdob_judgement->team) + 1;
   if (teamSz > 0 && teamSz <= 32) {
-    snprintf(sdob_submit_info->teamStr, teamSz, "Team: %s", sdob_judgement->team);
-    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_TEAMNUM], sdob_submit_info->teamStr);
+    snprintf(sdob_submit_info.teamStr, teamSz, "Team: %s", sdob_judgement->team);
+    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_TEAMNUM], sdob_submit_info.teamStr);
   }
 
   size_t roundSz = snprintf(NULL, 0, "Round: %s", sdob_judgement->round) + 1;
   if (roundSz > 0 && roundSz <= 32) {
-    snprintf(sdob_submit_info->roundStr, roundSz, "Round: %s", sdob_judgement->round);
-    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_ROUNDNUM], sdob_submit_info->roundStr);
+    snprintf(sdob_submit_info.roundStr, roundSz, "Round: %s", sdob_judgement->round);
+    gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_ROUNDNUM], sdob_submit_info.roundStr);
   }
 
   // Set Score Total
@@ -125,8 +99,8 @@ bool pg_sdobSubmitCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw
   if (scoreTotal != NULL) {
     size_t scoreSz = snprintf(NULL, 0, "Score: %s", scoreTotal) + 1;
     if (scoreSz > 0 && scoreSz <= 32) {
-      snprintf(sdob_submit_info->scoreStr, scoreSz, "Score: %s", scoreTotal);
-      gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SCORE], sdob_submit_info->scoreStr);
+      snprintf(sdob_submit_info.scoreStr, scoreSz, "Score: %s", scoreTotal);
+      gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SCORE], sdob_submit_info.scoreStr);
     }
   }
 
@@ -318,7 +292,7 @@ void pg_sdobSubmitButtonSetFuncs() {
 void pg_sdobSubmit_init(gslc_tsGui *pGui) {
   pg_sdobSubmitGuiInit(pGui);
 
-  sdob_submit_info = PG_SDOB_SUBMIT_INIT_INFO();
+  CLEAR(&sdob_submit_info,sizeof(sdob_submit_info));
 
   // Cleanup so Init is only ran once
   cbInit[E_PG_SDOB_SUBMIT] = NULL;

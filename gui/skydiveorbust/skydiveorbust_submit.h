@@ -31,15 +31,12 @@ gslc_tsElemRef m_asPgSdobSubmitElemRef[E_SDOB_SUBMIT_EL_MAX];
 gslc_tsElemRef* pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_MAX];
 
 struct pg_sdob_submit_info {
-  char *chapterStr;
-  char *teamStr;
-  char *roundStr;
-  char *scoreStr;
+  char chapterStr[32];
+  char teamStr[32];
+  char roundStr[32];
+  char scoreStr[32];
 };
-struct pg_sdob_submit_info *sdob_submit_info;
-
-struct pg_sdob_submit_info * PG_SDOB_SUBMIT_INIT_INFO();
-void PG_SDOB_SUBMIT_CLEAR_INFO(struct pg_sdob_submit_info *si);
+struct pg_sdob_submit_info sdob_submit_info;
 
 // Double press clear button
 int pg_sdob_submit_clearCheck;
