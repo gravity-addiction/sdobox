@@ -862,6 +862,12 @@ bool pg_sdobCbBtnScCount(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
 // Submit Button
 bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
+  if (!strlen(sdob_judgement->team) || !strlen(sdob_judgement->round)) {
+    // Prohibit submission if we do not have a valid team/round
+    return true;
+  }
+
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
 /*
