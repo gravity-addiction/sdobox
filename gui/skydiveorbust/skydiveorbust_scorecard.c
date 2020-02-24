@@ -1,6 +1,11 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <time.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <assert.h>
 
 #include "shared.h"
 #include "skydiveorbust.h"
@@ -277,6 +282,7 @@ void pg_sdobScoringSelectionLastHidden(gslc_tsGui *pGui) {
 int pg_sdobSubmitScorecard() {
 //   Jan 26 12:49:01 Eddie MyAVPlayer[82462]: SUBMISSION/MEET2019 4143,1,JR,0,01/26/2019 12:49:01,Group14-12_2.mp4,403.600000,148.866667,/,/,/,/,O,/,/,/,/,/,O,/,/,/,/,O,/,/,/,/,/,/,/,/
   if (!sdob_judgement || !sdob_judgement->marks->size) {
+    dbgprintf(DBG_ERROR, "%s, no marks to submit?\n", __PRETTY_FUNCTION__);
     return 0;
   }
 
@@ -331,6 +337,36 @@ int pg_sdobSubmitScorecard() {
   }
 
 
+  // If /home/pi/submitscore exists/executable, invoke it.  This is in addition to the logging
+  // which can be useful for backup.
+  {
+    struct stat sb;
+    const char action_script[] = "/opt/sdobox/bin/submitscore";
+    char submission[2048];
+    char cmd[2048];
+
+    if (stat(action_script,&sb) == 0 && (sb.st_mode & S_IXUSR)) {
+      int size = snprintf(submission, sizeof(submission),
+                          submit_fmt, (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
+                          (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
+                          sdob_player->duration, sdob_judgement->sowt, csv_score);
+      assert(size < sizeof(submission));
+
+      size = snprintf(cmd, sizeof(cmd), "%s \"%s\" \"%s\"", action_script, submission, sdob_judgement->video_file);
+      assert(size < sizeof(cmd));
+
+      int sysret = system(cmd);
+      if (sysret != 0) {
+        dbgprintf(DBG_DEBUG, "call to system with '%s' failed by returning %d\n",
+                  cmd, sysret);
+      }
+    }
+    else {
+      dbgprintf(DBG_DEBUG, "action script either does not exist or is not executable: '%s'\n", action_script);
+    }
+  }
+
+  // Also do this...
   openlog ("touchapp", LOG_NDELAY | LOG_PID, LOG_LOCAL1);
   syslog (LOG_NOTICE, submit_fmt,
       (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
