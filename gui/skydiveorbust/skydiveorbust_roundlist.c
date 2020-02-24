@@ -8,7 +8,7 @@
 #include "gui/keyboard/keyboard.h"
 
 struct pg_sdob_round_info {
-  char formatted_label_str[5][128];
+  char formatted_label_str[SDOB_NBUTTONS][128];
 } round_info;
 
 void pg_sdobRoundClose(gslc_tsGui *pGui) {
@@ -23,7 +23,7 @@ static bool pg_sdobRoundCbBtn(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   if (eTouch == GSLC_TOUCH_UP_IN) {
 
     int roundIndex = -1;
-    for(int i=0;i<5;++i) {
+    for(int i=0;i<SDOB_NBUTTONS;++i) {
       if (pvElemRef == pg_sdobRoundEl[E_SDOB_ROUND_EL_BTN_0 + i]) {
         roundIndex = i;
         break;
@@ -51,7 +51,7 @@ static bool pg_sdobRoundCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType e
   gslc_DrawFillRect(pGui, pRect, pElem->colElemFill);
 
   // "render" the strings:
-  size_t nrounds = MIN((size_t)5, sdob_num_current_rounds);
+  size_t nrounds = MIN((size_t)SDOB_NBUTTONS, sdob_num_current_rounds);
   size_t i=0;
   for(; i < nrounds; ++i)
     snprintf(round_info.formatted_label_str[i], sizeof(round_info.formatted_label_str[i]),
@@ -60,10 +60,10 @@ static bool pg_sdobRoundCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType e
              sdob_current_rounds[i].teamnumber,
              sdob_current_rounds[i].round);
 
-  for(; i < 5; ++i)
+  for(; i < SDOB_NBUTTONS; ++i)
     round_info.formatted_label_str[i][0] = '\0'; /* empty string */
 
-  for(i=0;i<5;++i)
+  for(i=0;i<SDOB_NBUTTONS;++i)
     gslc_ElemSetTxtStr(pGui, pg_sdobRoundEl[E_SDOB_ROUND_EL_BTN_0+i], round_info.formatted_label_str[i]);
 
   gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
@@ -89,9 +89,9 @@ void pg_sdobRoundGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetDrawFunc(pGui, pg_sdobRoundEl[E_SDOB_ROUND_EL_BOX], &pg_sdobRoundCbDraw);
   }
 
-  // +4 on either end, divide the height by 5, and subtract, say, 5 pixels for gap betwen them all
+  // +4 on either end, divide the height by SDOB_NBUTTONS, and subtract, say, 5 pixels for gap betwen them all
   const unsigned inter_button_gap = 5;
-  const unsigned nbuttons = 5;
+  const unsigned nbuttons = SDOB_NBUTTONS;
 
   const unsigned bheight = (rFullscreen.h - (nbuttons + 1) * inter_button_gap) / nbuttons;
   const unsigned bwidth = rFullscreen.w - 8;

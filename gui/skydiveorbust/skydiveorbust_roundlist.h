@@ -8,6 +8,8 @@ extern "C" {
 
 #include "gui/pages.h"
 
+#define SDOB_NBUTTONS 5
+
 enum {
   E_SDOB_ROUND_EL_BOX,
   E_SDOB_ROUND_EL_BTN_0,
@@ -16,7 +18,7 @@ enum {
   E_SDOB_ROUND_EL_BTN_3,
   E_SDOB_ROUND_EL_BTN_4,
 
-  E_SDOB_ROUND_EL_MAX
+  E_SDOB_ROUND_EL_MAX = E_SDOB_ROUND_EL_BTN_0 + SDOB_NBUTTONS
 };
 
 gslc_tsElem m_asPgSdobRoundElem[E_SDOB_ROUND_EL_MAX];
