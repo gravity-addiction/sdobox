@@ -807,7 +807,7 @@ bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (sdob_current_rounds) {
-    if (sdob_num_current_rounds > 1) {
+    if (sdob_num_current_rounds > 0) {
       // Automated mode if file declares the triplets
       touchscreenPageOpen(pvGui, E_PG_SDOB_ROUNDLIST);
     }
@@ -831,7 +831,7 @@ bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (sdob_current_rounds) {
-    if (sdob_num_current_rounds > 1) {
+    if (sdob_num_current_rounds > 0) {
       // Automated mode if file declares the triplets
       touchscreenPageOpen(pvGui, E_PG_SDOB_ROUNDLIST);
     }
