@@ -46,17 +46,11 @@ bool pg_main_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
 
-  char* fileExt = file_ext(pg_main_list[pg_main_listConfig->cur]->name);
-
-  if (strcasecmp(fileExt, "mpg") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "mov") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "mp4") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "wmv") == 0) {
+  // If a file is selected try to load it as video.
+  if (pg_main_listConfig->cur >= 0) {
     pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
   }
+
   return true;
 }
 

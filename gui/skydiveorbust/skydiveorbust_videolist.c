@@ -100,25 +100,14 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  // Clear Scorecard
-  struct queue_head *item = new_qhead();
-  item->action = E_Q_SCORECARD_CLEAR;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  if (pg_sdobVideo_listConfig->cur >= 0) {
+    pg_skydiveorbust_loadvideo(pGui,
+                               pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path,
+                               pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
 
-  char* fileExt = file_ext(pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
-
-  if (strcasecmp(fileExt, "mpg") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "mov") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "mp4") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
-  } else if (strcasecmp(fileExt, "wmv") == 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    // Close Menu
+    pg_sdobVideoListClose(pGui);
   }
-
-  // Close Menu
-  pg_sdobVideoListClose(pGui);
 
   return true;
 }
