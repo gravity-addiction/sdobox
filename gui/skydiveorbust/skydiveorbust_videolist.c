@@ -1,4 +1,5 @@
 #include <sys/stat.h>
+#include <assert.h>
 
 #include "skydiveorbust_videolist.h"
 
@@ -63,7 +64,14 @@ void pg_sdobVideoList_gotoFolderCheck(gslc_tsGui *pGui) {
   if (pg_sdobVideo_listConfig->cur < 0) { return; }
   if (pg_sdobVideo_listConfig->cur >= pg_sdobVideo_listConfig->len) { return; }
 
-  if (pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->mode & S_IFDIR) {
+  if (strcmp(pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, "..") == 0) {
+    char* p = pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path;
+    char* last_slash = strrchr(p, '/');
+    assert(last_slash);         /* there's no way this should be NULL */
+    char* filepath = strndup(p, (last_slash - p));
+    pg_sdobVideoList_loadFolder(pGui, filepath);
+  }
+  else if (pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->mode & S_IFDIR) {
     size_t filepathSz = snprintf(NULL, 0, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
     char *filePath = (char *)malloc(filepathSz * sizeof(char));
     snprintf(filePath, filepathSz, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
@@ -468,7 +476,12 @@ void pg_sdobVideoListButtonSetFuncs() {
 
 void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath) {
   VLIST_CLEAR_CONFIG(pg_sdobVideo_listConfig);
-  pg_sdobVideo_listConfig->len = file_list(folderPath, &pg_sdobVideo_list, -1);
+
+  pg_sdobVideo_listConfig->len =
+    strcmp(folderPath, VIDEOS_BASEPATH) == 0 ?
+    file_list(folderPath, &pg_sdobVideo_list, -1)
+      : file_list_w_up(folderPath, &pg_sdobVideo_list, -1);
+
   qsort(pg_sdobVideo_list, pg_sdobVideo_listConfig->len, sizeof(char *), fileStruct_cmpName);
   VLIST_UPDATE_CONFIG(pg_sdobVideo_listConfig);
   vlist_sliderUpdate(pGui, pg_sdobVideo_listConfig);

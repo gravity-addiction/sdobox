@@ -427,7 +427,7 @@ char *file_ext(char *filename) {
 }
 
 // Create list of files from folder, loop twice first for count and second for data
-size_t file_list(const char *path, struct fileStruct ***ls, int type) {
+static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, int with_up) {
   size_t count = 0;
   DIR *dp = NULL;
   struct dirent *ep = NULL;
@@ -444,7 +444,9 @@ size_t file_list(const char *path, struct fileStruct ***ls, int type) {
   ep = readdir(dp);
   while(NULL != ep) {
     // Hide dotfiles
-    if (strncmp(ep->d_name, ".", 1) == 0) {
+    if (strncmp(ep->d_name, ".", 1) == 0
+        &&
+        (!with_up || strcmp(ep->d_name, "..") != 0)) {
       ep = readdir(dp);
       continue;
     }
@@ -479,6 +481,12 @@ size_t file_list(const char *path, struct fileStruct ***ls, int type) {
   return count;
 }
 
+size_t file_list(const char *path, struct fileStruct ***ls, int type) {
+  return file_list_2(path,ls,type,0);
+}
+size_t file_list_w_up(const char *path, struct fileStruct ***ls, int type) {
+  return file_list_2(path,ls,type,1);
+}
 
 char * calculateSize(uint64_t size)
 {

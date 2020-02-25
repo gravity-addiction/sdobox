@@ -73,6 +73,7 @@ int cint_cmp(const void *a, const void *b);
 char *file_ext(char *filename);
 int fileStruct_cmpName(const void *a, const void *b);
 size_t file_list(const char *path, struct fileStruct ***ls, int type);
+size_t file_list_w_up(const char *path, struct fileStruct ***ls, int type);
 
 char * calculateSize(uint64_t size);
 // void run_system_cmd(char *fullpath);
