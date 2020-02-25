@@ -503,7 +503,18 @@ void pg_sdobVideoList_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_sdobVideoListButtonSetFuncs();
 
-  pg_sdobVideoList_loadFolder(pGui, "/home/pi/shared");
+  char* path_to_load = NULL;
+
+  // Load the previous directory if it exists, otherwise VIDEOS_BASEPATH
+  // If the previous dir is VIDEOS_BASEPATH AND it was empty, then this
+  // will be triggered also -- the only directory that can be empty is
+  // VIDEOS_BASEPATH - subdirs will always have "../" in them.
+  if (pg_sdobVideo_listConfig->len == 0)
+    path_to_load = VIDEOS_BASEPATH;
+  else
+    path_to_load = pg_sdobVideo_list[0]->path;
+
+  pg_sdobVideoList_loadFolder(pGui, path_to_load);
 
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_TXT_TMP], "Video List");
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], sdob_judgement->meet);
