@@ -2025,7 +2025,10 @@ void pg_sdobMpvSocketThreadStop() {
 }
 
 
-void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file) {
+//
+// Called only from the skydiveorbust page's thread as the result of a queue action.
+//
+static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, char* meet, char* file) {
   pg_sdobUpdateTeam(pGui, "");
   pg_sdobUpdateRound(pGui, "");
 
@@ -2035,6 +2038,21 @@ void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file) {
   pg_sdobUpdateMeet(pGui, meet);
   pg_sdobUpdateVideoDesc(pGui, file);
   pg_sdob_pl_sliderForceUpdate = 1;
+}
+
+//
+// Called from anywhere (_videolist.c and main.c) to request a change
+// to a new video file.  This creates the queue action responded to by
+// the above function.
+//
+void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* folder, char* file) {
+  struct queue_head *item = new_qhead();
+  item->action = E_Q_ACTION_LOADVIDEO;
+  item->cmd = strdup(folder);
+  item->u1.ptr = strdup(file);
+  item->u2.ptr = pGui;
+  assert(pg_sdobQueue);
+  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 }
 
 /////////////////////////////////////////////
@@ -2353,6 +2371,13 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
         case E_Q_ACTION_VIDEO_RATE_USER:
           pg_sdobUpdateUserDefinedVideoRate(pGui, mpv_video_rate);
+        break;
+
+        case E_Q_ACTION_LOADVIDEO:
+          pg_skydiveorbust_loadvideo_internal
+            ((gslc_tsGui*)item->u2.ptr, item->cmd, (char*)item->u1.ptr);
+          free(item->cmd);
+          free(item->u1.ptr);
         break;
 
         case E_Q_PLAYER_VIDEO_PAUSE:

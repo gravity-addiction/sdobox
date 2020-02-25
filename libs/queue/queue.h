@@ -11,6 +11,12 @@ extern "C" {
 //
 // This is a queue element, populated with varied useful fields.
 //
+typedef union {
+  void* ptr;
+  int integer;
+  unsigned uinteger;
+  double floating;
+} queue_any_u;
 
 struct queue_head {
   struct queue_head *next;
@@ -21,8 +27,9 @@ struct queue_head {
   double time;
   int selected;
   double amt;
-  char *key;
   char *cmd;
+  queue_any_u u1;
+  queue_any_u u2;
 };
 
 struct queue_root *ALLOC_QUEUE_ROOT();
