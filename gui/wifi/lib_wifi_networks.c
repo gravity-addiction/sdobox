@@ -454,12 +454,20 @@ void pg_wifi_enableNetworkAll() {
 }
 
 void pg_wifi_disableNetwork(int id) {
-  size_t cmdMem = snprintf(NULL, 0, "DISABLE_NETWORK %d", id);
-  char *cmd = malloc(cmdMem + 1);
-  snprintf(cmd, cmdMem + 1, "DISABLE_NETWORK %d", id);
-  // debug_print("\n\n%s\n", cmd);
-  pg_wifi_wpaSendCmd(cmd);
-  free(cmd);
+  if (1) {
+    // The DISABLE_NETWORK command does not shut wifi down.
+    // I need something to turn wifi OFF if I want to switch
+    // to ethernet.   This may be just a temporary workaround.
+    pg_wifi_wpaSendCmd("DISCONNECT");
+  }
+  else {
+    size_t cmdMem = snprintf(NULL, 0, "DISABLE_NETWORK %d", id);
+    char *cmd = malloc(cmdMem + 1);
+    snprintf(cmd, cmdMem + 1, "DISABLE_NETWORK %d", id);
+    // debug_print("\n\n%s\n", cmd);
+    pg_wifi_wpaSendCmd(cmd);
+    free(cmd);
+  }
 }
 void pg_wifi_enableNetwork(int id) {
   size_t cmdMem = snprintf(NULL, 0, "ENABLE_NETWORK %d", id);
