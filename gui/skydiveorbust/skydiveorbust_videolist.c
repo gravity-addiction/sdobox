@@ -54,6 +54,18 @@ void pg_sdboVideoListGetFolders(char* path) {
   }
 }
 
+static void refreshVideoList(gslc_tsGui *pGui) {
+  // Load the previous directory if it exists, otherwise VIDEOS_BASEPATH
+  // If the previous dir is VIDEOS_BASEPATH AND it was empty, then this
+  // will be triggered also -- the only directory that can be empty is
+  // VIDEOS_BASEPATH - subdirs will always have "../" in them.
+  char* path_to_load = NULL;
+  if (pg_sdobVideo_listConfig->len == 0)
+    path_to_load = VIDEOS_BASEPATH;
+  else
+    path_to_load = pg_sdobVideo_list[0]->path;
+  pg_sdobVideoList_loadFolder(pGui, path_to_load);
+}
 
 void pg_sdobVideoListClose(gslc_tsGui *pGui) {
   touchscreenPageClose(pGui, E_PG_SDOB_VIDEOLIST);
@@ -266,6 +278,17 @@ bool pg_sdobVideolist_cbBtn_sliderDown(void* pvGui, void *pvElemRef, gslc_teTouc
   return true;
 }
 
+static bool pg_sdobVideoListCbBtnRefresh(void* pvGui, void* pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  refreshVideoList(pGui);
+
+  // Redraw
+  gslc_ElemSetRedraw(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BOX], GSLC_REDRAW_FULL);
+
+  return true;
+}
 
 /////////////////////
 // Init Gui Elements
@@ -409,9 +432,9 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
             "Close", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnCancel)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_RED);
     gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], GSLC_ALIGN_MID_MID);
-    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], false);
+    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], true);
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], true);
   }
 
@@ -419,15 +442,28 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {rFullscreen.x + (rFullscreen.w / 3), (rFullscreen.y + rFullscreen.h) - 60, (rFullscreen.w / 3), 60},
-            "Change Video", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnChangeVideo)
+            "Load Video", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnChangeVideo)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_GREEN);
     gslc_ElemSetTxtAlign(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], GSLC_ALIGN_MID_MID);
-    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], false);
+    gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
   }
 
+  // Re-fresh Button
+  gslc_tsElemRef** eRef = &pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_REFRESH];
+  if ((*eRef = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+                                     (gslc_tsRect){rFullscreen.x + rFullscreen.w - 1 - 100, (rFullscreen.y + rFullscreen.h) - 60,
+                                                     100, 60},
+                                     "Refresh", 0, E_FONT_MONO14, &pg_sdobVideoListCbBtnRefresh))
+      != NULL) {
+    gslc_ElemSetTxtCol(pGui, *eRef, GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, *eRef, GSLC_COL_CYAN, GSLC_COL_BLACK, GSLC_COL_CYAN);
+    gslc_ElemSetTxtAlign(pGui, *eRef, GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, *eRef, true);
+    gslc_ElemSetFrameEn(pGui, *eRef, true);
+  }
 }
 
 
@@ -503,18 +539,7 @@ void pg_sdobVideoList_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_sdobVideoListButtonSetFuncs();
 
-  char* path_to_load = NULL;
-
-  // Load the previous directory if it exists, otherwise VIDEOS_BASEPATH
-  // If the previous dir is VIDEOS_BASEPATH AND it was empty, then this
-  // will be triggered also -- the only directory that can be empty is
-  // VIDEOS_BASEPATH - subdirs will always have "../" in them.
-  if (pg_sdobVideo_listConfig->len == 0)
-    path_to_load = VIDEOS_BASEPATH;
-  else
-    path_to_load = pg_sdobVideo_list[0]->path;
-
-  pg_sdobVideoList_loadFolder(pGui, path_to_load);
+  refreshVideoList(pGui);
 
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_TXT_TMP], "Video List");
   gslc_ElemSetTxtStr(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_FOLDER], sdob_judgement->meet);
