@@ -105,8 +105,8 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 // video filename into a list of candidate event/team/rounds.
 
 // Possible matching filenames:
-//  USIS2020_(8_801_1)_(8_802_1).mpg
-//  USIS2020_(4_401_10)_(4_GK4_9)_(4J_317_8)_(4J_317_8).30fps.4k.mp4
+//  USIS2020_(8_1_801)_(8_1_802).mpg
+//  USIS2020_(4_10_401)_(4_9_GK4)_(4J_8_317)_(4J_8_317).30fps.4k.mp4
 
 // No set limit on how many rounds are present.
 // The first field of a round is an event descriptor used to trigger
@@ -202,10 +202,10 @@ static void parse_video_rounds(char* vfilename) {
     sdob_current_rounds[i].eventname =
       strndup(subline+matches[1].rm_so,
               matches[1].rm_eo - matches[1].rm_so);
-    sdob_current_rounds[i].teamnumber =
+    sdob_current_rounds[i].round =
       strndup(subline+matches[2].rm_so,
               matches[2].rm_eo - matches[2].rm_so);
-    sdob_current_rounds[i].round =
+    sdob_current_rounds[i].teamnumber =
       strndup(subline+matches[3].rm_so,
               matches[3].rm_eo - matches[3].rm_so);
 
