@@ -2,7 +2,7 @@
 
 
 if [ "$#" -ne 6 ]; then
-  echo "Usage: split_video_with_timestamp.sh input.mp4 output sowt workingtime crf"
+  echo "Usage: split_video_with_timestamp.sh input.mp4 output sowt workingtime leaduptime crf"
   echo "Example: split_video_with_timestamp.sh ./input.mp4 ./output 12.345678 35 5 \"-crf 35\""
   echo "Example: split_video_with_timestamp.sh ./input.mpg ./output 12.345678 50 5 \"-b:v 10M\""
   
