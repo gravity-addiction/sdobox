@@ -16,11 +16,9 @@ wt=$4
 leadtime=$5
 bitrate=$6
 
-
 totaltime=$(($wt + $leadtime))
-ss=$(echo - | awk '{print 22.039289 - 5}')
+ss=$(echo - | awk -v sowt="$sowt" -v leadtime="$leadtime" '{print sowt - leadtime}')
 
-echo $ss
 echo 'Getting Duration'
 duration=$(ffprobe -loglevel error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$input")
 ffmpeg -f mpeg -ss $ss -i "$input" -an -t $totaltime $bitrate -c:v h264_omx -vf "drawtext=fontfile=OpenSans-Regular.ttf:text='%{eif\\:if(between(t\, 0\, $leadtime)\, $wt\, (($duration + $totaltime + .9) - $duration)-t)\\:d\\:2}':fontcolor=white:fontsize=24:x=w-tw-20:y=th:box=1:boxcolor=black@0.5:boxborderw=10" "$output.mp4"
