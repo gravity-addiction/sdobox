@@ -71,6 +71,7 @@ int parseTabbedData(const char *s, char *data[], size_t n);
 int cstring_cmp(const void *a, const void *b);
 int cint_cmp(const void *a, const void *b);
 char *file_ext(char *filename);
+int *file_exists(char *filename);
 int fileStruct_cmpName(const void *a, const void *b);
 size_t file_list(const char *path, struct fileStruct ***ls, int type);
 size_t file_list_w_up(const char *path, struct fileStruct ***ls, int type);

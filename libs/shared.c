@@ -426,6 +426,14 @@ char *file_ext(char *filename) {
   return dot + 1;
 }
 
+int *file_exists(char *filename) {
+  if(access(filename, F_OK) != -1) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 // Create list of files from folder, loop twice first for count and second for data
 static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, int with_up) {
   size_t count = 0;

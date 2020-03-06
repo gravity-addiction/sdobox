@@ -10,6 +10,25 @@
 #include "gui/keyboard/keyboard.h"
 #include "gui/skydiveorbust/skydiveorbust.h"
 
+
+bool pg_main_list_check() {
+  // Current index larger than length
+  if (pg_main_listConfig->cur < 0 || pg_main_listConfig->cur >= pg_main_listConfig->len) {
+    return false;
+  }
+  size_t pathSz = snprintf(NULL, 0, "%s/%s", pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name) + 1;
+  char *path = (char*)malloc(pathSz * sizeof(char));
+  snprintf(path, pathSz, "%s/%s", pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
+
+  // File exists and is accessable
+  if (!file_exists(path)) {
+    free(path);
+    return false;
+  }
+  free(path);
+
+  return true;
+}
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -22,8 +41,9 @@ bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_
 
 bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  if (!pg_main_list_check()) { return true; }
 
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SLIDESHOW);
 
   char* fileExt = file_ext(pg_main_list[pg_main_listConfig->cur]->name);
@@ -43,13 +63,13 @@ bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 
 bool pg_main_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (!pg_main_list_check()) { return true; }
+
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
 
   // If a file is selected try to load it as video.
-  if (pg_main_listConfig->cur >= 0) {
-    pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
-  }
+  pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
 
   return true;
 }
