@@ -182,7 +182,7 @@ bool pg_sdobVideolist_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_sdobVideo_listConfig, 0);
+  if (!vlist_clickBtn(pg_sdobVideo_listConfig, 0)) { return true; }
   pg_sdobVideoList_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -194,7 +194,7 @@ bool pg_sdobVideolist_cbBtn_elB(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_sdobVideo_listConfig, 1);
+  if (!vlist_clickBtn(pg_sdobVideo_listConfig, 1)) { return true; }
   pg_sdobVideoList_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -206,7 +206,7 @@ bool pg_sdobVideolist_cbBtn_elC(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_sdobVideo_listConfig, 2);
+  if (!vlist_clickBtn(pg_sdobVideo_listConfig, 2)) { return true; }
   pg_sdobVideoList_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -218,7 +218,7 @@ bool pg_sdobVideolist_cbBtn_elD(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_sdobVideo_listConfig, 3);
+  if (!vlist_clickBtn(pg_sdobVideo_listConfig, 3)) { return true; }
   pg_sdobVideoList_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -230,7 +230,7 @@ bool pg_sdobVideolist_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_sdobVideo_listConfig, 4);
+  if (!vlist_clickBtn(pg_sdobVideo_listConfig, 4)) { return true; }
   pg_sdobVideoList_gotoFolderCheck(pGui);
 
   // Update GUI list Box

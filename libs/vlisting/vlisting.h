@@ -30,7 +30,8 @@ void VLIST_CLEAR_CONFIG(struct vlist_config *config);
 void vlist_sliderDown(struct vlist_config *config);
 void vlist_sliderUp(struct vlist_config *config);
 void vlist_sliderSetPos(gslc_tsGui *pGui, struct vlist_config *config, int i);
-void vlist_clickBtn(struct vlist_config *config, int i);
+// returns 0 when click is invalid
+int vlist_clickBtn(struct vlist_config *config, int i);
 
 ///////////////////////////////
 // Slider Display Updates

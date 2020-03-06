@@ -79,7 +79,7 @@ bool pg_wifi_list_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_wifi_list_networkConfig, 0);
+  if (!vlist_clickBtn(pg_wifi_list_networkConfig, 0)) { return true; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -89,7 +89,7 @@ bool pg_wifi_list_cbBtn_elB(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_wifi_list_networkConfig, 1);
+  if (!vlist_clickBtn(pg_wifi_list_networkConfig, 1)) { return true; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -99,7 +99,7 @@ bool pg_wifi_list_cbBtn_elC(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_wifi_list_networkConfig, 2);
+  if (!vlist_clickBtn(pg_wifi_list_networkConfig, 2)) { return true; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -109,7 +109,7 @@ bool pg_wifi_list_cbBtn_elD(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_wifi_list_networkConfig, 3);
+  if (!vlist_clickBtn(pg_wifi_list_networkConfig, 3)) { return true; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -119,7 +119,7 @@ bool pg_wifi_list_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   if (pg_wifi_wpaScanning == 1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_wifi_list_networkConfig, 4);
+  if (!vlist_clickBtn(pg_wifi_list_networkConfig, 4)) { return true; }
   gslc_ElemSetRedraw(pGui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }

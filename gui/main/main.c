@@ -187,7 +187,7 @@ bool pg_main_cbBtn_elA(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 0);
+  if (!vlist_clickBtn(pg_main_listConfig, 0)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -199,7 +199,7 @@ bool pg_main_cbBtn_elB(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 1);
+  if (!vlist_clickBtn(pg_main_listConfig, 1)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -211,7 +211,7 @@ bool pg_main_cbBtn_elC(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 2);
+  if (!vlist_clickBtn(pg_main_listConfig, 2)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -223,7 +223,7 @@ bool pg_main_cbBtn_elD(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 3);
+  if (!vlist_clickBtn(pg_main_listConfig, 3)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -235,7 +235,7 @@ bool pg_main_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 4);
+  if (!vlist_clickBtn(pg_main_listConfig, 4)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -247,7 +247,7 @@ bool pg_main_cbBtn_elF(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 5);
+  if (!vlist_clickBtn(pg_main_listConfig, 5)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
@@ -259,7 +259,7 @@ bool pg_main_cbBtn_elG(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  vlist_clickBtn(pg_main_listConfig, 6);
+  if (!vlist_clickBtn(pg_main_listConfig, 6)) { return true; }
   pg_main_gotoFolderCheck(pGui);
 
   // Update GUI list Box
