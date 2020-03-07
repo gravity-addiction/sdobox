@@ -10,6 +10,7 @@ extern "C" {
 #include "gui/pages.h"
 #include "skydiveorbust_scorecard.h"
 #include "skydiveorbust_player.h"
+#include "skydiveorbust_sql.h"
 
 
 //////////////////

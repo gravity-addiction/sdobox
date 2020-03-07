@@ -2542,6 +2542,8 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   // Reset Scorecard Slider to Top
   // pg_sdobSliderResetCurPos(pGui);
 
+  pg_sdobSqlSetup();
+
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Started");
 }
 

@@ -20,7 +20,7 @@
 #include <curl/curl.h> // curl
 #include <wiringPi.h> // Gordons Wiring Pi, millis()
 #include <libconfig.h> // Config files ~/.config/touchapp/touchapp.conf
-#include <sqlite3.h> // SQLite3 Database
+
 
 
 
@@ -34,6 +34,7 @@
 #include "buttons/buttons.h"
 #include "flightgroups/flightgroups.h"
 #include "fbcp/fbcp.h"
+#include "sqlite3-wrapper/sqlite3-wrapper.h"
 #include "dbg/dbg.h"
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
@@ -117,6 +118,12 @@ void get_config_settings()
   } else {
     lib_buttonsBtnHoldDelay = 750;
   }
+  // sqlite3 (SQLITE3_PATH)
+
+  const char* retSQL3Path;
+  if (config_lookup_string(&cfg, "sqlite3", &retSQL3Path)) {
+    SQLITE3_PATH = (char*)retSQL3Path;
+  }
 
   // start page
   if (config_lookup_int(&cfg, "start_page", &retInt)) {
@@ -170,7 +177,10 @@ int main( int argc, char* args[] )
   // Start Buttons
   // lib_buttonsThreadStart();
 
-
+  if (SQLITE3_PATH != NULL) {
+    sqlite3_wrapper_init();
+    sqlite3_wrapper_start();
+  }
   // ------------------------------------------------
   // Create graphic elements
   // ------------------------------------------------
@@ -248,6 +258,9 @@ int main( int argc, char* args[] )
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
 
+  if (SQLITE3_PATH != NULL) {
+    sqlite3_wrapper_stop();
+  }
 
   // Quit GUIslice
   guislice_wrapper_quit(&m_gui);
