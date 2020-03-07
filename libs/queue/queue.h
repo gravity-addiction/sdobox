@@ -22,6 +22,7 @@ struct queue_head {
   struct queue_head *next;
   struct queue_head *prev;
   int action;
+  void* data;
   int mark;
   int milli;
   double time;
