@@ -5,7 +5,7 @@
 
 #include "shared.h"
 #include "queue/queue.h"
-#include "sqlite3-wrapper/sqlite3-wrapper.h"
+#include "sqlite3-wrapper.h"
 #include "dbg/dbg.h"
 
 

@@ -14,7 +14,7 @@ void pg_sdobSql_deleteTables();
 void pg_sdobSql_dropTables();
 
 int pg_sdobSql_markInsertCb(void *NotUsed, int argc, char **argv, char **azColName);
-void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* working_time);
+void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* working_time, char* note);
 
 #ifdef __cplusplus
 }
