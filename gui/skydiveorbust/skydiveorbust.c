@@ -2543,6 +2543,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   // pg_sdobSliderResetCurPos(pGui);
 
   pg_sdobSqlSetup();
+  // pg_sdobSql_markInsert(1, 1, "34.4", "35.0");
 
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Started");
 }

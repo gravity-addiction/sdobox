@@ -119,11 +119,10 @@ void get_config_settings()
     lib_buttonsBtnHoldDelay = 750;
   }
   // sqlite3 (SQLITE3_PATH)
-
-  const char* retSQL3Path;
+  const char * retSQL3Path;
   if (config_lookup_string(&cfg, "sqlite3", &retSQL3Path)) {
-    SQLITE3_PATH = (char*)retSQL3Path;
-  }
+    SQLITE3_PATH = strdup(retSQL3Path);
+  } else { SQLITE3_PATH = ":memory:"; }
 
   // start page
   if (config_lookup_int(&cfg, "start_page", &retInt)) {
