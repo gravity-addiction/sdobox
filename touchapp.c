@@ -35,6 +35,7 @@
 #include "flightgroups/flightgroups.h"
 #include "fbcp/fbcp.h"
 #include "sqlite3-wrapper/sqlite3-wrapper.h"
+#include "websocket/websocket.h"
 #include "dbg/dbg.h"
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
@@ -118,6 +119,7 @@ void get_config_settings()
   } else {
     lib_buttonsBtnHoldDelay = 750;
   }
+
   // sqlite3 (SQLITE3_PATH)
   const char * retSQL3Path;
   if (config_lookup_string(&cfg, "sqlite3", &retSQL3Path)) {
@@ -131,6 +133,11 @@ void get_config_settings()
   // Sanity check page int
   if (m_startPage < 0 || m_startPage >= MAX_PAGES) {
     m_startPage = 0;
+  // websocket (WEBSOCKET_PORT)
+  if (config_lookup_int(&cfg, "websocket", &retInt)) {
+    WEBSOCKET_PORT = retInt;
+  } else {
+    WEBSOCKET_PORT = 8080;
   }
 
   config_destroy(&cfg);
@@ -180,6 +187,11 @@ int main( int argc, char* args[] )
     sqlite3_wrapper_init();
     sqlite3_wrapper_start();
   }
+
+  if (WEBSOCKET_PORT) {
+    websocket_start();
+  }
+
   // ------------------------------------------------
   // Create graphic elements
   // ------------------------------------------------
@@ -256,6 +268,10 @@ int main( int argc, char* args[] )
   } // bQuit
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
+
+  if (WEBSOCKET_PORT) {
+    websocket_start();
+  }
 
   if (SQLITE3_PATH != NULL) {
     sqlite3_wrapper_stop();
