@@ -25,10 +25,19 @@ void pg_sdobSqlSetup() {
 void pg_sdobSql_createTables() {
   struct sqlite3WrapperData *data = (struct sqlite3WrapperData *)malloc(sizeof(struct sqlite3WrapperData));
   // data->sql = "CREATE TABLE IF NOT EXISTS sqlite_sequence(name,seq); "
-  data->sql = "CREATE TABLE IF NOT EXISTS video_info (id INTEGER PRIMARY KEY AUTOINCREMENT, id_rules INTEGER, video_hash TEXT NOT NULL UNIQUE, video_tags TEXT NOT NULL DEFAULT '', video_fps REAL NOT NULL DEFAULT 0, created_at REAL);" \
-    "CREATE TABLE IF NOT EXISTS video_marks (id INTEGER PRIMARY KEY AUTOINCREMENT, id_video INTEGER NOT NULL, mark_type INTEGER NOT NULL DEFAULT '', video_time REAL NOT NULL DEFAULT 0, working_time REAL NOT NULL DEFAULT 0);" \
+  data->sql = "CREATE TABLE IF NOT EXISTS sdob_video_marks (" \
+    "id INTEGER PRIMARY KEY AUTOINCREMENT, " \
+    "id_video INTEGER NOT NULL, " \
+    "mark_type INTEGER NOT NULL DEFAULT '', " \
+    "video_time REAL NOT NULL DEFAULT 0, " \
+    "working_time REAL NOT NULL DEFAULT 0, " \
+    "notes TEXT " \
+  ");";
+
+    /* "CREATE TABLE IF NOT EXISTS video_info (id INTEGER PRIMARY KEY AUTOINCREMENT, id_rules INTEGER, video_hash TEXT NOT NULL UNIQUE, video_tags TEXT NOT NULL DEFAULT '', video_fps REAL NOT NULL DEFAULT 0, created_at REAL);" \
     "CREATE TABLE IF NOT EXISTS rule_info (id INTEGER PRIMARY KEY AUTOINCREMENT, rule_tags TEXT NOT NULL DEFAULT '', rule_json TEXT, rule_version INTEGER);" \
     "CREATE TABLE IF NOT EXISTS scorecards (id INTEGER PRIMARY KEY AUTOINCREMENT, id_video INTEGER, id_rule INTEGER, id_judge INTEGER, notes TEXT, created_at TEXT)";
+    */
 
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
@@ -38,10 +47,10 @@ void pg_sdobSql_createTables() {
 
 void pg_sdobSql_deleteTables() {
   struct sqlite3WrapperData *data = (struct sqlite3WrapperData *)malloc(sizeof(struct sqlite3WrapperData));
-  data->sql = "DELETE FROM video_info;" \
-    "DELETE FROM video_marks;" \
+  data->sql = "DELETE FROM sdob_video_marks;";
+  /* "DELETE FROM video_info;" \
     "DELETE FROM rule_info;" \
-    "DELETE FROM scorecards;";
+    "DELETE FROM scorecards;"; */
 
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
@@ -51,10 +60,10 @@ void pg_sdobSql_deleteTables() {
 
 void pg_sdobSql_dropTables() {
   struct sqlite3WrapperData *data = (struct sqlite3WrapperData *)malloc(sizeof(struct sqlite3WrapperData));
-  data->sql = "DROP TABLE video_info;" \
-    "DROP TABLE video_marks;" \
+  data->sql = "DROP TABLE sdob_video_marks;";
+    /*"DROP TABLE video_info;" \
     "DROP TABLE rule_info;" \
-    "DROP TABLE scorecards;";
+    "DROP TABLE scorecards;";*/
 
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
@@ -72,11 +81,11 @@ int pg_sdobSql_markInsertCb(void *NotUsed, int argc, char **argv, char **azColNa
   return 1;
 }
 
-void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* working_time) {
+void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* working_time, char* note) {
   struct sqlite3WrapperData *data = (struct sqlite3WrapperData*)malloc(sizeof(struct sqlite3WrapperData));
-  data->sql = "INSERT INTO video_marks (id, id_video, mark_type, video_time, working_time) VALUES (?, ?, ?, ?, ?);";
+  data->sql = "INSERT INTO video_marks (id, id_video, mark_type, video_time, working_time, note) VALUES (?, ?, ?, ?, ?, ?);";
   data->callback = pg_sdobSql_markInsertCb;
-  data->bindingLen = 5;
+  data->bindingLen = 6;
   data->binding = (struct sqlite3WrapperBinding *)malloc(data->bindingLen * sizeof(struct sqlite3WrapperBinding));
   // Autonumbering ID
   data->binding[0].datatype = E_SQLITE3_TYPE_NULL;
@@ -96,6 +105,10 @@ void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* 
   // Video Mark Time from start of working time
   data->binding[4].datatype = E_SQLITE3_TYPE_TEXT;
   data->binding[4].str = working_time;
+
+  // Mark Notes
+  data->binding[5].datatype = E_SQLITE3_TYPE_TEXT;
+  data->binding[5].str = note;
 
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
