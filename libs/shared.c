@@ -426,7 +426,7 @@ char *file_ext(char *filename) {
   return dot + 1;
 }
 
-int *file_exists(char *filename) {
+int file_exists(char *filename) {
   if(access(filename, F_OK) != -1) {
     return 1;
   } else {

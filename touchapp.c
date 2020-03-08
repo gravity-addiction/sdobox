@@ -35,7 +35,9 @@
 #include "flightgroups/flightgroups.h"
 #include "fbcp/fbcp.h"
 #include "sqlite3-wrapper/sqlite3-wrapper.h"
-#include "websocket/websocket.h"
+#include "ulfius/websocket_api.h"
+#include "ulfius/websocket_server.h"
+#include "ulfius/websocket_client.h"
 #include "dbg/dbg.h"
 
 #include "GUIslice-wrapper/GUIslice-wrapper.h"
@@ -124,7 +126,7 @@ void get_config_settings()
   const char * retSQL3Path;
   if (config_lookup_string(&cfg, "sqlite3", &retSQL3Path)) {
     SQLITE3_PATH = strdup(retSQL3Path);
-  } else { SQLITE3_PATH = ":memory:"; }
+  }
 
   // start page
   if (config_lookup_int(&cfg, "start_page", &retInt)) {
@@ -138,7 +140,30 @@ void get_config_settings()
     WEBSOCKET_PORT = retInt;
   } else {
     WEBSOCKET_PORT = 8080;
+  // websocket_api_port (WEBSOCKET_API_PORT)
+  if (config_lookup_int(&cfg, "websocket_api_port", &retInt)) {
+    WEBSOCKET_API_PORT = retInt;
   }
+  if (config_lookup_int(&cfg, "websocket_server_port", &retInt)) {
+    WEBSOCKET_SERVER_PORT = retInt;
+  }
+  const char * retWebsocketUrl;
+  if (config_lookup_string(&cfg, "websocket_server_url", &retWebsocketUrl)) {
+    WEBSOCKET_SERVER_URL = strdup(retWebsocketUrl);
+  }
+  const char * retWebsocketStaticPath;
+  if (config_lookup_string(&cfg, "websocket_server_static_path", &retWebsocketStaticPath)) {
+    WEBSOCKET_SERVER_STATIC_PATH = strdup(retWebsocketStaticPath);
+  }
+  const char * retWebsocketStatic;
+  if (config_lookup_string(&cfg, "websocket_server_static", &retWebsocketStatic)) {
+    WEBSOCKET_SERVER_STATIC = strdup(retWebsocketStatic);
+  }
+  const char * retWebsocketHost;
+  if (config_lookup_string(&cfg, "websocket_client_host", &retWebsocketHost)) {
+    WEBSOCKET_CLIENT_HOST = strdup(retWebsocketHost);
+  }
+
 
   config_destroy(&cfg);
 }
@@ -188,8 +213,11 @@ int main( int argc, char* args[] )
     sqlite3_wrapper_start();
   }
 
-  if (WEBSOCKET_PORT) {
-    websocket_start();
+  if (WEBSOCKET_API_PORT) {
+    websocket_api_start();
+  }
+  if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
+    websocket_server_start();
   }
 
   // ------------------------------------------------
@@ -269,8 +297,12 @@ int main( int argc, char* args[] )
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
 
-  if (WEBSOCKET_PORT) {
-    websocket_start();
+  if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
+    websocket_server_start();
+  }
+
+  if (WEBSOCKET_API_PORT) {
+    websocket_api_start();
   }
 
   if (SQLITE3_PATH != NULL) {
