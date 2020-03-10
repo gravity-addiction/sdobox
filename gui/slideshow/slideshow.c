@@ -417,14 +417,23 @@ void pg_slideshowButtonRotaryPressed() {
 
     //-/ pg_slideshowSendChar("a"); // Reset to default zoom size
     mpv_play();
+
+    char *showCmd = strdup("show-text \"Playing\"\n");
+    mpv_cmd(showCmd);
   } else {
 
     if (pg_slideshowPaused == 0) {
       pg_slideshowPaused = 1;
       mpv_pause();
+
+      char *showCmd = strdup("show-text \"Paused\"\n");
+      mpv_cmd(showCmd);
     } else {
       pg_slideshowPaused = 0;
       mpv_play();
+
+      char *showCmd = strdup("show-text \"Playing\"\n");
+      mpv_cmd(showCmd);
     }
   }
 }
@@ -767,6 +776,12 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
   pg_slideshowMpvSocketThreadStart();
 
+  char* retPath;
+  if ((mpvSocketSinglet("path", &retPath)) == -1) {
+    char *cmd = strdup("loadlist \"/home/pi/shared/playlist.txt\" replace\n");
+    mpv_cmd(cmd);
+  }
+
 /*
   if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/", "w"))){
     // debug_print("%s\n", "Cannot Open image folder");
@@ -789,7 +804,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
 void pg_slideshow_close(gslc_tsGui *pGui) {
   fbcp_stop();
-
+  mpv_stop();
   pg_slideshowMpvSocketThreadStop();
 
   //-/ system("killall fim");
@@ -801,7 +816,7 @@ void pg_slideshow_close(gslc_tsGui *pGui) {
 void pg_slideshow_destroy(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Slideshow Stopping");
   // pg_slideshowButtonUnsetFuncs();
-  mpv_stop();
+
   mpv_playlist_clear();
 
   // // debug_print("%s\n", "Slideshow Stopping Folder Watch");
