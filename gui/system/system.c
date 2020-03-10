@@ -57,10 +57,48 @@ bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
   return true;
 }
 
-bool pg_system_cbBtn_update(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   
+  m_bQuit = 1;
 
+  return true;
+}
+
+bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (pg_system_apt_upgrade == 1) { return true; }
+  
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  FILE *fd;
+  fd = popen("sudo apt -qy update && sudo apt -qy -o \"Dpkg::Options::=--force-confdef\" -o \"Dpkg::Options::=--force-confold\" upgrade", "r");
+  if (!fd) return 1;
+
+  char buffer[64];
+  size_t chread;
+  int dots = 0;
+
+  gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Upgrading");
+  gslc_Update(pGui);
+  // Use fread so binary data is dealt with correctly
+  while ((chread = fread(buffer, 1, sizeof(buffer), fd)) != 0) {
+    if (dots == 0) {
+      gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Upgrading .");
+    } else if (dots == 1) {
+      gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Upgrading ..");
+    } else if (dots == 2) {
+      gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Upgrading ...");
+      dots = -1;
+    }
+    dots++;
+    gslc_Update(pGui);
+  }
+
+  pclose(fd);
+  pg_system_apt_upgrade = 0;
+  gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Finished");
+  gslc_Update(pGui);
   return true;
 }
 
@@ -96,6 +134,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], true); 
   }
+
+  // Close App
+  if ((
+    pg_systemEl[E_SYSTEM_EL_EXIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 210), ((rFullscreen.y + rFullscreen.h) - 50), 100, 50},
+            "Exit", 0, E_FONT_MONO14, &pg_system_cbBtn_exit)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], false);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], true); 
+  }
   
   // Wifi Settings
   if ((
@@ -113,7 +164,7 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   // Powercycle HDMI Port
   if ((
     pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0, 160, 150, 50},
+            (gslc_tsRect) {0, 130, 150, 50},
             "Powercycle HDMI", 0, E_FONT_MONO14, &pg_system_cbBtn_powercycleHdmi)
   ) != NULL) {            
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], GSLC_COL_WHITE);
@@ -121,6 +172,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true); 
+  }
+
+  // Update
+  if ((
+    pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 200, 150, 50},
+            "Upgrade", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
+  ) != NULL) {            
+    gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], true); 
   }
   
   return 1;
@@ -141,6 +205,8 @@ void pg_system_btnUnsetFuncs() {
 
 // GUI Init
 void pg_system_init(gslc_tsGui *pGui) {
+  pg_system_apt_upgrade = 0;
+
   // Create Interface
   pg_system_guiInit(pGui);
 

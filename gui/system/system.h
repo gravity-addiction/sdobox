@@ -20,8 +20,10 @@ enum {
   E_SYSTEM_EL_BOX,
   E_SYSTEM_EL_CLOSE,
   E_SYSTEM_EL_REBOOT,
+  E_SYSTEM_EL_EXIT,
   E_SYSTEM_EL_WIFI,
   E_SYSTEM_EL_POWERCYCLEHDMI,
+  E_SYSTEM_EL_UPGRADE,
   
   E_SYSTEM_EL_MAX
 };
@@ -34,10 +36,14 @@ gslc_tsElemRef pg_systemElemRef[MAX_ELEM_PG_SYSTEM_RAM];
 
 gslc_tsElemRef* pg_systemEl[E_SYSTEM_EL_MAX];
 
+int pg_system_apt_upgrade;
+
 bool pg_system_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
+bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_system_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_system_cbBtn_powercycleHdmi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
+bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 
 bool pg_system_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
 
