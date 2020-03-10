@@ -118,6 +118,15 @@ void get_config_settings()
     lib_buttonsBtnHoldDelay = 750;
   }
 
+  // start page
+  if (config_lookup_int(&cfg, "start_page", &retInt)) {
+    m_startPage = retInt;
+  }
+  // Sanity check page int
+  if (m_startPage < 0 || m_startPage >= MAX_PAGES) {
+    m_startPage = 0;
+  }
+
   config_destroy(&cfg);
 }
 
@@ -132,6 +141,7 @@ int main( int argc, char* args[] )
   // ------------------------------------------------
   // Main Quitter flag, 1 quits, 2 hurrys up quitting, and 3 quits rtfn
   m_bQuit = 0;
+  m_startPage = 0;
 
   // Debug printing support
   init_dbg();
@@ -210,7 +220,7 @@ int main( int argc, char* args[] )
 
   // mainButtonSetFuncs();
   // InitGUI_AdvertGui(strPath);
-  touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  touchscreenPageOpen(&m_gui, m_startPage);
 
   // ------------------------------------------------
   // Main event loop
