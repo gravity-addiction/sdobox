@@ -125,7 +125,7 @@ PI_THREAD (buttonsEventThread) {
 
 
 // Button Initialized
-void lib_buttons_init(gslc_tsGui *pGui) {
+void lib_buttons_init() {
   // placeholders for the rotary knob, determines which direction the knob was turned
   // lib_buttonsBtnDebounceDelay = 0;
   // lib_buttonsBtnHoldDelay = 1500;

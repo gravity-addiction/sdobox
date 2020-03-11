@@ -200,7 +200,7 @@ int main( int argc, char* args[] )
   // Initialize workers
   // ------------------------------------------------
   // libs/buttons
-  lib_buttons_init(&m_gui);
+  lib_buttons_init();
 
   // Start Buttons
   // lib_buttonsThreadStart();
@@ -220,7 +220,7 @@ int main( int argc, char* args[] )
   // ------------------------------------------------
   // Create graphic elements
   // ------------------------------------------------
-  guislice_wrapper_init(&m_gui);
+  m_touchscreenInit = guislice_wrapper_init(&m_gui);
 
   // InitGUI_Keyboard(&m_gui, strPath);
   // InitGUI_Wifi(&m_gui, strPath);
@@ -266,8 +266,9 @@ int main( int argc, char* args[] )
 
   // mainButtonSetFuncs();
   // InitGUI_AdvertGui(strPath);
-  touchscreenPageOpen(&m_gui, m_startPage);
-
+  if (m_touchscreenInit) {
+    touchscreenPageOpen(&m_gui, m_startPage);
+  }
   // ------------------------------------------------
   // Main event loop
   // ------------------------------------------------
@@ -306,12 +307,14 @@ int main( int argc, char* args[] )
     sqlite3_wrapper_stop();
   }
 
-  // Quit GUIslice
-  guislice_wrapper_quit(&m_gui);
+  if (m_touchscreenInit) {
+    // Quit GUIslice
+    guislice_wrapper_quit(&m_gui);
 
-  // Close all Pages
-  touchScreenPageDestroyAll(&m_gui);
-  touchscreenPageDestroy(&m_gui, 0);
+    // Close all Pages
+    touchScreenPageDestroyAll(&m_gui);
+    touchscreenPageDestroy(&m_gui, 0);
+  }
 
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();

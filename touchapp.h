@@ -12,6 +12,7 @@ char*    config_path = "/home/pi/.config/touchapp/touchapp.conf";
 // int      m_bQuit = 0; // Runs main() while loop while(!m_bQuit) {}
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
 int      m_startPage = 0; // Page Int to start
+int      m_touchscreenInit = 0; // guislice init successful
 
 void signal_sigint(int sig);
 void get_config_settings();

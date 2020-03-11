@@ -64,7 +64,7 @@ int      lib_buttonsThreadRunning; // Running flag for Mpv RPC
 void (*cbBtns[MAX_BUTTONS])();
 
 int lib_buttons_thread();
-void lib_buttons_init(gslc_tsGui *pGui);
+void lib_buttons_init();
 
 int lib_buttonsThreadStart();
 void lib_buttonsThreadStop();
