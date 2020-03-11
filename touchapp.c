@@ -135,11 +135,8 @@ void get_config_settings()
   // Sanity check page int
   if (m_startPage < 0 || m_startPage >= MAX_PAGES) {
     m_startPage = 0;
-  // websocket (WEBSOCKET_PORT)
-  if (config_lookup_int(&cfg, "websocket", &retInt)) {
-    WEBSOCKET_PORT = retInt;
-  } else {
-    WEBSOCKET_PORT = 8080;
+  }
+
   // websocket_api_port (WEBSOCKET_API_PORT)
   if (config_lookup_int(&cfg, "websocket_api_port", &retInt)) {
     WEBSOCKET_API_PORT = retInt;

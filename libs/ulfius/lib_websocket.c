@@ -1,3 +1,4 @@
+#include <string.h>
 #include <ulfius.h>
 #include "dbg/dbg.h"
 
