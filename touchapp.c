@@ -290,7 +290,9 @@ int main( int argc, char* args[] )
       m_bSleep = 1; // reset flag to next loop
     }
 
-    gslc_Update(&m_gui);
+    if (m_touchscreenInit) {
+      gslc_Update(&m_gui);
+    }
   } // bQuit
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
