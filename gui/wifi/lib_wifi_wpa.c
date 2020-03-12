@@ -124,7 +124,8 @@ int pg_wifi_wpaSendCmdBuf(char* cmd, char ** buf) {
     dbgprintf(DBG_ERROR, "%s\n", "wpa_ctrl_request() timeout.");
     return 0;
   }
-  dbgprintf(DBG_WPA, "WPA Cmd: %s\nLen: %d\nBuffer: %s\n", cmd, len, b);
+  dbgprintf(DBG_INFO, "WPA Cmd: %s\nLen: %d\n", cmd, len);
+  dbgprintf(DBG_WPA, "Buffer: %s\n", b);
   *buf = b;
   return len;
 }

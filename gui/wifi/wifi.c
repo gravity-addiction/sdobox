@@ -355,9 +355,9 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
  cleanup:
   if (network_id> -1) {
     // Delete Bad Network
-    size_t delNetworkSz = snprintf(NULL, 0, "DELETE_NETWORK %d", network_id) + 1;
+    size_t delNetworkSz = snprintf(NULL, 0, "REMOVE_NETWORK %d", network_id) + 1;
     char *delNetworkCmd = (char *)malloc(delNetworkSz * sizeof(char));
-    snprintf(delNetworkCmd, delNetworkSz, "DELETE_NETWORK %d", network_id);
+    snprintf(delNetworkCmd, delNetworkSz, "REMOVE_NETWORK %d", network_id);
     pg_wifi_wpaSendCmd(delNetworkCmd);
     free(delNetworkCmd);
   }
@@ -736,7 +736,7 @@ void pg_wifi_open(gslc_tsGui *pGui) {
   if (pg_wifi_net_selected) {
     pg_wifi_cbBtn_setSSID(pGui, pg_wifi_net_selected->ssid);
     // pg_wifi_cbBtn_setPass(pGui, "");
-    // pg_wifi_net_selected = NULL;
+    pg_wifi_net_selected = NULL;
   }
 }
 
