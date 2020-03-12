@@ -4,7 +4,7 @@
 #include "shared.h"
 #include "lib_wifi_wpa.h"
 #include "lib_wifi_networks.h"
-
+#include "dbg/dbg.h"
 
 
 
@@ -38,7 +38,7 @@ struct pg_wifi_statusStruct * PG_WIFI_INIT_STATUS()
   struct pg_wifi_statusStruct *ws = (struct pg_wifi_statusStruct*)malloc(sizeof(struct pg_wifi_statusStruct));
 
   ws->id = -1;
-  
+
   ws->ip_address = (char *)calloc(4, sizeof(char));
   strlcpy(ws->ip_address, "IP:", 4);
 
@@ -110,7 +110,7 @@ void PG_WIFI_DESTROY_NETWORK(struct pg_wifi_networkStruct *wn)
   free(wn->flags);
   free(wn->ssid);
   free(wn->txt);
-  free(wn); 
+  free(wn);
 }
 
 
@@ -208,7 +208,7 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   char *newTxt = (char *)realloc(wifi->txt, ssidSz * sizeof(char));
   snprintf(newTxt, ssidSz, "%s", t[1]);
   wifi->txt = newTxt;
-  
+
 
   // BSSID
   size_t bssidSz = snprintf(NULL, 0, "%s", t[2]) + 1;
@@ -267,7 +267,7 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   char *newDBm = (char *)realloc(wifi->dBm, dBmSz * sizeof(char));
   snprintf(newDBm, dBmSz, "%s", t[2]);
   wifi->dBm = newDBm;
-  
+
   // Flags
   size_t flagsSz = snprintf(NULL, 0, "%s", t[3]) + 1;
   char *newFlags = (char *)realloc(wifi->flags, flagsSz * sizeof(char));
@@ -283,7 +283,7 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   char *newTxt = (char *)realloc(wifi->txt, ssidSz * sizeof(char));
   snprintf(newTxt, ssidSz, "%s", t[1]);
   wifi->txt = newTxt;
-  
+
   pg_wifi_appendNetwork(wifi, &pg_wifi_nets_available);
 
   free(t[0]);
@@ -392,38 +392,27 @@ void pg_wifi_setInterface(char* interface) {
 }
 
 void pg_wifi_updateSavedNetworks() {
-
-  size_t len = 4096;
-  char *buf = (char *)calloc(len, sizeof(char));
-  // pg_wifi_wpaShownList = E_WIFI_WPA_LIST_NETWORKS;
-
   pg_wifi_clearNetworks(&pg_wifi_nets_saved);
-  pg_wifi_wpaSendCmdBuf("LIST_NETWORKS", buf, &len);
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf("LIST_NETWORKS", &buf);
   if (!len) {
-    free(buf);
     return;
   }
   // id / ssid / bssid / flags
   sgetlines_withcb(buf, len, &pg_wifi_addNetSaved);
-  free(buf);
 }
 
 void pg_wifi_updateAvailableNetworks() {
-
-  size_t len = 4096;
-  char *buf = (char *)calloc(len, sizeof(char));
-  // pg_wifi_wpaShownList = E_WIFI_WPA_SCAN_NETWORKS;
   pg_wifi_clearNetworks(&pg_wifi_nets_available);
 
-  pg_wifi_wpaSendCmdBuf("SCAN_RESULTS", buf, &len);
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf("SCAN_RESULTS", &buf);
   if (!len) {
-    free(buf);
     return;
   }
   // id / ssid / bssid / flags
   // printf("%s\n", buf);
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
-  free(buf);
 
   // printf("Got Available Networks: %d\n", pg_wifi_nets_available->len);
 }
@@ -431,16 +420,12 @@ void pg_wifi_updateAvailableNetworks() {
 
 
 int pg_wifi_getStatus() {
-  size_t len = 4096;
-  char *buf = (char *)calloc(len, sizeof(char));
-
-  pg_wifi_wpaSendCmdBuf("STATUS", buf, &len);
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf("STATUS", &buf);
   if (!len) {
-    free(buf);
     return 0;
   }
   sgetlines_withcb(buf, len, &pg_wifi_updateStatus);
-  free(buf);
   return 1;
 }
 

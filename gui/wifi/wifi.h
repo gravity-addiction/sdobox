@@ -46,9 +46,6 @@ enum {
   E_WIFI_EL_STATUS_FREQ,
   E_WIFI_EL_STATUS_MODE,
 
-  E_WIFI_EL_ERROR_HEADER,
-  E_WIFI_EL_ERROR_MSG,
-  E_WIFI_EL_ERROR_OK,
 
   E_WIFI_EL_MAX
 };
@@ -60,11 +57,6 @@ gslc_tsElem pg_wifiElem[MAX_ELEM_PG_WIFI];
 gslc_tsElemRef pg_wifiElemRef[MAX_ELEM_PG_WIFI_RAM];
 
 gslc_tsElemRef* pg_wifiEl[E_WIFI_EL_MAX];
-
-int pg_wifi_errorMsgRows = 4;
-int pg_wifi_errorMsgCols = 60;
-gslc_tsXTextbox pg_wifi_errorMsgTextbox;
-char *pg_wifi_errorMsgBuf;
 
 struct pg_wifi_networkAddStruct *pg_wifi_addInput;
 
@@ -82,9 +74,6 @@ bool pg_wifi_cbBtn_enableNetwork(void* pvGui, void *pvElemRef, gslc_teTouch eTou
 
 
 void pg_wifi_showStatus(gslc_tsGui *pGui);
-
-void pg_wifi_showErrorMsg(gslc_tsGui *pGui, char* str);
-void pg_wifi_closeErrorMsg(gslc_tsGui *pGui);
 
 bool pg_wifi_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
 

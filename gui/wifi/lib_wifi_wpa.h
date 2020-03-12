@@ -30,7 +30,7 @@ void *pg_wifi_wpaEventThread (UNU void *dummy);
 int pg_wifi_wpaEvents(char* wpa_interface);
 int pg_wifi_wpaOpen(char* wpa_interface);
 int pg_wifi_wpaTestConnection();
-int pg_wifi_wpaSendCmdBuf(char* cmd, char *buf, size_t *len);
+int pg_wifi_wpaSendCmdBuf(char* cmd, char ** buf);
 int pg_wifi_wpaSendCmd(char* cmd);
 void pg_wifi_wpaClose();
 

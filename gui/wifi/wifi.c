@@ -295,60 +295,72 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   // enable_network
   // save_config
 
-  size_t len = 32;
-  char buf[len + 1];
-  CLEAR(buf, len + 1);
-  buf[len] = '\0';
-
-  pg_wifi_wpaSendCmdBuf("ADD_NETWORK", buf, &len);
+  // Add Network Entry
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf("ADD_NETWORK", &buf);
   char *pEnd;
   int network_id = strtol(buf, &pEnd, 10);
   if (pEnd == buf
       || errno == ERANGE
   ) {
+    touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\n%s", buf);
     printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
     return false;
   }
 
+
+  // Set SSID
   size_t strSsidSz = snprintf(NULL, 0, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr) + 1;
   char *strSsidCmd = (char *)malloc(strSsidSz * sizeof(char));
   snprintf(strSsidCmd, strSsidSz, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr);
-
-  size_t strSsidRetSz = 32;
-  char strSsidRet[strSsidRetSz + 1];
-  CLEAR(strSsidRet, strSsidRetSz + 1);
-  strSsidRet[strSsidRetSz] = '\0';
-
-  pg_wifi_wpaSendCmdBuf(strSsidCmd, strSsidRet, &strSsidRetSz);
-  if (strcmp(strSsidRet, "FAIL") == 0) {
+  // Run
+  char* strSsidRet;
+  int strSsidRetSz = pg_wifi_wpaSendCmdBuf(strSsidCmd, &strSsidRet);
+  // Return
+  if (strSsidRetSz < 2 || strncmp(strSsidRet, "OK", 2) != 0) {
     // Failed adding SSID, unwind;
-    pg_wifi_showErrorMsg(pGui, "SSID value failed");
-    return true;
+    touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\nResponse: %s", strSsidRet);
+    goto cleanup;
   }
+  // Free
   free(strSsidCmd);
 
+
+  // Set Password
   size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr) + 1;
   char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
   snprintf(strPassCmd, strPassSz, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr);
-
-  size_t strPassRetSz = 32;
-  char strPassRet[strPassRetSz + 1];
-  CLEAR(strPassRet, strPassRetSz + 1);
-  strPassRet[strPassRetSz] = '\0';
-
-  pg_wifi_wpaSendCmdBuf(strPassCmd, strPassRet, &strPassRetSz);
-  if (strcmp(strPassRet, "FAIL") == 0) {
+  // Run
+  char* strPassRet;
+  int strPassRetSz = pg_wifi_wpaSendCmdBuf(strPassCmd, &strPassRet);
+  // Return
+  if (strPassRetSz < 2 || strncmp(strPassRet, "OK", 2) != 0) {
+    printf("SHOW Password Error!\n");
     // Failed adding SSID, unwind;
-    pg_wifi_showErrorMsg(pGui, "Password value failed");
-    return true;
+    touchscreenPopupMsgBox(pGui, "Error!", "Password Value Failed\nResponse: %s", strPassRet);
+    goto cleanup;
   }
+  // Free
   free(strPassCmd);
 
-  pg_wifi_enableNetwork(network_id);
+  // Save Config
   pg_wifi_wpaSendCmd("SAVE_CONFIG");
 
-  pg_wifi_cbBtn_resetSSID(pGui);
+  // Enable Network
+  pg_wifi_enableNetwork(network_id);
 
+  // Reset SSID Input Fields
+  pg_wifi_cbBtn_resetSSID(pGui);
+  return true;
+ cleanup:
+  if (network_id> -1) {
+    // Delete Bad Network
+    size_t delNetworkSz = snprintf(NULL, 0, "DELETE_NETWORK %d", network_id) + 1;
+    char *delNetworkCmd = (char *)malloc(delNetworkSz * sizeof(char));
+    snprintf(delNetworkCmd, delNetworkSz, "DELETE_NETWORK %d", network_id);
+    pg_wifi_wpaSendCmd(delNetworkCmd);
+    free(delNetworkCmd);
+  }
   return true;
 }
 
@@ -398,14 +410,6 @@ bool pg_wifi_cbBtn_enableNetwork(void* pvGui, void *pvElemRef, gslc_teTouch eTou
   return true;
 }
 
-bool pg_wifi_cbBtn_errorMsgOk(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-
-  pg_wifi_closeErrorMsg(pGui);
-
-  return true;
-}
 
 
 
@@ -426,68 +430,6 @@ void pg_wifi_showStatus(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_wifiEl[E_WIFI_EL_STATUS_STATE], pg_wifi_status->wpa_state);
   gslc_ElemSetTxtStr(pGui, pg_wifiEl[E_WIFI_EL_STATUS_FREQ], pg_wifi_status->freq);
   gslc_ElemSetTxtStr(pGui, pg_wifiEl[E_WIFI_EL_STATUS_MODE], pg_wifi_status->mode);
-}
-
-
-void pg_wifi_showErrorMsg(gslc_tsGui *pGui, char* str) {
-  // Hide Menu Items
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_CLOSE], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_DISABLE_NETWORK], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ENABLE_NETWORK], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_REASSOCIATE], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_SSID], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_IP], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_STATE], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_FREQ], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_MODE], false);
-
-  // Populate Textbox
-  gslc_ElemXTextboxReset(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG]);
-  gslc_ElemXTextboxAdd(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG], str);
-
-  // Show Error Message
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], true);
-}
-
-
-
-void pg_wifi_closeErrorMsg(gslc_tsGui *pGui) {
-  // Hide Error Msg box
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG], false);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], false);
-
-  // Show Menu Items
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_TXT], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_SSID_BTN], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BOX_PASS_BTN], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_FINDNET], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_SAVEDNET], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_BTN_CONNECT], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_CLOSE], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_DISABLE_NETWORK], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_ENABLE_NETWORK], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_REASSOCIATE], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_REFRESH], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_SSID], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_IP], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_STATE], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_FREQ], true);
-  gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_MODE], true);
-
-  // Clean Textbox
-  // gslc_ElemXTextboxReset(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG]);
 }
 
 
@@ -513,10 +455,6 @@ bool pg_wifi_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
 
 
 
-
-
-
-
 int pg_wifi_guiInit(gslc_tsGui *pGui)
 {
   // debug_print("%s\n", "Wifi GUI Init");
@@ -524,13 +462,13 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   gslc_PageAdd(pGui, ePage, pg_wifiElem, MAX_ELEM_PG_WIFI_RAM, pg_wifiElemRef, MAX_ELEM_PG_WIFI);
 
   int xHei = 20;
-
+/*
   // Main View Box
   pg_wifiEl[E_WIFI_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, (gslc_tsRect){0,170,420,120});
   gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX], GSLC_COL_GRAY, GSLC_COL_BLACK, GSLC_COL_BLACK);
   // Set the callback function to handle all drawing for the element
   gslc_ElemSetDrawFunc(pGui, pg_wifiEl[E_WIFI_EL_BOX], &pg_wifi_cbDrawBox);
-
+*/
 
 
   pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -734,31 +672,6 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_STATUS_MODE], false);
   // gslc_ElemSetVisible(pGui, pg_wifiEl[E_WIFI_EL_STATUS_MODE], false);
 
-
-  // Create textbox
-  pg_wifiEl[E_WIFI_EL_ERROR_MSG] = gslc_ElemXTextboxCreate(pGui, GSLC_ID_AUTO, ePage,
-          &pg_wifi_errorMsgTextbox,
-          (gslc_tsRect) {rFullscreen.x, (rFullscreen.y + 60), rFullscreen.w, (rFullscreen.h - 60)},
-          E_FONT_MONO18, (char*)&pg_wifi_errorMsgBuf, pg_wifi_errorMsgRows, pg_wifi_errorMsgCols);
-  gslc_ElemXTextboxWrapSet(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG], true);
-  gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_ERROR_MSG], GSLC_COL_BLUE_LT2, GSLC_COL_BLACK, GSLC_COL_GRAY_DK3);
-
-  pg_wifiEl[E_WIFI_EL_ERROR_HEADER] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {rFullscreen.x, rFullscreen.y, rFullscreen.w, 60},
-          (char*)"ERROR MESSAGE", 0, E_FONT_MONO18);
-  gslc_ElemSetTxtCol(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], GSLC_COL_WHITE);
-  gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], GSLC_ALIGN_MID_MID);
-  gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], false);
-  gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_ERROR_HEADER], false);
-
-  pg_wifiEl[E_WIFI_EL_ERROR_OK] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {rFullscreen.x + rFullscreen.w - 80, rFullscreen.y, 80, 60},
-          (char*)"OK", 0, E_FONT_MONO18, &pg_wifi_cbBtn_errorMsgOk);
-  gslc_ElemSetTxtCol(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], GSLC_COL_WHITE);
-  gslc_ElemSetTxtAlign(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], GSLC_ALIGN_MID_MID);
-  gslc_ElemSetFillEn(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], false);
-  gslc_ElemSetFrameEn(pGui, pg_wifiEl[E_WIFI_EL_ERROR_OK], false);
-
   return 1;
 }
 
@@ -796,7 +709,6 @@ void pg_wifi_init(gslc_tsGui *pGui) {
   pg_wifi_nets_saved = PG_WIFI_INIT_NETWORKS();
   pg_wifi_net_selected = NULL;
 
-  pg_wifi_errorMsgBuf = calloc(pg_wifi_errorMsgRows * pg_wifi_errorMsgCols, sizeof(char));
   // Create Interface
   pg_wifi_guiInit(pGui);
 
@@ -804,6 +716,7 @@ void pg_wifi_init(gslc_tsGui *pGui) {
   pg_wifi_wpaScanning = 0;
   pg_wifi_wpaOpen("/var/run/wpa_supplicant/wlan0");
   pg_wifi_wpaEvents("/var/run/wpa_supplicant/wlan0");
+
 
   // pg_wifi_wpaSendCmd("SCAN");
 
@@ -817,9 +730,6 @@ void pg_wifi_open(gslc_tsGui *pGui) {
   // Open WPA Interface socket
   // ls -l /var/run/wpa_supplicant for list of interfaces
   pg_wifi_wpaSetEventCallbackFunc(&pg_wifi_wpaEvent);
-
-  // Close any stale error message
-  pg_wifi_closeErrorMsg(pGui);
 
   // Fetch and show current wifi status
   if (pg_wifi_getStatus()) {
@@ -850,8 +760,6 @@ void pg_wifi_destroy() {
 
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_available);
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_saved);
-
-  free(pg_wifi_errorMsgBuf);
 
   pg_wifi_wpaClose();
 }

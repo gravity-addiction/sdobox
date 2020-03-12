@@ -20,6 +20,7 @@ typedef unsigned long dbgmask_t;
 #define DBG_SLIDER    (1UL<<7)
 #define DBG_VIDEOLIST (1UL<<8)
 #define DBG_SVR       (1UL<<9)
+#define DBG_WPA       (1UL<<10)
 
 void init_dbg();
 

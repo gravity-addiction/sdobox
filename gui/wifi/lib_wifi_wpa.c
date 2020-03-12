@@ -8,10 +8,10 @@
 
 #include "lib_wifi_wpa.h"
 #include "shared.h"
+#include "dbg/dbg.h"
 
 // pg_wifi_wpaSetEventCallbackFunc ?
 void pg_wifi_wpaEventCB(char* event) {
-  printf("Got Event --%s--\n", event);
   if (strcmp(event, "CTRL-EVENT-SCAN-STARTED ") == 0) {
     pg_wifi_wpaScanning = 1;
   } else if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
@@ -31,27 +31,27 @@ PI_THREAD (pg_wifi_wpaEventThread) {
   }
 
   int rc;
-  const int maxLen = 4096;
-  char buf[maxLen];
-  size_t len = maxLen - 1;
-  // CLEAR(buf, len);
+  const int maxBuf = 4096;
+  char buf[maxBuf];
+  buf[maxBuf - 1] = '\0';
+  size_t len = maxBuf - 1;
 
-  printf("%s\n", "Started WPA Event Thread");
+  dbgprintf(DBG_INFO, "%s\n", "Started WPA Event Thread");
   while (!pg_wifi_wpaEventThreadStop) {
     rc = wpa_ctrl_recv(pg_wifi_wpa_events, buf, &len);
-    buf[len] = '\0';
+    buf[len-1] = '\0';
 
     if (rc == 0 && len > 3) {
       // 60 59 61 bits at the beginning of the event, not sure why yet
       memmove(buf, buf+3, strlen(buf) - 1);
       buf[strlen(buf)] = '\0';
-// printf("WPA Event: %s\n", buf);
+      dbgprintf(DBG_WPA, "WPA Event: %s\n", buf);
       // call functions requesting access to events
       pg_wifi_wpaEventCB(buf);
       if (cbEvent[0]) { cbEvent[0](buf); }
 
       // Reset maximum buffer length
-      len = maxLen - 1;
+      len = maxBuf - 1;
     } else {
       usleep(250000);
     }
@@ -68,17 +68,17 @@ PI_THREAD (pg_wifi_wpaEventThread) {
 
 int pg_wifi_wpaEvents(char* wpa_interface) {
   if (pg_wifi_wpaEventThreadRunning) {
-    printf("Not Starting WPA Event Thread, Already Started\n");
+    dbgprintf(DBG_DEBUG, "Not Starting WPA Event Thread, Already Started\n");
     return 0;
   }
   pg_wifi_wpaEventThreadRunning = 1;
 
   pg_wifi_wpa_events = wpa_ctrl_open(wpa_interface);
   if (pg_wifi_wpa_events == NULL) {
-    printf("Failed to connect to wpa_supplicant global interface: %s error: %s\n", wpa_interface, strerror(errno));
+    dbgprintf(DBG_ERROR, "Failed to connect to wpa_supplicant global interface: %s error: %s\n", wpa_interface, strerror(errno));
     return 0;
   } else {
-    printf("WPA Connect Successful\n");
+    dbgprintf(DBG_WPA, "WPA Connect Successful\n");
   }
 
 
@@ -88,7 +88,7 @@ int pg_wifi_wpaEvents(char* wpa_interface) {
   pg_wifi_wpaEventThreadStop = 0;
   if (pg_wifi_wpaTestConnection()) {
     if (piThreadCreate(pg_wifi_wpaEventThread) != 0) {
-      printf("WPA Event Thread did not start");
+      dbgprintf(DBG_ERROR, "WPA Event Thread did not start");
       return 0;
     }
     return 1;
@@ -101,46 +101,47 @@ int pg_wifi_wpaOpen(char* wpa_interface) {
   pg_wifi_wpaScanning = 0;
   pg_wifi_wpa_conn = wpa_ctrl_open(wpa_interface);
   if (pg_wifi_wpa_conn == NULL) {
-    printf("Failed to connect to wpa_supplicant global interface: %s error: %s\n", wpa_interface, strerror(errno));
+    dbgprintf(DBG_ERROR, "Failed to open to wpa_supplicant global interface: %s error: %s\n", wpa_interface, strerror(errno));
     return 0;
   } else {
-    printf("WPA Connect Successful\n");
+    dbgprintf(DBG_WPA, "WPA Open Successful\n");
   }
 
   return 1;
 }
 
-int pg_wifi_wpaTestConnection() {
-  size_t len = 4;
-  char buf[len + 1];
-  CLEAR(buf, len + 1);
-  buf[len] = '\0';
+int pg_wifi_wpaSendCmdBuf(char* cmd, char ** buf) {
+  // CLEAR(buf, lenB);
+  size_t len = 4096;
+  char b[len];
+  b[len - 1] = '\0';
 
-  pg_wifi_wpaSendCmdBuf("PING", buf, &len);
-  if (strcmp(buf, "PONG") == 0) {
+  int rc = wpa_ctrl_request(pg_wifi_wpa_conn, cmd, strlen(cmd), b, &len, NULL);
+  if (rc == -1) {
+    dbgprintf(DBG_ERROR, "wpa_ctrl_request() failed: %s.\n", strerror(errno));
+    return 0;
+  } else if (rc == -2) {
+    dbgprintf(DBG_ERROR, "%s\n", "wpa_ctrl_request() timeout.");
+    return 0;
+  }
+  dbgprintf(DBG_WPA, "WPA Cmd: %s\nLen: %d\nBuffer: %s\n", cmd, len, b);
+  *buf = b;
+  return len;
+}
+
+int pg_wifi_wpaTestConnection() {
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf("PING", &buf);
+  printf("Got Back: --%s--\n", buf);
+  if (len >= 4 && strncmp(buf, "PONG", 4) == 0) {
     return 1;
   } else { return 0; }
 }
 
-int pg_wifi_wpaSendCmdBuf(char* cmd, char *buf, size_t *len) {
-  // CLEAR(buf, lenB);
-
-  int rc = wpa_ctrl_request(pg_wifi_wpa_conn, cmd, strlen(cmd), buf, len, NULL);
-  if (rc == -1) {
-    printf("wpa_ctrl_request() failed: %s.\n", strerror(errno));
-    return 0;
-  } else if (rc == -2) {
-    printf("%s\n", "wpa_ctrl_request() timeout.");
-    return 0;
-  }
-  printf("WPA Cmd: %s\nLen: %d\nBuffer: %s\n", cmd, rc, buf);
-  return 1;
-}
-
 int pg_wifi_wpaSendCmd(char* cmd) {
-  size_t len = 4096;
-  char buf[len];
-  if (pg_wifi_wpaSendCmdBuf(cmd, buf, &len)) {
+  char* buf;
+  int len = pg_wifi_wpaSendCmdBuf(cmd, &buf);
+  if (!len) {
     return 0;
   }
   // free(buf);
