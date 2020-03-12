@@ -193,7 +193,10 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   t[2] = malloc(sz + 1);
   t[3] = malloc(sz + 1);
 
-  parseTabbedData(buf, t, 4);
+  int tabCnt = parseTabbedData(buf, t, 4);
+  if (tabCnt < 4) {
+    goto cleanup;
+  }
   // printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
 
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
@@ -223,6 +226,8 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
   wifi->flags = newFlags;
 
   pg_wifi_appendNetwork(wifi, &pg_wifi_nets_saved);
+
+ cleanup:
   free(t[0]);
   free(t[1]);
   free(t[2]);
@@ -231,7 +236,7 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt) {
 
 
 void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
-  // printf("%s\n", buf);
+  // printf("ADD %d--%s\n", cnt, buf);
   if (cnt == 0) { // has header line (skip for now)
     // bssid / frequency / signal level / flags / ssid
     // printf("Got Header Line: --%s--\n", buf);
@@ -245,9 +250,11 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   t[3] = malloc(sz + 1);
   t[4] = malloc(sz + 1);
 
-  parseTabbedData(buf, t, 5);
+  int tabCnt = parseTabbedData(buf, t, 5);
   // printf("--%s--\nN: %s\nSSID: %s\nBSSID: %s\nFLAGS: %s\n\n", buf, t[0], t[1], t[2], t[3]);
-
+  if (tabCnt < 5) {
+    goto cleanup;
+  }
   struct pg_wifi_networkStruct *wifi = PG_WIFI_INIT_NETWORK();
 
   // BSSID
@@ -279,6 +286,7 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
   char *newSsid = (char *)realloc(wifi->ssid, ssidSz * sizeof(char));
   snprintf(newSsid, ssidSz, "%s", t[4]);
   wifi->ssid = newSsid;
+
   // TXT (use SSID info)
   char *newTxt = (char *)realloc(wifi->txt, ssidSz * sizeof(char));
   snprintf(newTxt, ssidSz, "%s", t[1]);
@@ -286,6 +294,7 @@ void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt) {
 
   pg_wifi_appendNetwork(wifi, &pg_wifi_nets_available);
 
+ cleanup:
   free(t[0]);
   free(t[1]);
   free(t[2]);
@@ -413,8 +422,6 @@ void pg_wifi_updateAvailableNetworks() {
   // id / ssid / bssid / flags
   // printf("%s\n", buf);
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
-
-  // printf("Got Available Networks: %d\n", pg_wifi_nets_available->len);
 }
 
 

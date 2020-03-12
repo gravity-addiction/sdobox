@@ -60,7 +60,7 @@ void pg_wifi_list_saved_setNetworkList(struct pg_wifi_networkStruct **ptrs, int 
   pg_wifi_list_saved_networkList->len = len;
   pg_wifi_list_saved_networkList->ptrs = ptrs;
 
-  
+
 }
 
 void pg_wifi_list_saved_resetNetworkList() {
@@ -71,9 +71,9 @@ void pg_wifi_list_saved_resetNetworkList() {
 
 void pg_wifi_list_saved_wpaEvent(char* event) {
   printf("Got Event: --%s--\n", event);
-  /*if (strcmp(event, "CTRL-EVENT-SCAN-STARTED ") == 0) {
+  /*if (strcmp(event, "CTRL-EVENT-SCAN-STARTED") == 0) {
     // debug_print("%s\n", "Scan Started!");
-  } else if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
+  } else if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS") == 0) {
     pg_wifi_updateSavedNetworks();
     pg_wifi_list_saved_setNetworkList(pg_wifi_nets_saved->ptrs, pg_wifi_nets_saved->len);
   }
@@ -232,7 +232,7 @@ bool pg_wifi_list_saved_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawTyp
 
   int pgAdd = pg_wifi_list_saved_networkList->scroll * 5;
   printf("Listing Networks: %d + %d\n", pg_wifi_list_saved_networkList->len, pgAdd);
-  
+
   for (int i = 0; i < 5; ++i) {
     // Fill Display Line
     if (i < pg_wifi_list_saved_networkList->len) {
@@ -458,7 +458,7 @@ int pg_wifi_list_saved_guiInit(gslc_tsGui *pGui)
 void pg_wifi_list_saved_init(gslc_tsGui *pGui) {
   // Initialize Network list
   pg_wifi_list_saved_networkList = PG_WIFI_LIST_SAVED_INIT_DATA();
-  
+
   // Create Interface
   pg_wifi_list_saved_guiInit(pGui);
 

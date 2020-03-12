@@ -679,19 +679,13 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
 
 // pg_wifi_wpaSetEventCallbackFunc ?
 void pg_wifi_wpaEvent(char* event) {
-  if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
+  if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS") == 0) {
     pg_wifi_updateAvailableNetworks();
   }
 
   if (pg_wifi_getStatus()) {
     pg_wifi_showStatus(&m_gui);
   }
-  /*
-  char *newTxt = malloc(strlen(str) + 1);
-  strlcpy(newTxt, str, strlen(str) + 1);
-  scorecard->judge = newTxt;
-  gslc_ElemSetTxtStr(pGui, m_pElemScorecardJudge, str);
-  */
 }
 
 

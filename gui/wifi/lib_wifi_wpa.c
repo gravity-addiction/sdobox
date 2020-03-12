@@ -12,9 +12,9 @@
 
 // pg_wifi_wpaSetEventCallbackFunc ?
 void pg_wifi_wpaEventCB(char* event) {
-  if (strcmp(event, "CTRL-EVENT-SCAN-STARTED ") == 0) {
+  if (strcmp(event, "CTRL-EVENT-SCAN-STARTED") == 0) {
     pg_wifi_wpaScanning = 1;
-  } else if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS ") == 0) {
+  } else if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS") == 0) {
     pg_wifi_wpaScanning = 0;
   }
 }
