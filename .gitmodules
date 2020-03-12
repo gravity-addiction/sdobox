@@ -1,0 +1,3 @@
+[submodule "GUIslice"]
+	path = GUIslice
+	url = https://github.com/gravity-addiction/GUIslice.git
