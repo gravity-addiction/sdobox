@@ -9,8 +9,8 @@ LDFLAGS = -L/usr/local/lib -L/opt/vc/lib
 LDLIB_EXTRA = -lwiringPi -lconfig -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos \
 -lvchiq_arm -lpthread -Llibs/jsmn -ljsmn -lsqlite3 -lulfius -lorcania
 
-GSLC_CORE := GUIslice/GUIslice.c $(wildcard GUIslice/elem/*.c) #GUIslice/GUIslice_config.h
-GSLC_INCLUDES = -I./GUIslice
+GSLC_CORE := GUIslice/src/GUIslice.c $(wildcard GUIslice/src/elem/*.c) #GUIslice/GUIslice_config.h
+GSLC_INCLUDES = -I./GUIslice/src
 
 TOUCHAPP_INCLUDES = -I./libs -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host -I/opt/vc/include/interface/vmcs_host/linux
 TOUCHAPP_CORE := $(wildcard libs/*.c) $(wildcard libs/**/*.c) $(wildcard gui/*.c) $(wildcard gui/**/*.c) \
@@ -33,7 +33,7 @@ endif
 
 # === SDL1.2 ===
 ifeq (SDL1,${GSLC_DRV})
-  GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
+  GSLC_SRCS = GUIslice/src/GUIslice_drv_sdl.c
   # - Add extra linker libraries if needed
   LDLIBS = libs/SDL/libSDL.a -ldl -lSDL_ttf ${GSLC_LDLIB_EXTRA}
 endif
@@ -41,7 +41,7 @@ endif
 ## === SDL2.0 ===
 #ifeq (SDL2,${GSLC_DRV})
 #  $(info GUIslice driver mode: SDL2)
-#  GSLC_SRCS = GUIslice/GUIslice_drv_sdl.c
+#  GSLC_SRCS = GUIslice/src/GUIslice_drv_sdl.c
 #  # - Add extra linker libraries if needed
 #  LDLIBS = -lSDL2 -lSDL2_ttf ${GSLC_LDLIB_EXTRA}
 #endif
@@ -75,4 +75,4 @@ touchapp: $(TOUCHAPP_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LDLIB_EXTRA)
 
 tags:
-	etags $(TOUCHAPP_SRCS) *.h GUIslice/GUIslice_config.h $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
+	etags $(TOUCHAPP_SRCS) *.h GUIslice/src/GUIslice_config.h $(shell find libs -name '*.h') $(shell find gui -name '*.h') wpa/*.h
