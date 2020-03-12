@@ -366,14 +366,18 @@ int parseTabbedData(const char *s, char *data[], size_t n) {
         return -1;  // More than n data
       }
       size_t Length = s - Start;
-      memcpy(data[i], Start, Length);
-      data[i][Length] = '\0';
-      i++;
-      if (*s == '\0') {
+      if (Length > 0) {
+        memcpy(data[i], Start, Length);
+        data[i][Length] = '\0';
+        i++;
+        if (*s == '\0') {
+          return i;
+        }
+        s++;
+        Start = s;
+      } else {
         return i;
       }
-      s++;
-      Start = s;
     }
     else s++;
   }
