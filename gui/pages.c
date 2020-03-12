@@ -3,6 +3,7 @@
 #include <time.h> // system time clocks
 #include <unistd.h>
 
+#include "gui/msgbox/msgbox.h"
 
 // Initialize Page
 void touchscreenPageInit(gslc_tsGui *pGui, int ePage) {
@@ -12,13 +13,13 @@ void touchscreenPageInit(gslc_tsGui *pGui, int ePage) {
 
 // Open Page
 void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
-  if (ePage < 0) { return; } 
+  if (ePage < 0) { return; }
 
   // Open Page
   m_page_previous = m_page_current;
 
   touchscreenPageInit(pGui, ePage);
-  
+  gslc_SetPageBase(pGui, ePage);
   gslc_SetPageCur(pGui, ePage);
   m_page_current = ePage;
 
@@ -29,7 +30,7 @@ void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
 
 // Close Page
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
-  if (ePage < 0) { return; } 
+  if (ePage < 0) { return; }
   if (cbClose[ePage] && cbClose[ePage] != NULL && cbInit[ePage] == NULL) {
     cbClose[ePage](pGui);
   }
@@ -38,7 +39,7 @@ void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
 
 // Destory Page
 void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
-  if (ePage < 0) { return; } 
+  if (ePage < 0) { return; }
 
   if (m_page_current == ePage) {
     touchscreenPageClose(pGui, ePage);
@@ -65,4 +66,45 @@ void touchScreenPageDestroyAll(gslc_tsGui *pGui) {
   for (size_t i = 1; i < MAX_PAGES; i++) {
     touchscreenPageDestroy(pGui, i);
   }
+}
+
+
+void touchscreenPopupMsgBox(gslc_tsGui *pGui, const char* title, const char* fmt, ...) {
+  if (cbInit[E_PG_MSGBOX]) { cbInit[E_PG_MSGBOX](pGui); }
+
+  gslc_PopupShow(pGui, E_PG_MSGBOX, true);
+
+  m_page_popup = m_page_current;
+  m_page_current = E_PG_MSGBOX;
+
+  if (cbOpen[E_PG_MSGBOX]) {
+    cbOpen[E_PG_MSGBOX](pGui);
+  }
+
+  pg_msgbox_setTitle(pGui, title);
+
+  va_list ap;
+  va_start(ap, fmt);
+
+  const size_t MAXBUF = 431;
+  char buf[MAXBUF];
+  buf[MAXBUF-1] = '\0';
+  int x = vsnprintf(buf, MAXBUF-1, fmt, ap);
+  if (x > 0) {
+    char newBuf[x];
+    strlcpy(newBuf, buf, x);
+    pg_msgbox_setMsg(pGui, newBuf);
+  }
+  va_end(ap);
+
+}
+
+void touchscreenPopupMsgBoxClose(gslc_tsGui *pGui) {
+  if (cbClose[E_PG_MSGBOX]) {
+    cbClose[E_PG_MSGBOX](pGui);
+  }
+
+  gslc_PopupHide(pGui);
+  m_page_current = m_page_popup;
+  m_page_popup = -1;
 }

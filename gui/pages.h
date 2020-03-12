@@ -8,6 +8,7 @@ extern "C" {
 enum {
   E_PG_MAIN,
   E_PG_KEYBOARD,
+  E_PG_MSGBOX,
   E_PG_SYSTEM,
   E_PG_WIFI,
   E_PG_WIFI_LIST,
@@ -26,6 +27,7 @@ enum {
 int m_page_current;
 int m_page_show; // = -1;
 int m_page_previous; // = -1;
+int m_page_popup;
 
 void (*cbInit[MAX_PAGES])(gslc_tsGui *pGui);
 void (*cbOpen[MAX_PAGES])(gslc_tsGui *pGui);
@@ -41,6 +43,9 @@ void touchscreenPageClose(gslc_tsGui *pGui, int ePage);
 void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage);
 void touchScreenPageCloseAll(gslc_tsGui *pGui);
 void touchScreenPageDestroyAll(gslc_tsGui *pGui);
+
+void touchscreenPopupMsgBox(gslc_tsGui *pGui, const char* title, const char* fmt, ...);
+void touchscreenPopupMsgBoxClose(gslc_tsGui *pGui);
 
 #ifdef __cplusplus
 }
