@@ -298,11 +298,11 @@ int main( int argc, char* args[] )
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
 
   if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
-    websocket_server_start();
+    websocket_server_stop();
   }
 
   if (WEBSOCKET_API_PORT) {
-    websocket_api_start();
+    websocket_api_stop();
   }
 
   if (SQLITE3_PATH != NULL) {
