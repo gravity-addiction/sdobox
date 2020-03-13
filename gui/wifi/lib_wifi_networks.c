@@ -409,6 +409,7 @@ void pg_wifi_updateSavedNetworks() {
   }
   // id / ssid / bssid / flags
   sgetlines_withcb(buf, len, &pg_wifi_addNetSaved);
+  free(buf);
 }
 
 void pg_wifi_updateAvailableNetworks() {
@@ -422,6 +423,7 @@ void pg_wifi_updateAvailableNetworks() {
   // id / ssid / bssid / flags
   // printf("%s\n", buf);
   sgetlines_withcb(buf, len, &pg_wifi_addNetAvailable);
+  free(buf);
 }
 
 
@@ -433,6 +435,7 @@ int pg_wifi_getStatus() {
     return 0;
   }
   sgetlines_withcb(buf, len, &pg_wifi_updateStatus);
+  free(buf);
   return 1;
 }
 

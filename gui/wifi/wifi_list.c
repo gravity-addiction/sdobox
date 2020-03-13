@@ -417,7 +417,6 @@ void pg_wifi_list_close(gslc_tsGui *pGui) {
 
 // GUI Destroy
 void pg_wifi_list_destroy() {
-  free(pg_wifi_list_networkList);
   free(pg_wifi_list_networkConfig->refs);
   free(pg_wifi_list_networkConfig);
 }

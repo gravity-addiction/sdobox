@@ -2,11 +2,16 @@
 
 #include "gui/pages.h"
 
+
+char pg_msgboxBuf[PG_MSGBOX_ROWS * PG_MSGBOX_COLS];
+
 void pg_msgbox_setTitle(gslc_tsGui *pGui, const char* title) {
   gslc_ElemSetTxtStr(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_HEADER], title);
 }
 void pg_msgbox_setMsg(gslc_tsGui *pGui, char* msg) {
-  gslc_ElemXTextboxAdd(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_MSG], msg);
+  char acTxt[431];
+  snprintf(acTxt, strlen(msg)+1, "%s\n", msg);
+  gslc_ElemXTextboxAdd(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_MSG], acTxt);
 }
 
 bool pg_msgbox_cbBtn_Ok(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
@@ -33,7 +38,7 @@ void pg_msgboxGuiInit(gslc_tsGui *pGui) {
   pg_msgboxEl[E_MSGBOX_EL_BOX_MSG] = gslc_ElemXTextboxCreate(pGui, GSLC_ID_AUTO, ePage,
           &pg_msgboxTextbox,
           (gslc_tsRect) {rFullscreen.x, (rFullscreen.y + 60), rFullscreen.w, (rFullscreen.h - 60)},
-          E_FONT_MONO18, pg_msgboxBuf, pg_msgboxRows, pg_msgboxCols);
+          E_FONT_MONO18, (char*)&pg_msgboxBuf, PG_MSGBOX_ROWS, PG_MSGBOX_COLS);
   gslc_ElemXTextboxWrapSet(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_MSG], true);
   gslc_ElemSetCol(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_MSG], GSLC_COL_BLUE_LT2, GSLC_COL_BLACK, GSLC_COL_GRAY_DK3);
 
@@ -61,10 +66,6 @@ void pg_msgboxGuiInit(gslc_tsGui *pGui) {
 
 // GUI Init
 void pg_msgbox_init(gslc_tsGui *pGui) {
-  pg_msgboxRows = 10;
-  pg_msgboxCols = 43;
-  pg_msgboxBuf = calloc((pg_msgboxRows * pg_msgboxCols) + 1, sizeof(char));
-
   pg_msgboxGuiInit(pGui);
   // gslc_ElemXTextboxReset(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX_MSG]);
 
@@ -75,7 +76,7 @@ void pg_msgbox_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_msgbox_open(gslc_tsGui *pGui) {
-  gslc_ElemSetRedraw(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX], GSLC_REDRAW_FULL);
+  // gslc_ElemSetRedraw(pGui, pg_msgboxEl[E_MSGBOX_EL_BOX], GSLC_REDRAW_FULL);
 }
 
 // GUI Close

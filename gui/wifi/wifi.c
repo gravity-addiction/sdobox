@@ -335,7 +335,6 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   int strPassRetSz = pg_wifi_wpaSendCmdBuf(strPassCmd, &strPassRet);
   // Return
   if (strPassRetSz < 2 || strncmp(strPassRet, "OK", 2) != 0) {
-    printf("SHOW Password Error!\n");
     // Failed adding SSID, unwind;
     touchscreenPopupMsgBox(pGui, "Error!", "Password Value Failed\nResponse: %s", strPassRet);
     goto cleanup;
@@ -343,11 +342,11 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   // Free
   free(strPassCmd);
 
-  // Save Config
-  pg_wifi_wpaSendCmd("SAVE_CONFIG");
-
   // Enable Network
   pg_wifi_enableNetwork(network_id);
+
+  // Save Config
+  pg_wifi_wpaSendCmd("SAVE_CONFIG");
 
   // Reset SSID Input Fields
   pg_wifi_cbBtn_resetSSID(pGui);
@@ -683,9 +682,11 @@ void pg_wifi_wpaEvent(char* event) {
     pg_wifi_updateAvailableNetworks();
   }
 
+/*
   if (pg_wifi_getStatus()) {
     pg_wifi_showStatus(&m_gui);
   }
+*/
 }
 
 

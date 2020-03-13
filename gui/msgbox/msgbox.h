@@ -25,9 +25,8 @@ gslc_tsElemRef m_asPgMsgboxElemRef[MAX_ELEM_PG_MSGBOX];
 
 gslc_tsElemRef* pg_msgboxEl[E_MSGBOX_EL_MAX];
 
-int pg_msgboxRows;
-int pg_msgboxCols;
-char *pg_msgboxBuf;
+#define PG_MSGBOX_ROWS 10
+#define PG_MSGBOX_COLS 43
 gslc_tsXTextbox pg_msgboxTextbox;
 
 void pg_msgbox_setTitle(gslc_tsGui *pGui, const char* title);

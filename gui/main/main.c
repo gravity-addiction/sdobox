@@ -132,6 +132,11 @@ void pg_main_setList(struct fileStruct **ptrs, int len) {
 }
 
 void pg_main_resetList() {
+  for (int i = 0; i < pg_main_listConfig->len; ++i) {
+    free(pg_main_list[i]->name);
+    free(pg_main_list[i]);
+  }
+  free(pg_main_list);
   VLIST_CLEAR_CONFIG(pg_main_listConfig);
 }
 
@@ -723,7 +728,7 @@ void pg_mainButtonSetFuncs() {
 }
 
 void pg_main_refreshCurrentFolder(gslc_tsGui* pGui) {
-  VLIST_CLEAR_CONFIG(pg_main_listConfig);
+  pg_main_resetList();
   pg_main_listConfig->len = file_list(pg_main_currentFolderPath, &pg_main_list, -1);
   qsort(pg_main_list, pg_main_listConfig->len, sizeof(char *), fileStruct_cmpName);
   VLIST_UPDATE_CONFIG(pg_main_listConfig);

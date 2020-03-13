@@ -31,6 +31,7 @@ void pg_sdboVideoListGetFiles(char* path) {
   for (i = 0; i < files_count; i++) {
     strlcpy(sdob_files->list[sdob_files->size], files[i]->name, strlen(files[i]->name) + 1);
     ++sdob_files->size;
+    free(files[i]->name);
   }
   free(files);
 }
@@ -51,7 +52,9 @@ void pg_sdboVideoListGetFolders(char* path) {
   for (i = 0; i < folder_count; i++) {
     strlcpy(sdob_folders->list[sdob_folders->size], folder[i]->name, strlen(folder[i]->name));
     ++sdob_folders->size;
+    free(folder[i]->name);
   }
+  free(folder);
 }
 
 static void refreshVideoList(gslc_tsGui *pGui) {
