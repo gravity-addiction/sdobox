@@ -205,6 +205,7 @@ void pg_main_gotoFolderCheck(gslc_tsGui *pGui) {
     char *filePath = (char *)malloc(filepathSz * sizeof(char));
     snprintf(filePath, filepathSz, "%s/%s", pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
     pg_main_loadFolder(pGui, filePath);
+    free(filePath);
   }
 }
 // A
