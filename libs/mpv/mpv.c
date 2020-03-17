@@ -284,7 +284,15 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
             int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
             if (rc > 0 && mpv_rpc_ret != NULL) {
                 // error response
-                if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
+                if (strncmp(mpv_rpc_ret, "{\"error\":\"success\"}", 19) == 0) {
+                    dbgprintf(DBG_MPV_READ,
+                              "Successful Response after request property %s, %s\n",
+                              prop, mpv_rpc_ret);
+                    *json_prop = strdup("true");
+                    free(mpv_rpc_ret);
+                    goto cleanup;
+                    // data response
+                } else if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
                     dbgprintf(DBG_MPV_READ|DBG_ERROR,
                               "Error after requesting property %s, %s\n",
                               prop, mpv_rpc_ret);
@@ -373,11 +381,35 @@ int mpv_seek_arg(double distance, char* flags) {
 }
 
 int mpv_pause() {
-  return mpv_fmt_cmd("set pause yes\n");
+  m_is_video_playing = 0;
+  return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "true");
 }
 
 int mpv_play() {
-  return mpv_fmt_cmd("set pause no\n");
+  m_is_video_playing = 1;
+  return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
+}
+
+int mpv_playpause_toggle() {
+  /*char* retPlay;
+  dbgprintf(DBG_INFO, "A");
+  if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+    dbgprintf(DBG_INFO, "B");
+    if (strncmp(retPlay, "false", 5) == 0) {
+      dbgprintf(DBG_INFO, "C\n");
+      return mpv_play();
+    } else {
+      dbgprintf(DBG_INFO, "D\n");
+      return mpv_pause();
+    }
+  } else */
+  if (m_is_video_playing) {
+    dbgprintf(DBG_INFO, "E\n");
+    return mpv_pause();
+  } else {
+    dbgprintf(DBG_INFO, "F\n");
+    return mpv_play();
+  }
 }
 
 
@@ -420,6 +452,7 @@ double mpv_speed_adjust(double spd) {
 
 
 void mpv_stop() {
+  m_is_video_playing = 0;
   mpv_fmt_cmd("stop\n");
 }
 

@@ -64,6 +64,7 @@ int mpv_seek_arg(double distance, char* flags);
 
 int mpv_pause();
 int mpv_play();
+int mpv_playpause_toggle();
 
 double mpv_speed(double spd);
 double mpv_speed_adjust(double spd);
