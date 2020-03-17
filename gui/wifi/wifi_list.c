@@ -153,7 +153,7 @@ bool pg_wifi_list_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
     pg_wifi_net_selected = NULL;
   }
 
-  touchscreenPageOpen(pGui, E_PG_WIFI);
+  touchscreenPageGoBack(pGui);
   return true;
 }
 
