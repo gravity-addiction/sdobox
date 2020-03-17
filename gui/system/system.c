@@ -20,16 +20,15 @@
 bool pg_system_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
-  touchscreenPageClose(pGui, E_PG_SYSTEM);
-  touchscreenPageOpen(pGui, E_PG_MAIN);
+
+  touchscreenPageGoBack(pGui);
   return true;
 }
 
 bool pg_system_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   touchscreenPageOpen(pGui, E_PG_WIFI);
   return true;
 }
@@ -37,20 +36,20 @@ bool pg_system_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_system_cbBtn_powercycleHdmi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  
+
   gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true);
   gslc_Update(pGui);
   system("/usr/bin/vcgencmd display_power 0");
   usleep(2000000);
   system("/usr/bin/vcgencmd display_power 1");
   gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], false);
-  
+
   return true;
 }
 
 bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  
+
   m_bQuit = 1;
   system("sudo /sbin/shutdown -r now &");
 
@@ -59,7 +58,7 @@ bool pg_system_cbBtn_reboot(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, i
 
 bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  
+
   m_bQuit = 1;
 
   return true;
@@ -68,7 +67,7 @@ bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   if (pg_system_apt_upgrade == 1) { return true; }
-  
+
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   FILE *fd;
@@ -127,12 +126,12 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     pg_systemEl[E_SYSTEM_EL_REBOOT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100), ((rFullscreen.y + rFullscreen.h) - 50), 100, 50},
             "Reboot", 0, E_FONT_MONO14, &pg_system_cbBtn_reboot)
-  ) != NULL) {            
+  ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], true); 
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], true);
   }
 
   // Close App
@@ -140,38 +139,38 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     pg_systemEl[E_SYSTEM_EL_EXIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 210), ((rFullscreen.y + rFullscreen.h) - 50), 100, 50},
             "Exit", 0, E_FONT_MONO14, &pg_system_cbBtn_exit)
-  ) != NULL) {            
+  ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], true); 
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], true);
   }
-  
+
   // Wifi Settings
   if ((
     pg_systemEl[E_SYSTEM_EL_WIFI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 60, 100, 50},
             "Wifi", 0, E_FONT_MONO14, &pg_system_cbBtn_wifi)
-  ) != NULL) {            
+  ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], true); 
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], true);
   }
-  
+
   // Powercycle HDMI Port
   if ((
     pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 130, 150, 50},
             "Powercycle HDMI", 0, E_FONT_MONO14, &pg_system_cbBtn_powercycleHdmi)
-  ) != NULL) {            
+  ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true); 
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true);
   }
 
   // Update
@@ -179,20 +178,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 200, 150, 50},
             "Upgrade", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
-  ) != NULL) {            
+  ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], true); 
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], true);
   }
-  
+
   return 1;
 }
 
 void pg_system_btnDoubleHeld() {
-  touchscreenPageClose(&m_gui, E_PG_SYSTEM);
-  touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  touchscreenPageGoBack(&m_gui);
 }
 
 void pg_system_btnSetFuncs() {

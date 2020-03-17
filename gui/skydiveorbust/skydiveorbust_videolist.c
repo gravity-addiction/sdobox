@@ -71,8 +71,7 @@ static void refreshVideoList(gslc_tsGui *pGui) {
 }
 
 void pg_sdobVideoListClose(gslc_tsGui *pGui) {
-  touchscreenPageClose(pGui, E_PG_SDOB_VIDEOLIST);
-  touchscreenPageOpen(pGui, m_page_previous);
+  touchscreenPageGoBack(pGui);
 }
 
 void pg_sdobVideoList_gotoFolderCheck(gslc_tsGui *pGui) {

@@ -12,8 +12,7 @@ struct pg_sdob_round_info {
 } round_info;
 
 void pg_sdobRoundClose(gslc_tsGui *pGui) {
-  touchscreenPageClose(pGui, E_PG_SDOB_ROUNDLIST);
-  touchscreenPageOpen(pGui, m_page_previous);
+  touchscreenPageGoBack(pGui);
 }
 
 ////////////////

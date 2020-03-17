@@ -6,6 +6,7 @@ extern "C" {
 #endif // __cplusplus
 
 enum {
+  E_PG_STARTUP,
   E_PG_MAIN,
   E_PG_KEYBOARD,
   E_PG_MSGBOX,
@@ -29,6 +30,10 @@ int m_page_show; // = -1;
 int m_page_previous; // = -1;
 int m_page_popup;
 
+int *m_page_stack;
+int m_page_stackLen;
+int m_page_stackMax;
+
 void (*cbInit[MAX_PAGES])(gslc_tsGui *pGui);
 void (*cbOpen[MAX_PAGES])(gslc_tsGui *pGui);
 int (*cbThread[MAX_PAGES])(gslc_tsGui *pGui);
@@ -36,8 +41,16 @@ void (*cbClose[MAX_PAGES])(gslc_tsGui *pGui);
 void (*cbDestroy[MAX_PAGES])(gslc_tsGui *pGui);
 
 
+// Page Stack management
+void touchscreenPageStackAdd(int ePage);
+int touchscreenPageStackCur();
+int touchscreenPageStackPop();
+void touchscreenPageStackReset();
+void touchscreenPageGoBack(gslc_tsGui *pGui);
+
 // Initialize Page
 void touchscreenPageInit(gslc_tsGui *pGui, int ePage);
+void touchscreenPageSetCur(gslc_tsGui *pGui, int ePage);
 void touchscreenPageOpen(gslc_tsGui *pGui, int ePage);
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage);
 void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage);

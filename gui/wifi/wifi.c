@@ -368,7 +368,7 @@ bool pg_wifi_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  touchscreenPageOpen(pGui, E_PG_MAIN);
+  touchscreenPageGoBack(pGui);
   return true;
 }
 

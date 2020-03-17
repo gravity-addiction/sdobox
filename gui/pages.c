@@ -4,29 +4,76 @@
 #include <unistd.h>
 
 #include "gui/msgbox/msgbox.h"
+#include "dbg/dbg.h"
 
-// Initialize Page
-void touchscreenPageInit(gslc_tsGui *pGui, int ePage) {
-  if (cbInit[ePage]) { cbInit[ePage](pGui); }
+
+void touchscreenPageStackAdd(int ePage) {
+  if (m_page_stackLen >= m_page_stackMax) {
+    m_page_stackMax += 16;
+    int *tStack;
+    tStack=realloc(m_page_stack, m_page_stackMax * sizeof(int));
+    if(tStack == NULL) {
+      dbgprintf(DBG_ERROR, "Cannot Realloc Page Stack");
+      return;
+    }
+    m_page_stack = tStack;
+  }
+
+  (m_page_stack)[m_page_stackLen] = ePage;
+  m_page_stackLen++;
 }
 
+int touchscreenPageStackCur() {
+  if (m_page_stackLen > 0) {
+    return (m_page_stack)[m_page_stackLen - 1];
+  } else { return -1; }
+}
+
+int touchscreenPageStackPop() {
+  if (m_page_stackLen > 0) {
+    m_page_stackLen--;
+    return (m_page_stack)[m_page_stackLen];
+  } else { return -1; }
+}
+
+
+void touchscreenPageStackReset() {
+  CLEAR(m_page_stack, m_page_stackLen);
+  m_page_stackLen = 0;
+}
+
+
+void touchscreenPageGoBack(gslc_tsGui *pGui) {
+  touchscreenPageClose(pGui, touchscreenPageStackCur());
+  touchscreenPageStackPop();
+  touchscreenPageSetCur(pGui, touchscreenPageStackCur());
+}
+
+
+
+
+
+
+// update actual page
+void touchscreenPageSetCur(gslc_tsGui *pGui, int ePage) {
+  if (cbInit[ePage]) { cbInit[ePage](pGui); }
+
+  gslc_SetPageBase(pGui, ePage);
+  gslc_SetPageCur(pGui, ePage);
+
+  if (cbOpen[ePage]) {
+    cbOpen[ePage](pGui);
+  }
+}
 
 // Open Page
 void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; }
 
-  // Open Page
-  m_page_previous = m_page_current;
-
-  touchscreenPageInit(pGui, ePage);
-  gslc_SetPageBase(pGui, ePage);
-  gslc_SetPageCur(pGui, ePage);
-  m_page_current = ePage;
-
-  if (cbOpen[m_page_current]) {
-    cbOpen[m_page_current](pGui);
-  }
+  touchscreenPageStackAdd(ePage);
+  touchscreenPageSetCur(pGui, ePage);
 }
+
 
 // Close Page
 void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
@@ -41,8 +88,8 @@ void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
 void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; }
 
-  if (m_page_current == ePage) {
-    touchscreenPageClose(pGui, ePage);
+  if (touchscreenPageStackCur() == ePage) {
+    touchscreenPageGoBack(pGui);
   }
   if (cbInit[ePage] == NULL && cbDestroy[ePage]) {
     cbDestroy[ePage](pGui);
@@ -54,6 +101,7 @@ void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
 // Bulk Close All Pages
 void touchScreenPageCloseAll(gslc_tsGui *pGui) {
   // Start at 1 as to not destory the main page
+
   for (size_t i = 1; i < MAX_PAGES; i++) {
     touchscreenPageClose(pGui, i);
   }
@@ -107,4 +155,13 @@ void touchscreenPopupMsgBoxClose(gslc_tsGui *pGui) {
   gslc_PopupHide(pGui);
   m_page_current = m_page_popup;
   m_page_popup = -1;
+}
+
+
+
+// Setup Constructor
+void __attribute__ ((constructor)) pg_setup(void) {
+  m_page_stackLen = 0;
+  m_page_stackMax = 16;
+  m_page_stack = malloc(m_page_stackMax * sizeof(int));
 }

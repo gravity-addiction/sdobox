@@ -8,8 +8,7 @@
 #include "gui/keyboard/keyboard.h"
 
 void pg_sdobSubmitClose(gslc_tsGui *pGui) {
-  touchscreenPageClose(pGui, E_PG_SDOB_SUBMIT);
-  touchscreenPageOpen(pGui, m_page_previous);
+  touchscreenPageGoBack(pGui);
 }
 
 ////////////////

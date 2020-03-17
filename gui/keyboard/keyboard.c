@@ -19,7 +19,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(struct pg_keyboard_dat
     -1, 90, 88, 67, 86, 66, 78, 77,
     15, 15, -1, 32, 32, 32, 32, 32, 32, -1, 13, 13
   };
-  
+
   return pg_keyboard_layoutConfig(data, layoutRowWids, layoutRows, 5, layout, 59);
 }
 
@@ -35,7 +35,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
     -1, 122, 120, 99, 118, 98, 110, 109,
     15, 15, -1, 32, 32, 32, 32, 32, 32, -1, 13, 13
   };
-  
+
   return pg_keyboard_layoutConfig(data, layoutRowWids, layoutRows, 5, layout, 59);
 }
 
@@ -51,7 +51,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
 // layoutLen - total number of values in layout
 // layoutEl - gslc_tsElemRef pointers for keys
 // layout - ascii layout values
-struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data, 
+struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data,
       int *layoutRowsWid, int *layoutRows, int layoutRowsLen,
       int *layout, int layoutLen) {
 
@@ -93,7 +93,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_data
 struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA()
 {
   struct pg_keyboard_dataStruct *data = (struct pg_keyboard_dataStruct*)malloc(sizeof(struct pg_keyboard_dataStruct));
-  
+
   data->max = 128;
   data->limit = 100;
   data->len = 0;
@@ -116,7 +116,7 @@ struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA()
     data->layoutRowsWid[lR] = -1;
     data->layoutRows[lR] = -1;
   }
-  
+
   // Initialize Value Values
   data->layoutLen = 1;
   data->layoutEl = (gslc_tsElemRef**)malloc(data->layoutLen * sizeof(gslc_tsElemRef *));
@@ -243,13 +243,7 @@ bool pg_keyboard_cbBtn_enter(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
 
   // pg_keyboardInput[strlen(pg_keyboardInput)] = '\0';
   pg_keyboard_runCb(pGui, pg_keyboard_data);
-  touchscreenPageClose(pGui, E_PG_KEYBOARD);
-
-  if (m_page_previous > -1) {
-    touchscreenPageOpen(pGui, m_page_previous);
-  } else {
-    touchscreenPageOpen(pGui, E_PG_MAIN);
-  }
+  touchscreenPageGoBack(pGui);
   return true;
 }
 
@@ -266,8 +260,8 @@ bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
     gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
     pg_keyboard_limitCheck(pGui);
   }
-  
-  
+
+
   return true;
 }
 
@@ -277,13 +271,7 @@ bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  touchscreenPageClose(pGui, E_PG_KEYBOARD);
-
-  if (m_page_previous > -1) {
-    touchscreenPageOpen(pGui, m_page_previous);
-  } else {
-    touchscreenPageOpen(pGui, E_PG_MAIN);
-  }
+  touchscreenPageGoBack(pGui);
   return true;
 }
 
@@ -337,7 +325,7 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
             pg_keyboard_data = pg_keyboard_def_upperCase(pg_keyboard_data);
             pg_keyboard_shiftOn = 1;
           }
-          
+
           // Display
           pg_keyboard_guiKeyboard(pGui);
           pg_keyboard_guiKeyboardUpdate(pGui);
@@ -356,9 +344,9 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
             pg_keyboard_data->ptr = newBuf;
           }
 
-          
+
           strlcat(pg_keyboard_data->ptr, x, pg_keyboard_data->len);
-          
+
           free(x);
         break;
       }
@@ -367,7 +355,7 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
       gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
       pg_keyboard_limitCheck(pGui);
     }
-    
+
   }
 
   return 1;
@@ -586,7 +574,7 @@ void pg_keyboard_open(gslc_tsGui *pGui) {
 }
 
 void pg_keyboard_close(gslc_tsGui *pGui) {
-  
+
 }
 
 

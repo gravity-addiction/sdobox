@@ -123,8 +123,7 @@ bool pg_slideshow_cbBtn_close(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  touchscreenPageClose(pGui, E_PG_SLIDESHOW);
-  touchscreenPageOpen(pGui, E_PG_MAIN);
+  touchscreenPageGoBack(pGui);
   return true;
 }
 
@@ -458,14 +457,12 @@ void pg_slideshowButtonRightHeld() {
 
 void pg_slideshowButtonRotaryHeld() {
   // debug_print("%s\n", "Rotary Held Slideshow");
-  touchscreenPageClose(&m_gui, E_PG_SLIDESHOW);
-  touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  touchscreenPageGoBack(&m_gui);
 }
 
 void pg_slideshowButtonDoubleHeld() {
   // kill(0, SIGINT);
-  touchscreenPageClose(&m_gui, E_PG_SLIDESHOW);
-  touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  touchscreenPageGoBack(&m_gui);
 }
 
 void pg_slideshowButtonSetFuncs() {
@@ -639,7 +636,7 @@ PI_THREAD (pg_slideshowMpvSocketThread)
     if (rc > 0) {
       char* json_event;// = malloc(128);
       int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
-      // printf("MPV Event: -%s-, Parsed: %s Len: %d\n\n\n", mpv_event_ret, json_event, rcE);
+      // dbgprintf(DBG_MPV, "MPV Event: -%s-, Parsed: %s Len: %d\n\n\n", mpv_event_ret, json_event, rcE);
       free(mpv_event_ret);
       if (rcE == 0) { continue; }
 
@@ -665,7 +662,6 @@ PI_THREAD (pg_slideshowMpvSocketThread)
       }
       // MPV Start File
       else if (strcmp(json_event, "start-file") == 0) {
-
 
       }
       // Meta Updated
@@ -776,6 +772,9 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
   pg_slideshowMpvSocketThreadStart();
 
+  fbcp_start();
+  // fbcpThreadStart();
+
   char* retPath;
   if ((mpvSocketSinglet("path", &retPath)) == -1) {
     char *cmd = strdup("loadlist \"/home/pi/shared/playlist.txt\" replace\n");
@@ -804,6 +803,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
 void pg_slideshow_close(gslc_tsGui *pGui) {
   fbcp_stop();
+  // fbcpThreadStop();
   mpv_stop();
   pg_slideshowMpvSocketThreadStop();
 

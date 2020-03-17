@@ -1755,8 +1755,7 @@ void pg_skydiveorbustButtonRotaryHeld() {
 }
 
 void pg_skydiveorbustButtonDoubleHeld() {
-  touchscreenPageClose(&m_gui, E_PG_SKYDIVEORBUST);
-  touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  touchscreenPageGoBack(&m_gui);
 }
 
 void pg_skydiveorbustButtonSetFuncs() {

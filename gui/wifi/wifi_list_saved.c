@@ -141,7 +141,7 @@ bool pg_wifi_list_saved_cbBtn_elE(void* pvGui, void *pvElemRef, gslc_teTouch eTo
 bool pg_wifi_list_saved_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_WIFI);
+  touchscreenPageGoBack(pGui);
 
   return true;
 }
