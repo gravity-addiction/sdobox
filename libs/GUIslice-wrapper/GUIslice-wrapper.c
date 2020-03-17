@@ -4,13 +4,7 @@
 #include "GUIslice/src/GUIslice.h"
 #include "GUIslice-wrapper.h"
 #include "gui/keyboard/keyboard.h"
-
-// Debugging Printout helper
-#if defined(DEBUG) || 1
-    static int16_t DebugOut(char ch) { fputc(ch, stderr); return 0; }
-#else
-    static int16_t DebugOut(char ch) { return 0; }
-#endif
+#include "dbg/dbg.h"
 
 
 // Configure environment variables suitable for display
@@ -48,10 +42,6 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
 
   gslc_tsRect rF = {0, 0, 480, 320};
   rFullscreen = rF;
-
-
-  gslc_InitDebug(&DebugOut);
-
   // GUISlice Environment
   UserInitEnv();
 

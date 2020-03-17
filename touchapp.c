@@ -324,6 +324,7 @@ int main( int argc, char* args[] )
   fbcp_stop();
 
   printf("%s\n", "Controls are yours.");
+  gslc_Quit(&m_gui);
   usleep(250000);
   return m_bSigInt;
 }

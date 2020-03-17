@@ -21,7 +21,7 @@ void init_dbg() {
   if (e)
     configured_mask = strtoul(e, NULL, 0);
 
-  gslc_InitDebug(gui_debug_out);
+  gslc_InitDebug(&gui_debug_out);
 }
 
 static void vasigprintf(const char* fmt, va_list ap) {
