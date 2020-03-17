@@ -319,9 +319,6 @@ int pg_wifi_list_saved_guiInit(gslc_tsGui *pGui)
   int ePage = E_PG_WIFI_LIST_SAVED;
   gslc_PageAdd(pGui, ePage, pg_wifiListSavedElem, MAX_ELEM_PG_WIFI_LIST_SAVED_RAM, pg_wifiListSavedElemRef, MAX_ELEM_PG_WIFI_LIST_SAVED);
 
-  // Set Background to a flat color
-  gslc_SetBkgndColor(pGui, GSLC_COL_BLACK);
-
   gslc_tsRect rListBox = {0,5,425,250};
 
   // Main View Box

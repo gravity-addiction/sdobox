@@ -493,7 +493,6 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
   int ePage = E_PG_KEYBOARD;
 
   gslc_PageAdd(&m_gui, ePage, pg_keyboardElem, MAX_ELEM_PG_KEYBOARD_RAM, pg_keyboardElemRef, MAX_ELEM_PG_KEYBOARD);
-  // gslc_SetBkgndColor(&m_gui, GSLC_COL_BLACK);
 
   // Overall Redraw Box
   if ((

@@ -222,7 +222,6 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
 
   gslc_PageAdd(pGui, E_PG_SLIDESHOW, pg_slideshowElem, MAX_ELEM_PG_SLIDESHOW_RAM,
                pg_slideshowElemRef, MAX_ELEM_PG_SLIDESHOW);
-  // gslc_SetBkgndColor(pGui, GSLC_COL_GRAY_DK2);
 
   pg_slideshowEl[E_SLIDESHOW_EL_TOUCHPAD] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
     (gslc_tsRect){160,100,160,120},
