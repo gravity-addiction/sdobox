@@ -7,7 +7,7 @@ extern "C" {
 
 
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
 #include "shared.h"
@@ -24,7 +24,8 @@ enum {
   E_SYSTEM_EL_WIFI,
   E_SYSTEM_EL_POWERCYCLEHDMI,
   E_SYSTEM_EL_UPGRADE,
-  
+  E_SYSTEM_EL_STARTUP,
+
   E_SYSTEM_EL_MAX
 };
 
@@ -44,6 +45,7 @@ bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_system_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_system_cbBtn_powercycleHdmi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
+bool pg_system_cbBtn_startup(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 
 bool pg_system_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
 

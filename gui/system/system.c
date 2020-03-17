@@ -101,6 +101,14 @@ bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   return true;
 }
 
+bool pg_system_cbBtn_startup(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageOpen(pGui, E_PG_STARTUP);
+  return true;
+}
+
 /////////////////////////////
 //
 // GUI DISPLAY FUNCTIONS
@@ -147,6 +155,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], true);
   }
 
+  // Startup
+  if ((
+    pg_systemEl[E_SYSTEM_EL_STARTUP] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 0, 150, 50},
+            "Startup Menu", 0, E_FONT_MONO14, &pg_system_cbBtn_startup)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], false);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], true);
+  }
+
   // Wifi Settings
   if ((
     pg_systemEl[E_SYSTEM_EL_WIFI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -185,6 +206,8 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], true);
   }
+
+
 
   return 1;
 }

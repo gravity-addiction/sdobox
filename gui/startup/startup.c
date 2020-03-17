@@ -34,6 +34,14 @@ bool pg_startup_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   return true;
 }
 
+bool pg_startup_cbBtn_menu(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageOpen(pGui, E_PG_MAIN);
+  return true;
+}
+
 bool pg_startup_cbBtn_btnConfig(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
@@ -152,6 +160,15 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_BTN_WIFI], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_BTN_WIFI], true);
   gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_BTN_WIFI], true);
+
+  pg_startupEl[E_STARTUP_EL_BTN_MENU] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {310, 200, 100, 60},
+          (char*)"Menu", 0, E_FONT_MONO18, &pg_startup_cbBtn_menu);
+  gslc_ElemSetTxtCol(pGui, pg_startupEl[E_STARTUP_EL_BTN_MENU], GSLC_COL_GRAY_LT2);
+  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_BTN_MENU], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_BTN_MENU], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_BTN_MENU], true);
+  gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_BTN_MENU], true);
 
 }
 
