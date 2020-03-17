@@ -414,26 +414,8 @@ void pg_slideshowButtonRotaryPressed() {
     mpv_set_prop_double("video-pan-y", pg_slideshowPanY);
     mpv_set_prop_double("video-zoom", pg_slideshowZoom);
 
-    //-/ pg_slideshowSendChar("a"); // Reset to default zoom size
-    mpv_play();
-
-    char *showCmd = strdup("show-text \"Playing\"\n");
-    mpv_cmd(showCmd);
   } else {
-
-    if (pg_slideshowPaused == 0) {
-      pg_slideshowPaused = 1;
-      mpv_pause();
-
-      char *showCmd = strdup("show-text \"Paused\"\n");
-      mpv_cmd(showCmd);
-    } else {
-      pg_slideshowPaused = 0;
-      mpv_play();
-
-      char *showCmd = strdup("show-text \"Playing\"\n");
-      mpv_cmd(showCmd);
-    }
+    mpv_playpause_toggle();
   }
 }
 
@@ -781,6 +763,8 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
     mpv_cmd(cmd);
   }
 
+  // Play on Open
+  mpv_play();
 /*
   if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/", "w"))){
     // debug_print("%s\n", "Cannot Open image folder");
