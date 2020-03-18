@@ -30,6 +30,16 @@ bool pg_main_list_check() {
 
   return true;
 }
+
+void pg_main_mirror_toggle(gslc_tsGui *pGui) {
+  if (fbcp_toggle()) {
+    gslc_SetTouchDisabled(pGui, true);
+  } else {
+    gslc_SetTouchDisabled(pGui, false);
+    gslc_PageRedrawSet(pGui, true);
+  }
+}
+
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -104,9 +114,9 @@ bool pg_main_cbBtn_network(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
 
 bool pg_main_cbBtn_mirror(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  fbcp_toggle();
+  pg_main_mirror_toggle(pGui);
   return true;
 }
 
@@ -707,7 +717,7 @@ void pg_mainButtonRightPressed() {
   // debug_print("%s\n", "Main Right Pressed");
 }
 void pg_mainButtonRotaryPressed() {
-  // debug_print("%s\n", "Main Rotary Pressed");
+  pg_main_mirror_toggle(&m_gui);
 }
 void pg_mainButtonLeftHeld() {
   // debug_print("%s\n", "Main Left Held");
