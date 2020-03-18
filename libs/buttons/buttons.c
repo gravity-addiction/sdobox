@@ -11,6 +11,7 @@
 
 
 int lib_buttons_thread() {
+  if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
 
   int i_now = millis();
 
@@ -202,6 +203,8 @@ void lib_buttonsSetCallbackFunc(int btn, void (*function)()) {
 int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
                 int actionPressed, int actionReleased, int actionHeld
 ) {
+  if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
+
   int p = digitalRead(pin);
   unsigned int i_now = millis();
 
@@ -264,6 +267,8 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
 
 // Rotary Management Routine
 void lib_buttonsRotaryInterrupt(void) {
+  if (lib_buttonsDisabled) { return; } // Check Buttons Disabled
+
   r_a = digitalRead(ROTARY_PIN_A);
   r_b = digitalRead(ROTARY_PIN_B);
 
@@ -296,18 +301,21 @@ void lib_buttonsRotaryInterrupt(void) {
 
 // Rotary Button Pressed
 void lib_buttonsRotaryBtnInterrupt(void) {
+  if (lib_buttonsDisabled) { return; } // Check Buttons Disabled
   lib_buttonsManageBtnInterrupt(ROTARY_PIN_BTN, E_BUTTON_ROTARY_LOW, E_BUTTON_ROTARY_HIGH,
                   E_BUTTON_ROTARY_PRESSED, E_BUTTON_ROTARY_RELEASED, E_BUTTON_ROTARY_HELD);
 }
 
 // Left Button Pressed
 void lib_buttonsLeftBtnInterrupt(void) {
+  if (lib_buttonsDisabled) { return; } // Check Buttons Disabled
   lib_buttonsManageBtnInterrupt(LEFT_PIN_BTN, E_BUTTON_LEFT_LOW, E_BUTTON_LEFT_HIGH,
                   E_BUTTON_LEFT_PRESSED, E_BUTTON_LEFT_RELEASED, E_BUTTON_LEFT_HELD);
 }
 
 // Right Button Pressed
 void lib_buttonsRightBtnInterrupt(void) {
+  if (lib_buttonsDisabled) { return; } // Check Buttons Disabled
   lib_buttonsManageBtnInterrupt(RIGHT_PIN_BTN, E_BUTTON_RIGHT_LOW, E_BUTTON_RIGHT_HIGH,
                   E_BUTTON_RIGHT_PRESSED, E_BUTTON_RIGHT_RELEASED, E_BUTTON_RIGHT_HELD);
 }

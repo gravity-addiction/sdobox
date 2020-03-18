@@ -61,6 +61,8 @@ int       lib_buttonsBtnHoldDelay;
 int      lib_buttonsThreadKill; // Stopping mpvRpcSocket
 int      lib_buttonsThreadRunning; // Running flag for Mpv RPC
 
+int lib_buttonsDisabled; // Complete Disable Buttons While in Mirroring
+
 void (*cbBtns[MAX_BUTTONS])();
 
 int lib_buttons_thread();
