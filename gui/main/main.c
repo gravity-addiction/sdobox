@@ -5,6 +5,7 @@
 #include "buttons/buttons.h"
 #include "vlisting/vlisting.h"
 #include "mpv/mpv.h"
+#include "fbcp/fbcp.h"
 
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"
@@ -98,6 +99,14 @@ bool pg_main_cbBtn_network(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
 
   pg_main_loadFolder(pGui, "network:///");
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
+bool pg_main_cbBtn_mirror(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  fbcp_toggle();
   return true;
 }
 
@@ -418,7 +427,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_mainEl[E_MAIN_EL_BTN_E] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 215, 100, 50},
-            "Network", 0, E_FONT_MONO14, &pg_main_cbBtn_network)
+            "Mirror", 0, E_FONT_MONO14, &pg_main_cbBtn_mirror)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
