@@ -1,0 +1,4 @@
+#!/bin/sh
+
+sudo systemctl restart mpv.service
+sudo systemctl restart sdobox.service

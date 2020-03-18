@@ -1,0 +1,4 @@
+#!/bin/sh
+
+sudo systemctl stop sdobox.service
+sudo systemctl disable sdobox.service

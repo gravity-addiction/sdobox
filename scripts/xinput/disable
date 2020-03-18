@@ -1,0 +1,3 @@
+#!/bin/sh
+
+DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0

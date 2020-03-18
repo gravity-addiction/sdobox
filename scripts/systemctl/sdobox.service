@@ -1,0 +1,24 @@
+[Unit]
+Description=SDOBOX Service
+After=mpv.service
+# After=smbd.service
+# OnFailure=notify-bsod.service
+
+[Service]
+Type=idle
+Restart=on-failure
+
+PIDFile=/tmp/sdobox.pid
+ExecStart=sudo /usr/local/bin/sdobox
+# Development Version Startup
+# ExecStart=sudo /home/pi/dev/advert-gui/touchapp
+
+KillSignal=SIGINT
+KillMode=process
+User=pi
+WorkingDirectory=/home/pi/shared
+StandardError=null
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target

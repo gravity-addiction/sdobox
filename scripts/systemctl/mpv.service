@@ -1,0 +1,16 @@
+[Unit]
+Description=MPV Startup
+
+[Service]
+Type=idle
+Restart=yes
+
+PIDFile=/run/mpv.pid
+User=pi
+
+ExecStart=/usr/bin/mpv --fullscreen --video-osd=no --loop-playlist --video-sync=display-resample --hr-seek-framedrop=yes --input-ipc-server=/tmp/mpv.socket --no-osc --no-osd-bar --osd-on-seek=no --reset-on-next-file=all --keep-open=always --idle
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
