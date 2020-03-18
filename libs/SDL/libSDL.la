@@ -8,7 +8,7 @@
 dlname='libSDL-1.2.so.0'
 
 # Names of this library.
-library_names='libSDL-1.2.so.0.11.4 libSDL-1.2.so.0 libSDL.so'
+library_names='libSDL-1.2.so.0.11.5 libSDL-1.2.so.0 libSDL.so'
 
 # The name of the static archive.
 old_library='libSDL.a'
@@ -25,7 +25,7 @@ weak_library_names=''
 # Version information for libSDL.
 current=11
 age=11
-revision=4
+revision=5
 
 # Is this an already installed library?
 installed=no
@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/usr/lib'
+libdir='/usr/local/lib'
