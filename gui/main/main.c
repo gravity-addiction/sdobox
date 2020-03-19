@@ -34,8 +34,10 @@ bool pg_main_list_check() {
 void pg_main_mirror_toggle(gslc_tsGui *pGui) {
   if (fbcp_toggle()) {
     gslc_SetTouchDisabled(pGui, true);
+    gslc_SetScreenDisabled(pGui, true);
   } else {
     gslc_SetTouchDisabled(pGui, false);
+    gslc_SetScreenDisabled(pGui, false);
     gslc_PageRedrawSet(pGui, true);
   }
 }
