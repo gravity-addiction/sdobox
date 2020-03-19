@@ -156,7 +156,7 @@ void pg_main_resetList() {
     free(pg_main_list[i]);
   }
   free(pg_main_list);
-  VLIST_CLEAR_CONFIG(pg_main_listConfig);
+  pg_main_listConfig->len = 0;
 }
 
 
@@ -749,6 +749,7 @@ void pg_mainButtonSetFuncs() {
 
 void pg_main_refreshCurrentFolder(gslc_tsGui* pGui) {
   pg_main_resetList();
+
   pg_main_listConfig->len = file_list(pg_main_currentFolderPath, &pg_main_list, -1);
   qsort(pg_main_list, pg_main_listConfig->len, sizeof(char *), fileStruct_cmpName);
   VLIST_UPDATE_CONFIG(pg_main_listConfig);
@@ -758,6 +759,8 @@ void pg_main_refreshCurrentFolder(gslc_tsGui* pGui) {
 void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath) {
   free(pg_main_currentFolderPath);
   pg_main_currentFolderPath = strdup(folderPath);
+  VLIST_CLEAR_CONFIG(pg_main_listConfig);
+  vlist_sliderResetCurPos(pGui, pg_main_listConfig);
   pg_main_refreshCurrentFolder(pGui);
 }
 
@@ -789,11 +792,8 @@ void pg_main_open(gslc_tsGui *pGui) {
 
 // GUI Destroy
 void pg_main_destroy(gslc_tsGui *pGui) {
-  for (int i = 0; i < pg_main_listConfig->len; ++i) {
-    free(pg_main_list[i]->name);
-    free(pg_main_list[i]);
-  }
-  free(pg_main_list);
+  pg_main_resetList();
+
   free(pg_main_listConfig->refs);
   free(pg_main_listConfig);
   free(pg_main_currentFolderPath);

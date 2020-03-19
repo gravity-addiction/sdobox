@@ -116,7 +116,8 @@ void vlist_sliderChangeCurPos(gslc_tsGui *pGui, struct vlist_config *config, int
 
 // Reset Cur Slider pos
 void vlist_sliderResetCurPos(gslc_tsGui *pGui, struct vlist_config *config) {
-  vlist_sliderChangeCurPos(pGui, config, 0);
+  int i_slot_old = gslc_ElemXSliderGetPos(pGui, config->sliderEl);
+  vlist_sliderChangeCurPos(pGui, config, i_slot_old * -1);
 }
 
 
