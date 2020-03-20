@@ -133,7 +133,31 @@
 
         `sudo TSLIB_FBDEVICE=/dev/fb1 TSLIB_TSDEVICE=/dev/input/touchscreen ts_calibrate`
 
-## Contributions
+
+## Development
+
+Requires compiling on a raspberry pi platform.
+
+
+### Clone and make repo
+```
+git clone --recurse-submodules https://github.com/gravity-addiction/sdobox.git
+cd sdobox
+make -j4
+sudo ./touchapp
+```
+
+### Debugging
+
+Install clang tools `sudo apt install clang`
+
+Modify `Makefile` chaging **CC** to use one of the clang options and REM out `CC = gcc`
+
+Require running `make clean` in order to compile all libraries using clang
+
+
+
+## Contributors
 **Special Thanks to the people contributing to this project**
 
     - Gary Taylor @gravity-addiction
