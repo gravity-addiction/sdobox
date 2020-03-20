@@ -12,12 +12,12 @@
 
 #include "slideshow.h"
 
-#include "shared.h"
-#include "queue/queue.h"
-#include "buttons/buttons.h"
-#include "mpv/mpv.h"
+#include "libs/shared.h"
+#include "libs/queue/queue.h"
+#include "libs/buttons/buttons.h"
+#include "libs/mpv/mpv.h"
 #include "gui/pages.h"
-#include "fbcp/fbcp.h"
+#include "libs/fbcp/fbcp.h"
 
 void pg_slideshowReset(gslc_tsGui *pGui) {
   // debug_print("%s\n", "Slideshow Reset");

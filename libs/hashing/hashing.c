@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 
 // ---------------------------
 // Hashing Routines

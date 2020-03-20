@@ -1,7 +1,7 @@
 #include "skydiveorbust_roundlist.h"
 
-#include "buttons/buttons.h"
-#include "queue/queue.h"
+#include "libs/buttons/buttons.h"
+#include "libs/queue/queue.h"
 #include "gui/pages.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"

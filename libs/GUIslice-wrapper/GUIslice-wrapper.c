@@ -4,7 +4,7 @@
 #include "GUIslice/src/GUIslice.h"
 #include "GUIslice-wrapper.h"
 #include "gui/keyboard/keyboard.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 // Configure environment variables suitable for display

@@ -8,8 +8,8 @@
 #include <unistd.h>
 
 #include "lib_wifi_wpa.h"
-#include "shared.h"
-#include "dbg/dbg.h"
+#include "libs/shared.h"
+#include "libs/dbg/dbg.h"
 
 // pg_wifi_wpaSetEventCallbackFunc ?
 void pg_wifi_wpaEventCB(char *buf, size_t len) {

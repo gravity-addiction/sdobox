@@ -15,11 +15,11 @@
 #include "skydiveorbust.h"
 #include "gui/pages.h"
 
-#include "buttons/buttons.h"
-#include "queue/queue.h"
-#include "mpv/mpv.h"
-#include "fbcp/fbcp.h"
-#include "dbg/dbg.h"
+#include "libs/buttons/buttons.h"
+#include "libs/queue/queue.h"
+#include "libs/mpv/mpv.h"
+#include "libs/fbcp/fbcp.h"
+#include "libs/dbg/dbg.h"
 
 #include "gui/keyboard/keyboard.h"
 

@@ -12,7 +12,7 @@ LDLIB_EXTRA = -lwiringPi -lconfig -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lo
 GSLC_CORE := GUIslice/src/GUIslice.c $(wildcard GUIslice/src/elem/*.c) #GUIslice/GUIslice_config.h
 GSLC_INCLUDES = -I./GUIslice/src
 
-TOUCHAPP_INCLUDES = -I./libs -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host -I/opt/vc/include/interface/vmcs_host/linux
+TOUCHAPP_INCLUDES = -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads -I/opt/vc/include/interface/vmcs_host -I/opt/vc/include/interface/vmcs_host/linux
 TOUCHAPP_CORE := $(wildcard libs/*.c) $(wildcard libs/**/*.c) $(wildcard gui/*.c) $(wildcard gui/**/*.c) \
 		         $(wildcard wpa/*.c)
 

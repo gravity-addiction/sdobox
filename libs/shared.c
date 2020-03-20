@@ -13,10 +13,10 @@
 #include <sys/kd.h>
 #include <assert.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 #define JSMN_HEADER
 #include "jsmn/jsmn.h" // JSON Parsing
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 #define DIM(x) (sizeof(x)/sizeof((x)))
 

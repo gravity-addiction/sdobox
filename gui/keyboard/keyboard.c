@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "keyboard.h"
-#include "shared.h"
+#include "libs/shared.h"
 #include "gui/pages.h"
 
 

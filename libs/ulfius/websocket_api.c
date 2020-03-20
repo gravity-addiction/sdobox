@@ -2,10 +2,10 @@
 #include <ulfius.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "lib_websocket.h"
 #include "websocket_api.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 

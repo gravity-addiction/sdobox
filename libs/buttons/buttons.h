@@ -6,7 +6,7 @@ extern "C" {
 #endif // __cplusplus
 
 #include "GUIslice.h"
-#include "shared.h"
+#include "libs/shared.h"
 
 
 enum {

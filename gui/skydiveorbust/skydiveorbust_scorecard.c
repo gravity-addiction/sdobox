@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "skydiveorbust.h"
-#include "queue/queue.h"
-#include "mpv/mpv.h"
+#include "libs/queue/queue.h"
+#include "libs/mpv/mpv.h"
 
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
@@ -230,7 +230,7 @@ void pg_sdobScoringMarks(gslc_tsGui *pGui) {
 
   for(int i = 0; i < sdob_judgement->marks->tickCnt; ++i) {
     if (sdob_judgement->marks->arrScorecardTimes[i] >= 0) {
-      // Get percent in working time ((mark - sowt) / wt)  
+      // Get percent in working time ((mark - sowt) / wt)
       sdob_judgement->marks->arrScorecardTicks[i] = (((sdob_judgement->marks->arrScorecardTimes[i] - sdob_judgement->sowt) / sdob_judgement->workingTime) * 100);
     } else {
       sdob_judgement->marks->arrScorecardTicks[i] = -1.0;

@@ -3,10 +3,10 @@
 #include <sqlite3.h> // SQLite3 Database
 #include <wiringPi.h> // Gordons Wiring Pi
 
-#include "shared.h"
-#include "queue/queue.h"
+#include "libs/shared.h"
+#include "libs/queue/queue.h"
 #include "sqlite3-wrapper.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 void sqlite3Version() {

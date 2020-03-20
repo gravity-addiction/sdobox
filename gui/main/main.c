@@ -2,10 +2,10 @@
 #include "main.h"
 #include <sys/stat.h>
 
-#include "buttons/buttons.h"
-#include "vlisting/vlisting.h"
-#include "mpv/mpv.h"
-#include "fbcp/fbcp.h"
+#include "libs/buttons/buttons.h"
+#include "libs/vlisting/vlisting.h"
+#include "libs/mpv/mpv.h"
+#include "libs/fbcp/fbcp.h"
 
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"

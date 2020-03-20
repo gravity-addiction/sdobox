@@ -7,10 +7,10 @@ extern "C" {
 
 
 #include <stdio.h>
-#include <string.h> 
+#include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "gui/pages.h"
 
 #include "lib_wifi_wpa.h"

@@ -1,10 +1,10 @@
 #include "pages.h"
-#include "shared.h"
+#include "libs/shared.h"
 #include <time.h> // system time clocks
 #include <unistd.h>
 
 #include "gui/msgbox/msgbox.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 void touchscreenPageStackAdd(int ePage) {

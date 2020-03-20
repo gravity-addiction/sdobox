@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "GUIslice-wrapper/GUIslice-wrapper.h"
+#include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "vlisting.h"
 
 ///////////////////////////////

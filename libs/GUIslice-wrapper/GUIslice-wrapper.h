@@ -74,7 +74,7 @@ extern "C" {
 #define MAX_ELEM_PG_DEFAULT_RAM    MAX_ELEM_PG_DEFAULT // Default
 
 // Third Party Libs
-#include "shared.h"
+#include "libs/shared.h"
 #include "gui/pages.h"
 #include <wiringPi.h> // Gordons Wiring Pi
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 #include "GUIslice/src/GUIslice.h"
 
 static dbgmask_t configured_mask = DBG_ERROR;

@@ -11,12 +11,12 @@
 #include <wiringPi.h>           /* millis() */
 
 // #include <mpv/client.h>
-#include "shared.h"
+#include "libs/shared.h"
 #include "mpv.h"
 
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
-#include "queue/queue.h"
+#include "libs/queue/queue.h"
 
 
 

@@ -5,7 +5,7 @@
 #include <errno.h>
 
 #include "queue.h"
-#include "shared.h"             /* m_bQuit */
+#include "libs/shared.h"             /* m_bQuit */
 
 // #define QUEUE_DEBUG_P
 

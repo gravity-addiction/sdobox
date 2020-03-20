@@ -3,7 +3,7 @@
 #include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "lib_wifi_wpa.h"
 #include "lib_wifi_networks.h"
 #include "wifi.h"

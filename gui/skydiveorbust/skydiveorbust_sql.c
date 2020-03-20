@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <sqlite3.h> // SQLite3 Database
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "skydiveorbust_sql.h"
-#include "sqlite3-wrapper/sqlite3-wrapper.h"
-#include "queue/queue.h"
-#include "dbg/dbg.h"
+#include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
+#include "libs/queue/queue.h"
+#include "libs/dbg/dbg.h"
 
 int pg_sdobSqlCb_debug(void *NotUsed, int argc, char **argv, char **azColName) {
    int i;

@@ -10,9 +10,9 @@ extern "C" {
 #include <string.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "gui/pages.h"
-#include "vlisting/vlisting.h"
+#include "libs/vlisting/vlisting.h"
 
 #include "lib_wifi_wpa.h"
 #include "lib_wifi_networks.h"

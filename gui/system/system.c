@@ -6,9 +6,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "system.h"
-#include "buttons/buttons.h"
+#include "libs/buttons/buttons.h"
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"
 

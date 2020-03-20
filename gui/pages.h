@@ -23,7 +23,7 @@ enum {
 };
 
 #include "GUIslice.h"
-#include "GUIslice-wrapper/GUIslice-wrapper.h"
+#include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 
 int m_page_current;
 int m_page_show; // = -1;

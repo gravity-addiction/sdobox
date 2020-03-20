@@ -3,8 +3,8 @@
 #include <pthread.h>
 
 #include "skydiveorbust.h"
-#include "queue/queue.h"
-#include "mpv/mpv.h"
+#include "libs/queue/queue.h"
+#include "libs/mpv/mpv.h"
 
 
 

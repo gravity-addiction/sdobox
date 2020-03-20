@@ -41,7 +41,7 @@ struct pg_keyboard_dataStruct {
   int layoutRowsLen;
   int *layoutRowsWid;
   int *layoutRows;
-  
+
   int layoutLen;
   int *layout;
 
@@ -64,7 +64,7 @@ int pg_keyboard_shiftOn;
 #include <string.h>
 
 #include "keyboard.h"
-#include "shared.h"
+#include "libs/shared.h"
 #include "gui/pages.h"
 
 
@@ -84,7 +84,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
 // layoutLen - total number of values in layout
 // layoutEl - gslc_tsElemRef pointers for keys
 // layout - ascii layout values
-struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data, 
+struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data,
       int *layoutRowsWid, int *layoutRows, int layoutRowsLen,
       int *layout, int layoutLen);
 

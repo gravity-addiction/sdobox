@@ -25,26 +25,35 @@
 
 
 // Core Headers
-#include "touchapp.h"
-#include "shared.h"
+#include "libs/shared.h"
 
 
 // Lib Headers
-#include "queue/queue.h"
-#include "buttons/buttons.h"
-#include "flightgroups/flightgroups.h"
-#include "fbcp/fbcp.h"
-#include "sqlite3-wrapper/sqlite3-wrapper.h"
-#include "ulfius/websocket_api.h"
-#include "ulfius/websocket_server.h"
-#include "ulfius/websocket_client.h"
-#include "dbg/dbg.h"
+#include "libs/queue/queue.h"
+#include "libs/buttons/buttons.h"
+#include "libs/fbcp/fbcp.h"
+#include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
+#include "libs/ulfius/websocket_api.h"
+#include "libs/ulfius/websocket_server.h"
+#include "libs/ulfius/websocket_client.h"
+#include "libs/dbg/dbg.h"
+#include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 
-#include "GUIslice-wrapper/GUIslice-wrapper.h"
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
 
 
+#define JSMN_HEADER
+#include "libs/jsmn/jsmn.h" // JSON Parsing
+
+char*    config_path = "/home/pi/.config/touchapp/touchapp.conf";
+int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
+int      m_startPage = 0; // Page Int to start
+int      m_touchscreenInit = 0; // guislice init successful
+
+void signal_sigint(int sig);
+void get_config_settings();
+int main( int argc, char* args[] );
 
 
 // SIGINT handler

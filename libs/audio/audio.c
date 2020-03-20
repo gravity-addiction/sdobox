@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "audio.h"
 
 void volume_increase() {

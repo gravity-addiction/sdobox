@@ -10,7 +10,7 @@
 
 #include <wiringPi.h> // Gordons Wiring Pi
 #include "fbcp.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 int fbcpData_fbfd = 0;

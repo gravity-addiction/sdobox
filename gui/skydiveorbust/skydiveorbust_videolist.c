@@ -3,12 +3,12 @@
 
 #include "skydiveorbust_videolist.h"
 
-#include "buttons/buttons.h"
-#include "mpv/mpv.h"
-#include "queue/queue.h"
+#include "libs/buttons/buttons.h"
+#include "libs/mpv/mpv.h"
+#include "libs/queue/queue.h"
 #include "gui/pages.h"
-#include "vlisting/vlisting.h"
-#include "dbg/dbg.h"
+#include "libs/vlisting/vlisting.h"
+#include "libs/dbg/dbg.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
 #include "gui/keyboard/keyboard.h"

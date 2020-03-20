@@ -6,8 +6,8 @@
 #include <wiringPi.h> // Gordons Wiring Pi
 
 #include "GUIslice.h"
-#include "buttons/buttons.h"
-#include "queue/queue.h"
+#include "libs/buttons/buttons.h"
+#include "libs/queue/queue.h"
 
 
 int lib_buttons_thread() {

@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "shared.h"
+#include "libs/shared.h"
 #include "lib_wifi_wpa.h"
 #include "lib_wifi_networks.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 
 

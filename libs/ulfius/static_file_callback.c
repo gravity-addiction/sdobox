@@ -26,7 +26,7 @@
 
 #include "lib_websocket.h"
 #include "static_file_callback.h"
-#include "dbg/dbg.h"
+#include "libs/dbg/dbg.h"
 
 /**
  * Return the filename extension
