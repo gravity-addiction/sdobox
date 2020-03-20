@@ -20,14 +20,14 @@
 
 
 ## Installation
-    
+
 - Downloading and Install Raspberrian
 
      this step has been very well documented and described many places on the internet. To be honest, if you're brand new to raspberry pi, this project may not be the best for learning. It's heavy in development right now and it may flustrate new comers. *You've been warned.*
 
 - Preboot config
     - WIFI
-    
+
         on the new boot partition of the sd card, create a file named,
         `wpa_supplicant.conf`<br>Add The following to the *wpa_supplicant.conf* file.
         ```
@@ -63,7 +63,7 @@
 - mpv installation
 
     `scripts/install-mpv.sh` - compile several video and audio libraries, including ffmpeg and mpv. downloads from original source locations
-    
+
     `scripts/install-mpv-plus-drive.sh` - install ffmpeg, mpv and other video / audio libraries. installs wiringpi for RPI4. downloads from google drive mirror.
 
 
@@ -78,9 +78,9 @@
         - Assign overlay in /boot/config.txt<br> :rotate=270 is optional for fixing upside down screens.
 
             `sudo sh -c 'echo "dtoverlay=waveshare35c:rotate=270" >> /boot/config.txt'`
-        
+
         - Add Framebuffer mapping and Font to /boot/cmdline.txt
-        
+
             `sudo sh -c 'echo "$(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8" > /boot/cmdline.txt'`
 
 
@@ -93,9 +93,9 @@
         - Assign overlay in /boot/config.txt<br> :rotate=270 is optional for fixing upside down screens.
 
             `sudo sh -c 'echo "dtoverlay=waveshare35a:rotate=270" >> /boot/config.txt'`
-        
+
         - Add Framebuffer mapping and default terminal font to /boot/cmdline.txt
-        
+
             `sudo sh -c 'echo "$(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8" > /boot/cmdline.txt'`
 
 
@@ -130,15 +130,40 @@
 
     - Reboot
     - Calibrate touchscreen
-        
+
         `sudo TSLIB_FBDEVICE=/dev/fb1 TSLIB_TSDEVICE=/dev/input/touchscreen ts_calibrate`
 
 ## Contributions
 **Special Thanks to the people contributing to this project**
 
-    - Gary Taylor @gravityaddiction
+    - Gary Taylor @gravity-addiction
     - Jim Rees @jimrees
 
 
 ## Licence
 
+SDOBOX - Skydive or Bust Touchscreen Software
+Copyright (c) 2019-2020
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Except as contained in this notice, the name of the SDOBOX, Skydive Or Bust, or
+Strict Development, Inc. shall not be used in advertising or otherwise to promote
+the sale, use or other dealings in this Software without prior written
+authorization from the Strict Development, Inc. or Gary Taylor.
