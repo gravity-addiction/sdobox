@@ -50,7 +50,7 @@
 
     From a shell prompt running the following commands to add the sdobox repository to your `/etc/apt/sources.list` and download sdobox through `sudo apt install sdobox`
 
-    For the same information goto; https://sdobox.skydiveorbust.com/
+    For the same information goto; http://sdobox.skydiveorbust.com/ or https://s3-us-west-2.amazonaws.com/sdobox.skydiveorbust.com/index.html
 
     ```
     echo "deb http://sdobox.skydiveorbust.com/ sdobox main" | sudo tee -a /etc/apt/sources.list
@@ -141,7 +141,7 @@ Requires compiling on a raspberry pi platform.
 
 ### Clone and make repo
 ```
-git clone --recurse-submodules https://github.com/gravity-addiction/sdobox.git
+git clone --recurse-submodules http://github.com/gravity-addiction/sdobox.git
 cd sdobox
 make -j4
 sudo ./touchapp
