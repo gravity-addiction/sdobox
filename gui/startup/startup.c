@@ -8,6 +8,48 @@
 
 char pg_startupIpboxBuf[PG_STARTUP_IPBOX_ROWS * PG_STARTUP_IPBOX_COLS];
 
+/////////////////////
+// Function calls
+void updateIpAddress(gslc_tsGui *pGui) {
+  FILE* input = popen("ip address list | grep inet | grep -v 127.0.0 | cut -d \" \" -f 6 | cut -d \"/\" -f 1", "r");
+  char result[PG_STARTUP_IPBOX_ROWS * PG_STARTUP_IPBOX_COLS];
+  char* got;
+  gslc_ElemXTextboxReset(pGui, pg_startupEl[E_STARTUP_EL_IPBOX]);
+  pg_startupIpBoxLines = 0;
+  while((got = fgets(result, sizeof(result), input)) != NULL) {
+    if (got && strlen(got) > 0) {
+      pg_startupIpBoxLines++;
+      gslc_ElemXTextboxAdd(pGui, pg_startupEl[E_STARTUP_EL_IPBOX], result);
+    }
+  }
+  fclose(input);
+}
+
+void pg_startup_updateIpBoxScroll(gslc_tsGui *pGui) {
+  int winRows = 4;
+  int winMax = (PG_STARTUP_IPBOX_ROWS - winRows);
+
+  if (pg_startupIpBoxScroll < 0) {
+    pg_startupIpBoxScroll = pg_startupIpBoxLines - 1;
+  }
+  if (pg_startupIpBoxScroll > winMax || pg_startupIpBoxScroll > pg_startupIpBoxLines) {
+    pg_startupIpBoxScroll = 0;
+  }
+
+  if (pg_startupIpBoxScroll == 0) {
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  } else if (pg_startupIpBoxScroll == winMax) {
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  } else {
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
+    gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  }
+  gslc_ElemXTextboxScrollSet(pGui, pg_startupEl[E_STARTUP_EL_IPBOX], pg_startupIpBoxScroll, winMax);
+
+}
+
 ///////////////////////
 // Keyboard Callback
 void pg_startupCbBtnKeyboard_Callback(gslc_tsGui *pGui, char* str) {
@@ -52,12 +94,20 @@ bool pg_startup_cbBtn_btnConfig(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,
 
 bool pg_startup_cbBtn_ipBoxUp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_startupIpBoxScroll--;
+  pg_startup_updateIpBoxScroll(pGui);
 
   return true;
 }
 
 bool pg_startup_cbBtn_ipBoxDown(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_startupIpBoxScroll++;
+  pg_startup_updateIpBoxScroll(pGui);
 
   return true;
 }
@@ -71,24 +121,20 @@ bool pg_startupCbBtnKeyboard(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   return true;
 }
 
+bool pg_startup_cbBtn_ipRefresh(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  updateIpAddress(pGui);
 
-
-
-/////////////////////
-// Function calls
-void updateIpAddress(gslc_tsGui *pGui) {
-  FILE* input = popen("ip address list | grep inet | grep -v 127.0.0 | cut -d \" \" -f 6 | cut -d \"/\" -f 1", "r");
-  char result[PG_STARTUP_IPBOX_ROWS * PG_STARTUP_IPBOX_COLS];
-  char* got;
-  gslc_ElemXTextboxReset(pGui, pg_startupEl[E_STARTUP_EL_IPBOX]);
-  while((got = fgets(result, sizeof(result), input)) != NULL) {
-    if (got && strlen(got) > 0) {
-      gslc_ElemXTextboxAdd(pGui, pg_startupEl[E_STARTUP_EL_IPBOX], result);
-    }
-  }
-  fclose(input);
+  pg_startupIpBoxScroll = 0;
+  pg_startup_updateIpBoxScroll(pGui);
+  return true;
 }
+
+
+
+
 
 
 
@@ -107,7 +153,7 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
 
   // IP Address Txt
   pg_startupEl[E_STARTUP_EL_IP_ADDRESS] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {(rFullscreen.x), (rFullscreen.y + 5), rFullscreen.w, (15 + yPadding)},
+          (gslc_tsRect) {(rFullscreen.x), (rFullscreen.y + 5), 190, (15 + yPadding)},
           (char*)"IP Addresses: ", 0, E_FONT_MONO18);
   gslc_ElemSetTxtCol(pGui, pg_startupEl[E_STARTUP_EL_IP_ADDRESS], GSLC_COL_GRAY_LT2);
   gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_IP_ADDRESS], GSLC_ALIGN_MID_LEFT);
@@ -115,6 +161,17 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_IP_ADDRESS], false);
   gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_IP_ADDRESS], false);
   // gslc_ElemSetVisible(pGui, pg_startupEl[E_STARTUP_EL_IP_ADDRESS], false);
+
+  // IP Address Refresh Btn
+  pg_startupEl[E_STARTUP_EL_IP_REFRESH] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {(rFullscreen.x + 200), (rFullscreen.y + 5), 160, (15 + yPadding)},
+          (char*)"Refresh", 0, E_FONT_MONO18, &pg_startup_cbBtn_ipRefresh);
+  gslc_ElemSetTxtCol(pGui, pg_startupEl[E_STARTUP_EL_IP_REFRESH], GSLC_COL_GRAY_LT2);
+  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IP_REFRESH], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_IP_REFRESH], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_IP_REFRESH], true);
+  gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_IP_REFRESH], true);
+
 
   // Create textbox
   pg_startupEl[E_STARTUP_EL_IPBOX] = gslc_ElemXTextboxCreate(pGui, GSLC_ID_AUTO, ePage,
@@ -129,7 +186,7 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
           (gslc_tsRect) {(rFullscreen.w - 45), (rFullscreen.y + yPadding + 20), 40, 40},
           (char*)"^", 0, E_FONT_MONO24, &pg_startup_cbBtn_ipBoxUp);
   gslc_ElemSetTxtCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GRAY_LT2);
-  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
   gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], true);
   gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_UP], true);
@@ -138,7 +195,7 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
           (gslc_tsRect) {(rFullscreen.w - 45), (rFullscreen.y + yPadding + 80), 40, 40},
           (char*)"v", 0, E_FONT_MONO24, &pg_startup_cbBtn_ipBoxDown);
   gslc_ElemSetTxtCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GRAY_LT2);
-  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GRAY_LT2, GSLC_COL_BLACK, GSLC_COL_BLUE);
+  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_COL_GREEN, GSLC_COL_BLACK, GSLC_COL_BLUE);
   gslc_ElemSetTxtAlign(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], true);
   gslc_ElemSetFrameEn(pGui, pg_startupEl[E_STARTUP_EL_IPBOX_DOWN], true);
@@ -229,6 +286,9 @@ void pg_startup_init(gslc_tsGui *pGui) {
 void pg_startup_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_startupButtonSetFuncs();
+  pg_startupIpBoxLines = 0;
+  pg_startupIpBoxScroll = 0;
+  pg_startup_updateIpBoxScroll(pGui);
 
   updateIpAddress(pGui);
 }

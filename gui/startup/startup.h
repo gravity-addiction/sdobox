@@ -11,6 +11,7 @@ extern "C" {
 enum {
   E_STARTUP_EL_IPBOX,
   E_STARTUP_EL_IP_ADDRESS,
+  E_STARTUP_EL_IP_REFRESH,
   E_STARTUP_EL_IPBOX_UP,
   E_STARTUP_EL_IPBOX_DOWN,
   E_STARTUP_EL_BTN_CONFIG,
@@ -28,9 +29,11 @@ gslc_tsElemRef m_asPgStartupElemRef[MAX_ELEM_PG_STARTUP];
 
 gslc_tsElemRef* pg_startupEl[E_STARTUP_EL_MAX];
 
-#define PG_STARTUP_IPBOX_ROWS 10
-#define PG_STARTUP_IPBOX_COLS 43
+#define PG_STARTUP_IPBOX_ROWS 16
+#define PG_STARTUP_IPBOX_COLS 37
 gslc_tsXTextbox pg_startupIpboxTextbox;
+int pg_startupIpBoxScroll;
+int pg_startupIpBoxLines;
 
 void pg_startupButtonRotaryCW();
 void pg_startupButtonRotaryCCW();
