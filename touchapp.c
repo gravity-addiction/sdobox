@@ -282,9 +282,11 @@ int main( int argc, char* args[] )
   // Main event loop
   // ------------------------------------------------
   int m_bSleep = 1;
+  int m_tPageCur = touchscreenPageStackCur();
+
   while (!m_bQuit) {
-    if (cbThread[m_page_current] &&
-        cbThread[m_page_current](&m_gui)
+    if (cbThread[m_tPageCur] &&
+        cbThread[m_tPageCur](&m_gui)
     ) {
       m_bSleep = 0;
     }
@@ -302,6 +304,8 @@ int main( int argc, char* args[] )
     if (m_touchscreenInit) {
       gslc_Update(&m_gui);
     }
+
+    m_tPageCur = touchscreenPageStackCur();
   } // bQuit
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
