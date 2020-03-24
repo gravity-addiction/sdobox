@@ -231,7 +231,6 @@ bool pg_wifi_list_saved_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawTyp
   gslc_DrawFillRect(pGui,pRect,pElem->colElemFill);
 
   int pgAdd = pg_wifi_list_saved_networkList->scroll * 5;
-  printf("Listing Networks: %d + %d\n", pg_wifi_list_saved_networkList->len, pgAdd);
 
   for (int i = 0; i < 5; ++i) {
     // Fill Display Line
@@ -459,6 +458,8 @@ void pg_wifi_list_saved_init(gslc_tsGui *pGui) {
   // Create Interface
   pg_wifi_list_saved_guiInit(pGui);
 
+  pg_wifi_list_saved_setNetworkList(pg_wifi_nets_saved->ptrs, pg_wifi_nets_saved->len);
+
   cbInit[E_PG_WIFI_LIST_SAVED] = NULL;
 }
 
@@ -466,8 +467,6 @@ void pg_wifi_list_saved_init(gslc_tsGui *pGui) {
 // GUI Open
 void pg_wifi_list_saved_open(gslc_tsGui *pGui) {
 
-  pg_wifi_updateSavedNetworks();
-  pg_wifi_list_saved_setNetworkList(pg_wifi_nets_saved->ptrs, pg_wifi_nets_saved->len);
 
   gslc_ElemSetRedraw(pGui, pg_wifiListSavedEl[E_WIFI_LIST_SAVED_EL_BOX], GSLC_REDRAW_FULL);
 }

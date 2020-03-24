@@ -12,6 +12,8 @@ struct pg_wifi_networkAddStruct * PG_WIFI_INIT_INPUT()
 {
   struct pg_wifi_networkAddStruct *inp = (struct pg_wifi_networkAddStruct*)malloc(sizeof(struct pg_wifi_networkAddStruct));
 
+  inp->id = -1;
+
   inp->ssidMax = 256;
   inp->ssidLen = 0;
   inp->ssidPtr = (char*)calloc(inp->ssidMax, sizeof(char));
@@ -151,14 +153,8 @@ int pg_wifi_appendNetwork(struct pg_wifi_networkStruct *wifi, struct pg_wifi_net
   // Exists? replace
   for (int w = 0; w < (*wns)->len; ++w) {
     if (wifi->ssid == NULL) { break; }
+
     if ((*wns)->ptrs[w]->id > -1 && (*wns)->ptrs[w]->id == wifi->id) {
-      // Clean old record
-      PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[w]);
-      // Replace
-      (*wns)->ptrs[w] = wifi;
-      return w;
-    } else
-    if (strcmp((*wns)->ptrs[w]->ssid, wifi->ssid) == 0) {
       // Clean old record
       PG_WIFI_DESTROY_NETWORK((*wns)->ptrs[w]);
       // Replace
@@ -400,6 +396,31 @@ void pg_wifi_setInterface(char* interface) {
   free(cmd);
 }
 
+void pg_wifi_combineNetworks() {
+  pg_wifi_nets_combined->len = 0;
+  int aLen = pg_wifi_nets_available->len;
+  int sLen = pg_wifi_nets_saved->len;
+  int sI = -1;
+  for (int a = 0; a < aLen; ++a) {
+
+    // Check SSID in saved list
+    for (int s = 0; s < sLen; ++s) {
+      if (strcmp(pg_wifi_nets_available->ptrs[a]->ssid, pg_wifi_nets_saved->ptrs[s]->ssid) == 0) {
+        sI = s;
+        break;
+      }
+    }
+
+    if (sI > -1) {
+      pg_wifi_appendNetwork(pg_wifi_nets_saved->ptrs[sI], &pg_wifi_nets_combined);
+    } else {
+      pg_wifi_appendNetwork(pg_wifi_nets_available->ptrs[a], &pg_wifi_nets_combined);
+    }
+
+    sI = -1;
+  }
+}
+
 void pg_wifi_updateSavedNetworks() {
   pg_wifi_clearNetworks(&pg_wifi_nets_saved);
   char* buf;
@@ -410,6 +431,7 @@ void pg_wifi_updateSavedNetworks() {
   // id / ssid / bssid / flags
   sgetlines_withcb(buf, len, &pg_wifi_addNetSaved);
   free(buf);
+  pg_wifi_combineNetworks();
 }
 
 void pg_wifi_updateAvailableNetworks() {

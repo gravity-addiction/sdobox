@@ -58,7 +58,8 @@ void pg_wifi_list_resetNetworkList() {
 void pg_wifi_list_wpaEvent(char* event) {
   if (strcmp(event, "CTRL-EVENT-SCAN-RESULTS") == 0) {
     pg_wifi_updateAvailableNetworks();
-    pg_wifi_list_setNetworkList(pg_wifi_nets_available->ptrs, pg_wifi_nets_available->len);
+    pg_wifi_combineNetworks();
+    pg_wifi_list_setNetworkList(pg_wifi_nets_combined->ptrs, pg_wifi_nets_combined->len);
     vlist_sliderUpdate(&m_gui, pg_wifi_list_networkConfig);
     gslc_ElemSetRedraw(&m_gui, pg_wifiListEl[E_WIFI_LIST_EL_BOX], GSLC_REDRAW_FULL);
   } else
@@ -148,7 +149,7 @@ bool pg_wifi_list_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouc
 
   if (pg_wifi_list_networkConfig->cur > -1) {
     pg_wifi_net_selected = pg_wifi_list_networkList[pg_wifi_list_networkConfig->cur];
-    // printf("Selected: %d - %s\n", pg_wifi_list_networkConfig->cur, pg_wifi_net_selected->ssid);
+    // printf("Selected (%d) %d - %s\n", pg_wifi_list_networkConfig->cur, pg_wifi_net_selected->id, pg_wifi_net_selected->ssid);
   } else {
     pg_wifi_net_selected = NULL;
   }

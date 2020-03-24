@@ -7,6 +7,7 @@ extern "C" {
 
 
 struct pg_wifi_networkAddStruct {
+ int id;
  size_t ssidMax;
  size_t ssidLen;
  char *ssidPtr;
@@ -50,6 +51,7 @@ struct pg_wifi_networksStruct {
 };
 struct pg_wifi_networksStruct *pg_wifi_nets_available;
 struct pg_wifi_networksStruct *pg_wifi_nets_saved;
+struct pg_wifi_networksStruct *pg_wifi_nets_combined;
 struct pg_wifi_networkStruct *pg_wifi_net_selected;
 
 struct pg_wifi_networkAddStruct * PG_WIFI_INIT_INPUT();
@@ -72,6 +74,7 @@ void pg_wifi_addNetSaved(char *buf, size_t sz, size_t cnt);
 void pg_wifi_addNetAvailable(char *buf, size_t sz, size_t cnt);
 void pg_wifi_updateStatus(char *buf, size_t sz, size_t cnt);
 void pg_wifi_setInterface(char* interface);
+void pg_wifi_combineNetworks();
 void pg_wifi_updateSavedNetworks();
 void pg_wifi_updateAvailableNetworks();
 int pg_wifi_getStatus();

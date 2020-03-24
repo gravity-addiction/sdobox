@@ -213,9 +213,11 @@ commands:
   dpp_pkex_add add PKEX code
   dpp_pkex_remove *|<id> = remove DPP pkex information
 */
+void pg_wifi_cbBtn_setID(gslc_tsGui *pGui, int id) {
+  pg_wifi_addInput->id = id;
+}
 
 void pg_wifi_cbBtn_setSSID(gslc_tsGui *pGui, char* str) {
-  //
   size_t strSz = snprintf(NULL, 0, "%s", str) + 1;
   if (strSz > pg_wifi_addInput->ssidMax) {
     pg_wifi_addInput->ssidMax += 128;
@@ -243,6 +245,7 @@ void pg_wifi_cbBtn_setPass(gslc_tsGui *pGui, char* str) {
 }
 
 void pg_wifi_cbBtn_resetSSID(gslc_tsGui *pGui) {
+  pg_wifi_cbBtn_setID(pGui, -1);
   pg_wifi_cbBtn_setSSID(pGui, "");
   pg_wifi_cbBtn_setPass(pGui, "");
 }
@@ -255,6 +258,7 @@ bool pg_wifi_cbBtn_SSID(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  pg_wifi_cbBtn_setID(pGui, -1);
   pg_keyboard_show(pGui, 16, pg_wifi_addInput->ssidPtr, &pg_wifi_cbBtn_setSSID);
   return true;
 }
@@ -287,63 +291,80 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  int network_id;
   // Add Network get id
+  if (pg_wifi_addInput->id == -1) {
+    // Add Network Entry
+    char* buf;
+    int len = pg_wifi_wpaSendCmdBuf("ADD_NETWORK", &buf);
+    char *pEnd;
+    network_id = strtol(buf, &pEnd, 10);
+    if (pEnd == buf
+        || errno == ERANGE
+    ) {
+      touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\n%s", buf);
+      printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
+      return false;
+    }
 
-  // set_network 1 ssid "TEST1"
-  // set_network 1 psk "TESTPASS!@#"
-  // password 1 "TEST!PASDF#"
-  // enable_network
-  // save_config
+    // Set SSID
+    size_t strSsidSz = snprintf(NULL, 0, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr) + 1;
+    char *strSsidCmd = (char *)malloc(strSsidSz * sizeof(char));
+    snprintf(strSsidCmd, strSsidSz, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr);
+    // Run
+    char* strSsidRet;
+    int strSsidRetSz = pg_wifi_wpaSendCmdBuf(strSsidCmd, &strSsidRet);
+    // Return
+    if (strSsidRetSz < 2 || strncmp(strSsidRet, "OK", 2) != 0) {
+      // Failed adding SSID, unwind;
+      touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\nResponse: %s", strSsidRet);
+      free(strSsidCmd);
+      goto cleanup;
+    }
+    // Free
+    free(strSsidCmd);
 
-  // Add Network Entry
-  char* buf;
-  int len = pg_wifi_wpaSendCmdBuf("ADD_NETWORK", &buf);
-  char *pEnd;
-  int network_id = strtol(buf, &pEnd, 10);
-  if (pEnd == buf
-      || errno == ERANGE
-  ) {
-    touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\n%s", buf);
-    printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
-    return false;
+    // Set Password
+    size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d psk \"%s\"", pg_wifi_addInput->id, pg_wifi_addInput->passPtr) + 1;
+    char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
+    snprintf(strPassCmd, strPassSz, "SET_NETWORK %d psk \"%s\"", pg_wifi_addInput->id, pg_wifi_addInput->passPtr);
+    // Run
+    char* strPassRet;
+    int strPassRetSz = pg_wifi_wpaSendCmdBuf(strPassCmd, &strPassRet);
+    // Return
+    if (strPassRetSz < 2 || strncmp(strPassRet, "OK", 2) != 0) {
+      // Failed adding SSID, unwind;
+      touchscreenPopupMsgBox(pGui, "Error!", "Password Value Failed\nResponse: %s", strPassRet);
+      free(strPassCmd);
+      goto cleanup;
+    }
+    // Free
+    free(strPassCmd);
+
+    pg_wifi_addInput->id = network_id;
+
+  // Update SSID with new Password
+  } else if (strcmp(pg_wifi_addInput->passPtr, " ") != 0) {
+    // Set Password
+    size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d password \"%s\"", pg_wifi_addInput->id, pg_wifi_addInput->passPtr) + 1;
+    char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
+    snprintf(strPassCmd, strPassSz, "SET_NETWORK %d password \"%s\"", pg_wifi_addInput->id, pg_wifi_addInput->passPtr);
+    // Run
+    char* strPassRet;
+    int strPassRetSz = pg_wifi_wpaSendCmdBuf(strPassCmd, &strPassRet);
+    // Return
+    if (strPassRetSz < 2 || strncmp(strPassRet, "OK", 2) != 0) {
+      // Failed adding SSID, unwind;
+      touchscreenPopupMsgBox(pGui, "Error!", "Password Value Failed\nResponse: %s", strPassRet);
+      free(strPassCmd);
+      return true;
+    }
+    // Free
+    free(strPassCmd);
   }
-
-
-  // Set SSID
-  size_t strSsidSz = snprintf(NULL, 0, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr) + 1;
-  char *strSsidCmd = (char *)malloc(strSsidSz * sizeof(char));
-  snprintf(strSsidCmd, strSsidSz, "SET_NETWORK %d ssid \"%s\"", network_id, pg_wifi_addInput->ssidPtr);
-  // Run
-  char* strSsidRet;
-  int strSsidRetSz = pg_wifi_wpaSendCmdBuf(strSsidCmd, &strSsidRet);
-  // Return
-  if (strSsidRetSz < 2 || strncmp(strSsidRet, "OK", 2) != 0) {
-    // Failed adding SSID, unwind;
-    touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\nResponse: %s", strSsidRet);
-    goto cleanup;
-  }
-  // Free
-  free(strSsidCmd);
-
-
-  // Set Password
-  size_t strPassSz = snprintf(NULL, 0, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr) + 1;
-  char *strPassCmd = (char *)malloc(strPassSz * sizeof(char));
-  snprintf(strPassCmd, strPassSz, "SET_NETWORK %d psk \"%s\"", network_id, pg_wifi_addInput->passPtr);
-  // Run
-  char* strPassRet;
-  int strPassRetSz = pg_wifi_wpaSendCmdBuf(strPassCmd, &strPassRet);
-  // Return
-  if (strPassRetSz < 2 || strncmp(strPassRet, "OK", 2) != 0) {
-    // Failed adding SSID, unwind;
-    touchscreenPopupMsgBox(pGui, "Error!", "Password Value Failed\nResponse: %s", strPassRet);
-    goto cleanup;
-  }
-  // Free
-  free(strPassCmd);
 
   // Enable Network
-  pg_wifi_enableNetwork(network_id);
+  pg_wifi_enableNetwork(pg_wifi_addInput->id);
 
   // Save Config
   pg_wifi_wpaSendCmd("SAVE_CONFIG");
@@ -351,6 +372,7 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   // Reset SSID Input Fields
   pg_wifi_cbBtn_resetSSID(pGui);
   return true;
+
  cleanup:
   if (network_id> -1) {
     // Delete Bad Network
@@ -702,6 +724,7 @@ void pg_wifi_init(gslc_tsGui *pGui) {
   // Initialize Network info arrays
   pg_wifi_nets_available = PG_WIFI_INIT_NETWORKS();
   pg_wifi_nets_saved = PG_WIFI_INIT_NETWORKS();
+  pg_wifi_nets_combined = PG_WIFI_INIT_NETWORKS();
   pg_wifi_net_selected = NULL;
 
   // Create Interface
@@ -712,7 +735,7 @@ void pg_wifi_init(gslc_tsGui *pGui) {
   pg_wifi_wpaOpen("/var/run/wpa_supplicant/wlan0");
   pg_wifi_wpaEvents("/var/run/wpa_supplicant/wlan0");
 
-
+  pg_wifi_updateSavedNetworks();
   // pg_wifi_wpaSendCmd("SCAN");
 
   cbInit[E_PG_WIFI] = NULL;
@@ -735,8 +758,13 @@ void pg_wifi_open(gslc_tsGui *pGui) {
 
   // Show Selected In Box
   if (pg_wifi_net_selected) {
+    pg_wifi_cbBtn_setID(pGui, pg_wifi_net_selected->id);
     pg_wifi_cbBtn_setSSID(pGui, pg_wifi_net_selected->ssid);
-    // pg_wifi_cbBtn_setPass(pGui, "");
+    if (pg_wifi_net_selected->id > -1) {
+      pg_wifi_cbBtn_setPass(pGui, " ");
+    } else {
+      pg_wifi_cbBtn_setPass(pGui, "");
+    }
     pg_wifi_net_selected = NULL;
   }
 }
@@ -752,9 +780,11 @@ void pg_wifi_destroy() {
 
   pg_wifi_clearNetworks(&pg_wifi_nets_available);
   pg_wifi_clearNetworks(&pg_wifi_nets_saved);
+  // pg_wifi_clearNetworks(&pg_wifi_nets_combined);
 
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_available);
   PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_saved);
+  // PG_WIFI_DESTROY_NETWORKS(pg_wifi_nets_combined);
 
   pg_wifi_wpaClose();
 }
