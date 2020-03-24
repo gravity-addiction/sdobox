@@ -5,7 +5,6 @@
 extern "C" {
 #endif // __cplusplus
 
-
 #include "gui/pages.h"
 
 enum {
@@ -17,6 +16,8 @@ enum {
   E_STARTUP_EL_BTN_CONFIG,
   E_STARTUP_EL_BTN_WIFI,
   E_STARTUP_EL_BTN_MENU,
+  E_STARTUP_EL_HOSTNAME,
+  E_STARTUP_EL_HOSTNAME_TXT,
 
   E_STARTUP_EL_MAX
 };
@@ -34,6 +35,7 @@ gslc_tsElemRef* pg_startupEl[E_STARTUP_EL_MAX];
 gslc_tsXTextbox pg_startupIpboxTextbox;
 int pg_startupIpBoxScroll;
 int pg_startupIpBoxLines;
+char *pg_startupHostname;
 
 void pg_startupButtonRotaryCW();
 void pg_startupButtonRotaryCCW();

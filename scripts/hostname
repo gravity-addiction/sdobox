@@ -1,0 +1,6 @@
+#!/bin/sh
+sudo hostname "$1"
+if [ $? -eq 0 ]; then
+  sudo sed -i 's/$2/$1/g' /etc/hosts
+  echo "$1" | sudo tee /etc/hostname
+fi
