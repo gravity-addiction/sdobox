@@ -5,13 +5,14 @@
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
  */
-
 #ifndef WPA_CTRL_H
 #define WPA_CTRL_H
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#include <stddef.h>
 
 /* wpa_supplicant control interface - fixed message prefixes */
 

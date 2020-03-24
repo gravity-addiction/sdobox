@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+#include <stdio.h>
+
 typedef long os_time_t;
 
 /**
