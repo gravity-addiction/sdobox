@@ -887,6 +887,7 @@ bool pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (!fbcp_toggle()) {
+    usleep(50000);
     gslc_PageRedrawSet(pGui, true);
   }
   return true;

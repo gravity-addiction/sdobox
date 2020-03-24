@@ -132,6 +132,7 @@ bool pg_slideshow_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (!fbcp_toggle()) {
+    usleep(50000); // Make sure fbcp is done
     gslc_PageRedrawSet(pGui, true);
   }
   return true;

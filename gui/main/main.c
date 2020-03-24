@@ -36,6 +36,7 @@ void pg_main_mirror_toggle(gslc_tsGui *pGui) {
     gslc_SetTouchDisabled(pGui, true);
     gslc_SetScreenDisabled(pGui, true);
   } else {
+    usleep(50000);
     gslc_SetTouchDisabled(pGui, false);
     gslc_SetScreenDisabled(pGui, false);
     gslc_PageRedrawSet(pGui, true);
