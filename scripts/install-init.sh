@@ -1,20 +1,5 @@
 #!/bin/bash
 
-# boot/config.txt additions (not re-runable)
-echo 'dtparam=spi=on
-dtparam=i2c1=on
-dtparam=12c_arm=on
-dtoverlay=waveshare35c:rotate=270
-gpu_mem=256
-gpio=4=op,dh
-gpio=12=op,dh' | sudo tee -a /boot/config.txt
-
-# boot/cmdline.txt wrap existing content with additions (not re-runable)
-echo "dwc_otg.lpm_enable=0 $(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8 logo.nologo loglevel=3 vt.global_cursor_default=0" | sudo tee /boot/cmdline.txt
-sudo wget -O /boot/overlays/waveshare35c.dtbo https://raw.githubusercontent.com/gravity-addiction/sdobox/master/scripts/overlays/waveshare35c-overlay.dtb 
-
-
-
 # Disable Swap
 sudo dphys-swapfile swapoff
 sudo dphys-swapfile uninstall
@@ -29,17 +14,17 @@ sudo locale-gen
 # Extra Libraries
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5
+sudo apt install -y autoconf libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5
 
 # Automount USB Sticks
 sudo apt install -y exfat-fuse
 sudo apt install -y exfat-utils pmount
 
-echo "#!/bin/bash
+echo '#!/bin/bash
 
 PART=$1
-FS_LABEL=`lsblk -o name,label | grep ${PART} | awk '{print $2}'`
-FS_TYPE=`lsblk -o name,fstype | grep ${PART} | awk '{print $2}'`
+FS_LABEL=`lsblk -o name,label | grep ${PART} | awk \\'{print $2}\\'`
+FS_TYPE=`lsblk -o name,fstype | grep ${PART} | awk \\'{print $2}\\'`
 
 if [ -z ${FS_LABEL} ]
 then
@@ -58,7 +43,7 @@ else
   else
     /usr/bin/pmount --umask 000 --noatime -w --sync /dev/${PART} /media/${FS_LABEL}_${PART}
   fi
-fi" | sudo tee /usr/local/bin/automount
+fi' | sudo tee /usr/local/bin/automount
 sudo chmod 755 /usr/local/bin/automount
 
 
