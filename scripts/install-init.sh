@@ -43,7 +43,7 @@ else
   else
     /usr/bin/pmount --umask 000 --noatime -w --sync /dev/${PART} /media/${FS_LABEL}_${PART}
   fi
-fi' | tee /usr/local/bin/automount
+fi' | sudo tee /usr/local/bin/automount
 sudo chmod 755 /usr/local/bin/automount
 
 
