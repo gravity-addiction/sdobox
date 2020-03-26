@@ -23,8 +23,8 @@ sudo apt install -y exfat-utils pmount
 echo '#!/bin/bash
 
 PART=$1
-FS_LABEL=`lsblk -o name,label | grep ${PART} | awk \\'{print $2}\\'`
-FS_TYPE=`lsblk -o name,fstype | grep ${PART} | awk \\'{print $2}\\'`
+FS_LABEL=`lsblk -o name,label | grep ${PART} | awk '\''{print $2}'\''`
+FS_TYPE=`lsblk -o name,fstype | grep ${PART} | awk '\''{print $2}'\''`
 
 if [ -z ${FS_LABEL} ]
 then
@@ -43,7 +43,7 @@ else
   else
     /usr/bin/pmount --umask 000 --noatime -w --sync /dev/${PART} /media/${FS_LABEL}_${PART}
   fi
-fi' | sudo tee /usr/local/bin/automount
+fi' | tee /usr/local/bin/automount
 sudo chmod 755 /usr/local/bin/automount
 
 
