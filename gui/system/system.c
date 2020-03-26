@@ -119,6 +119,9 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   int ePage = E_PG_SYSTEM;
   gslc_PageAdd(pGui, ePage, pg_systemElem, MAX_ELEM_PG_SYSTEM_RAM, pg_systemElemRef, MAX_ELEM_PG_SYSTEM);
 
+  pg_systemEl[E_SYSTEM_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen);
+  gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_BOX], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
+
   // Close Key
   pg_systemEl[E_SYSTEM_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100),(rFullscreen.y + 5),100,50},

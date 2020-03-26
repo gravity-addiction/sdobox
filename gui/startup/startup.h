@@ -8,6 +8,7 @@ extern "C" {
 #include "gui/pages.h"
 
 enum {
+  E_STARTUP_EL_BOX,
   E_STARTUP_EL_IPBOX,
   E_STARTUP_EL_IP_ADDRESS,
   E_STARTUP_EL_IP_REFRESH,

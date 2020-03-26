@@ -483,14 +483,9 @@ int pg_wifi_guiInit(gslc_tsGui *pGui)
   gslc_PageAdd(pGui, ePage, pg_wifiElem, MAX_ELEM_PG_WIFI_RAM, pg_wifiElemRef, MAX_ELEM_PG_WIFI);
 
   int xHei = 20;
-/*
-  // Main View Box
-  pg_wifiEl[E_WIFI_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, (gslc_tsRect){0,170,420,120});
-  gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX], GSLC_COL_GRAY, GSLC_COL_BLACK, GSLC_COL_BLACK);
-  // Set the callback function to handle all drawing for the element
-  gslc_ElemSetDrawFunc(pGui, pg_wifiEl[E_WIFI_EL_BOX], &pg_wifi_cbDrawBox);
-*/
 
+  pg_wifiEl[E_WIFI_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen);
+  gslc_ElemSetCol(pGui, pg_wifiEl[E_WIFI_EL_BOX], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
 
   pg_wifiEl[E_WIFI_EL_BOX_SSID_TXT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0,165,480,50}, (char*)"SSID:", 0, E_FONT_MONO18, &pg_wifi_cbBtn_SSID);

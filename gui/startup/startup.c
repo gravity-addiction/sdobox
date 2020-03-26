@@ -198,6 +198,9 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
   int yPadding = 10;
   int xPadding = 10;
 
+  pg_startupEl[E_STARTUP_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen);
+  gslc_ElemSetCol(pGui, pg_startupEl[E_STARTUP_EL_BOX], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
+
   // IP Address Txt
   pg_startupEl[E_STARTUP_EL_IP_ADDRESS] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {(rFullscreen.x), (rFullscreen.y + 5), 190, (15 + yPadding)},
