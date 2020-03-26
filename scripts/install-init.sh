@@ -14,7 +14,7 @@ sudo locale-gen
 # Extra Libraries
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y autoconf libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5
+sudo apt install -y autoconf libtool libtool-bin libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5
 
 # Automount USB Sticks
 sudo apt install -y exfat-fuse
