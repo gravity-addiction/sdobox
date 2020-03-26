@@ -113,16 +113,18 @@ sudo apt update
 sudo apt install sdobox
 
 mkdir -p ~/.config/touchapp
-echo "rotary_pin_a = 24;
+echo 'rotary_pin_a = 24;
 rotary_pin_b = 25;
 rotary_pin_btn = 23;
 right_pin_btn = 22;
 left_pin_btn = 21;
 debounce_delay = 175;
-btn_hold_delay = 800;" | tee ~/.config/touchapp/touchapp.conf
+btn_hold_delay = 800;' | tee ~/.config/touchapp/touchapp.conf
 
 mkdir ~/shared
 
 sudo reboot now
 
-sudo DISPLAY=:0.0 xinput set-prop --type=float 'ADS7846 Touchscreen' 'Coordinate Transformation Matrix' 1.09867116676776 0.0126685555708521 -0.0712659131294964 0.000421126074768624 1.10129147730563 -0.0511172071924601 0 0 1
+## Post reboot commands
+# sudo DISPLAY=:0.0 xinput set-prop --type=float 'ADS7846 Touchscreen' 'Coordinate Transformation Matrix' 1.09867116676776 0.0126685555708521 -0.0712659131294964 0.000421126074768624 1.10129147730563 -0.0511172071924601 0 0 1
+# sudo TSLIB_FBDEVICE=/dev/fb1 TSLIB_TSDEVICE=/dev/input/touchscreen ts_calibrate
