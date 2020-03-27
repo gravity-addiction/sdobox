@@ -8,7 +8,7 @@
 
 
 // Upper Case American Layout
-struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(struct pg_keyboard_dataStruct *data) {
+struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data) {
   // Initalize Default Layout
   int layoutRowWids[5] = { 10, 10, 20, 9, 12 };
   int layoutRows[5] = { 10, 10, 19, 8, 12 };
@@ -20,11 +20,11 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(struct pg_keyboard_dat
     15, 15, -1, 32, 32, 32, 32, 32, 32, -1, 13, 13
   };
 
-  return pg_keyboard_layoutConfig(data, layoutRowWids, layoutRows, 5, layout, 59);
+  return pg_keyboard_layoutConfig(pGui, data, layoutRowWids, layoutRows, 5, layout, 59);
 }
 
 // Lower Case American Layout
-struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dataStruct *data) {
+struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data) {
   // Initalize Default Layout
   int layoutRowWids[5] = { 10, 10, 20, 9, 12 };
   int layoutRows[5] = { 10, 10, 19, 8, 12 };
@@ -36,9 +36,24 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
     15, 15, -1, 32, 32, 32, 32, 32, 32, -1, 13, 13
   };
 
-  return pg_keyboard_layoutConfig(data, layoutRowWids, layoutRows, 5, layout, 59);
+  return pg_keyboard_layoutConfig(pGui, data, layoutRowWids, layoutRows, 5, layout, 59);
 }
 
+// Lower Case American Layout
+struct pg_keyboard_dataStruct * pg_keyboard_def_symbols(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data) {
+  // Initalize Default Layout
+  int layoutRowWids[5] = { 10, 10, 20, 9, 12 };
+  int layoutRows[5] = { 10, 10, 19, 8, 12 };
+  int layout[59] = {
+    185, 178, 179, -1, -1, -1, 188, 189, 190, 186,
+    96, 126, 123, 125, 124, 91, 93, 61, 43, 45,
+    -1, 176, 176, -1, -1, 171, 171, 187, 187, 95, 95, 59, 59, 58, 58, 39, 39, 34, 34,
+    -1, 92, 60, 62, 44, 46, 47, 63,
+    15, 15, -1, 32, 32, 32, 32, 32, 32, -1, 13, 13
+  };
+
+  return pg_keyboard_layoutConfig(pGui, data, layoutRowWids, layoutRows, 5, layout, 59);
+}
 
 
 ////////////////////////////
@@ -51,10 +66,22 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
 // layoutLen - total number of values in layout
 // layoutEl - gslc_tsElemRef pointers for keys
 // layout - ascii layout values
-struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data,
+struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data,
       int *layoutRowsWid, int *layoutRows, int layoutRowsLen,
       int *layout, int layoutLen) {
 
+  // *todo Cleaout old config
+  for (int l = 0; l < data->layoutLen; ++l) {
+    data->layout[l] = -1;
+    gslc_ElemSetTxtStr(pGui, data->layoutEl[l], (char*)" ");
+  }
+  for (int lR = 0; lR < data->layoutRowsLen; ++lR) {
+    data->layoutRowsWid[lR] = -1;
+    data->layoutRows[lR] = -1;
+  }
+
+
+  // Make sure enough rows to cover this config
   if (data->layoutRowsLen < layoutRowsLen) {
     int * newRowsWid = (int *)realloc(data->layoutRowsWid, layoutRowsLen * sizeof(int));
     data->layoutRowsWid = newRowsWid;
@@ -64,22 +91,24 @@ struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_data
   }
   data->layoutRowsLen = layoutRowsLen;
 
+  // Set each Row Width and Count
   for (int lR = 0; lR < data->layoutRowsLen; ++lR) {
     data->layoutRowsWid[lR] = layoutRowsWid[lR];
     data->layoutRows[lR] = layoutRows[lR];
   }
 
-
+  // Make sure enough space for all the keys in layout
   if (data->layoutLen < layoutLen) {
     data->layoutEl = (gslc_tsElemRef**)realloc(data->layoutEl, layoutLen * sizeof(gslc_tsElemRef *));
     data->layout = (int *)realloc(data->layout, layoutLen * sizeof(int));
     for (int lN = data->layoutLen; lN < layoutLen; ++lN) {
       data->layout[lN] = -1;
-      data->layoutEl[lN] = NULL;
+      data->layoutEl[lN] = pg_keyboard_guiKeyboard_CreateElem(pGui);
     }
   }
   data->layoutLen = layoutLen;
 
+  // remap all layout keys
   for (int l = 0; l < data->layoutLen; ++l) {
     data->layout[l] = layout[l];
   }
@@ -90,7 +119,7 @@ struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_data
 
 
 
-struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA()
+struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA(gslc_tsGui* pGui)
 {
   struct pg_keyboard_dataStruct *data = (struct pg_keyboard_dataStruct*)malloc(sizeof(struct pg_keyboard_dataStruct));
 
@@ -122,8 +151,8 @@ struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA()
   data->layoutEl = (gslc_tsElemRef**)malloc(data->layoutLen * sizeof(gslc_tsElemRef *));
   data->layout = (int *)malloc(data->layoutLen * sizeof(int));
   for (int l = 0; l < data->layoutLen; ++l) {
-    data->layoutEl[l] = NULL;
     data->layout[l] = -1;
+    data->layoutEl[l] = pg_keyboard_guiKeyboard_CreateElem(pGui);
   }
 
   return data;
@@ -149,35 +178,11 @@ void PG_KEYBOARD_DESTROY_DATA(struct pg_keyboard_dataStruct *data) {
 
 
 
-int pg_keyboard_appendCb(struct pg_keyboard_dataStruct *data, void (*function)(gslc_tsGui *, char*)) {
-
-  if (data->cbLen < data->cbMax) {
-    struct pg_keyboard_dataCbStruct *cb = (struct pg_keyboard_dataCbStruct*)malloc(sizeof(struct pg_keyboard_dataCbStruct));
-    cb->id = data->cbLen;
-    cb->ptr = function;
-    data->cb[data->cbLen] = cb;
-    return data->cbLen++;
-  }
-  return -1;
-}
-
-void pg_keyboard_runCb(gslc_tsGui *pGui, struct pg_keyboard_dataStruct *data) {
-  for (size_t i = 0; i < data->cbLen; ++i) {
-    if (data->cb[i]->ptr != NULL) {
-      data->cb[i]->ptr(pGui, data->ptr);
-    }
-  }
-}
-
-void pg_keyboard_cleanCb(struct pg_keyboard_dataStruct *data) {
-  for (size_t i = 0; i < data->cbLen; ++i) {
-    free(data->cb[i]);
-    data->cb[i] = NULL;
-  }
-  data->cbLen = 0;
-}
 
 
+
+
+// Reset Majority of keyboard information
 void pg_keyboard_reset(gslc_tsGui *pGui) {
   // Clear Callbacks
   pg_keyboard_cleanCb(pg_keyboard_data);
@@ -188,6 +193,11 @@ void pg_keyboard_reset(gslc_tsGui *pGui) {
   pg_keyboard_limitCheck(pGui);
 }
 
+
+
+
+
+// Public function for showing the keyboard with config settings
 void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(gslc_tsGui *, char *)) {
   touchscreenPageOpen(pGui, E_PG_KEYBOARD);
   pg_keyboard_reset(pGui);
@@ -200,9 +210,12 @@ void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(
     pg_keyboard_data->ptr = newBuf;
   }
 
-  size_t strSz = snprintf(NULL, 0, "%s", str) + 1;
-  if (strSz > pg_keyboard_data->max) {
-    strSz = pg_keyboard_data->max;
+  size_t strSz = 1;
+  if (str != NULL && strcmp(str, " ") != 0) {
+    strSz = snprintf(NULL, 0, "%s", str) + 1;
+    if (strSz > pg_keyboard_data->max) {
+      strSz = pg_keyboard_data->max;
+    }
   }
   strlcpy(pg_keyboard_data->ptr, str, strSz);
   pg_keyboard_data->len = strSz - 2;
@@ -211,6 +224,8 @@ void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(
 }
 
 
+
+// Check user supplied charactor limit on text
 void pg_keyboard_limitCheck(gslc_tsGui *pGui) {
   if (pg_keyboard_data->len > pg_keyboard_data->limit) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_COL_RED_DK1);
@@ -220,11 +235,92 @@ void pg_keyboard_limitCheck(gslc_tsGui *pGui) {
 }
 
 
+void pg_keyboard_setCase(gslc_tsGui *pGui) {
+  // Set Keys to value
+  if (!pg_keyboard_shiftOn) {
+    // Set Upper Case
+    pg_keyboard_data = pg_keyboard_def_upperCase(pGui, pg_keyboard_data);
+  } else {
+    // Set Lower Case
+    pg_keyboard_data = pg_keyboard_def_lowerCase(pGui, pg_keyboard_data);
+  }
+}
+
+void pg_keyboard_setSymbols(gslc_tsGui *pGui, int doSymbols) {
+  // do toggling
+  if (doSymbols && pg_keyboard_symbolOn) {
+    doSymbols = 0;
+  }
+
+  if (doSymbols) {
+    pg_keyboard_data = pg_keyboard_def_symbols(pGui, pg_keyboard_data);
+    pg_keyboard_symbolOn = 1;
+    gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], true);
+  } else {
+    pg_keyboard_symbolOn = 0;
+    gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], false);
+    pg_keyboard_setCase(pGui);
+  }
+}
+
+
+
+
+
+
+
+
+
 
 ////////////////////////////
-// Keyboard PAge Button callbacks
+// CALLBACK MANAGEMENT
+// Append callback, returning assigned id
+int pg_keyboard_appendCb(struct pg_keyboard_dataStruct *data, void (*function)(gslc_tsGui *, char*)) {
+
+  if (data->cbLen < data->cbMax) {
+    struct pg_keyboard_dataCbStruct *cb = (struct pg_keyboard_dataCbStruct*)malloc(sizeof(struct pg_keyboard_dataCbStruct));
+    cb->id = data->cbLen;
+    cb->ptr = function;
+    data->cb[data->cbLen] = cb;
+    return data->cbLen++;
+  }
+  return -1;
+}
+
+// Run Callback
+void pg_keyboard_runCb(gslc_tsGui *pGui, struct pg_keyboard_dataStruct *data) {
+  for (size_t i = 0; i < data->cbLen; ++i) {
+    if (data->cb[i]->ptr != NULL) {
+      data->cb[i]->ptr(pGui, data->ptr);
+    }
+  }
+}
+
+// Clean Callback
+void pg_keyboard_cleanCb(struct pg_keyboard_dataStruct *data) {
+  for (size_t i = 0; i < data->cbLen; ++i) {
+    free(data->cb[i]);
+    data->cb[i] = NULL;
+  }
+  data->cbLen = 0;
+}
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////
+// KEYBOARD BUTTON ACTIONS
 // Shift Key
 bool pg_keyboard_cbBtn_shift(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
 {
@@ -265,7 +361,7 @@ bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
   return true;
 }
 
-// Delete Key
+// Cancel Key
 bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
 {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
@@ -275,8 +371,17 @@ bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
   return true;
 }
 
+// Symbols Key
+bool pg_keyboard_cbBtn_symbols(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
+{
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  pg_keyboard_setSymbols(pGui, 1);
 
+  pg_keyboard_guiKeyboardUpdate(pGui);
+  return true;
+}
 
 // All Else
 bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY)
@@ -285,13 +390,13 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
   gslc_tsElemRef* pElemRef = (gslc_tsElemRef*)(pvElemRef);
   gslc_tsElem*    pElem    = pElemRef->pElem;
 
+
   if ( eTouch == GSLC_TOUCH_UP_IN ) {
 
     // Find Matching Layout GSLC_ID
     int keyId = -1;
     for (int k = 0; k < pg_keyboard_data->layoutLen; ++k) {
       if (pg_keyboard_data->layout[k] == -1) { continue; }
-      if (pg_keyboard_data->layoutEl[k] == NULL) { continue; }
 
       if (pg_keyboard_data->layoutEl[k]->pElem->nId == pElem->nId) {
         keyId = k;
@@ -308,28 +413,30 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
         case -1:
           return 1;
         break;
-        case 8: // Backspace
-          return pg_keyboard_cbBtn_delete(pvGui, pvElemRef, eTouch, nX, nY);
-        break;
         case 13: // System Enter
           // Do Enter Stuff
           return pg_keyboard_cbBtn_enter(pvGui, pvElemRef, eTouch, nX, nY);
         break;
-        case 15: // system Shift
-          if (pg_keyboard_shiftOn == 1) {
-            // Set Lower Case
-            pg_keyboard_data = pg_keyboard_def_lowerCase(pg_keyboard_data);
+        case 15: // Shift
+          // Determine Shift Toggle
+          if (pg_keyboard_data->layout[keyId] == 15 && pg_keyboard_shiftOn) {
             pg_keyboard_shiftOn = 0;
-          } else {
-            // Set Upper Case
-            pg_keyboard_data = pg_keyboard_def_upperCase(pg_keyboard_data);
+          } else if (pg_keyboard_data->layout[keyId] == 15) {
             pg_keyboard_shiftOn = 1;
           }
 
-          // Display
-          pg_keyboard_guiKeyboard(pGui);
+          // Set Keys to value
+          pg_keyboard_setSymbols(pGui, 0);
+          // pg_keyboard_setCase(pGui); // false symbols runs setCase
           pg_keyboard_guiKeyboardUpdate(pGui);
           return 1;
+        break;
+        case 8:
+        case 127: // Delete
+          if (pg_keyboard_data->len > -1) {
+            pg_keyboard_data->ptr[pg_keyboard_data->len] = '\0';
+            pg_keyboard_data->len -= 1;
+          }
         break;
         default: // Everything Else
           xLen = snprintf(NULL, 0, "%c", pg_keyboard_data->layout[keyId]) + 1;
@@ -365,26 +472,34 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
 
 
 
-bool pg_keyboard_draw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw)
-{
-  gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
-  gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
-  gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
-  gslc_tsRect     pRect     = pElem->rElem;
-
-  gslc_DrawFillRect(pGui,pRect,pElem->colElemFill);
-  gslc_DrawLine(pGui, pRect.x, pRect.y + 60, pRect.x + pRect.w, pRect.y + 60, GSLC_COL_GRAY);
-
-  pg_keyboard_limitCheck(pGui);
-
-  gslc_ElemDrawByRef(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_REDRAW_FULL);
 
 
 
 
-  gslc_ElemSetRedraw(pGui, pg_keyboardEl[E_KEYBOARD_EL_BOX], GSLC_REDRAW_NONE);
-  return true;
+
+
+
+
+
+
+////////////////////////////
+// DRAW KEYBOARD ELEMENTS
+// Create GUISlice KeyBtn Element
+gslc_tsElemRef* pg_keyboard_guiKeyboard_CreateElem(gslc_tsGui* pGui) {
+  int ePage = E_PG_KEYBOARD;
+
+  gslc_tsElemRef* layoutEl = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {0, 0, 1, 1},
+          (char*)"", 0, E_FONT_MONO24, &pg_keyboard_cbBtn);
+  gslc_ElemSetTxtCol(pGui, layoutEl, GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, layoutEl, GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, layoutEl, GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, layoutEl, true);
+  gslc_ElemSetFrameEn(pGui, layoutEl, true);
+  return layoutEl;
 }
+
+
 
 
 
@@ -412,6 +527,7 @@ int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui) {
 
       switch (pg_keyboard_data->layout[keyId]) {
         case -1:
+          gslc_ElemSetTxtStr(pGui, pg_keyboard_data->layoutEl[keyId], (char*)" ");
           ++keyId;
           continue;
         break;
@@ -435,7 +551,7 @@ int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui) {
       if (keyId < pg_keyboard_data->layoutLen - 1
          && pg_keyboard_data->layout[keyId + 1] == pg_keyboard_data->layout[keyId]) {
         offsetX += xWid;
-        pg_keyboard_data->layoutEl[keyId] = NULL;
+        gslc_ElemSetTxtStr(pGui, pg_keyboard_data->layoutEl[keyId], (char*)" ");
       } else {
         // New Key In Row
         pg_keyboard_data->layoutEl[keyId]->pElem->rElem = (gslc_tsRect) {(rFullscreen.x + (l * xWid)) - offsetX, (keyY + (lR * xHei)), xWid + offsetX, xHei};
@@ -453,54 +569,22 @@ int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui) {
 }
 
 
-// Initalize GUIslice Elements needed for buttons (pooled)
-int pg_keyboard_guiKeyboard(gslc_tsGui* pGui) {
-  int ePage = E_PG_KEYBOARD;
 
-  int keyId = 0;
 
-  for (int lR = 0; lR < pg_keyboard_data->layoutRowsLen; ++lR) {
-    // New Row
-    int rowLen = pg_keyboard_data->layoutRows[lR];
 
-    for (int l = 0; l < rowLen; ++l) {
-      if (keyId < pg_keyboard_data->layoutLen - 1
-         && pg_keyboard_data->layout[keyId + 1] == pg_keyboard_data->layout[keyId]) {
-        pg_keyboard_data->layoutEl[keyId] = NULL;
-      } else if (pg_keyboard_data->layoutEl[keyId] == NULL) {
-        // New Key In Row
-        pg_keyboard_data->layoutEl[keyId] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-                (gslc_tsRect) {0, 0, 1, 1},
-                (char*)"", 0, E_FONT_MONO14, &pg_keyboard_cbBtn);
-        gslc_ElemSetTxtCol(pGui, pg_keyboard_data->layoutEl[keyId], GSLC_COL_WHITE);
-        gslc_ElemSetCol(pGui, pg_keyboard_data->layoutEl[keyId], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
-        gslc_ElemSetTxtAlign(pGui, pg_keyboard_data->layoutEl[keyId], GSLC_ALIGN_MID_MID);
-        gslc_ElemSetFillEn(pGui, pg_keyboard_data->layoutEl[keyId], true);
-        gslc_ElemSetFrameEn(pGui, pg_keyboard_data->layoutEl[keyId], true);
-      }
-      ++keyId;
-    }
 
-  }
 
-  return 1;
-}
+
 
 
 int pg_keyboard_guiInit(gslc_tsGui* pGui)
 {
-
   int ePage = E_PG_KEYBOARD;
 
   gslc_PageAdd(&m_gui, ePage, pg_keyboardElem, MAX_ELEM_PG_KEYBOARD_RAM, pg_keyboardElemRef, MAX_ELEM_PG_KEYBOARD);
 
-  // Overall Redraw Box
-  if ((
-    pg_keyboardEl[E_KEYBOARD_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen)
-  ) != NULL) {
-    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_BOX], GSLC_COL_GRAY,GSLC_COL_BLACK,GSLC_COL_BLACK);
-    gslc_ElemSetDrawFunc(pGui, pg_keyboardEl[E_KEYBOARD_EL_BOX], &pg_keyboard_draw);
-  }
+  pg_keyboardEl[E_KEYBOARD_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen);
+  gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_BOX], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
 
   // Keyboard Input Box
   if ((
@@ -509,7 +593,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
           (char *)"", 0, E_FONT_MONO18)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_GRAY);
     gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], GSLC_ALIGN_MID_LEFT);
     gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], true);
     gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], false);
@@ -522,7 +606,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
             (char *)"<--", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_delete)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_GRAY);
     gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], false);
     gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_DELETE], true);
@@ -535,10 +619,23 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
             (char *)"Cancel", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_cancel)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE);
-    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_COL_WHITE, GSLC_COL_GRAY, GSLC_COL_GRAY);
     gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], false);
     gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_CANCEL], true);
+  }
+
+  // Symbols Key
+  if ((
+    pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {rFullscreen.x,(rFullscreen.y + 213),56,50},
+            (char *)"Symbol", 10, E_FONT_MONO14, &pg_keyboard_cbBtn_symbols)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], GSLC_COL_WHITE, GSLC_COL_GRAY, GSLC_COL_GRAY);
+    gslc_ElemSetTxtAlign(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], false);
+    gslc_ElemSetFrameEn(pGui, pg_keyboardEl[E_KEYBOARD_EL_SYMBOLS], true);
   }
 
   return 1;
@@ -550,8 +647,8 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
 
 // GUI Init
 void pg_keyboard_init(gslc_tsGui *pGui) {
-  pg_keyboard_data = PG_KEYBOARD_INIT_DATA();
   pg_keyboard_guiInit(pGui);
+  pg_keyboard_data = PG_KEYBOARD_INIT_DATA(pGui);
 
   cbInit[E_PG_KEYBOARD] = NULL;
 }
@@ -559,16 +656,16 @@ void pg_keyboard_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_keyboard_open(gslc_tsGui *pGui) {
+
   // // Set Upper Case
   // pg_keyboard_data = pg_keyboard_def_upperCase(pg_keyboard_data);
   // pg_keyboard_shiftOn = 1;
 
   // Set Lower Case
-  pg_keyboard_data = pg_keyboard_def_lowerCase(pg_keyboard_data);
-  pg_keyboard_shiftOn = 0;
+  pg_keyboard_data = pg_keyboard_def_upperCase(pGui, pg_keyboard_data);
+  pg_keyboard_shiftOn = 1;
 
   // Display
-  pg_keyboard_guiKeyboard(pGui);
   pg_keyboard_guiKeyboardUpdate(pGui);
 }
 

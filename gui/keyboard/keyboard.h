@@ -18,15 +18,18 @@ enum {
   E_KEYBOARD_EL_CANCEL,
   E_KEYBOARD_EL_INPUT,
   E_KEYBOARD_EL_DELETE,
+  E_KEYBOARD_EL_SYMBOLS,
 
   E_KEYBOARD_EL_MAX
 };
 
+// struct for holding callback info when enter is pressed
 struct pg_keyboard_dataCbStruct {
   int id;
   void (*ptr)(gslc_tsGui *, char*);
 };
 
+// Current layout configuration for keyboard
 struct pg_keyboard_dataStruct {
   int max;
   int limit;
@@ -57,7 +60,7 @@ gslc_tsElemRef* pg_keyboardEl[E_KEYBOARD_EL_MAX];
 
 
 int pg_keyboard_shiftOn;
-
+int pg_keyboard_symbolOn;
 
 
 #include <stdio.h>
@@ -70,9 +73,11 @@ int pg_keyboard_shiftOn;
 
 
 // Upper Case American Layout
-struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(struct pg_keyboard_dataStruct *data);
+struct pg_keyboard_dataStruct * pg_keyboard_def_upperCase(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data);
 // Lower Case American Layout
-struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dataStruct *data);
+struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data);
+// Symbol Layout
+struct pg_keyboard_dataStruct * pg_keyboard_def_symbols(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data);
 
 ////////////////////////////
 // KEYBOARD LAYOUT CONFIGURATION
@@ -84,13 +89,15 @@ struct pg_keyboard_dataStruct * pg_keyboard_def_lowerCase(struct pg_keyboard_dat
 // layoutLen - total number of values in layout
 // layoutEl - gslc_tsElemRef pointers for keys
 // layout - ascii layout values
-struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(struct pg_keyboard_dataStruct *data,
+struct pg_keyboard_dataStruct * pg_keyboard_layoutConfig(gslc_tsGui* pGui, struct pg_keyboard_dataStruct *data,
       int *layoutRowsWid, int *layoutRows, int layoutRowsLen,
       int *layout, int layoutLen);
 
-struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA();
+struct pg_keyboard_dataStruct * PG_KEYBOARD_INIT_DATA(gslc_tsGui* pGui);
 void PG_KEYBOARD_DESTROY_DATA(struct pg_keyboard_dataStruct *data);
 
+////////////////////////////
+// CALLBACK MANAGEMENT
 int pg_keyboard_appendCb(struct pg_keyboard_dataStruct *data, void (*function)(gslc_tsGui *, char*));
 void pg_keyboard_runCb(gslc_tsGui *pGui, struct pg_keyboard_dataStruct *data);
 void pg_keyboard_cleanCb(struct pg_keyboard_dataStruct *data);
@@ -98,19 +105,35 @@ void pg_keyboard_cleanCb(struct pg_keyboard_dataStruct *data);
 void pg_keyboard_reset(gslc_tsGui *pGui);
 void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(gslc_tsGui *, char *));
 void pg_keyboard_limitCheck(gslc_tsGui *pGui);
+void pg_keyboard_setCase();
 
+////////////////////////////
+// KEYBOARD BUTTON CALLBACKS
 bool pg_keyboard_cbBtn_shift(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn_enter(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn_cancel(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY);
 
+////////////////////////////
+// DRAW KEYBOARD ELEMENTS
+// Create GUISlice KeyBtn Element
+gslc_tsElemRef* pg_keyboard_guiKeyboard_CreateElem(gslc_tsGui* pGui);
+// Draw ticker
 bool pg_keyboard_draw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw);
 
+// Update Keyboard Buttons with Latest Display and Locations
 int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui);
+// Initalize GUIslice Elements needed for buttons (pooled)
 int pg_keyboard_guiKeyboard(gslc_tsGui* pGui);
+
+
+////////////////////////////
+// KEYBOARD BASELINE GUISLICE LAYOUT
 int pg_keyboard_guiInit(gslc_tsGui* pGui);
 
+////////////////////////////
+// KEYBOARD DEFAULT INIT FUNCTIONS
 void pg_keyboard_init(gslc_tsGui *pGui);
 void pg_keyboard_open(gslc_tsGui *pGui);
 void pg_keyboard_close(gslc_tsGui *pGui);
