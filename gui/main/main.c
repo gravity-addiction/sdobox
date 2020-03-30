@@ -63,6 +63,43 @@ void pg_main_slideshow_open(gslc_tsGui *pGui, char* path, char* file) {
   }
 }
 
+
+int pg_main_addList(struct fileStruct *ptr) {
+  if (pg_main_listConfig->len >= pg_main_listConfig->max) {
+    pg_main_listConfig->max = pg_main_listConfig->len + 32;
+    struct fileStruct **newPtrs = (struct fileStruct**)realloc(pg_main_list, pg_main_listConfig->max * sizeof(struct fileStruct*));
+    pg_main_list = newPtrs;
+  }
+  pg_main_list[pg_main_listConfig->len] = ptr;
+  pg_main_listConfig->len += 1;
+  return (pg_main_listConfig->len - 1);
+}
+
+void pg_main_resetList() {
+  if (pg_main_list == NULL || pg_main_listConfig->len == 0) { return; }
+  for (int i = 0; i < pg_main_listConfig->len; ++i) {
+    free(pg_main_list[i]->name);
+    free(pg_main_list[i]);
+  }
+  free(pg_main_list);
+  pg_main_listConfig->len = 0;
+}
+
+void pg_main_setList(struct fileStruct **ptrs, int len) {
+  pg_main_resetList();
+
+  pg_main_listConfig->len = len;
+  pg_main_list = ptrs;
+}
+
+
+void pg_main_playListEntry(gslc_tsGui *pGui){
+  if (!pg_main_list_check()) { return; }
+  pg_main_slideshow_open(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
+}
+
+
+
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -75,11 +112,9 @@ bool pg_main_cbBtn_startX(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_
 
 bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  if (!pg_main_list_check()) { return true; }
-
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  pg_main_slideshow_open(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
 
+  pg_main_playListEntry(pGui);
   return true;
 }
 
@@ -139,33 +174,71 @@ bool pg_main_cbBtn_system(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_
   return true;
 }
 
-int pg_main_addList(struct fileStruct *ptr) {
-  if (pg_main_listConfig->len >= pg_main_listConfig->max) {
-    pg_main_listConfig->max = pg_main_listConfig->len + 32;
-    struct fileStruct **newPtrs = (struct fileStruct**)realloc(pg_main_list, pg_main_listConfig->max * sizeof(struct fileStruct*));
-    pg_main_list = newPtrs;
-  }
-  pg_main_list[pg_main_listConfig->len] = ptr;
-  pg_main_listConfig->len += 1;
-  return (pg_main_listConfig->len - 1);
+
+
+///////////////////////
+// Top Buttons
+bool pg_main_cbBtn_a(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_playListEntry(pGui);
+  return true;
 }
 
-void pg_main_resetList() {
-  if (pg_main_list == NULL || pg_main_listConfig->len == 0) { return; }
-  for (int i = 0; i < pg_main_listConfig->len; ++i) {
-    free(pg_main_list[i]->name);
-    free(pg_main_list[i]);
-  }
-  free(pg_main_list);
-  pg_main_listConfig->len = 0;
+bool pg_main_cbBtn_b(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+//  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  mpv_stop();
+  return true;
 }
 
-void pg_main_setList(struct fileStruct **ptrs, int len) {
-  pg_main_resetList();
+bool pg_main_cbBtn_c(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_main_listConfig->len = len;
-  pg_main_list = ptrs;
+  pg_main_loadFolder(pGui, "/home/pi/shared");
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
 }
+
+bool pg_main_cbBtn_d(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_loadFolder(pGui, "/media");
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
+  return true;
+}
+
+bool pg_main_cbBtn_e(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_main_mirror_toggle(pGui);
+  return true;
+}
+
+bool pg_main_cbBtn_f(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (!pg_main_list_check()) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
+  // If a file is selected try to load it as video.
+  pg_skydiveorbust_loadvideo(pGui, pg_main_list[pg_main_listConfig->cur]->path, pg_main_list[pg_main_listConfig->cur]->name);
+  return true;
+}
+
+bool pg_main_cbBtn_g(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+//  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  return true;
+}
+
+
 
 
 
@@ -253,7 +326,9 @@ bool pg_main_cbBtn_elAAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 0)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[0]->path, pg_main_list[0]->name);
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -273,7 +348,9 @@ bool pg_main_cbBtn_elBAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 1)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[1]->path, pg_main_list[1]->name);
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -293,7 +370,9 @@ bool pg_main_cbBtn_elCAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 2)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[2]->path, pg_main_list[2]->name);
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -313,7 +392,9 @@ bool pg_main_cbBtn_elDAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 3)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[3]->path, pg_main_list[3]->name);
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -333,7 +414,9 @@ bool pg_main_cbBtn_elEAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 4)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[4]->path, pg_main_list[4]->name);
+  gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
 
@@ -353,23 +436,13 @@ bool pg_main_cbBtn_elFAction(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
+  if (!vlist_clickBtn(pg_main_listConfig, 5)) { return true; }
   pg_main_slideshow_open(pGui, pg_main_list[5]->path, pg_main_list[5]->name);
-  return true;
-}
-
-
-// G
-bool pg_main_cbBtn_elG(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-
-  if (!vlist_clickBtn(pg_main_listConfig, 6)) { return true; }
-  pg_main_gotoFolderCheck(pGui);
-
-  // Update GUI list Box
   gslc_ElemSetRedraw(pGui, pg_mainEl[E_MAIN_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
+
+
 
 bool pg_main_cbBtn_sliderPos(void* pvGui, void* pvElemRef, int16_t nPos)
 {
@@ -426,7 +499,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_mainEl[E_MAIN_EL_BTN_A] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
             (gslc_tsRect) {0, 0, 64, 64},
-            "Play", 0, E_FONT_MONO14, &pg_main_cbBtn_slideshow)
+            "Play", 0, E_FONT_MONO14, &pg_main_cbBtn_a)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_A], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_A], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -434,11 +507,12 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_A], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_A], true);
   }
+
   // Button B
   if ((
     pg_mainEl[E_MAIN_EL_BTN_B] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {65, 0, 64, 64},
-            "SDOB", 0, E_FONT_MONO14, &pg_main_cbBtn_sdob)
+            (gslc_tsRect) {64, 0, 64, 64},
+            "Stop", 0, E_FONT_MONO14, &pg_main_cbBtn_b)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_B], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_B], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -446,11 +520,12 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_B], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_B], true);
   }
+
   // Button C
   if ((
     pg_mainEl[E_MAIN_EL_BTN_C] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {130, 0, 64, 64},
-            "Root", 0, E_FONT_MONO14, &pg_main_cbBtn_root)
+            (gslc_tsRect) {128, 0, 64, 64},
+            "Root", 0, E_FONT_MONO14, &pg_main_cbBtn_c)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_C], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -458,11 +533,12 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_C], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_C], true);
   }
+
   // Button D
   if ((
     pg_mainEl[E_MAIN_EL_BTN_D] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {195, 0, 64, 64},
-            "USB", 0, E_FONT_MONO14, &pg_main_cbBtn_usb)
+            (gslc_tsRect) {192, 0, 64, 64},
+            "USB", 0, E_FONT_MONO14, &pg_main_cbBtn_d)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_D], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -470,11 +546,12 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_D], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_D], true);
   }
+
   // Button E
   if ((
     pg_mainEl[E_MAIN_EL_BTN_E] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {259, 0, 64, 64},
-            "Mirror", 0, E_FONT_MONO14, &pg_main_cbBtn_mirror)
+            (gslc_tsRect) {256, 0, 64, 64},
+            "Mirror", 0, E_FONT_MONO14, &pg_main_cbBtn_e)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_E], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -482,11 +559,12 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_E], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_E], true);
   }
+
   // Button F
   if ((
     pg_mainEl[E_MAIN_EL_BTN_F] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {325, 0, 64, 64},
-            "System", 0, E_FONT_MONO14, &pg_main_cbBtn_system)
+            (gslc_tsRect) {320, 0, 64, 64},
+            "SDOB", 0, E_FONT_MONO14, &pg_main_cbBtn_f)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_F], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_F], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -495,6 +573,31 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_F], true);
   }
 
+  // Button G
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_G] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {384, 0, 64, 64},
+            " ", 0, E_FONT_MONO14, &pg_main_cbBtn_g)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_G], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_G], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_G], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_G], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_G], true);
+  }
+
+  // Button H
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_H] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {448, 0, 32, 64},
+            "S", 0, E_FONT_MONO14, &pg_main_cbBtn_system)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_H], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_H], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_H], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_H], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_H], true);
+  }
 
 
   int xHei = 40;
