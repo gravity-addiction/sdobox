@@ -58,7 +58,7 @@ void touchscreenPageGoBack(gslc_tsGui *pGui) {
 void touchscreenPageSetCur(gslc_tsGui *pGui, int ePage) {
   if (cbInit[ePage]) { cbInit[ePage](pGui); }
 
-  gslc_SetBkgndColor(pGui, GSLC_COL_BLACK);
+  // gslc_SetBkgndColor(pGui, GSLC_COL_BLACK);
   gslc_SetPageBase(pGui, ePage);
   gslc_SetPageCur(pGui, ePage);
 
