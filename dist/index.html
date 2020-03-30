@@ -6,15 +6,15 @@
   <h1>This is repository for sdobox.</h1>
   <p><pre>
 To install sdobox, add new repository to /etc/apt/sources.list:
-
-deb http://sdobox.skydiveorbust.com/ sdobox main
-
-
 And import key that is used to sign the release:
 
+<pre><code>
+echo 'deb http://sdobox.skydiveorbust.com/ sdobox main' | sudo tee -a /etc/apt/sources.list
 wget -qO - http://sdobox.skydiveorbust.com/pubkey.txt | sudo apt-key add -
 sudo apt update
 sudo apt install sdobox
+
+</code></pre>
   </pre></p>
 </body>
 </html>
