@@ -16,6 +16,7 @@
 #include "libs/queue/queue.h"
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
+#include "libs/mpv/mpv_events.h"
 #include "gui/pages.h"
 #include "libs/fbcp/fbcp.h"
 
@@ -543,176 +544,6 @@ void pg_slideshowFolderWatchThreadStop() {
 
 
 
-// ------------------------
-// MPV Socket Thread
-// ------------------------
-PI_THREAD (pg_slideshowMpvSocketThread)
-{
-  if (pg_slideshowMpvSocketThreadRunning) {
-    // debug_print("%s\n", "Not Starting MPV Event Thread, Already Started");
-    return NULL;
-  }
-  pg_slideshowMpvSocketThreadRunning = 1;
-
-  if (pg_slideshowMpvSocketThreadKill) {
-    // debug_print("%s\n", "Not Starting MPV Event Thread, Stop Flag Set");
-    pg_slideshowMpvSocketThreadRunning = 0;
-    return NULL;
-  }
-
-  // debug_print("%s\n", "Starting MPV Event Thread");
-
-  struct sockaddr_un addr;
-  // char buf[100];
-
-  // char* mpv_chapter_ret;
-
-  int socket_try = 0;
-  // struct queue_head *item;
-
-  // Wait for socket to arrive
-  while (!pg_slideshowMpvSocketThreadKill && socket_try < 10 && access(mpv_socket_path, R_OK) == -1) {
-    // debug_print("Waiting to See %s\n", mpv_socket_path);
-    socket_try++;
-    usleep(1000000);
-  }
-
-  if ((pg_slideshow_player_mpv_fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-    // debug_print("%s\n", "MPV Socket Error");
-    pg_slideshowMpvSocketThreadKill = 1;
-  }
-  // Set Socket Non-Blocking
-  setnonblock(pg_slideshow_player_mpv_fd);
-
-  memset(&addr, 0, sizeof(struct sockaddr_un));
-  addr.sun_family = AF_UNIX;
-  if (*mpv_socket_path == '\0') {
-    *addr.sun_path = '\0';
-    strncpy(addr.sun_path+1, mpv_socket_path+1, sizeof(addr.sun_path)-2);
-  } else {
-    strncpy(addr.sun_path, mpv_socket_path, sizeof(addr.sun_path)-1);
-  }
-
-  if (connect(pg_slideshow_player_mpv_fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
-    // MPV Connect Error
-    pg_slideshowMpvSocketThreadKill = 1;
-  }
-
-  // Grab MPV Events, sent in JSON format
-  while(!pg_slideshowMpvSocketThreadKill) {
-    if (!fd_is_valid(pg_slideshow_player_mpv_fd)) {
-      // printf("FD Re-Connect: %d, %d\n", pg_slideshow_player_mpv_fd_timer, millis());
-      // try closing fd
-      if (pg_slideshow_player_mpv_fd) { close(pg_slideshow_player_mpv_fd); }
-      // reconnect fd
-      if (connect(pg_slideshow_player_mpv_fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
-        // MPV Connect Error
-        pg_slideshowMpvSocketThreadKill = 1;
-      }
-    }
-
-// Grab Next Socket Line
-    char* mpv_event_ret; // = malloc(128);
-    // int rc = getline(&mpv_event_ret, 256, pg_slideshow_player_mpv_fd);
-    int rc = sgetline(pg_slideshow_player_mpv_fd, &mpv_event_ret);
-    if (rc > 0) {
-      char* json_event;// = malloc(128);
-      int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
-      // dbgprintf(DBG_MPV, "MPV Event: -%s-, Parsed: %s Len: %d\n\n\n", mpv_event_ret, json_event, rcE);
-      free(mpv_event_ret);
-      if (rcE == 0) { continue; }
-
-
-      if (strcmp(json_event, "seek") == 0
-          || strcmp(json_event, "playback-restart") == 0
-      ) {
-
-      }
-      else if (strcmp(json_event, "pause") == 0) {
-
-
-      }
-      // else if (strcmp(json_event, "unpause") == 0) {
-      else if (strcmp(json_event, "unpause") == 0) {
-
-      }
-      // MPV Video Ended
-      else if (strcmp(json_event, "end-file") == 0) {
-        // Update GUI Display of Display Ended
-        // endVideoPlayer();
-
-      }
-      // MPV Start File
-      else if (strcmp(json_event, "start-file") == 0) {
-
-      }
-      // Meta Updated
-      else if (strcmp(json_event, "metadata-update") == 0) {
-        // printf("Meta update\n");
-        // printf("Parsed: %s Len: %d\n\n\n", json_event, rcE);
-        char* retFrameInfo;
-        if (mpvSocketSinglet("video-frame-info", &retFrameInfo) != -1) {
-          // printf("Info: %s\n", retFrameInfo);
-          char* json_picType;
-          pg_slideshowIsPicture = ta_json_parse(retFrameInfo, "picture-type", &json_picType);
-          free(retFrameInfo);
-          if (pg_slideshowIsPicture > 0) { free(json_picType); }
-        } else {
-          pg_slideshowIsPicture = 0;
-        }
-      }
-      // Chapter Changed
-      else if (strcmp(json_event, "chapter-change") == 0) {
-
-
-      }
-      // File Loaded (Unpause)
-      else if (strcmp(json_event, "file-loaded") == 0) {
-        // sdob_player->paused = 0;
-
-      }
-      free(json_event);
-    usleep(100);
-    }
-
-  // No Work needed done
-    else {
-      // Nothing to Do, Sleep for a moment
-      usleep(200000);
-    }
-  }
-  // close
-  // debug_print("%s\n", "Closing MPV RPC");
-  pg_slideshowMpvSocketThreadRunning = 0;
-  return NULL;
-}
-
-
-int pg_slideshowMpvSocketThreadStart() {
-  // debug_print("%s\n", "pg_slideshowMpvSocketThreadStart()");
-  if (pg_slideshowMpvSocketThreadRunning) { return 0; }
-
-  // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", pg_slideshowMpvSocketThreadRunning);
-  pg_slideshowMpvSocketThreadKill = 0;
-  return piThreadCreate(pg_slideshowMpvSocketThread);
-}
-
-void pg_slideshowMpvSocketThreadStop() {
-  // debug_print("%s\n", "pg_slideshowMpvSocketThreadStop()");
-  // Shutdown MPV Socket Thread
-  if (pg_slideshowMpvSocketThreadRunning) {
-    pg_slideshowMpvSocketThreadKill = 1;
-    int shutdown_cnt = 0;
-    while (pg_slideshowMpvSocketThreadRunning && shutdown_cnt < 20) {
-      usleep(100000);
-      shutdown_cnt++;
-    }
-    // debug_print("SkydiveOrBust MPV Socket Thread Shutdown %d\n", shutdown_cnt);
-  }
-}
-
-
-
 
 // GUI Init
 void pg_slideshow_init(gslc_tsGui *pGui) {
@@ -727,7 +558,7 @@ void pg_slideshow_init(gslc_tsGui *pGui) {
 
   pg_slideshowIsPicture = 0;
 
-  mpv_init(pGui);
+
   pg_slideshowGuiInit(pGui);
 
   cbInit[E_PG_SLIDESHOW] = NULL;
@@ -745,18 +576,22 @@ int pg_slideshow_thread(gslc_tsGui *pGui) {
   return 0;
 }
 
-
+void pg_slideshow_testFunc(char* event) {
+  printf("Yay Event: %s\n", event);
+}
 
 // GUI Open
 void pg_slideshow_open(gslc_tsGui *pGui) {
   printf("%s\n", "Slideshow Setting Button Functions");
   pg_slideshowButtonSetFuncs();
 
-  pg_slideshowMpvSocketThreadStart();
+  // pg_slideshowMpvSocketThreadStart();
+  // libMpvSocketThreadStart();
+  // libMpvCallbackAppend(&pg_slideshow_testFunc);
 
-  fbcp_start();
+  // fbcp_start();
   // fbcpThreadStart();
-
+/*
   char* retPath;
   if ((mpvSocketSinglet("path", &retPath)) == -1) {
     char *cmd = strdup("loadlist \"/home/pi/shared/playlist.txt\" replace\n");
@@ -765,6 +600,7 @@ void pg_slideshow_open(gslc_tsGui *pGui) {
 
   // Play on Open
   mpv_play();
+*/
 /*
   if(!(pg_slideshowFD = popen("/usr/bin/fim -d /dev/fb0 -a -q --sort-basename --no-commandline -R /home/pi/shared/", "w"))){
     // debug_print("%s\n", "Cannot Open image folder");
@@ -789,8 +625,8 @@ void pg_slideshow_close(gslc_tsGui *pGui) {
   fbcp_stop();
   // fbcpThreadStop();
   mpv_stop();
-  pg_slideshowMpvSocketThreadStop();
-
+  // pg_slideshowMpvSocketThreadStop();
+  // libMpvSocketThreadStop();
   //-/ system("killall fim");
   //-/ fflush(pg_slideshowFD);
   //-/ pclose(pg_slideshowFD);

@@ -32,6 +32,8 @@
 #include "libs/queue/queue.h"
 #include "libs/buttons/buttons.h"
 #include "libs/fbcp/fbcp.h"
+#include "libs/mpv/mpv.h"
+#include "libs/mpv/mpv_events.h"
 #include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
 #include "libs/ulfius/websocket_api.h"
 #include "libs/ulfius/websocket_server.h"
@@ -226,6 +228,10 @@ int main( int argc, char* args[] )
     websocket_server_start();
   }
 
+  // Initialize MPV library
+  mpv_init();
+  libMpvSocketThreadStart();
+
   // ------------------------------------------------
   // Create graphic elements
   // ------------------------------------------------
@@ -321,6 +327,10 @@ int main( int argc, char* args[] )
   if (SQLITE3_PATH != NULL) {
     sqlite3_wrapper_stop();
   }
+
+  // Kill MPV
+  mpv_stop();
+  libMpvSocketThreadStop();
 
   if (m_touchscreenInit) {
     // Quit GUIslice

@@ -449,7 +449,7 @@ static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, i
 
   dp = opendir(path);
   if(NULL == dp) {
-      fprintf(stderr, "no such directory: '%s'", path);
+      dbgprintf(DBG_ERROR, "no such directory: '%s'\n", path);
       return 0;
   }
 

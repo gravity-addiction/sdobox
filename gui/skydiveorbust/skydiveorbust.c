@@ -2089,7 +2089,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   ///////////////////
   // MPV Initializer
-  mpv_init(pGui);
+  // mpv_init(pGui);
 
 
 
