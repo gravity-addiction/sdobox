@@ -116,10 +116,9 @@ PI_THREAD (libMpvSocketThread)
 
       char* json_event;// = malloc(128);
       int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
-      printf("MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
+      // printf("MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
       free(mpv_event_ret);
       if (rcE == 0) { continue; }
-
       // for (int tI = 0; tI < libMpvEventThreads->len; ++tI) {
         // pthread_t threads;
         // struct libMpvEventThreadData threadsData; // = (struct libMpvEventThreadData*)malloc(sizeof(struct libMpvEventThreadData));
@@ -127,6 +126,7 @@ PI_THREAD (libMpvSocketThread)
         // threadsData.cb = libMpvEventThreads->cbs[tI]->cb;
         // pthread_create(&threads, NULL, libMpvCallbackFunc, (void *)&json_event);
       // }
+      free(json_event);
       usleep(100);
     }
 
