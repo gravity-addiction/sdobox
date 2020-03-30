@@ -859,9 +859,7 @@ void pg_main_refreshCurrentFolder(gslc_tsGui* pGui) {
 }
 
 void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath) {
-  if (pg_main_currentFolderPath != NULL) {
-    free(pg_main_currentFolderPath);
-  }
+  free(pg_main_currentFolderPath);
   pg_main_currentFolderPath = strdup(folderPath);
   pg_main_refreshCurrentFolder(pGui);
   vlist_sliderResetCurPos(pGui, pg_main_listConfig);
@@ -897,9 +895,6 @@ void pg_main_open(gslc_tsGui *pGui) {
 // GUI Destroy
 void pg_main_destroy(gslc_tsGui *pGui) {
   pg_main_resetList();
-
-  if (pg_main_list != NULL) { free(pg_main_list); }
-  free(pg_main_currentFolderPath);
 }
 
 // Setup Constructor
