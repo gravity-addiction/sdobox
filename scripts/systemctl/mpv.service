@@ -3,12 +3,12 @@ Description=MPV Startup
 
 [Service]
 Type=idle
-Restart=on-failure
+Restart=always
 
 PIDFile=/run/mpv.pid
 User=pi
 
-ExecStart=/usr/bin/mpv --background=#000000 --fullscreen --video-osd=no --loop-playlist --video-sync=display-resample --hr-seek-framedrop=yes --input-ipc-server=/tmp/mpv.socket --no-osc --no-osd-bar --osd-on-seek=no --reset-on-next-file=all --keep-open=always --idle
+ExecStart=/usr/bin/mpv --background=#000000 --fullscreen --loop-file=no --loop-playlist --image-display-duration=inf --rpi-layer=3 --video-osd=no --video-sync=display-resample --hr-seek-framedrop=yes --input-ipc-server=/tmp/mpv.socket --no-osc --no-osd-bar --osd-on-seek=no --reset-on-next-file=all --keep-open=always --idle
 StandardOutput=null
 StandardError=null
 
