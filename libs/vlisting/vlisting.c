@@ -67,12 +67,31 @@ void vlist_sliderSetPos(gslc_tsGui *pGui, struct vlist_config *config, int i) {
   config->scroll = i;
 }
 
+void vlist_sliderSetPosFromCur(gslc_tsGui *pGui, struct vlist_config *config) {
+  int sR = config->cur % config->per;
+  int i = (config->cur - sR) / config->per;
+  vlist_sliderSetPos(pGui, config, i);
+}
+
 // List item clicked, make it current selected
 int vlist_clickBtn(struct vlist_config *config, int i) {
   int newI = i + (config->scroll * config->per);
   if (newI >= config->len) { return 0; }
   config->cur = newI;
   return 1;
+}
+
+void vlist_next(struct vlist_config *config) {
+  int newI = config->cur + 1;
+  if (newI >= config->len) { newI = 0; }
+  config->cur = newI;
+}
+
+void vlist_prev(struct vlist_config *config) {
+  int newI = config->cur - 1;
+  if (newI < 0) { newI = config->len - 1; }
+  if (newI < 0) { newI = 0; }
+  config->cur = newI;
 }
 
 
