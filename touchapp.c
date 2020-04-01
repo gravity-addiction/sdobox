@@ -40,6 +40,7 @@
 #include "libs/ulfius/websocket_client.h"
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
+#include "libs/fbbg/fbbg.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -275,6 +276,9 @@ int main( int argc, char* args[] )
   strlcpy(filename, "/home/pi/Videos/SVNH2019/flightgroups.json", fileLen);
   xml_flightgroups_parseFile(filename);
   */
+
+  // Start FBBG Display 0, Layer 0
+  // fbbg_start();
   ///// TEST STUFF /////
 
 
@@ -345,6 +349,8 @@ int main( int argc, char* args[] )
 
   // Kill any outstanding fbcp instances
   fbcp_stop();
+  // Kill any outstanding fbbg instances
+  fbbg_stop();
 
   printf("%s\n", "Controls are yours.");
   gslc_Quit(&m_gui);
