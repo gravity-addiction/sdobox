@@ -17,6 +17,7 @@
 #include "libs/dbg/dbg.h"
 
 #include "libs/queue/queue.h"
+#include "libs/fbbg/fbbg.h"
 
 
 
@@ -387,6 +388,7 @@ int mpv_pause() {
 
 int mpv_play() {
   m_is_video_playing = 1;
+  fbbg_start();
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
 }
 
@@ -452,6 +454,7 @@ double mpv_speed_adjust(double spd) {
 
 
 void mpv_stop() {
+  fbbg_stop();
   m_is_video_playing = 0;
   mpv_fmt_cmd("stop\n");
 }
@@ -491,6 +494,7 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   filename = quotify(filename,&qfilename);
 
   int result = mpv_fmt_cmd("loadfile \"%s/%s\" %s %s\n", folder, filename, flag, opts);
+  mpv_play();
 
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
@@ -500,6 +504,7 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
 }
 
 void mpv_quit() {
+  fbbg_stop();
   mpv_fmt_cmd("quit\n");
   mpv_socket_close(mpv_socket_fd);
 }

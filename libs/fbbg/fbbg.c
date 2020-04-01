@@ -16,12 +16,11 @@ fbbg_init(
     uint16_t colour,
     int32_t layer)
 {
-    int result = 0;
     VC_IMAGE_TYPE_T type = VC_IMAGE_RGBA16;
     uint32_t vc_image_ptr;
 
     bg->resource = vc_dispmanx_resource_create(type, 1, 1, &vc_image_ptr);
-    // assert(bg->resource != 0);
+
     if (bg->resource == 0) {
       return;
     }
@@ -33,12 +32,12 @@ fbbg_init(
 
     bg->layer = layer;
 
-    result = vc_dispmanx_resource_write_data(bg->resource,
+    vc_dispmanx_resource_write_data(bg->resource,
                                              type,
                                              sizeof(colour),
                                              &colour,
                                              &dst_rect);
-    // assert(result == 0);
+
 }
 
 //-------------------------------------------------------------------------
@@ -75,7 +74,7 @@ fbbg_add(
                                 &alpha,
                                 NULL,
                                 DISPMANX_NO_ROTATE);
-    // assert(bg->element != 0);
+
 }
 
 //-------------------------------------------------------------------------
@@ -84,34 +83,10 @@ void
 fbbg_destroy(
     FBBG_BACKGROUND_LAYER_T *bg)
 {
-    int result = 0;
-
-    DISPMANX_UPDATE_HANDLE_T update = vc_dispmanx_update_start(0);
-    // assert(update != 0);
-    if (result == 0) {
-      dbgprintf(DBG_ERROR, "FBBG Destroy: Unable to update start\nError: %d", result);
-      return;
-    }
-
-    result = vc_dispmanx_element_remove(update, bg->element);
-    // assert(result == 0);
-    if (result != 0) {
-      dbgprintf(DBG_ERROR, "FBBG Destroy: Unable to remove element\nError: %d", result);
-      return;
-    }
-
-    result = vc_dispmanx_update_submit_sync(update);
-    // assert(result == 0);
-    if (result != 0) {
-      dbgprintf(DBG_ERROR, "FBBG Destroy: Unable Submit Sync\nError: %d", result);
-      return;
-    }
-
-    result = vc_dispmanx_resource_delete(bg->resource);
-    if (result != 0) {
-      dbgprintf(DBG_ERROR, "FBBG Destroy: Unable Delete Resource\nError: %d", result);
-      return;
-    }
+  DISPMANX_UPDATE_HANDLE_T update = vc_dispmanx_update_start(0);
+  vc_dispmanx_element_remove(update, bg->element);
+  vc_dispmanx_update_submit_sync(update);
+  vc_dispmanx_resource_delete(bg->resource);
 }
 
 //-------------------------------------------------------------------------
@@ -129,7 +104,7 @@ int fbbg_toggle() {
 
 int fbbg_start()
 {
-  if (fbbgRunning) { return 0; }
+  if (fbbgRunning == 1) { return 0; }
 
   uint16_t background = 0x000F;
   uint32_t displayNumber = 0;
@@ -137,38 +112,17 @@ int fbbg_start()
   bcm_host_init();
 
   fbbg_display = vc_dispmanx_display_open(displayNumber);
-  // assert(fbbg_display != 0);
-  if (fbbg_display == 0) {
-    dbgprintf(DBG_ERROR, "FBBG Start: Unable to Open Display\nError: %d", fbbg_display);
-    return 0;
-  }
-
 
   DISPMANX_MODEINFO_T info;
-  int result = vc_dispmanx_display_get_info(fbbg_display, &info);
-  // assert(result == 0);
-  if (result != 0) {
-    dbgprintf(DBG_ERROR, "FBBG Start: Unable to Get Display Info\nError: %d", result);
-    return 0;
-  }
+  vc_dispmanx_display_get_info(fbbg_display, &info);
 
   fbbg_init(&fbbg_backgroundLayer, background, displayLayer);
 
   DISPMANX_UPDATE_HANDLE_T update = vc_dispmanx_update_start(0);
-  // assert(update != 0);
-  if (update == 0) {
-    dbgprintf(DBG_ERROR, "FBBG Start: Unable to Update Start\nError: %d", result);
-    return 0;
-  }
 
   fbbg_add(&fbbg_backgroundLayer, fbbg_display, update);
 
-  result = vc_dispmanx_update_submit_sync(update);
-  // assert(result == 0);
-  if (result != 0) {
-    dbgprintf(DBG_ERROR, "FBBG Start: Unable to Submit Sync\nError: %d", result);
-    return 0;
-  }
+  vc_dispmanx_update_submit_sync(update);
 
   fbbgRunning = 1;
   return 1;
@@ -177,15 +131,10 @@ int fbbg_start()
 //-------------------------------------------------------------------------
 
 void fbbg_stop() {
-  if (!fbbgRunning) { return; }
-
+  if (fbbgRunning != 1) { return; }
   fbbg_destroy(&fbbg_backgroundLayer);
 
-  int result = vc_dispmanx_display_close(fbbg_display);
-  // assert(result == 0);
-  if (result != 0) {
-    dbgprintf(DBG_ERROR, "FBBG Stop: Unable to Close Display\nError: %d", result);
-  }
+  vc_dispmanx_display_close(fbbg_display);
 
   fbbgRunning = 0;
 }

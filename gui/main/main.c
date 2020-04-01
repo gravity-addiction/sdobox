@@ -54,9 +54,11 @@ void pg_main_slideshow_open(gslc_tsGui *pGui, char* path, char* file) {
   if (strcasecmp(fileExt, "txt") == 0) {
     snprintf(cmd, cmdSz, "loadlist \"%s/%s\" replace\n", path, file);
     mpv_cmd(cmd);
+    mpv_play();
   } else {
     snprintf(cmd, cmdSz, "loadfile \"%s/%s\" replace\n", path, file);
     mpv_cmd(cmd);
+    mpv_play();
   }
 }
 
