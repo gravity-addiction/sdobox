@@ -71,6 +71,11 @@ void vlist_sliderSetPosFromCur(gslc_tsGui *pGui, struct vlist_config *config) {
   int sR = config->cur % config->per;
   int i = (config->cur - sR) / config->per;
   vlist_sliderSetPos(pGui, config, i);
+
+  int i_slot_old = gslc_ElemXSliderGetPos(pGui, config->sliderEl);
+  if (i_slot_old != config->scroll) {
+    vlist_sliderChangeCurPos(pGui, config, (config->scroll - i_slot_old));
+  }
 }
 
 // List item clicked, make it current selected
