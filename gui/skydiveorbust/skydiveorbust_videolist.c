@@ -493,10 +493,6 @@ void pg_sdobVideoListButtonRightHeld() {
 void pg_sdobVideoListButtonRotaryHeld() {
   // debug_print("%s\n", "SDOB Videolist Rotary Held");
 }
-void pg_sdobVideoListButtonDoubleHeld() {
-  // debug_print("%s\n", "SDOB Videolist Double Held");
-  // systemMenuOpen();
-}
 
 // Setup Button Functions
 // Rem out any you don't want to overwrite, only one function cb per enum
@@ -509,7 +505,6 @@ void pg_sdobVideoListButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_sdobVideoListButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_sdobVideoListButtonRightHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_sdobVideoListButtonRotaryHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_sdobVideoListButtonDoubleHeld);
 }
 
 void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath) {

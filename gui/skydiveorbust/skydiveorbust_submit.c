@@ -267,10 +267,6 @@ void pg_sdobSubmitButtonRightHeld() {
 void pg_sdobSubmitButtonRotaryHeld() {
   // debug_print("%s\n", "SDOB Submit Rotary Held");
 }
-void pg_sdobSubmitButtonDoubleHeld() {
-  // debug_print("%s\n", "SDOB Submit Double Held");
-  // systemMenuOpen();
-}
 
 // Setup Button Functions
 // Rem out any you don't want to overwrite, only one function cb per enum
@@ -283,7 +279,6 @@ void pg_sdobSubmitButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_sdobSubmitButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_sdobSubmitButtonRightHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_sdobSubmitButtonRotaryHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_sdobSubmitButtonDoubleHeld);
 }
 
 

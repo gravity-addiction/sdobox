@@ -132,10 +132,7 @@ bool pg_slideshow_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  if (!fbcp_toggle()) {
-    usleep(50000); // Make sure fbcp is done
-    gslc_PageRedrawSet(pGui, true);
-  }
+  guislice_wrapper_mirror_toggle(pGui);
   return true;
 }
 
@@ -443,11 +440,6 @@ void pg_slideshowButtonRotaryHeld() {
   touchscreenPageGoBack(&m_gui);
 }
 
-void pg_slideshowButtonDoubleHeld() {
-  // kill(0, SIGINT);
-  touchscreenPageGoBack(&m_gui);
-}
-
 void pg_slideshowButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, &pg_slideshowButtonRotaryCW);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CCW, &pg_slideshowButtonRotaryCCW);
@@ -457,7 +449,6 @@ void pg_slideshowButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_slideshowButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_slideshowButtonRightHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_slideshowButtonRotaryHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_slideshowButtonDoubleHeld);
 }
 
 void pg_slideshowButtonUnsetFuncs() {

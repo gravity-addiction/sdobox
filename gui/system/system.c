@@ -215,12 +215,8 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   return 1;
 }
 
-void pg_system_btnDoubleHeld() {
-  touchscreenPageGoBack(&m_gui);
-}
-
 void pg_system_btnSetFuncs() {
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_system_btnDoubleHeld);
+
 }
 
 void pg_system_btnUnsetFuncs() {

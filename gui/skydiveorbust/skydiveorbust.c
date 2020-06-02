@@ -886,10 +886,7 @@ bool pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  if (!fbcp_toggle()) {
-    usleep(50000);
-    gslc_PageRedrawSet(pGui, true);
-  }
+  guislice_wrapper_mirror_toggle(pGui);
   return true;
 }
 
@@ -1755,10 +1752,6 @@ void pg_skydiveorbustButtonRotaryHeld() {
   }
 }
 
-void pg_skydiveorbustButtonDoubleHeld() {
-  touchscreenPageGoBack(&m_gui);
-}
-
 void pg_skydiveorbustButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, &pg_skydiveorbustButtonRotaryCW);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CCW, &pg_skydiveorbustButtonRotaryCCW);
@@ -1768,7 +1761,6 @@ void pg_skydiveorbustButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_skydiveorbustButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_skydiveorbustButtonRightHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_skydiveorbustButtonRotaryHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_skydiveorbustButtonDoubleHeld);
 }
 
 void pg_skydiveorbustButtonUnsetFuncs() {
@@ -1780,7 +1772,6 @@ void pg_skydiveorbustButtonUnsetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, NULL);
-  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, NULL);
 }
 
 

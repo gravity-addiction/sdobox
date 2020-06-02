@@ -66,6 +66,8 @@ extern "C" {
 #define IMG_BTN_VOLUME_MUTE       "/opt/sdobox/images/volume_mute.bmp"
 #define IMG_BTN_VOLUME_MUTE_SEL   "/opt/sdobox/images/volume_mute_sel.bmp"
 
+#define IMG_BTN_PLAY_BUTTON              "/opt/sdobox/images/play-button.bmp"
+
 // 48px X 48px images
 #define IMG_BTN_VOLUME_ONLY       "/opt/sdobox/images/volume_only.bmp"
 #define IMG_BTN_VOLUME_ONLY_SEL   "/opt/sdobox/images/volume_only_sel.bmp"
@@ -106,6 +108,7 @@ int gslc_wrapper_initalized; // Flag for gslc_init()
 void UserInitEnv();
 int guislice_wrapper_init(gslc_tsGui *pGui);
 int guislice_wrapper_quit(gslc_tsGui *pGui);
+void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui);
 
 #ifdef __cplusplus
 }

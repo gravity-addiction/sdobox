@@ -5,6 +5,7 @@
 #include "GUIslice-wrapper.h"
 #include "gui/keyboard/keyboard.h"
 #include "libs/dbg/dbg.h"
+#include "libs/fbcp/fbcp.h"
 
 
 // Configure environment variables suitable for display
@@ -69,4 +70,14 @@ int guislice_wrapper_quit(gslc_tsGui *pGui) {
   gslc_Quit(pGui);
 
   return 1;
+}
+
+// Framebuffer mirroring, global
+void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
+  if (!fbcp_toggle()) {
+    usleep(50000);
+    gslc_SetTouchDisabled(pGui, false);
+    gslc_SetScreenDisabled(pGui, false);
+    gslc_PageRedrawSet(pGui, true);
+  }
 }
