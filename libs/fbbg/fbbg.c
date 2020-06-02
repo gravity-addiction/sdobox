@@ -113,8 +113,8 @@ int fbbg_start()
 
   fbbg_display = vc_dispmanx_display_open(displayNumber);
 
-  DISPMANX_MODEINFO_T info;
-  vc_dispmanx_display_get_info(fbbg_display, &info);
+  // DISPMANX_MODEINFO_T info;
+  // vc_dispmanx_display_get_info(fbbg_display, &info);
 
   fbbg_init(&fbbg_backgroundLayer, background, displayLayer);
 
@@ -132,9 +132,14 @@ int fbbg_start()
 
 void fbbg_stop() {
   if (fbbgRunning != 1) { return; }
+
+  DISPMANX_UPDATE_HANDLE_T update = vc_dispmanx_update_start(0);
+
   fbbg_destroy(&fbbg_backgroundLayer);
 
   vc_dispmanx_display_close(fbbg_display);
+
+  vc_dispmanx_update_submit_sync(update);
 
   fbbgRunning = 0;
 }
