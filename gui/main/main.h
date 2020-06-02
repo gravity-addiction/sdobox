@@ -9,6 +9,8 @@ extern "C" {
 #include "gui/pages.h"
 
 enum {
+  E_MAIN_CLEAN,
+
   E_MAIN_EL_BTN_A,
   E_MAIN_EL_BTN_B,
   E_MAIN_EL_BTN_C,
