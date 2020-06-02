@@ -21,19 +21,23 @@
 
 
 
+static pthread_mutex_t mpvSocketAccessLock = PTHREAD_MUTEX_INITIALIZER;
 
 int mpv_socket_conn() {
+  pthread_mutex_lock(&mpvSocketAccessLock);
   int fd;
   struct sockaddr_un addr;
   // Wait for socket to arrive
   if (access(mpv_socket_path, R_OK) == -1) {
     dbgprintf(DBG_ERROR, "No Socket Available for Singlet %s\n", mpv_socket_path);
-    return -1;
+    fd = -1;
+    goto cleanup;
   }
 
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
-    return -1;
+    fd = -1;
+    goto cleanup;
   }
 
   // Set Socket Non-Blocking
@@ -50,8 +54,12 @@ int mpv_socket_conn() {
 
   if (connect(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
     dbgprintf(DBG_ERROR, "%s\n%s\n", "MPV Singlet Connect Error", strerror(errno));
-    return -1;
+    fd = -1;
+    goto cleanup;
   }
+
+ cleanup:
+  pthread_mutex_unlock(&mpvSocketAccessLock);
   return fd;
 }
 
@@ -235,13 +243,13 @@ int mpv_fd_write(char *data) {
   return 1;
 }
 
-static pthread_mutex_t mpvSocketAccessLock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t mpvSocketCmdLock = PTHREAD_MUTEX_INITIALIZER;
 
 int mpv_cmd(char *cmd_string) {
 
-    pthread_mutex_lock(&mpvSocketAccessLock);
+    pthread_mutex_lock(&mpvSocketCmdLock);
     int fdWrite = mpv_fd_write(cmd_string);
-    pthread_mutex_unlock(&mpvSocketAccessLock);
+    pthread_mutex_unlock(&mpvSocketCmdLock);
 
     free(cmd_string);
     return fdWrite;
@@ -261,7 +269,7 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
 
     int result = -1;
 
-    pthread_mutex_lock(&mpvSocketAccessLock);
+    pthread_mutex_lock(&mpvSocketCmdLock);
 
     /* set the timeout data structure. */
     mpv_socket_timeout.tv_sec = 2;
@@ -319,7 +327,7 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
     }
 
  cleanup:
-    pthread_mutex_unlock(&mpvSocketAccessLock);
+    pthread_mutex_unlock(&mpvSocketCmdLock);
     return result;
 }
 

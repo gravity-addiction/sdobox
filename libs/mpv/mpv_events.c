@@ -5,8 +5,10 @@
 #include <unistd.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 #include <pthread.h>
+#include <errno.h>
 
 #include "libs/shared.h"
+#include "libs/dbg/dbg.h"
 
 #include "mpv_events.h"
 #include "mpv.h"
@@ -98,7 +100,7 @@ PI_THREAD (libMpvSocketThread)
   // Grab MPV Events, sent in JSON format
   while(!libMpvSocketThreadKill) {
     if (!fd_is_valid(mpv_fd)) {
-      // dbgprintf(DBG_MPV, "FD Re-Connect: %d, %d\n", mpv_fd_timer, millis());
+      dbgprintf(DBG_ERROR, "Mpv Events Sockets Re-Connect\n");
       // try closing fd
       if (mpv_fd) { close(mpv_fd); }
       // reconnect fd
@@ -116,7 +118,7 @@ PI_THREAD (libMpvSocketThread)
 
       char* json_event;// = malloc(128);
       int rcE = ta_json_parse(mpv_event_ret, "event", &json_event);
-      // printf("MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
+      dbgprintf(DBG_MPV_EVENT, "MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
       free(mpv_event_ret);
       if (rcE == 0) { continue; }
       // for (int tI = 0; tI < libMpvEventThreads->len; ++tI) {
