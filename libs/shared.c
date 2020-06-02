@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/kd.h>
 #include <assert.h>
 
@@ -132,6 +133,14 @@ size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s)
 
 int fd_is_valid(int fd) {
   return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
+}
+
+int fd_is_connected(int fd)
+{
+    unsigned char buf;
+    int err = recv(fd, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
+    printf("Connected: %d, Err: %d\n", err, errno);
+    return 1;
 }
 
 int setnonblock(int sock) {

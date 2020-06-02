@@ -56,6 +56,7 @@ size_t strlcpy(char *dst, const char *src, size_t size);
 void init_string(struct string *s);
 size_t writefunc(void *ptr, size_t size, size_t nmemb, struct string *s);
 int fd_is_valid(int fd);
+int fd_is_connected(int fd);
 int setnonblock(int sock);
 void *malloc(unsigned int size);
 void clearsocket(int fd);

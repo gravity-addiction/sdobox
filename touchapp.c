@@ -61,7 +61,7 @@ int main( int argc, char* args[] );
 
 // SIGINT handler
 void signal_sigint(int sig) { // can be called asynchronously
-  dbgprintf(DBG_DEBUG, "SIGINT: current m_bQuit value = %d\n", m_bQuit);
+  dbgprintf(DBG_DEBUG, "SIGINT: %d current m_bQuit value = %d\n", sig, m_bQuit);
   if (m_bQuit > 1) {
     dbgprintf(DBG_DEBUG, "Forcibly exiting now!\n");
     _exit(1);                   /* do NOT call atexit functions */
