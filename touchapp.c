@@ -41,7 +41,6 @@
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
-#include "libs/clock/clock.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
