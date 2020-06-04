@@ -351,7 +351,7 @@ void pg_startupButtonRightHeld() {
 
 }
 void pg_startupButtonRotaryHeld() {
-
+  guislice_wrapper_mirror_toggle(&m_gui);
 }
 void pg_startupButtonDoubleHeld() {
   touchscreenPageGoBack(&m_gui);

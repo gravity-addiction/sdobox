@@ -41,6 +41,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
+#include "libs/clock/clock.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -279,6 +280,7 @@ int main( int argc, char* args[] )
 
   // Start FBBG Display 0, Layer 0
   // fbbg_start();
+  // clock_setLocaltime();
   ///// TEST STUFF /////
 
 

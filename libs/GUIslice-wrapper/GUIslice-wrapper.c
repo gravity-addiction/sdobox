@@ -81,3 +81,7 @@ void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
     gslc_PageRedrawSet(pGui, true);
   }
 }
+
+int guislice_wrapper_mirroring() {
+  return fbcpThreadRunning;
+}
