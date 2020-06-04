@@ -1,0 +1,10 @@
+// Download, Patch & Install SDL1.2 Libraries from github mirror
+cd ~/dev
+git clone https://github.com/gravity-addiction/SDL-mirror.git
+cd SDL-mirror
+
+./autogen.sh
+./configure --enable-sndio=no
+make -j4
+cp build/libSDL* ../sdobox/libs/SDL/
+cp build/.libs/libSDL*.a ../sdobox/libs/SDL/
