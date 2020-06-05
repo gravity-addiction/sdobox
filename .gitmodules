@@ -1,3 +1,6 @@
 [submodule "GUIslice"]
 	path = GUIslice
 	url = https://github.com/gravity-addiction/GUIslice.git
+[submodule "xdotool"]
+	path = xdotool
+	url = https://github.com/gravity-addiction/xdotool.git
