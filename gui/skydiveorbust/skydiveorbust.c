@@ -1748,7 +1748,7 @@ void pg_skydiveorbustButtonRotaryHeld() {
     item->selected = sdob_judgement->marks->selected;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   } else {
-
+    guislice_wrapper_mirror_toggle(&m_gui);
   }
 }
 
@@ -2551,13 +2551,12 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
 
+  mpv_stop();
   fbcp_stop();
 }
 
 // GUI Destroy
 void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
-
-  mpv_fmt_cmd("stop\n");
 
   // Free Judgement Info
   free(sdob_judgement->judge);
@@ -2609,6 +2608,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   free(sdob_player_ticks->ptr);
   free(sdob_player_ticks);
 
+  mpv_playlist_clear();
   // printf("Page SkydiveOrBust Destroyed\n");
 }
 

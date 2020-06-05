@@ -122,29 +122,31 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   pg_systemEl[E_SYSTEM_EL_BOX] = gslc_ElemCreateBox(pGui, GSLC_ID_AUTO, ePage, rFullscreen);
   gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_BOX], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
 
+  gslc_ElemCreateImg(pGui, GSLC_ID_AUTO, ePage, rFullscreen, gslc_GetImageFromFile(IMG_SCREEN_SYSTEM, GSLC_IMGREF_FMT_BMP16));
+
   // Close Key
   pg_systemEl[E_SYSTEM_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100),(rFullscreen.y + 5),100,50},
-          "Close", 0, E_FONT_MONO14, &pg_system_cbBtn_close);
+          (gslc_tsRect){430, 0, 50, 50},
+          "", 0, E_FONT_MONO14, &pg_system_cbBtn_close);
   gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], GSLC_COL_WHITE);
   gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
   gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], false);
-  gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], true);
+  gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_CLOSE], false);
 
   // Reboot device
   if ((
     pg_systemEl[E_SYSTEM_EL_REBOOT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {((rFullscreen.x + rFullscreen.w) - 100), ((rFullscreen.y + rFullscreen.h) - 50), 100, 50},
-            "Reboot", 0, E_FONT_MONO14, &pg_system_cbBtn_reboot)
+            (gslc_tsRect) {404, 245, 75, 75},
+            (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_reboot)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], true);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REBOOT], false);
   }
-
+/*
   // Close App
   if ((
     pg_systemEl[E_SYSTEM_EL_EXIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -157,33 +159,33 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_EXIT], true);
   }
-
+*/
   // Startup
   if ((
     pg_systemEl[E_SYSTEM_EL_STARTUP] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0, 0, 150, 50},
-            "Startup Menu", 0, E_FONT_MONO14, &pg_system_cbBtn_startup)
+            (gslc_tsRect) {0, 0, 74, 74},
+            (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_startup)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], true);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_STARTUP], false);
   }
 
   // Wifi Settings
   if ((
     pg_systemEl[E_SYSTEM_EL_WIFI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0, 60, 100, 50},
-            "Wifi", 0, E_FONT_MONO14, &pg_system_cbBtn_wifi)
+            (gslc_tsRect) {85, 128, 64, 64},
+            (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_wifi)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], true);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_WIFI], false);
   }
-
+/*
   // Powercycle HDMI Port
   if ((
     pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -196,18 +198,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true);
   }
+*/
 
   // Update
   if ((
     pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0, 200, 150, 50},
-            "Upgrade", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
+            (gslc_tsRect) {200, 128, 64, 64},
+            (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
-    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], true);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
   }
 
 
@@ -219,9 +222,6 @@ void pg_system_btnSetFuncs() {
 
 }
 
-void pg_system_btnUnsetFuncs() {
-  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, NULL);
-}
 
 // GUI Init
 void pg_system_init(gslc_tsGui *pGui) {
@@ -240,7 +240,7 @@ void pg_system_open(gslc_tsGui *pGui) {
 }
 
 void pg_system_close(gslc_tsGui *pGui) {
-  pg_system_btnUnsetFuncs();
+
 }
 
 // GUI Destroy

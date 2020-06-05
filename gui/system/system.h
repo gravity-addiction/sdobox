@@ -29,7 +29,7 @@ enum {
   E_SYSTEM_EL_MAX
 };
 
-#define MAX_ELEM_PG_SYSTEM      E_SYSTEM_EL_MAX
+#define MAX_ELEM_PG_SYSTEM      E_SYSTEM_EL_MAX + 1
 #define MAX_ELEM_PG_SYSTEM_RAM  MAX_ELEM_PG_SYSTEM
 
 gslc_tsElem pg_systemElem[MAX_ELEM_PG_SYSTEM];

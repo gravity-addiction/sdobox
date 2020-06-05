@@ -7,7 +7,7 @@ INCLUDE = -I. $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib
 LDLIB_EXTRA = -lwiringPi -lconfig -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos \
--lvchiq_arm -lpthread -Llibs/jsmn -ljsmn -lsqlite3 -lulfius -lorcania
+-lvchiq_arm -lpthread -Llibs/jsmn -ljsmn -lsqlite3 -lulfius -lorcania -lasound
 
 GSLC_CORE := GUIslice/src/GUIslice.c $(wildcard GUIslice/src/elem/*.c) #GUIslice/GUIslice_config.h
 GSLC_INCLUDES = -I./GUIslice/src

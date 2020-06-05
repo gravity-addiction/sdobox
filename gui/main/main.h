@@ -18,7 +18,13 @@ enum {
   E_MAIN_EL_BTN_GALCULATOR,
   E_MAIN_EL_BTN_FILE_MANAGER,
   E_MAIN_EL_BTN_VSCODE,
-  
+  E_MAIN_EL_BTN_SLIDESHOW,
+  E_MAIN_EL_BTN_COOKBOOK,
+  E_MAIN_EL_BTN_PARACHUTE,
+  E_MAIN_EL_VOLUME,
+  E_MAIN_EL_VOLUME_DISPLAY,
+  E_MAIN_EL_VOLUME_MUTE,
+
   E_MAIN_EL_MAX
 };
 
@@ -30,11 +36,9 @@ gslc_tsElemRef m_asPgMainElemRef[MAX_ELEM_PG_MAIN];
 
 gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
 
-struct vlist_config *pg_main_listConfig;
-struct fileStruct **pg_main_list;
-struct fileStruct **pg_main_listFolders;
-char* pg_main_currentFolderPath;
-gslc_tsXSlider pg_main_listSlider;
+gslc_tsXSlider m_sXSlider_Volume;
+uint16_t m_nPosVolume;
+char* m_cPosVolume;
 
 void pg_mainButtonRotaryCW();
 void pg_mainButtonRotaryCCW();

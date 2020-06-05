@@ -6,7 +6,10 @@
 #include "gui/keyboard/keyboard.h"
 #include "libs/dbg/dbg.h"
 #include "libs/fbcp/fbcp.h"
+#include "libs/clock/clock.h"
 
+uint32_t guislice_wrapper_clockUpdate;
+char *timeStr;
 
 // Configure environment variables suitable for display
 void UserInitEnv()
@@ -46,6 +49,8 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   // GUISlice Environment
   UserInitEnv();
 
+  guislice_wrapper_clockUpdate = 0;
+  timeStr = (char *)malloc(32 * sizeof(char));
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
 
   // ------------------------------------------------
@@ -59,12 +64,15 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
 
   // gslcWrapperThreadStart();
 
+
   gslc_wrapper_initalized = 1;
   return 1;
 }
 
 int guislice_wrapper_quit(gslc_tsGui *pGui) {
   gslc_wrapper_initalized = 0;
+  free(timeStr);
+  
   gslc_SetPageCur(pGui, GSLC_PAGE_NONE);
   // gslcWrapperThreadStop();
   gslc_Quit(pGui);
@@ -84,4 +92,18 @@ void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
 
 int guislice_wrapper_mirroring() {
   return fbcpThreadRunning;
+}
+
+
+void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate) {
+  if (guislice_wrapper_mirroring() == 0 && 
+    (forceUpdate == 1 || millis() - guislice_wrapper_clockUpdate > 1000)
+  ) {
+    // Reset milli tracking var
+    if (forceUpdate == 0 || guislice_wrapper_clockUpdate == 0) {
+      guislice_wrapper_clockUpdate = millis();
+    }
+    clock_getTime(&timeStr);
+    gslc_ElemSetTxtStr(pGui, pElemRef, timeStr);
+  }
 }

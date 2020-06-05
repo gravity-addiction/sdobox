@@ -5,6 +5,10 @@
 extern "C" {
 #endif // __cplusplus
 
+long volume_cur;
+void volume_setVolume(long volume);
+long volume_getVolume();
+
 void volume_increase();
 void volume_decrease();
 void volume_mute();

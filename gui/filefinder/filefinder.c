@@ -834,9 +834,7 @@ void pg_fileFinderButtonLeftHeld() {
 void pg_fileFinderButtonRightHeld() {
   // debug_print("%s\n", "Main Right Held");
 }
-void pg_fileFinderButtonRotaryHeld() {
-  guislice_wrapper_mirror_toggle(&m_gui);
-}
+
 
 // Setup Button Functions
 // Rem out any you don't want to overwrite, only one function cb per enum
@@ -848,7 +846,6 @@ void pg_fileFinderButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_RELEASED, &pg_fileFinderButtonRotaryPressed);
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_fileFinderButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_fileFinderButtonRightHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_fileFinderButtonRotaryHeld);
 }
 
 void pg_fileFinder_refreshCurrentFolder(gslc_tsGui* pGui) {

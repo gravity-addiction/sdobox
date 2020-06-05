@@ -435,10 +435,6 @@ void pg_slideshowButtonRightHeld() {
   mpv_cmd(cmd);
 }
 
-void pg_slideshowButtonRotaryHeld() {
-  // debug_print("%s\n", "Rotary Held Slideshow");
-  touchscreenPageGoBack(&m_gui);
-}
 
 void pg_slideshowButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, &pg_slideshowButtonRotaryCW);
@@ -448,7 +444,6 @@ void pg_slideshowButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_RELEASED, &pg_slideshowButtonRotaryPressed);
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_slideshowButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_slideshowButtonRightHeld);
-  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_slideshowButtonRotaryHeld);
 }
 
 void pg_slideshowButtonUnsetFuncs() {
@@ -459,7 +454,6 @@ void pg_slideshowButtonUnsetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_RELEASED, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, NULL);
-  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, NULL);
 }
 
 

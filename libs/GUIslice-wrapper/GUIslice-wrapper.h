@@ -27,7 +27,10 @@ extern "C" {
 #define IMG_BTNEXIT_SEL32X32_SEL  "/opt/sdobox/images/btn-exit_sel32x32.bmp"
 
 // Screens 320px x 480px
+#define IMG_SCREEN_BLANK         "/opt/sdobox/images/screen/blank.bmp"
 #define IMG_SCREEN_MAIN_1         "/opt/sdobox/images/screen/main.bmp"
+#define IMG_SCREEN_COOKBOOK       "/opt/sdobox/images/screen/cookbook.bmp"
+#define IMG_SCREEN_SYSTEM       "/opt/sdobox/images/screen/system.bmp"
 
 // 64px X 64px images
 #define IMG_BTN_UP_ARROW          "/opt/sdobox/images/up_arrow.bmp"
@@ -111,6 +114,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui);
 int guislice_wrapper_quit(gslc_tsGui *pGui);
 void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui);
 int guislice_wrapper_mirroring();
+void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate);
 
 #ifdef __cplusplus
 }
