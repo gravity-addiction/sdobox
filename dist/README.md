@@ -42,6 +42,6 @@ aptly snapshot list
 
 // aptly publish snapshot sdobox_1.0-1 s3:sdobox.skydiveorbust.com:
 
-export AWS_ACCESS_KEY_ID="AKIA4SPMMSJ4T3NGBAU2"
-export AWS_SECRET_ACCESS_KEY="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"
+export AWS_ACCESS_KEY_ID="sorry amazon"
+export AWS_SECRET_ACCESS_KEY="won't do it again"
 aptly publish switch sdobox s3:sdobox.skydiveorbust.com: sdobox_1.0-9
