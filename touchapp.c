@@ -41,6 +41,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
+#include "libs/xdotool-wrapper/xdotool-wrapper.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -200,7 +201,7 @@ int main( int argc, char* args[] )
 
   // Register Signals
   signal(SIGINT, signal_sigint);
-  // signal(SIGTERM, signal_sigint);
+  signal(SIGTERM, signal_sigint);
 
   // For running as a daemon
   if (sigignore(SIGHUP)) {
@@ -280,6 +281,7 @@ int main( int argc, char* args[] )
   // Start FBBG Display 0, Layer 0
   // fbbg_start();
   // clock_setLocaltime();
+  // xdotool_wrapper_wakeUp();
   ///// TEST STUFF /////
 
 

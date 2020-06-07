@@ -137,7 +137,8 @@
 ## Development
 
 Requires compiling on a raspberry pi platform.
-
+```
+sudo apt install libiw-dev libsqlite3-dev libulfius-dev libxdo-dev libasound2-dev
 
 ### Clone and make repo
 ```
