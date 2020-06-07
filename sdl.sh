@@ -3,7 +3,7 @@
 cd SDL
 ./autogen.sh
 ./configure --enable-sndio=no
-make -j4
-cp build/libSDL* ../sdobox/libs/SDL/
-cp build/.libs/libSDL*.a ../sdobox/libs/SDL/
+make clean && make -j4
+cp build/libSDL* ../libs/SDL/
+cp build/.libs/libSDL*.a ../libs/SDL/
 cd ..
