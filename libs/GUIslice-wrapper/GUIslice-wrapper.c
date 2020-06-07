@@ -87,6 +87,12 @@ void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
     gslc_SetTouchDisabled(pGui, false);
     gslc_SetScreenDisabled(pGui, false);
     gslc_PageRedrawSet(pGui, true);
+    system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
+  } else {
+    gslc_SetTouchDisabled(pGui, true);
+    gslc_SetScreenDisabled(pGui, true);
+    gslc_PageRedrawSet(pGui, false);
+    system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 1 &");
   }
 }
 

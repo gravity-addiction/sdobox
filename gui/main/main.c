@@ -33,28 +33,28 @@ bool pg_main_cbBtn_settings(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int1
 bool pg_main_cbBtn_chromium_browser(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  system("sudo -H -u pi bash -c \"DISPLAY=:0.0 /usr/bin/wmctrl -a '- Chromium' || DISPLAY=:0.0 /usr/bin/chromium-browser &\"");
+  system("DISPLAY=:0.0 /usr/bin/wmctrl -a '- Chromium' || DISPLAY=:0.0 /usr/bin/chromium-browser &");
   return true;
 }
 
 bool pg_main_cbBtn_galculator(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  system("sudo -H -u pi bash -c \"DISPLAY=:0.0 /usr/bin/wmctrl -a 'galculator' || DISPLAY=:0.0 /usr/bin/galculator &\"");
+  system("DISPLAY=:0.0 /usr/bin/wmctrl -a 'galculator' || DISPLAY=:0.0 /usr/bin/galculator &");
   return true;
 }
 
 bool pg_main_cbBtn_file_manager(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  system("sudo -H -u pi bash -c \"DISPLAY=:0.0 /usr/bin/wmctrl -a 'xdg-open' || DISPLAY=:0.0 /usr/bin/xdg-open /home/pi/shared &\"");
+  system("DISPLAY=:0.0 /usr/bin/wmctrl -a 'xdg-open' || DISPLAY=:0.0 /usr/bin/xdg-open /home/pi/shared &");
   return true;
 }
 
 bool pg_main_cbBtn_vscode(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  system("sudo -H -u pi bash -c \"DISPLAY=:0.0 /usr/bin/wmctrl -a '- Code - OSS (headmelted)' || DISPLAY=:0.0 /usr/bin/code-oss &\"");
+  system("DISPLAY=:0.0 /usr/bin/wmctrl -a '- Code - OSS (headmelted)' || DISPLAY=:0.0 /usr/bin/code-oss &");
   return true;
 }
 
@@ -62,7 +62,7 @@ bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_SLIDESHOW);
+  touchscreenPageOpen(pGui, E_PG_FILEFINDER);
   return true;
 }
 
@@ -384,7 +384,7 @@ void pg_main_open(gslc_tsGui *pGui) {
   int iVol = volume_cur + 10239;
   gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
 
-  guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 1);
+  // guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 1);
 }
 
 // GUI Thread
