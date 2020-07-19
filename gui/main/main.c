@@ -394,7 +394,7 @@ uint32_t pg_main_clockUpdate = 0;
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
 
-  if (volume_getVolume(&pg_main_volume)) {s
+  if (volume_getVolume(&pg_main_volume)) {
     int iVol = pg_main_volume + 10239;
     gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
   }
