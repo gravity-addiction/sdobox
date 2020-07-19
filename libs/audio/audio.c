@@ -8,23 +8,44 @@
 #include "libs/shared.h"
 #include "audio.h"
 
+
+snd_mixer_t *audio_handle;
+snd_mixer_selem_id_t *audio_sid;
+char *audio_card = "default";
+char *audio_selem_name = "PCM";
+int audio_handled = 0;
+
+
+void audio_closeHandle() {
+  if (audio_handled == 0) { return; }
+  snd_mixer_close(audio_handle);
+  audio_handled = 0;
+}
+
+void audio_openHandle(char *card) {
+  if (audio_handled == 1) { return; }
+  snd_mixer_open(&audio_handle, 0);
+  snd_mixer_attach(audio_handle, card);
+  snd_mixer_selem_register(audio_handle, NULL, NULL);
+  snd_mixer_load(audio_handle);
+  audio_handled = 1;
+}
+
+snd_mixer_elem_t* audio_findSelem(char *selem_name) {
+  snd_mixer_selem_id_alloca(&audio_sid);
+  snd_mixer_selem_id_set_index(audio_sid, 0);
+  snd_mixer_selem_id_set_name(audio_sid, selem_name);
+  return snd_mixer_find_selem(audio_handle, audio_sid);
+}
+
+
 // Maybe initialize with a timeout for multiple volume changes in short time
 void volume_setVolume(long volume) {
   long min, max, cur;
-  snd_mixer_t *handle;
-  snd_mixer_selem_id_t *sid;
-  const char *card = "default";
-  const char *selem_name = "PCM";
 
-  snd_mixer_open(&handle, 0);
-  snd_mixer_attach(handle, card);
-  snd_mixer_selem_register(handle, NULL, NULL);
-  snd_mixer_load(handle);
+  audio_openHandle(audio_card);
+  snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name);
 
-  snd_mixer_selem_id_alloca(&sid);
-  snd_mixer_selem_id_set_index(sid, 0);
-  snd_mixer_selem_id_set_name(sid, selem_name);
-  snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
   snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &cur);
   snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
   // Negative Min, Positive Max
@@ -37,29 +58,27 @@ void volume_setVolume(long volume) {
   }
   snd_mixer_selem_set_playback_dB_all(elem, volume_cur, (volume_cur > 0) ? 1 : 0);
 
-  snd_mixer_close(handle);
+  audio_closeHandle();
 }
 
 // Maybe initialize with a timeout for multiple volume changes in short time
-long volume_getVolume() {
-  snd_mixer_t *handle;
-  snd_mixer_selem_id_t *sid;
-  const char *card = "default";
-  const char *selem_name = "PCM";
+int volume_getVolume(long * volume) {
+  long volume_new;
 
-  snd_mixer_open(&handle, 0);
-  snd_mixer_attach(handle, card);
-  snd_mixer_selem_register(handle, NULL, NULL);
-  snd_mixer_load(handle);
+  audio_openHandle(audio_card);
+  snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name);
 
-  snd_mixer_selem_id_alloca(&sid);
-  snd_mixer_selem_id_set_index(sid, 0);
-  snd_mixer_selem_id_set_name(sid, selem_name);
-  snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
-  snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_cur);
+  snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_new);
+  audio_closeHandle();
 
-  snd_mixer_close(handle);
-  return volume_cur;
+  if (volume_new == volume_cur) {
+    *volume = volume_cur;
+    return 0;
+  } else {
+    volume_cur = volume_new;
+    *volume = volume_cur;
+    return 1;
+  }
 }
 
 void volume_increase() {

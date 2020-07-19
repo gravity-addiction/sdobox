@@ -5,9 +5,11 @@
 extern "C" {
 #endif // __cplusplus
 
+void audio_closeHandle();
+
 long volume_cur;
-void volume_setVolume(long volume);
-long volume_getVolume();
+void volume_setVolume(long ssvolume);
+int volume_getVolume(long * volume);
 
 void volume_increase();
 void volume_decrease();

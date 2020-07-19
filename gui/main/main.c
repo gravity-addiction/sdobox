@@ -105,7 +105,7 @@ bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
   long iVolume = m_nPosVolume - 10239;
   volume_setVolume(iVolume);
   setVolumeDisplay(pGui);
-  
+
 
 /*
   // Fetch the new RGB component from the slider
@@ -170,7 +170,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetDrawFunc(pGui, pg_mainEl[E_MAIN_EL_BOX], &pg_main_cbDrawBox);
 
   gslc_ElemCreateImg(pGui, GSLC_ID_AUTO, ePage, rFullscreen, gslc_GetImageFromFile(IMG_SCREEN_MAIN_1, GSLC_IMGREF_FMT_BMP16));
-  
+
   /////////////////////
   // Page Defined Elements
 
@@ -227,7 +227,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_VSCODE], false);
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_VSCODE], false);
   }
-  
+
   // Slideshow Button
   if ((
     pg_mainEl[E_MAIN_EL_BTN_SLIDESHOW] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -374,14 +374,15 @@ void pg_main_init(gslc_tsGui *pGui) {
   cbInit[E_PG_MAIN] = NULL;
 }
 
+long pg_main_volume;
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
-  volume_getVolume();
+  volume_getVolume(&pg_main_volume);
   setVolumeDisplay(pGui);
-  int iVol = volume_cur + 10239;
+  int iVol = pg_main_volume + 10239;
   gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
 
   // guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 1);
@@ -389,8 +390,15 @@ void pg_main_open(gslc_tsGui *pGui) {
 
 // GUI Thread
 uint32_t pg_main_clockUpdate = 0;
+
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
+
+  if (volume_getVolume(&pg_main_volume)) {s
+    int iVol = pg_main_volume + 10239;
+    gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
+  }
+
   return 0;
 }
 
