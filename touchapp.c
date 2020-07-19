@@ -41,7 +41,6 @@
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
-#include "libs/xdotool-wrapper/xdotool-wrapper.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -289,6 +288,8 @@ int main( int argc, char* args[] )
   // mainButtonSetFuncs();
   // InitGUI_AdvertGui(strPath);
   if (m_touchscreenInit) {
+    // Setup TSLib Calibration
+    system("/opt/sdobox/scripts/xinput/set &");
     touchscreenPageOpen(&m_gui, m_startPage);
   }
   // ------------------------------------------------

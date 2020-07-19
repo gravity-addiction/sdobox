@@ -7,6 +7,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/clock/clock.h"
+#include "libs/xdotool-wrapper/xdotool-wrapper.h"
 
 uint32_t guislice_wrapper_clockUpdate;
 char *timeStr;
@@ -89,6 +90,7 @@ void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
     gslc_PageRedrawSet(pGui, true);
     system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
   } else {
+    xdotool_wrapper_wakeUp();
     gslc_SetTouchDisabled(pGui, true);
     gslc_SetScreenDisabled(pGui, true);
     gslc_PageRedrawSet(pGui, false);

@@ -396,7 +396,8 @@ int mpv_pause() {
 
 int mpv_play() {
   m_is_video_playing = 1;
-  fbbg_start();
+  // Start Background layer behind mpv images
+  // fbbg_start();
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
 }
 
