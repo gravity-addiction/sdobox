@@ -86,15 +86,6 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 
 //////////////////
 // Volume Slider
-void setVolumeDisplay(gslc_tsGui *pGui) {
-  if (volume_cur <= -10200) {
-    snprintf(m_cPosVolume, 32, "Volume: Mute");
-  } else {
-    snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (volume_cur * .01));
-  }
-  gslc_ElemSetTxtStr(pGui, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY], m_cPosVolume);
-}
-
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
@@ -104,7 +95,7 @@ bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
   m_nPosVolume = gslc_ElemXSliderGetPos(pGui, pElemRef);
   long iVolume = m_nPosVolume - 10239;
   volume_setVolume(iVolume);
-  setVolumeDisplay(pGui);
+  guislice_wrapper_setVolumeDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
 
 
 /*
@@ -367,37 +358,23 @@ void pg_mainButtonSetFuncs() {
 // GUI Init
 void pg_main_init(gslc_tsGui *pGui) {
   pg_mainGuiInit(pGui);
-  m_cPosVolume = (char*)calloc(32, sizeof(char));
-
 
   // Cleanup so Init is only ran once
   cbInit[E_PG_MAIN] = NULL;
 }
 
-long pg_main_volume;
+
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
-  volume_getVolume(&pg_main_volume);
-  setVolumeDisplay(pGui);
-  int iVol = pg_main_volume + 10239;
-  gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
-
-  // guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 1);
 }
 
 // GUI Thread
-uint32_t pg_main_clockUpdate = 0;
-
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
-
-  if (volume_getVolume(&pg_main_volume)) {
-    int iVol = pg_main_volume + 10239;
-    gslc_ElemXSliderSetPos(pGui, pg_mainEl[E_MAIN_EL_VOLUME], iVol);
-  }
+  guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
 
   return 0;
 }

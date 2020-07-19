@@ -4,12 +4,16 @@
 #include "GUIslice/src/GUIslice.h"
 #include "GUIslice-wrapper.h"
 #include "gui/keyboard/keyboard.h"
+#include "libs/audio/audio.h"
 #include "libs/dbg/dbg.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/clock/clock.h"
 #include "libs/xdotool-wrapper/xdotool-wrapper.h"
 
 uint32_t guislice_wrapper_clockUpdate;
+uint32_t guislice_wrapper_volumeUpdate;
+long guislice_wrapper_volume;
+char* m_cPosVolume;
 char *timeStr;
 
 // Configure environment variables suitable for display
@@ -52,6 +56,9 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
 
   guislice_wrapper_clockUpdate = 0;
   timeStr = (char *)malloc(32 * sizeof(char));
+
+  m_cPosVolume = (char*)calloc(32, sizeof(char));
+
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
 
   // ------------------------------------------------
@@ -73,7 +80,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
 int guislice_wrapper_quit(gslc_tsGui *pGui) {
   gslc_wrapper_initalized = 0;
   free(timeStr);
-  
+
   gslc_SetPageCur(pGui, GSLC_PAGE_NONE);
   // gslcWrapperThreadStop();
   gslc_Quit(pGui);
@@ -104,7 +111,7 @@ int guislice_wrapper_mirroring() {
 
 
 void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate) {
-  if (guislice_wrapper_mirroring() == 0 && 
+  if (guislice_wrapper_mirroring() == 0 &&
     (forceUpdate == 1 || millis() - guislice_wrapper_clockUpdate > 1000)
   ) {
     // Reset milli tracking var
@@ -113,5 +120,45 @@ void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int f
     }
     clock_getTime(&timeStr);
     gslc_ElemSetTxtStr(pGui, pElemRef, timeStr);
+  }
+}
+
+void guislice_wrapper_setVolumeDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRefDisplay) {
+  if (guislice_wrapper_volume <= -10200) {
+    snprintf(m_cPosVolume, 32, "Volume: Mute");
+  } else {
+    snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (guislice_wrapper_volume * .01));
+  }
+  gslc_ElemSetTxtStr(pGui, pElemRefDisplay, m_cPosVolume);
+}
+
+void guislice_wrapper_setVolume(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate) {
+  if (guislice_wrapper_mirroring() == 0 &&
+    (forceUpdate == 1 || millis() - guislice_wrapper_volumeUpdate > 200)
+  ) {
+    // Reset milli tracking var
+    if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
+      guislice_wrapper_volumeUpdate = millis();
+    }
+    if (volume_getVolume(&guislice_wrapper_volume)) {
+      int iVol = guislice_wrapper_volume + 10239;
+      gslc_ElemXSliderSetPos(pGui, pElemRef, iVol);
+    }
+  }
+}
+
+void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate, gslc_tsElemRef *pElemRefDisplay) {
+  if (guislice_wrapper_mirroring() == 0 &&
+    (forceUpdate == 1 || millis() - guislice_wrapper_volumeUpdate > 200)
+  ) {
+    // Reset milli tracking var
+    if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
+      guislice_wrapper_volumeUpdate = millis();
+    }
+    if (volume_getVolume(&guislice_wrapper_volume)) {
+      int iVol = guislice_wrapper_volume + 10239;
+      gslc_ElemXSliderSetPos(pGui, pElemRef, iVol);
+      guislice_wrapper_setVolumeDisplay(pGui, pElemRefDisplay);
+    }
   }
 }

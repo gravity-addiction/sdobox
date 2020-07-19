@@ -112,9 +112,16 @@ int gslc_wrapper_initalized; // Flag for gslc_init()
 void UserInitEnv();
 int guislice_wrapper_init(gslc_tsGui *pGui);
 int guislice_wrapper_quit(gslc_tsGui *pGui);
+
 void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui);
 int guislice_wrapper_mirroring();
+
 void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate);
+
+void guislice_wrapper_setVolumeDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef);
+void guislice_wrapper_setVolume(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate);
+void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate, gslc_tsElemRef *pElemRefDisplay);
+
 
 #ifdef __cplusplus
 }
