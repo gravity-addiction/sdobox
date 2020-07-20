@@ -15,6 +15,8 @@ void volume_increase();
 void volume_decrease();
 void volume_mute();
 
+double volume_logLinear(double x);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
