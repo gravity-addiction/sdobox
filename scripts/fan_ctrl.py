@@ -9,10 +9,7 @@ import time
 
 # Configuration
 # D2 Fan Pin
-FAN_PIN = 4            # BCM pin used to drive transistor's base
-
-# D6 Fan Pin
-FAN_PIN = 18            # BCM pin used to drive transistor's base
+FAN_PIN = 4
 
 WAIT_TIME = 15          # [s] Time to wait between each refresh
 FAN_MIN = 30            # [%] Fan minimum speed.

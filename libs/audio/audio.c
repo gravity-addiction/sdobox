@@ -11,8 +11,9 @@
 
 
 char *audio_card = "default";
-char *audio_selem_name = "Headphone";
+char *audio_selem_name = "Master";
 
+int volume_no_device = 0; // Lock audio handle when incorrect device is detected
 
 void audio_closeHandle(snd_mixer_t **audio_handle) {
   snd_mixer_close(*audio_handle);
@@ -35,6 +36,10 @@ snd_mixer_elem_t* audio_findSelem(char *selem_name, snd_mixer_t **audio_handle, 
 
 // Maybe initialize with a timeout for multiple volume changes in short time
 void volume_setVolume(long volume) {
+  if (volume_no_device == 1) {
+    return;
+  }
+
   long min, max, cur;
   float new, newc;
   snd_mixer_t *audio_handle;
@@ -43,6 +48,12 @@ void volume_setVolume(long volume) {
   audio_openHandle(audio_card, &audio_handle);
 
   snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name, &audio_handle, &audio_sid);
+  if (elem == NULL) {
+    volume_no_device = 1;
+    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
+    audio_closeHandle(&audio_handle);
+    return;
+  }
   snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &cur);
   snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
 
@@ -66,6 +77,10 @@ void volume_setVolume(long volume) {
 
 // Maybe initialize with a timeout for multiple volume changes in short time
 int volume_getVolume(long * volume) {
+  if (volume_no_device == 1) {
+    return;
+  }
+
   long volume_new;
   snd_mixer_t *audio_handle;
   snd_mixer_selem_id_t *audio_sid;
@@ -73,7 +88,9 @@ int volume_getVolume(long * volume) {
 
   snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name, &audio_handle, &audio_sid);
   if (elem == NULL) {
+    volume_no_device = 1;
     dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
+    audio_closeHandle(&audio_handle);
     return 0;
   }
 

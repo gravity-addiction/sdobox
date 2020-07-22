@@ -149,7 +149,7 @@ echo 'SUBSYSTEM=="input", ATTRS{name}=="ADS7846 Touchscreen", ENV{DEVNAME}=="*ev
 sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
 
 # Compile and install SDL libraries
-./sdl.sh -i
+./sdl.sh -i -a
 
 # Compile and install TSLib Libraries
 ./tslib.sh -i
@@ -171,7 +171,7 @@ fi
 
 
 # Compile SDOBOX Project
-./sdobox.sh
+./sdobox.sh -a
 
 
 # Install Headmelted version of Code
