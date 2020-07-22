@@ -1,5 +1,5 @@
-#!/bin/sh
-init=false
+#!/bin/bash
+init=
 
 cd SDL
 ./autogen.sh
@@ -15,13 +15,15 @@ while getopts "i:" opt; do
     esac
 done
 
-if [ ($init) ]; then
+if [ ! -z $init ]; then
   sudo make install
 else
-  read -p "System Install (sudo make install)? " -n 1 -r
+  read -p "System Install (sudo make install)? y/N " -n 1 -r
   echo    # (optional) move to a new line
-  if [[ ! $REPLY =~ ^[Yy]$ ]]
+  if [[ ! $REPLY =~ ^[Yy]$ ]];
   then
+    echo
+  else
     sudo make install
   fi
 fi
