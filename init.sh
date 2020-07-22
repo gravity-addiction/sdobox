@@ -29,6 +29,11 @@ sudo cp -R scripts /opt/sdobox/
 sudo cp scripts/overlays/* /boot/overlays/
 
 
+# Fixup cmdline.txt
+echo "dwc_otg.lpm_enable=0 $(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8 logo.nologo loglevel=3 vt.global_cursor_default=0" | sudo tee /boot/cmdline.txt
+sudo sed -i "s/console=serial0,/console=TTYAMA0,/" /boot/cmdline.txt
+sudo sed -i "s/console=tty1/console=tty3/" /boot/cmdline.txt
+
 # Setup Boot Config Files
 sudo sed -i 's/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
 
