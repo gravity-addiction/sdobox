@@ -3,7 +3,7 @@ Description=MPV Startup
 
 [Service]
 Type=idle
-Restart=always
+Restart=on-failure
 
 PIDFile=/run/mpv.pid
 User=pi

@@ -1,12 +1,11 @@
 #!/bin/sh
 init=false
 
-cd SDL
+cd tslib
+
 ./autogen.sh
-./configure --enable-sndio=no
-make clean && make -j4
-cp build/libSDL* ../libs/SDL/
-cp build/.libs/libSDL*.a ../libs/SDL/
+./configure
+make -j4
 
 while getopts "i:" opt; do
     case $opt in
@@ -16,13 +15,15 @@ while getopts "i:" opt; do
 done
 
 if [ ($init) ]; then
-  sudo make install
+    sudo make install
+    sudo cp -P /usr/local/lib/libts* /usr/lib/arm-linux-gnueabihf/
 else
   read -p "System Install (sudo make install)? " -n 1 -r
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]
   then
     sudo make install
+    sudo cp -P /usr/local/lib/libts* /usr/lib/arm-linux-gnueabihf/
   fi
 fi
 
