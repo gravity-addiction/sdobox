@@ -8,3 +8,6 @@
 	path = SDL
 	url = https://github.com/gravity-addiction/SDL-mirror.git
 	branch = SDL12
+[submodule "tslib"]
+	path = tslib
+	url = https://github.com/gravity-addiction/tslib.git
