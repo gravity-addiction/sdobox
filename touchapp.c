@@ -193,8 +193,6 @@ int main( int argc, char* args[] )
   // Debug printing support
   init_dbg();
 
-  // Touchapp Environment
-  get_config_settings();
   // Syslog Mask
   setlogmask (LOG_UPTO (LOG_NOTICE));
 
@@ -208,9 +206,37 @@ int main( int argc, char* args[] )
     abort();
   }
 
+
+  // ------------------------------------------------
+  // Check For Touchscreen Calibration
+  // ------------------------------------------------
+  // Tslib pointercal
+  if (access("/etc/pointercal", R_OK) == -1 && access("/usr/local/etc/pointercal", R_OK) == -1) {
+    dbgprintf(DBG_ERROR, "No Touchscreen Calibration!\n");
+    system("/opt/sdobox/scripts/calibrate");
+  }
+
+
+  // ------------------------------------------------
+  // Create graphic elements
+  // ------------------------------------------------
+  m_touchscreenInit = guislice_wrapper_init(&m_gui);
+
+
   // ------------------------------------------------
   // Initialize workers
   // ------------------------------------------------
+
+  // Touchapp config file
+  if (access(config_path, R_OK) == -1) {
+    dbgprintf(DBG_ERROR, "No Config File!: %s\n", config_path);
+    gslc_Quit(&m_gui);
+    return 0;
+  }
+
+  // Touchapp Environment
+  get_config_settings();
+
   // libs/buttons
   lib_buttons_init();
 
@@ -233,10 +259,7 @@ int main( int argc, char* args[] )
   mpv_init();
   libMpvSocketThreadStart();
 
-  // ------------------------------------------------
-  // Create graphic elements
-  // ------------------------------------------------
-  m_touchscreenInit = guislice_wrapper_init(&m_gui);
+
 
   // InitGUI_Keyboard(&m_gui, strPath);
   // InitGUI_Wifi(&m_gui, strPath);
