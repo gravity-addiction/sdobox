@@ -53,8 +53,9 @@ echo
 ##### We're about to download all the files that the script needs. It may look like a lot, but the grand total is less than 18 MB! This is quite impressive when you consider that FFmpeg alone contains more than one MILLION lines of source code! Before we do the downloads, however, we need to change our current working directory to the Vidware_Downloads folder with the cd command:
 
 ##### This is where my script downloads the 11 files it needs. At the time of this writing – August 2018 – all URLs link to the most recent versions available. Be careful if you think you can simply update these links to get even more recent versions in the future! Other parts of my script make specific assumptions about these particular versions. So unless you fully understand all aspects of my script, you definitely don't want to do that!
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1lWA1-O6wwzczc33-mBQcTP0XiwQzPiuG' -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
+#wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1lWA1-O6wwzczc33-mBQcTP0XiwQzPiuG' -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
 #wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.0.2.tar.bz2 -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
+wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2 -O Vidware_Downloads/ffmpeg-4.3.1.tar.bz2
 
 wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1i_nc7YYBGUNyIN10O4UsquuLUnKppLxQ' -O Vidware_Downloads/v0.29.0.tar.gz
 #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/mpv-player/mpv/archive/v0.29.0.tar.gz -O Vidware_Downloads/v0.29.0.tar.gz
@@ -172,7 +173,7 @@ echo "------------------------------"
 echo
 
 sudo apt update
-sudo apt install -y automake checkinstall libraspberrypi0 libsdl2-dev libva-dev libluajit-5.1-dev libgles2-mesa-dev libtool libvdpau-dev libxcb-shm0-dev texinfo libfontconfig1-dev libfribidi-dev python-docutils libbluray-dev libjpeg-dev libtheora-dev libvorbis-dev libgnutls28-dev linux-headers-rpi2 libomxil-bellagio-dev xdotool libcdio-cdda-dev libcdio-paranoia-dev libdvdread-dev libdvdnav-dev libbluray-dev
+sudo apt install -y automake checkinstall libsdl2-dev libva-dev libluajit-5.1-dev libgles2-mesa-dev libtool libvdpau-dev libxcb-shm0-dev texinfo libfontconfig1-dev libfribidi-dev python-docutils libbluray-dev libjpeg-dev libtheora-dev libvorbis-dev libgnutls28-dev linux-headers-rpi2 libomxil-bellagio-dev xdotool libcdio-cdda-dev libcdio-paranoia-dev libdvdread-dev libdvdnav-dev libbluray-dev
 
 
 
@@ -336,7 +337,7 @@ echo "Now installing FFmpeg. This will take about 7 minutes." | fold -s
 echo "------------------------------"
 echo
 
-sudo checkinstall -y --pkgname ffmpeg --pkgversion 4.0.2 make install
+sudo checkinstall -y --pkgname ffmpeg --pkgversion 4.3.1 make install
 sudo ldconfig
 
 cd ..
@@ -392,7 +393,7 @@ echo
 sudo cp /etc/apt/preferences /etc/apt/preferences_BACKUP &> /dev/null
 
 echo "Package: ffmpeg
-Pin: version 4.0.2-1
+Pin: version 4.3.1-1
 Pin-Priority: 1001
 
 Package: mpv

@@ -140,6 +140,7 @@ sudo locale-gen
 # Update Apt
 sudo apt-mark hold raspberrypi-bootloader
 sudo apt-mark hold raspberrypi-kernel
+
 sudo apt update
 sudo apt dist-upgrade -y
 
