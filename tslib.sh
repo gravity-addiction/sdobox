@@ -1,6 +1,9 @@
 #!/bin/bash
 init=
 
+git submodule init
+git submodule update
+
 cd tslib
 
 ./autogen.sh

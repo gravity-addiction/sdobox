@@ -1,6 +1,9 @@
 #!/bin/bash
 init=
 
+git submodule init
+git submodule update
+
 cd SDL
 ./autogen.sh
 ./configure --enable-sndio=no
