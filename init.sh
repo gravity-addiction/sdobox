@@ -7,7 +7,7 @@ read -p "Fan Equip? Y/n" -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Nn]$ ]]
 then
-  fan_equip="18"
+  fan_equip="-1"
 fi
 
 # Disable Swap
@@ -98,27 +98,84 @@ fi
 
 
 # Setup RPI4 Pinouts
-wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
-sudo dpkg -i wiringpi-latest.deb
+if ! /usr/bin/gpio -v | grep -Fq "gpio version: 2.52"; then
+  echo 
+  echo
+  echo "Installing GPIO Drivers"
+  echo
+  wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
+  sudo dpkg -i wiringpi-latest.deb
+fi
 
 if [ ! -z $fan_equip ];
 then
-  if ! grep -Fxq "gpio=$fan_equip=op,dh" /boot/config.txt
+  #  Find Fan
+  if [[ $fan_equip = -1 ]];
   then
-    echo "gpio=$fan_equip=op,dh"| sudo tee -a /boot/config.txt
+    /usr/bin/gpio mode 1 out
+    /usr/bin/gpio write 1 1
+    read -p "Fan On? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="18"
+    else
+      /usr/bin/gpio write 1 0
+      /usr/bin/gpio mode 1 in
+    fi
   fi
 
-  sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" scripts/fan_ctrl.py
-  sudo cp scripts/fan_ctrl.py /opt/sdobox/
+  if [[ $fan_equip = -1 ]];
+  then
+    /usr/bin/gpio mode 7 out
+    /usr/bin/gpio write 7 1
+    read -p "Did Fan On This Time? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="4"
+    else
+      /usr/bin/gpio write 7 0
+      /usr/bin/gpio mode 7 in
+    fi
+  fi
 
-  if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
-    sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
-    sudo systemctl enable fanctrl.service
-    sudo systemctl start fanctrl.service
-  else
-    sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
-    sudo systemctl daemon-reload
-    sudo systemctl restart fanctrl.service
+  if [[ $fan_equip = -1 ]];
+  then
+    /usr/bin/gpio mode 26 out
+    /usr/bin/gpio write 26 1
+    read -p "Last Change, Did The Fan On? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="12"
+    else
+      /usr/bin/gpio write 26 0
+      /usr/bin/gpio mode 26 in
+    fi
+  fi
+
+
+  if [[ ! $fan_equip = -1 ]];
+  then
+
+    if ! grep -Fxq "gpio=$fan_equip=op,dh" /boot/config.txt
+    then
+      echo "gpio=$fan_equip=op,dh"| sudo tee -a /boot/config.txt
+    fi
+
+    sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" scripts/fan_ctrl.py
+    sudo cp scripts/fan_ctrl.py /opt/sdobox/
+
+    if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
+      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo systemctl enable fanctrl.service
+      sudo systemctl start fanctrl.service
+    else
+      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo systemctl daemon-reload
+      sudo systemctl restart fanctrl.service
+    fi
   fi
 fi
 
