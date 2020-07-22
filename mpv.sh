@@ -28,13 +28,14 @@ echo "------------------------------"
 echo "Cleaning and Creating Vidware folders; Vidware_Downloads,  Vidware_Build folders." | fold -s
 echo "------------------------------"
 echo
-##### Remove Old File Cache
-sudo rm -rf Vidware_*
+
 
 ##### Vidware_Downloads: My script philosophy is to keep things clean and simple. That's why my first step is to create 3 different folders to keep the main elements of my script completely separate from each other. Before anything can be built, we first have to download 6 files in the form of "stable release tarballs". This is the raw source code my script will use to build the 6 programs. We also need 4 GPU-related files from the Raspberry Pi Foundation's official GitHub site that provide OpenGL ES and EGL support (they allow mpv to "talk" to the Raspberry's VideoCore GPU and thus facilitate hardware acceleration). Finally, we need a "waf" file that will allow us to build mpv. All of this will go inside the "Vidware_Downloads" folder – which we're creating with the mkdir command:
 mkdir Vidware_Downloads
 
 ##### Vidware_Build: This is the folder where all our "building" will take place – the folder where the raw source code of 6 programs will be compiled and transformed into working software. The "primary" programs are FFmpeg and mpv. But my script also builds a mandatory library called libass – a subtitle renderer that mpv requires. It also builds an advanced H.264 video encoder (x264) and two advanced audio encoders (Fraunhofer AAC and LAME MP3):
+##### Remove Old File Cache
+sudo rm -rf Vidware_Build
 mkdir Vidware_Build
 
 ##### I've discovered an odd quirk about checkinstall: If we don't manually create a standard usr doc path before running it, checkinstall will fail to install some of our programs. This affects the LAME MP3 encoder – but not having the path up to "doc" also affects FFmpeg (even if you don't build or install LAME). This command line takes care of that:
@@ -53,47 +54,93 @@ echo
 ##### We're about to download all the files that the script needs. It may look like a lot, but the grand total is less than 18 MB! This is quite impressive when you consider that FFmpeg alone contains more than one MILLION lines of source code! Before we do the downloads, however, we need to change our current working directory to the Vidware_Downloads folder with the cd command:
 
 ##### This is where my script downloads the 11 files it needs. At the time of this writing – August 2018 – all URLs link to the most recent versions available. Be careful if you think you can simply update these links to get even more recent versions in the future! Other parts of my script make specific assumptions about these particular versions. So unless you fully understand all aspects of my script, you definitely don't want to do that!
-#wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1lWA1-O6wwzczc33-mBQcTP0XiwQzPiuG' -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
-#wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.0.2.tar.bz2 -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
-wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2 -O Vidware_Downloads/ffmpeg-4.3.1.tar.bz2
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1i_nc7YYBGUNyIN10O4UsquuLUnKppLxQ' -O Vidware_Downloads/v0.29.0.tar.gz
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/mpv-player/mpv/archive/v0.29.0.tar.gz -O Vidware_Downloads/v0.29.0.tar.gz
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1a95tlnRe3kvmTQb2JrOYHVNS-kXYZiPW' -O Vidware_Downloads/libass-0.14.0.tar.gz
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/libass/libass/releases/download/0.14.0/libass-0.14.0.tar.gz -O Vidware_Downloads/libass-0.14.0.tar.gz
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1e6JIy5fXMYKcPq7L51M6_BcSvVxrSEC9' -O Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2
-#wget -nc -q --show-progress --no-use-server-timestamps https://download.videolan.org/x264/snapshots/x264-snapshot-20180831-2245-stable.tar.bz2 -O Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=18bgesyGLCIXmnHe1iM110rL7vXxcmDvY' -O Vidware_Downloads/fdk-aac-0.1.6.tar.gz
-#wget -nc -q --show-progress --no-use-server-timestamps https://downloads.sourceforge.net/opencore-amr/fdk-aac-0.1.6.tar.gz -O Vidware_Downloads/fdk-aac-0.1.6.tar.gz
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=14ZSxMXiZ1SegB1LuOHCawOB4u8RLzyHW' -O Vidware_Downloads/lame-3.100.tar.gz
-#wget -nc -q --show-progress --no-use-server-timestamps https://downloads.sourceforge.net/lame/lame-3.100.tar.gz -O Vidware_Downloads/lame-3.100.tar.gz
-
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1_xLBDmDSTwjv1yvBkKnueaI3YpiRDkV6' -O Vidware_Downloads/waf-2.0.9
-#wget -nc -q --show-progress --no-use-server-timestamps https://waf.io/waf-2.0.9 -O Vidware_Downloads/waf-2.0.9
 
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1Vrv-9b6NaKd1DI4MX8hae38hT_Qoaw_5' -O Vidware_Downloads/libGLESv2.so
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/libGLESv2.so -O Vidware_Downloads/libGLESv2.so
+#if ! echo "7b9deb74b4fcc665c5187dcd057b678e754b43d2  Vidware_Downloads/ffmpeg-4.0.2.tar.bz2" | shasum -c -; then
+  #wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1lWA1-O6wwzczc33-mBQcTP0XiwQzPiuG' -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
+  #wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.0.2.tar.bz2 -O Vidware_Downloads/ffmpeg-4.0.2.tar.bz2
+#fi
+if ! echo "d7bf601a6fc904333ab261e73c4b602ea471e942  Vidware_Downloads/ffmpeg-4.3.1.tar.bz2" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/ffmpeg-4.3.1.tar.bz2
+  wget -nc -q --show-progress --no-use-server-timestamps https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2 -O Vidware_Downloads/ffmpeg-4.3.1.tar.bz2
+fi
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=11b8ecLf_7VBOq6qf6R38lcGy7cEP_B9p' -O Vidware_Downloads/libEGL.so
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/libEGL.so -O Vidware_Downloads/libEGL.so
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1svQU1sml_QffrEHoghkRDxO2S03s4WHF' -O Vidware_Downloads/brcmglesv2.pc
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/pkgconfig/brcmglesv2.pc -O Vidware_Downloads/brcmglesv2.pc
+if ! echo "b890b726a39a67ef8d7c278f28531be375eaf7e8  Vidware_Downloads/v0.29.0.tar.gz" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/v0.29.0.tar.gz
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1i_nc7YYBGUNyIN10O4UsquuLUnKppLxQ' -O Vidware_Downloads/v0.29.0.tar.gz
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/mpv-player/mpv/archive/v0.29.0.tar.gz -O Vidware_Downloads/v0.29.0.tar.gz
+fi
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1D_XqqCzZIeu74u0269FRjniFzPAysD_j' -O Vidware_Downloads/brcmegl.pc
-#wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/pkgconfig/brcmegl.pc -O Vidware_Downloads/brcmegl.pc
+if ! echo "68cd30fbe69b27dd63794c8b408ce064c0adf2f9  Vidware_Downloads/libass-0.14.0.tar.gz" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/libass-0.14.0.tar.gz
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1a95tlnRe3kvmTQb2JrOYHVNS-kXYZiPW' -O Vidware_Downloads/libass-0.14.0.tar.gz
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/libass/libass/releases/download/0.14.0/libass-0.14.0.tar.gz -O Vidware_Downloads/libass-0.14.0.tar.gz
+fi
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1teZuSbE7kR0S8wDa3IezfsmPtq2XkCsH' -O Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt
-#wget -nc -q --show-progress https://github.com/mpv-player/mpv/files/3458510/0001-6838-Fix-rpi-compile-issues.patch.txt -O Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt
+if ! echo "388cda48efb36212a1e76505b3c8183ceb689634  Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1e6JIy5fXMYKcPq7L51M6_BcSvVxrSEC9' -O Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2
+  #wget -nc -q --show-progress --no-use-server-timestamps https://download.videolan.org/x264/snapshots/x264-snapshot-20180831-2245-stable.tar.bz2 -O Vidware_Downloads/x264-snapshot-20180831-2245-stable.tar.bz2
+fi
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1XHbgEyi475lmIcs_BEzOMZNggDV3qfZz' -O Vidware_Downloads/alsa_patch.diff
+if ! echo "574103e24fe45b3b89a92cc6a7a9d260c483b9e0  Vidware_Downloads/fdk-aac-0.1.6.tar.gz" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/fdk-aac-0.1.6.tar.gz
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=18bgesyGLCIXmnHe1iM110rL7vXxcmDvY' -O Vidware_Downloads/fdk-aac-0.1.6.tar.gz
+  #wget -nc -q --show-progress --no-use-server-timestamps https://downloads.sourceforge.net/opencore-amr/fdk-aac-0.1.6.tar.gz -O Vidware_Downloads/fdk-aac-0.1.6.tar.gz
+fi
 
-wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1I8jTErzkWCTLtNX84RE7nhflAc-dNSwZ' -O Vidware_Downloads/wscript_patch.diff
+if ! echo "64c53b1a4d493237cef5e74944912cd9f98e618d  Vidware_Downloads/lame-3.100.tar.gz" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/lame-3.100.tar.gz
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=14ZSxMXiZ1SegB1LuOHCawOB4u8RLzyHW' -O Vidware_Downloads/lame-3.100.tar.gz
+  #wget -nc -q --show-progress --no-use-server-timestamps https://downloads.sourceforge.net/lame/lame-3.100.tar.gz -O Vidware_Downloads/lame-3.100.tar.gz
+fi
+
+if ! echo "e71581b47d9e61a470c146bf0a28d2c2dde718eb  Vidware_Downloads/waf-2.0.9" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/waf-2.0.9
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1_xLBDmDSTwjv1yvBkKnueaI3YpiRDkV6' -O Vidware_Downloads/waf-2.0.9
+  #wget -nc -q --show-progress --no-use-server-timestamps https://waf.io/waf-2.0.9 -O Vidware_Downloads/waf-2.0.9
+fi
+
+if ! echo "54e6a6677e30d13bc724c976c8cdb87c8dd9001d  Vidware_Downloads/libGLESv2.so" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/libGLESv2.so
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1Vrv-9b6NaKd1DI4MX8hae38hT_Qoaw_5' -O Vidware_Downloads/libGLESv2.so
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/libGLESv2.so -O Vidware_Downloads/libGLESv2.so
+fi
+
+if ! echo "a0fdafd7a2529b4b9c73db3bec8eead98e1e6088  Vidware_Downloads/libEGL.so" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/libEGL.so
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=11b8ecLf_7VBOq6qf6R38lcGy7cEP_B9p' -O Vidware_Downloads/libEGL.so
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/libEGL.so -O Vidware_Downloads/libEGL.so
+fi
+
+if ! echo "0190338049e5782166380917267075644faf9cff  Vidware_Downloads/brcmglesv2.pc" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/brcmglesv2.pc
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1svQU1sml_QffrEHoghkRDxO2S03s4WHF' -O Vidware_Downloads/brcmglesv2.pc
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/pkgconfig/brcmglesv2.pc -O Vidware_Downloads/brcmglesv2.pc
+fi
+
+if ! echo "83267264fadb16c94191596a7837993cb8ba3684  Vidware_Downloads/brcmegl.pc" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/brcmegl.pc
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1D_XqqCzZIeu74u0269FRjniFzPAysD_j' -O Vidware_Downloads/brcmegl.pc
+  #wget -nc -q --show-progress --no-use-server-timestamps https://github.com/raspberrypi/firmware/raw/master/hardfp/opt/vc/lib/pkgconfig/brcmegl.pc -O Vidware_Downloads/brcmegl.pc
+fi
+
+if ! echo "f8974ecf68b6e870215f0da9b7d2a3d900b63364  Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1teZuSbE7kR0S8wDa3IezfsmPtq2XkCsH' -O Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt
+  #wget -nc -q --show-progress https://github.com/mpv-player/mpv/files/3458510/0001-6838-Fix-rpi-compile-issues.patch.txt -O Vidware_Downloads/0001-6838-Fix-rpi-compile-issues.patch.txt
+fi
+
+if ! echo "d83117527385a6dedd252b83d3d778824c2db066  Vidware_Downloads/alsa_patch.diff" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/alsa_patch.diff
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1XHbgEyi475lmIcs_BEzOMZNggDV3qfZz' -O Vidware_Downloads/alsa_patch.diff
+fi
+
+if ! echo "e540874e6848da3018b29de59bf36e23bb20c40b  Vidware_Downloads/wscript_patch.diff" | shasum -c -; then
+  sudo rm -f Vidware_Downloads/wscript_patch.diff
+  wget -nc --no-check-certificate -q --show-progress 'https://docs.google.com/uc?export=download&id=1I8jTErzkWCTLtNX84RE7nhflAc-dNSwZ' -O Vidware_Downloads/wscript_patch.diff
+fi
 
 echo; echo
 echo "------------------------------"
@@ -380,7 +427,7 @@ echo
 sudo checkinstall -y --pkgname mpv --pkgversion 0.29.0 ./waf install
 sudo ldconfig
 
-
+cd ../..
 
 
 echo; echo; echo
