@@ -10,9 +10,9 @@ cd tslib
 ./configure
 make -j4
 
-while getopts "i:" opt; do
+while getopts ":i" opt; do
     case $opt in
-    i) init=true ;; # Handle -a
+    i) init="true" ;; # Handle -a
     \?) ;; # Handle error: unknown option or missing required argument.
     esac
 done
