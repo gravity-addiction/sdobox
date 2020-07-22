@@ -154,8 +154,10 @@ sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
 # Compile and install TSLib Libraries
 ./tslib.sh -i
 
+# Compile and install MPV
 ./mpv.sh -i
 
+# Activate Startup Idle process for MPV
 if [ ! -f "/lib/systemd/system/mpv.service" ]; then
   sudo cp scripts/systemctl/mpv.service /lib/systemd/system/
   sudo systemctl enable mpv.service
@@ -167,8 +169,12 @@ else
   sudo systemctl restart mpv.service
 fi
 
-# Install Extra SDOBOX Libraries
-sudo apt install -y autoconf libtool libtool-bin libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5 libulfius-dev libxdo-dev libconfig-dev libsdl-ttf2.0-dev libsqlite3-dev libiw-dev libmpv-dev wmctrl
+
+# Compile SDOBOX Project
+./sdobox.sh
+
 
 # Install Headmelted version of Code
 sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
+# Open VSCode with SDOBOX as open folder
+code-oss .
