@@ -230,8 +230,10 @@ int main( int argc, char* args[] )
   // Touchapp config file
   if (access(config_path, R_OK) == -1) {
     dbgprintf(DBG_ERROR, "No Config File!: %s\n", config_path);
-    gslc_Quit(&m_gui);
-    return 0;
+    if (lib_buttons_configure(config_path) == 0) {
+      gslc_Quit(&m_gui);
+      return 0;
+    }
   }
 
   // Touchapp Environment

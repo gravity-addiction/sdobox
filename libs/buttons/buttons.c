@@ -1,7 +1,10 @@
 
 #include <stdio.h>
+#include <libgen.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
@@ -9,6 +12,124 @@
 #include "libs/buttons/buttons.h"
 #include "libs/queue/queue.h"
 
+
+
+  
+void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]) {
+  for (int p = 0; p < whitelistPinsSize; p++) {
+    pinCache[p] = digitalRead(whitelistedPins[p]);
+  }
+}
+
+int lib_buttons_findGPIO(int i_timeout, int isleep) { // timeout in milliseconds to search, i_sleep wait between checks
+  const int whitelistPinsSize = 18;
+  const int whitelistedPins[] = { 2, 3, 4, 7, 8, 9, 15, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+  int pinLast[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int pinCache[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+  int pinFound = -2; // -2 for nothing found, -1 will flag timeout
+  int i_now = millis();
+  int ii_now = millis();
+  int i_diff = 0;
+  int i_sleep = isleep * 1000;
+
+  lib_buttons_searchGPIO(whitelistPinsSize, whitelistedPins, pinCache);
+  for (int p = 0; p < whitelistPinsSize; p++) {
+    pinLast[p] = pinCache[p];
+  }
+
+  while (pinFound < -1) {
+    usleep(i_sleep);
+    lib_buttons_searchGPIO(whitelistPinsSize, whitelistedPins, pinCache);
+    for (int p = 0; p < whitelistPinsSize; p++) {
+      if (pinLast[p] != pinCache[p]) {
+        pinFound = whitelistedPins[p];
+        break;
+      }
+    }
+
+    // Check for Timeout
+    ii_now = millis();
+    i_diff = ii_now - i_now;
+    if ( i_diff > i_timeout) { 
+      pinFound = -1;
+    }
+  }
+
+  return pinFound;
+}
+
+
+void lib_buttons_waitRelease(int pin) {
+  int pinState = digitalRead(pin);
+  while (pinState == 0) {
+    usleep(50000);
+    pinState = digitalRead(pin);
+  }
+}
+
+int lib_buttons_configure(char* config_path) {
+  if (wiringPiSetup () == -1) {
+    // debug_print("%s\n", "Failed Initializing Pi Wiring");
+    return 0;
+  }
+
+  int leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB = -1;
+
+  printf("Press Left Button\n");
+  leftBtn = lib_buttons_findGPIO(10000, 100);
+  printf("Left Button Found! %d\n", leftBtn);
+  printf("Press Right Button\n");
+  lib_buttons_waitRelease(leftBtn);
+  rightBtn = lib_buttons_findGPIO(10000, 100);
+  printf("Right Button Found! %d\n", rightBtn);
+  printf("Press Directly Down On Rotary Button\n");
+  lib_buttons_waitRelease(rightBtn);
+  rotaryBtn = lib_buttons_findGPIO(10000, 100);
+  printf("Rotary Button Found! %d\n", rotaryBtn);
+  printf("Spin Rotary Knob Clockwise Until Detected\n");
+  lib_buttons_waitRelease(rotaryBtn);
+  rotaryA = lib_buttons_findGPIO(10000, 50);
+  rotaryB = lib_buttons_findGPIO(10000, 50);
+
+  int i_now = millis();
+  int ii_now = millis();
+  int i_diff = 0;
+  while (rotaryA == rotaryB) {
+    rotaryB = lib_buttons_findGPIO(10000, 50);
+    // Check for Timeout
+    ii_now = millis();
+    i_diff = ii_now - i_now;
+    if ( i_diff > 20000) { 
+      rotaryB = -1;
+    }
+  }
+  if (rotaryB == -1) {
+    printf("Rotary Knob NOT Found, 20second Timeout!\n");
+  } else {
+    printf("Rotary Knob Found! %d %d\n", rotaryA, rotaryB);
+  }
+
+  // Check config path folder exists
+  char* dir = strdup(config_path);
+  char* dirn = dirname(dir);
+  if (dirn != NULL) {
+    mkdir(dirn, 0700);
+
+    // Writing to Config File
+    FILE *fptr;
+    fptr = fopen(config_path, "w");
+    if (fptr == NULL) {
+      return 0;
+    }
+
+    fprintf(fptr, "rotary_pin_a = %d;\nrotary_pin_b = %d;\nrotary_pin_btn = %d;\nright_pin_btn = %d;\nleft_pin_btn = %d;\ndebounce_delay = 175;\nbtn_hold_delay = 800;\n", rotaryA, rotaryB, rotaryBtn, rightBtn, leftBtn);
+    fclose(fptr);
+
+    return 1;
+  }
+
+  return 0;
+}
 
 int lib_buttons_thread() {
   if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled

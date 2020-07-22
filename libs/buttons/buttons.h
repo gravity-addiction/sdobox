@@ -65,6 +65,8 @@ int lib_buttonsDisabled; // Complete Disable Buttons While in Mirroring
 
 void (*cbBtns[MAX_BUTTONS])();
 
+int lib_buttons_configure(char* config_path);
+
 int lib_buttons_thread();
 void lib_buttons_init();
 
