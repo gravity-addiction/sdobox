@@ -30,7 +30,36 @@ sudo cp scripts/overlays/* /boot/overlays/
 
 
 # Fixup cmdline.txt
-echo "dwc_otg.lpm_enable=0 $(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8 logo.nologo loglevel=3 vt.global_cursor_default=0" | sudo tee /boot/cmdline.txt
+if ! grep -Fq "dwc_otg.lpm_enable" /boot/cmdline.txt
+then
+  echo "dwc_otg.lpm_enable=0 $(cat /boot/cmdline.txt)" | sudo tee /boot/cmdline.txt
+fi
+
+if ! grep -Fwq "fbcon=map:10" /boot/cmdline.txt
+then
+  sudo sed -i '$ s/$/ fbcon=map:10/' /boot/cmdline.txt
+fi
+
+if ! grep -Fwq "fbcon=font:VGA8x8" /boot/cmdline.txt
+then
+  sudo sed -i '$ s/$/ fbcon=font:VGA8x8/' /boot/cmdline.txt
+fi
+
+if ! grep -Fwq "logo.nologo" /boot/cmdline.txt
+then
+  sudo sed -i '$ s/$/ logo.nologo/' /boot/cmdline.txt
+fi
+
+if ! grep -Fq "loglevel" /boot/cmdline.txt
+then
+  sudo sed -i '$ s/$/ loglevel=3/' /boot/cmdline.txt
+fi
+
+if ! grep -Fq "vt.global_cursor_default" /boot/cmdline.txt
+then
+  sudo sed -i '$ s/$/ vt.global_cursor_default=0/' /boot/cmdline.txt
+fi
+
 sudo sed -i "s/console=serial0,/console=TTYAMA0,/" /boot/cmdline.txt
 sudo sed -i "s/console=tty1/console=tty3/" /boot/cmdline.txt
 
@@ -124,8 +153,7 @@ sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
 # Compile and install TSLib Libraries
 ./tslib.sh -i
 
-# Install MPV Video Player
-wget --no-check-certificate -q 'https://docs.google.com/uc?export=download&id=1lJn84VN5BIKwZ6fc7YDnqIdII9JO_hEU' -O - | bash
+./mpv.sh -i
 
 if [ ! -f "/lib/systemd/system/mpv.service" ]; then
   sudo cp scripts/systemctl/mpv.service /lib/systemd/system/
@@ -142,4 +170,4 @@ fi
 sudo apt install -y autoconf libtool libtool-bin libsdl-ttf2.0-0 libts0 libconfig9 fonts-noto-mono git libulfius2.5 libulfius-dev libxdo-dev libconfig-dev libsdl-ttf2.0-dev libsqlite3-dev libiw-dev libmpv-dev wmctrl
 
 # Install Headmelted version of Code
-su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
+sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
