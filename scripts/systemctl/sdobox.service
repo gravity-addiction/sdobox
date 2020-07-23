@@ -1,24 +1,26 @@
 [Unit]
 Description=SDOBOX Service
 After=mpv.service
-# After=smbd.service
-# OnFailure=notify-bsod.service
 
 [Service]
 Type=idle
 Restart=on-failure
 
 PIDFile=/tmp/sdobox.pid
-ExecStart=sudo /usr/local/bin/sdobox
-# Development Version Startup
-# ExecStart=sudo /home/pi/dev/advert-gui/touchapp
+ExecStart=/usr/local/bin/sdobox
+
 
 KillSignal=SIGINT
 KillMode=process
 User=pi
 WorkingDirectory=/home/pi/shared
+Environment="SDL_NOKEYBOARD=1"
+
+# Debugging Settings
 StandardError=null
 StandardOutput=null
+# Environment="DBGMASK=1111111111"
+# ExecStart=sudo /home/pi/Downloads/sdobox/touchapp
 
 [Install]
 WantedBy=multi-user.target
