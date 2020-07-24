@@ -27,6 +27,7 @@ cp build/.libs/libSDL*.a ../libs/SDL/
 
 if [ ! -z $init ]; then
 #  sudo make install
+  echo
 else
   read -p "System Install (sudo make install)? y/N " -n 1 -r
   echo    # (optional) move to a new line

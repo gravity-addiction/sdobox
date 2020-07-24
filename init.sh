@@ -18,9 +18,100 @@ then
   disable_swap="true"
 fi
 
+
+
+# Setup RPI4 Pinouts
+if ! /usr/bin/gpio -v | grep -Fq "gpio version: 2.52"; then
+  echo 
+  echo
+  echo "Installing GPIO Drivers"
+  echo
+  wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
+  sudo dpkg -i wiringpi-latest.deb
+fi
+
+if [ ! -z $fan_equip ];
+then
+
+  echo 
+  echo
+  echo "Onboard Fan Detection"
+  echo
+  #  Find Fan
+  if [[ $fan_equip = -1 ]];
+  then
+    /usr/bin/gpio mode 1 out
+    /usr/bin/gpio write 1 1
+    read -p "Check to hear or see if the Fan Turn On? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="18"
+    else
+      /usr/bin/gpio write 1 0
+      /usr/bin/gpio mode 1 in
+    fi
+  fi
+
+  if [[ $fan_equip = -1 ]];
+  then
+    /usr/bin/gpio mode 7 out
+    /usr/bin/gpio write 7 1
+    read -p "Did Fan On This Time? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="4"
+    else
+      /usr/bin/gpio write 7 0
+      /usr/bin/gpio mode 7 in
+    fi
+  fi
+
+  if [[ $fan_equip = -1 ]];
+  then
+    /usr/bin/gpio mode 26 out
+    /usr/bin/gpio write 26 1
+    read -p "Last Chance, Did The Fan On? y/N" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]];
+    then
+      fan_equip="12"
+    else
+      /usr/bin/gpio write 26 0
+      /usr/bin/gpio mode 26 in
+    fi
+  fi
+
+
+  if [[ ! $fan_equip = -1 ]];
+  then
+
+    if ! grep -Fxq "gpio=$fan_equip=op,dh" /boot/config.txt
+    then
+      echo "gpio=$fan_equip=op,dh"| sudo tee -a /boot/config.txt
+    fi
+
+    sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" scripts/fan_ctrl.py
+    sudo cp scripts/fan_ctrl.py /opt/sdobox/
+
+    if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
+      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo systemctl enable fanctrl.service
+      sudo systemctl start fanctrl.service
+    else
+      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo systemctl daemon-reload
+      sudo systemctl restart fanctrl.service
+    fi
+  fi
+fi
+
+
 # Init Submodules
 git submodule init
 git submodule update
+
 
 # Copy around files
 sudo mkdir -p /opt/sdobox
@@ -97,89 +188,6 @@ then
 fi
 
 
-# Setup RPI4 Pinouts
-if ! /usr/bin/gpio -v | grep -Fq "gpio version: 2.52"; then
-  echo 
-  echo
-  echo "Installing GPIO Drivers"
-  echo
-  wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
-  sudo dpkg -i wiringpi-latest.deb
-fi
-
-if [ ! -z $fan_equip ];
-then
-  #  Find Fan
-  if [[ $fan_equip = -1 ]];
-  then
-    /usr/bin/gpio mode 1 out
-    /usr/bin/gpio write 1 1
-    read -p "Fan On? y/N" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]];
-    then
-      fan_equip="18"
-    else
-      /usr/bin/gpio write 1 0
-      /usr/bin/gpio mode 1 in
-    fi
-  fi
-
-  if [[ $fan_equip = -1 ]];
-  then
-    /usr/bin/gpio mode 7 out
-    /usr/bin/gpio write 7 1
-    read -p "Did Fan On This Time? y/N" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]];
-    then
-      fan_equip="4"
-    else
-      /usr/bin/gpio write 7 0
-      /usr/bin/gpio mode 7 in
-    fi
-  fi
-
-  if [[ $fan_equip = -1 ]];
-  then
-    /usr/bin/gpio mode 26 out
-    /usr/bin/gpio write 26 1
-    read -p "Last Change, Did The Fan On? y/N" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]];
-    then
-      fan_equip="12"
-    else
-      /usr/bin/gpio write 26 0
-      /usr/bin/gpio mode 26 in
-    fi
-  fi
-
-
-  if [[ ! $fan_equip = -1 ]];
-  then
-
-    if ! grep -Fxq "gpio=$fan_equip=op,dh" /boot/config.txt
-    then
-      echo "gpio=$fan_equip=op,dh"| sudo tee -a /boot/config.txt
-    fi
-
-    sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" scripts/fan_ctrl.py
-    sudo cp scripts/fan_ctrl.py /opt/sdobox/
-
-    if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
-      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
-      sudo systemctl enable fanctrl.service
-      sudo systemctl start fanctrl.service
-    else
-      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
-      sudo systemctl daemon-reload
-      sudo systemctl restart fanctrl.service
-    fi
-  fi
-fi
-
-
 # Disable Swap
 if [ $disable_swap ]
 then
@@ -230,8 +238,26 @@ fi
 # Compile SDOBOX Project
 ./sdobox.sh -a
 
+## Install to system
+sudo cp touchapp /usr/local/bin/sdobox
+sudo chmod +x /usr/local/bin/sdobox
+
+# Activate Startup Idle process for SDOBOX
+if [ ! -f "/lib/systemd/system/sdobox.service" ]; then
+  sudo cp scripts/systemctl/sdobox.service /lib/systemd/system/
+  sudo systemctl enable sdobox.service
+  sudo systemctl start sdobox.service
+else
+  ## Don't overwrite possible updates to sdobox service systemctl file
+  # sudo cp scripts/systemctl/sdobox.service /lib/systemd/system/
+  # sudo systemctl daemon-reload
+  sudo systemctl restart sdobox.service
+fi
 
 # Install Headmelted version of Code
 sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
+
 # Open VSCode with SDOBOX as open folder
-code-oss .
+# code-oss .
+
+sudo reboot now
