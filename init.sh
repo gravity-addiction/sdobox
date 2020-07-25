@@ -152,7 +152,7 @@ then
 fi
 
 sudo sed -i "s/console=serial0,/console=ttyAMA0,/" /boot/cmdline.txt
-sudo sed -i "s/console=tty1/console=tty3/" /boot/cmdline.txt
+# sudo sed -i "s/console=tty1/console=tty3/" /boot/cmdline.txt
 
 # Setup Boot Config Files
 sudo sed -i 's/^dtoverlay=vc4-fkms-v3d/#dtoverlay=vc4-fkms-v3d/g' /boot/config.txt
