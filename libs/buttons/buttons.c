@@ -67,48 +67,9 @@ void lib_buttons_waitRelease(int pin) {
   }
 }
 
-int lib_buttons_configure(char* config_path) {
-  if (wiringPiSetup () == -1) {
-    // debug_print("%s\n", "Failed Initializing Pi Wiring");
-    return 0;
-  }
 
-  int leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB = -1;
 
-  printf("Press Left Button\n");
-  leftBtn = lib_buttons_findGPIO(10000, 100);
-  printf("Left Button Found! %d\n", leftBtn);
-  printf("Press Right Button\n");
-  lib_buttons_waitRelease(leftBtn);
-  rightBtn = lib_buttons_findGPIO(10000, 100);
-  printf("Right Button Found! %d\n", rightBtn);
-  printf("Press Directly Down On Rotary Button\n");
-  lib_buttons_waitRelease(rightBtn);
-  rotaryBtn = lib_buttons_findGPIO(10000, 100);
-  printf("Rotary Button Found! %d\n", rotaryBtn);
-  printf("Spin Rotary Knob Clockwise Until Detected\n");
-  lib_buttons_waitRelease(rotaryBtn);
-  rotaryA = lib_buttons_findGPIO(10000, 50);
-  rotaryB = lib_buttons_findGPIO(10000, 50);
-
-  int i_now = millis();
-  int ii_now = millis();
-  int i_diff = 0;
-  while (rotaryA == rotaryB) {
-    rotaryB = lib_buttons_findGPIO(10000, 50);
-    // Check for Timeout
-    ii_now = millis();
-    i_diff = ii_now - i_now;
-    if ( i_diff > 20000) { 
-      rotaryB = -1;
-    }
-  }
-  if (rotaryB == -1) {
-    printf("Rotary Knob NOT Found, 20second Timeout!\n");
-  } else {
-    printf("Rotary Knob Found! %d %d\n", rotaryA, rotaryB);
-  }
-
+int lib_buttons_saveConfig(char* config_path, int leftBtn, int rightBtn, int rotaryBtn, int rotaryA, int rotaryB) {
   // Check config path folder exists
   char* dir = strdup(config_path);
   char* dirn = dirname(dir);
@@ -130,6 +91,52 @@ int lib_buttons_configure(char* config_path) {
 
   return 0;
 }
+
+int lib_buttons_configure(char* config_path) {
+  if (wiringPiSetup () == -1) {
+    dbgprintf(DBG_DEBUG, "Failed Initializing Pi Wiring\n");
+    return 0;
+  }
+
+  int leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB = -1;
+
+  dbgprintf(DBG_DEBUG, "Press Left Button\n");
+  leftBtn = lib_buttons_findGPIO(10000, 100);
+  dbgprintf(DBG_DEBUG, "Left Button Found! %d\n", leftBtn);
+  dbgprintf(DBG_DEBUG, "Press Right Button\n");
+  lib_buttons_waitRelease(leftBtn);
+  rightBtn = lib_buttons_findGPIO(10000, 100);
+  dbgprintf(DBG_DEBUG, "Right Button Found! %d\n", rightBtn);
+  dbgprintf(DBG_DEBUG, "Press Directly Down On Rotary Button\n");
+  lib_buttons_waitRelease(rightBtn);
+  rotaryBtn = lib_buttons_findGPIO(10000, 100);
+  dbgprintf(DBG_DEBUG, "Rotary Button Found! %d\n", rotaryBtn);
+  dbgprintf(DBG_DEBUG, "Spin Rotary Knob Clockwise Until Detected\n");
+  lib_buttons_waitRelease(rotaryBtn);
+  rotaryA = lib_buttons_findGPIO(10000, 50);
+  rotaryB = lib_buttons_findGPIO(10000, 50);
+
+  int i_now = millis();
+  int ii_now = millis();
+  int i_diff = 0;
+  while (rotaryA == rotaryB) {
+    rotaryB = lib_buttons_findGPIO(10000, 50);
+    // Check for Timeout
+    ii_now = millis();
+    i_diff = ii_now - i_now;
+    if ( i_diff > 20000) { 
+      rotaryB = -1;
+    }
+  }
+  if (rotaryB == -1) {
+    dbgprintf(DBG_DEBUG, "Rotary Knob NOT Found, 20second Timeout!\n");
+  } else {
+    dbgprintf(DBG_DEBUG, "Rotary Knob Found! %d %d\n", rotaryA, rotaryB);
+  }
+
+  return lib_buttons_saveConfig(config_path, leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB);
+}
+
 
 int lib_buttons_thread() {
   if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
@@ -267,19 +274,19 @@ void lib_buttons_init() {
     // debug_print("%s\n", "Failed Initializing Pi Wiring");
   }
 
-  if ( wiringPiISR (ROTARY_PIN_A, INT_EDGE_BOTH, &lib_buttonsRotaryInterrupt) < 0 ) {
+  if ( ROTARY_PIN_A > -1 && ROTARY_PIN_B > -1 && wiringPiISR (ROTARY_PIN_A, INT_EDGE_BOTH, &lib_buttonsRotaryInterrupt) < 0 ) {
     // debug_print("Unable to setup Rotary Pin A ISR: %s\n", strerror(errno));
   }
-  if ( wiringPiISR (ROTARY_PIN_B, INT_EDGE_BOTH, &lib_buttonsRotaryInterrupt) < 0 ) {
+  if ( ROTARY_PIN_A > -1 && ROTARY_PIN_B > -1 && wiringPiISR (ROTARY_PIN_B, INT_EDGE_BOTH, &lib_buttonsRotaryInterrupt) < 0 ) {
     // debug_print("Unable to setup Rotary Pin B ISR: %s\n", strerror(errno));
   }
-  if ( wiringPiISR (ROTARY_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRotaryBtnInterrupt) < 0 ) {
+  if ( ROTARY_PIN_BTN > -1 && wiringPiISR (ROTARY_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRotaryBtnInterrupt) < 0 ) {
     // debug_print("Unable to setup Rotary Pin Btn ISR: %s\n", strerror(errno));
   }
-  if ( wiringPiISR (RIGHT_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRightBtnInterrupt) < 0 ) {
+  if ( RIGHT_PIN_BTN > -1 && wiringPiISR (RIGHT_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRightBtnInterrupt) < 0 ) {
     // debug_print("Unable to setup Right Btn ISR: %s\n", strerror(errno));
   }
-  if ( wiringPiISR (LEFT_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsLeftBtnInterrupt) < 0 ) {
+  if ( LEFT_PIN_BTN > -1 && wiringPiISR (LEFT_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsLeftBtnInterrupt) < 0 ) {
     // debug_print("Unable to setup Left Btn ISR: %s\n", strerror(errno));
   }
 

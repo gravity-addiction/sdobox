@@ -109,6 +109,16 @@ bool pg_system_cbBtn_startup(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   return true;
 }
 
+bool pg_system_cbBtn_reconfigButtons(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  touchscreenPageOpen(pGui, E_PG_CONFIGURE);
+  touchscreenPageGoBack(pGui);
+  return true;
+}
+
+
 /////////////////////////////
 //
 // GUI DISPLAY FUNCTIONS
@@ -213,7 +223,18 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
   }
 
-
+  // Reconfigure Buttons
+  if ((
+    pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {0, 200, 150, 50},
+            "Configure Buttons", 0, E_FONT_MONO14, &pg_system_cbBtn_reconfigButtons)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], false);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], true);
+  }
 
   return 1;
 }

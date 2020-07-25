@@ -238,10 +238,14 @@ int main( int argc, char* args[] )
   // Touchapp config file
   if (access(config_path, R_OK) == -1) {
     dbgprintf(DBG_ERROR, "No Config File!: %s\n", config_path);
+
+    touchscreenPageOpen(&m_gui, E_PG_CONFIGURE);
+/*
     if (lib_buttons_configure(config_path) == 0) {
       gslc_Quit(&m_gui);
       return 0;
     }
+*/
   }
 
   // Touchapp Environment
@@ -324,7 +328,13 @@ int main( int argc, char* args[] )
     // Setup TSLib Calibration
     system("/opt/sdobox/scripts/xinput/set &");
     touchscreenPageOpen(&m_gui, m_startPage);
+  
+    gslc_SetTouchDisabled(&m_gui, false);
+    gslc_SetScreenDisabled(&m_gui, false);
+    gslc_PageRedrawSet(&m_gui, true);
+    system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
   }
+
   // ------------------------------------------------
   // Main event loop
   // ------------------------------------------------

@@ -8,6 +8,7 @@ extern "C" {
 enum {
   E_PG_MAIN,
   E_PG_STARTUP,
+  E_PG_CONFIGURE,
   E_PG_KEYBOARD,
   E_PG_MSGBOX,
   E_PG_SYSTEM,

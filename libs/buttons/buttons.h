@@ -65,6 +65,11 @@ int lib_buttonsDisabled; // Complete Disable Buttons While in Mirroring
 
 void (*cbBtns[MAX_BUTTONS])();
 
+void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]);
+int lib_buttons_findGPIO(int i_timeout, int isleep);
+void lib_buttons_waitRelease(int pin);
+
+int lib_buttons_saveConfig(char* config_path, int leftBtn, int rightBtn, int rotaryBtn, int rotaryA, int rotaryB);
 int lib_buttons_configure(char* config_path);
 
 int lib_buttons_thread();

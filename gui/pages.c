@@ -73,6 +73,7 @@ void touchscreenPageOpen(gslc_tsGui *pGui, int ePage) {
 
   touchscreenPageStackAdd(ePage);
   touchscreenPageSetCur(pGui, ePage);
+  gslc_Update(pGui);
 }
 
 
@@ -82,6 +83,7 @@ void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
   if (cbClose[ePage] && cbClose[ePage] != NULL && cbInit[ePage] == NULL) {
     cbClose[ePage](pGui);
   }
+  gslc_Update(pGui);
 }
 
 
