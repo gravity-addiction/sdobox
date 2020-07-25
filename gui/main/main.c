@@ -47,7 +47,7 @@ bool pg_main_cbBtn_galculator(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
 bool pg_main_cbBtn_file_manager(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
-  system("DISPLAY=:0.0 /usr/bin/wmctrl -a 'xdg-open' || DISPLAY=:0.0 /usr/bin/xdg-open /home/pi/shared &");
+  system("DISPLAY=:0.0 /usr/bin/wmctrl -a 'xdg-open' || DISPLAY=:0.0 /usr/bin/xdg-open /home/pi &");
   return true;
 }
 

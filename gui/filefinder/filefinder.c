@@ -2,6 +2,7 @@
 #include "filefinder.h"
 #include <sys/stat.h>
 
+#include "libs/shared.h"
 #include "libs/buttons/buttons.h"
 #include "libs/vlisting/vlisting.h"
 #include "libs/mpv/mpv.h"
@@ -146,7 +147,7 @@ bool pg_fileFinder_cbBtn_root(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_fileFinder_loadFolder(pGui, "/home/pi/shared");
+  pg_fileFinder_loadFolder(pGui, VIDEOS_BASEPATH);
   gslc_ElemSetRedraw(pGui, pg_fileFinderEl[E_FILEFINDER_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -202,7 +203,7 @@ bool pg_fileFinder_cbBtn_c(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  pg_fileFinder_loadFolder(pGui, "/home/pi/shared");
+  pg_fileFinder_loadFolder(pGui, VIDEOS_BASEPATH);
   gslc_ElemSetRedraw(pGui, pg_fileFinderEl[E_FILEFINDER_EL_BOX], GSLC_REDRAW_FULL);
   return true;
 }
@@ -852,7 +853,7 @@ void pg_fileFinder_refreshCurrentFolder(gslc_tsGui* pGui) {
   pg_fileFinder_resetList();
 
   if (
-    strcmp(pg_fileFinder_currentFolderPath, "/home/pi/shared") == 0 ||
+    strcmp(pg_fileFinder_currentFolderPath, VIDEOS_BASEPATH) == 0 ||
     strcmp(pg_fileFinder_currentFolderPath, "/media") == 0
   ) {
     pg_fileFinder_listConfig->len = file_list(pg_fileFinder_currentFolderPath, &pg_fileFinder_list, -1);
@@ -898,7 +899,7 @@ void pg_fileFinder_init(gslc_tsGui *pGui) {
 
   pg_fileFinder_currentFolderPath = NULL;
 
-  pg_fileFinder_loadFolder(pGui, "/home/pi/shared");
+  pg_fileFinder_loadFolder(pGui, VIDEOS_BASEPATH);
 
   // Cleanup so Init is only ran once
   cbInit[E_PG_FILEFINDER] = NULL;

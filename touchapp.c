@@ -173,6 +173,14 @@ void get_config_settings()
     WEBSOCKET_CLIENT_HOST = strdup(retWebsocketHost);
   }
 
+  const char * retVideosPath;
+  if (config_lookup_string(&cfg, "videos_path", &retVideosPath)) {
+    VIDEOS_BASEPATH = strdup(retVideosPath);
+  } else if (config_lookup_string(&cfg, "video_path", &retVideosPath)) {
+    VIDEOS_BASEPATH = strdup(retVideosPath);
+  } else {
+    VIDEOS_BASEPATH = strdup("/home/pi/Videos");
+  }
 
   config_destroy(&cfg);
 }

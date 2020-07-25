@@ -3,6 +3,8 @@
 
 #include "skydiveorbust_videolist.h"
 
+#include "libs/shared.h"
+
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
 #include "libs/queue/queue.h"
@@ -12,8 +14,6 @@
 
 #include "gui/skydiveorbust/skydiveorbust.h"
 #include "gui/keyboard/keyboard.h"
-
-#define VIDEOS_BASEPATH "/home/pi/shared"
 
 void pg_sdboVideoListGetFiles(char* path) {
   struct fileStruct **files;

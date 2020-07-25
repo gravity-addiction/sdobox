@@ -13,7 +13,7 @@ ExecStart=/usr/local/bin/sdobox
 KillSignal=SIGINT
 KillMode=process
 User=pi
-WorkingDirectory=/home/pi/shared
+WorkingDirectory=/home/pi
 Environment="SDL_NOKEYBOARD=1"
 
 # Debugging Settings

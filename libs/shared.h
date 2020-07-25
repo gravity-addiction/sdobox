@@ -18,6 +18,8 @@ extern "C" {
 #define DEBUG 0
 #define CLEAR(x, y) memset(x,'\0',y)
 
+// Videos Folder, config videos_path
+char* VIDEOS_BASEPATH;
 
 int m_bQuit;
 int fbcp_running;
