@@ -151,7 +151,7 @@ then
   sudo sed -i '$ s/$/ vt.global_cursor_default=0/' /boot/cmdline.txt
 fi
 
-sudo sed -i "s/console=serial0,/console=TTYAMA0,/" /boot/cmdline.txt
+sudo sed -i "s/console=serial0,/console=ttyAMA0,/" /boot/cmdline.txt
 sudo sed -i "s/console=tty1/console=tty3/" /boot/cmdline.txt
 
 # Setup Boot Config Files
