@@ -20,6 +20,8 @@ char *timeStr;
 void UserInitEnv()
 {
   // setenv((char*)"FRAMEBUFFER",GSLC_DEV_FB,1);
+  // https://github.com/gravity-addiction/SDL-mirror branch SDL12 bypass keyboard checks for console
+  setenv("SDL_NOKEYBOARD","1",1);
 
   // Honor whatever the user may have set in the environment already
   if (!getenv("SDL_FBDEV")) {
@@ -44,6 +46,7 @@ void UserInitEnv()
   setenv((char*)"TSLIB_CALIBFILE",(char*)"/usr/local/etc/pointercal",1);
   setenv((char*)"TSLIB_CONFFILE",(char*)"/usr/local/etc/ts.conf",1);
   setenv((char*)"TSLIB_PLUGINDIR",(char*)"/usr/local/lib/ts",1);
+
 }
 
 int guislice_wrapper_init(gslc_tsGui *pGui) {
