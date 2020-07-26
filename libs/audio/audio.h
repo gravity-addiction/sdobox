@@ -5,22 +5,23 @@
 extern "C" {
 #endif // __cplusplus
 
-void audio_closeHandle();
-
 long volume_min;
 long volume_max;
-long volume_cur;
 
-void volume_setVolume(long ssvolume);
-void volume_setVolumeDb(long db);
-int volume_getVolume(long * volume, long * dbGain);
+// Convert volume value from log db to scale percentage
+void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPercent);
+
+// Set playback volume control for persistant handle
+void volume_setVolume(long volume);
 void volume_setPercent(long volPercent);
-void volume_increase();
-void volume_decrease();
-void volume_mute();
 
-void volume_range(long *min, long *max, long *cur);
-void volume_range_get();
+int volume_getVolume(char* card, char* device, long * dbGain);
+int volume_getVolumeRange(char* card, char* device, long * dbMin, long *dbMax);
+
+void volume_incrase();
+void volume_decrease();
+
+
 
 
 #ifdef __cplusplus

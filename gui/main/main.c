@@ -97,9 +97,6 @@ bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 
     long iVolume = m_nPosVolume;
     volume_setPercent(iVolume);
-    // guislice_wrapper_setVolumeDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
-
-
 /*
   // Fetch the new RGB component from the slider
   switch (pElem->nId) {
@@ -371,8 +368,6 @@ void pg_main_init(gslc_tsGui *pGui) {
 void pg_main_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
-
-  volume_range_get();
 }
 
 // GUI Thread

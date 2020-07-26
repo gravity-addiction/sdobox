@@ -14,6 +14,7 @@ uint32_t guislice_wrapper_clockUpdate;
 uint32_t guislice_wrapper_volumeUpdate;
 long guislice_wrapper_volume;
 long guislice_wrapper_db;
+long guislice_wrapper_dbMin, guislice_wrapper_dbMax;
 char* m_cPosVolume;
 char *timeStr;
 
@@ -62,6 +63,10 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   timeStr = (char *)malloc(32 * sizeof(char));
 
   m_cPosVolume = (char*)calloc(32, sizeof(char));
+
+  // Fill volume ranges for alsa and pulseaudio
+  volume_getVolumeRange("hw:0", "PCM", &guislice_wrapper_dbMin, &guislice_wrapper_dbMax);
+  volume_getVolumeRange("default", "Master", &volume_min, &volume_max);
 
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
 
@@ -131,9 +136,7 @@ void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int f
 
 
 void guislice_wrapper_setVolumeDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRefDisplay) {
-  printf("WRP: %ld\n", guislice_wrapper_volume);
-  
-  if (guislice_wrapper_volume <= volume_min) {
+  if (guislice_wrapper_db <= guislice_wrapper_dbMin) {
     snprintf(m_cPosVolume, 32, "Volume: Mute");
   } else {
     snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (guislice_wrapper_db * .01));
@@ -145,10 +148,6 @@ void guislice_wrapper_setVolume(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int 
   
 }
 
-
-
-
-
 void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate, gslc_tsElemRef *pElemRefDisplay) {
   if (guislice_wrapper_mirroring() == 0 &&
     (forceUpdate == 1 || millis() - guislice_wrapper_volumeUpdate > 200)
@@ -157,29 +156,21 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
     if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
       guislice_wrapper_volumeUpdate = millis();
     }
-    if (volume_getVolume(&guislice_wrapper_volume, &guislice_wrapper_db)) {
-      /*
-      // printf("Vol: %ld\n", guislice_wrapper_volume);
-      // int nPos = 100;
-      // int nPos = volume_logLinear(guislice_wrapper_volume);
+    if (volume_getVolume("hw:0", "PCM", &guislice_wrapper_db)) {
+      
+      long volPercent = 0;
+      volume_dbToPercent(guislice_wrapper_db, guislice_wrapper_dbMin, guislice_wrapper_dbMax, &volPercent);
 
       gslc_tsElem*      pElem = gslc_GetElemFromRef(pGui, pElemRef);
       gslc_tsXSlider*   pSlider = (gslc_tsXSlider*)(pElem->pXData);
-      int16_t           nPosOld;
-      // Clip position
-      if (nPos < pSlider->nPosMin) { nPos = pSlider->nPosMin; }
-      if (nPos > pSlider->nPosMax) { nPos = pSlider->nPosMax; }
-      // Update
-      nPosOld = pSlider->nPos;
-      pSlider->nPos = nPos;
 
-      // Only update if changed
-      if (nPos != nPosOld) {
-        // Mark for redraw
-        // - Only need incremental redraw
-        gslc_ElemSetRedraw(pGui,pElemRef,GSLC_REDRAW_INC);
-      }
-*/
+      // Clip position
+      if (volPercent < pSlider->nPosMin) { volPercent = pSlider->nPosMin; }
+      if (volPercent > pSlider->nPosMax) { volPercent = pSlider->nPosMax; }
+
+      // Update
+      pSlider->nPos = volPercent;
+      gslc_ElemSetRedraw(pGui,pElemRef,GSLC_REDRAW_INC);
       guislice_wrapper_setVolumeDisplay(pGui, pElemRefDisplay);
     }
   }

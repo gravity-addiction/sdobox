@@ -11,15 +11,21 @@
 #include "audio.h"
 
 
-char *audio_card = "hw:0";
-char *audio_selem_name = "PCM";
-
-int volume_no_device = 0; // Lock audio handle when incorrect device is detected
-int volume_handleOpen = 0;
+// Default audio server (default / Master when pulseaudio is available, hw:0 / PCM for db readings)
+char *audio_card = "default";
+char *audio_selem_name = "Master";
 snd_mixer_t *volume_audio_handle;
 snd_mixer_selem_id_t *volume_audio_sid;
 snd_mixer_elem_t* volume_elem;
 
+
+int volume_no_device = 0; // Lock audio handle when incorrect device is detected
+
+
+
+
+///////////////////////
+// Audio core creation and destruction of audio alsa handles
 void audio_closeHandle(snd_mixer_t **audio_handle) {
   snd_mixer_close(*audio_handle);
 }
@@ -37,8 +43,13 @@ snd_mixer_elem_t* audio_findSelem(char *selem_name, snd_mixer_t **audio_handle, 
   snd_mixer_selem_id_set_name(*audio_sid, selem_name);
   return snd_mixer_find_selem(*audio_handle, *audio_sid);
 }
+//
+////////////////////////
 
 
+////////////////////////
+// Volume persistant handle creation
+int volume_handleOpen = 0;
 void volume_closeAudio() {
   audio_closeHandle(&volume_audio_handle);
   volume_handleOpen = 0;
@@ -227,30 +238,54 @@ int volume_initAudio(int runTest) {
   }
   return 1;
 }
+//
+///////////////////////
 
+
+
+
+// Convert volume value from log db to scale percentage
+void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPercent) {
+  if (volValue < volMin) {
+    *volPercent = 0;
+    return;
+  }
+  if (volValue > volMax) {
+    *volPercent = 100;
+    return;
+  }
+
+  double p = 48.0;
+  double scaleS = 100.0 / (p - 1);
+  double scaleT = -100 / (p - 1);
+  *volPercent = scaleS * pow(p, (double)(volValue - volMin) / (double)(volMax - volMin)) + scaleT;
+}
+
+
+
+// Set playback volume control for persistant handle
 void volume_setVolume(long volume) {
   volume_initAudio(0);
   if (volume_no_device == 1) {
     return;
   }
 
-
   int e;
   if ((e = snd_mixer_selem_set_playback_volume_all(volume_elem, volume)) < 0) {
-    printf("Error Setting Playback Volume! %s\n", snd_strerror(e));
+    dbgprintf(DBG_ERROR, "Error Setting Playback Volume! %s\n", snd_strerror(e));
     volume_closeAudio();
   }
 }
 
-
 void volume_setPercent(long volPercent) {
+  // Help fat fingers
   if (volPercent < 3) {
     volPercent = 0;
-    return;
   }
 
-  double vP = (double)((volPercent * 1.2) * .01);
-  double vPd = ((volume_max - volume_min) * pow(10.0, log(vP)));
+
+  double vP = (double)(volPercent * .01);
+  double vPd = ((volume_max - volume_min) * vP);
   long volVal = vPd + volume_min;
 
   volume_setVolume(volVal);
@@ -258,79 +293,78 @@ void volume_setPercent(long volPercent) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Maybe initialize with a timeout for multiple volume changes in short time
-int volume_getVolume(long * volume, long * dbGain) {
+long curDb;
+int volume_getVolume(char* card, char* device, long * dbGain) {
   
   snd_mixer_t *volume_get_audio_handle;
   snd_mixer_selem_id_t *volume_get_audio_sid;
 
-  audio_openHandle("hw:0", &volume_get_audio_handle);
+  audio_openHandle(card, &volume_get_audio_handle);
 
-  snd_mixer_elem_t* volume_get_elem = audio_findSelem("PCM", &volume_get_audio_handle, &volume_get_audio_sid);
-  if (volume_elem == NULL) {
+  snd_mixer_elem_t* volume_get_elem = audio_findSelem(device, &volume_get_audio_handle, &volume_get_audio_sid);
+  if (volume_get_elem == NULL) {
     volume_no_device = 1;
-    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
+    dbgprintf(DBG_ERROR, "Not able to find audio card: %s, device: %s\n", card, device);
     audio_closeHandle(&volume_get_audio_handle);
-    return 0;
-  }
-  
-  if (volume_no_device == 1) {
     return 0;
   }
 
-  if (snd_mixer_selem_get_playback_volume(volume_get_elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_cur) < 0) {
+  if (snd_mixer_selem_get_playback_volume(volume_get_elem, SND_MIXER_SCHN_FRONT_LEFT, &curDb) < 0) {
     audio_closeHandle(&volume_get_audio_handle);
     return 0;
   }
+  audio_closeHandle(&volume_get_audio_handle);
 
   int changed = 0;
-  if (*volume != volume_cur) {
+  if (*dbGain != curDb) {
+    *dbGain = curDb;
     changed = 1;
   }
 
-  *volume = volume_cur;
-  double vPd = (double)(*volume - volume_min) / (double)(volume_max - volume_min);
-  *dbGain = (long)((double)(volume_max - volume_min) * log(vPd));
-  
-  audio_closeHandle(&volume_get_audio_handle);
   return changed;
 }
 
-void volume_range(long *min, long *max, long *cur) {
-  if (volume_no_device == 1) {
-    return;
+
+
+
+
+int volume_getVolumeRange(char* card, char* device, long * dbMin, long *dbMax) {
+  
+  snd_mixer_t *volume_get_audio_handle;
+  snd_mixer_selem_id_t *volume_get_audio_sid;
+
+  audio_openHandle(card, &volume_get_audio_handle);
+
+  snd_mixer_elem_t* volume_get_elem = audio_findSelem(device, &volume_get_audio_handle, &volume_get_audio_sid);
+  if (volume_get_elem == NULL) {
+    volume_no_device = 1;
+    dbgprintf(DBG_ERROR, "Not able to find audio card: %s, device: %s\n", card, device);
+    audio_closeHandle(&volume_get_audio_handle);
+    return 1;
   }
 
-  *min = volume_min;
-  *max = volume_max;
-  *cur = volume_cur;
-  return;
+  if (snd_mixer_selem_get_playback_volume_range(volume_get_elem, dbMin, dbMax) < 0) {
+    audio_closeHandle(&volume_get_audio_handle);
+    return 1;
+  }
+  audio_closeHandle(&volume_get_audio_handle);
+  
+  return 0;
 }
-
-void volume_range_get() {
-
-  volume_initAudio(1);
-  if (volume_no_device == 1) {
-    return;
-  }
-
-  if (snd_mixer_selem_get_playback_volume(volume_elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_cur) < 0) {
-    volume_closeAudio();
-    volume_initAudio(1);
-    if (volume_no_device == 1) {
-      return;
-    }
-  };
-  if (snd_mixer_selem_get_playback_volume_range(volume_elem, &volume_min, &volume_max) < 0) {
-    volume_closeAudio();
-  }
-
-  return;
-}
-
-
-
-
 
 
 
