@@ -1,3 +1,4 @@
+#define ALSA_PCM_NEW_HW_PARAMS_API
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,10 +11,14 @@
 #include "audio.h"
 
 
-char *audio_card = "default";
-char *audio_selem_name = "Master";
+char *audio_card = "hw:0";
+char *audio_selem_name = "PCM";
 
 int volume_no_device = 0; // Lock audio handle when incorrect device is detected
+int volume_handleOpen = 0;
+snd_mixer_t *volume_audio_handle;
+snd_mixer_selem_id_t *volume_audio_sid;
+snd_mixer_elem_t* volume_elem;
 
 void audio_closeHandle(snd_mixer_t **audio_handle) {
   snd_mixer_close(*audio_handle);
@@ -34,79 +39,300 @@ snd_mixer_elem_t* audio_findSelem(char *selem_name, snd_mixer_t **audio_handle, 
 }
 
 
-// Maybe initialize with a timeout for multiple volume changes in short time
+void volume_closeAudio() {
+  audio_closeHandle(&volume_audio_handle);
+  volume_handleOpen = 0;
+}
+
+int volume_initAudio(int runTest) {
+  if (volume_elem && runTest == 1) { // Test Handle
+    if (!snd_mixer_selem_is_active(volume_elem)) {
+      volume_closeAudio();
+    }
+  }
+
+  if (volume_handleOpen == 0) {
+    /*
+  int val;
+
+  printf("ALSA library version: %s\n",
+          SND_LIB_VERSION_STR);
+
+  printf("\nPCM stream types:\n");
+  for (val = 0; val <= SND_PCM_STREAM_LAST; val++)
+    printf("  %s\n",
+      snd_pcm_stream_name((snd_pcm_stream_t)val));
+
+  printf("\nPCM access types:\n");
+  for (val = 0; val <= SND_PCM_ACCESS_LAST; val++)
+    printf("  %s\n",
+      snd_pcm_access_name((snd_pcm_access_t)val));
+
+  printf("\nPCM formats:\n");
+  for (val = 0; val <= SND_PCM_FORMAT_LAST; val++)
+    if (snd_pcm_format_name((snd_pcm_format_t)val)
+      != NULL)
+      printf("  %s (%s)\n",
+        snd_pcm_format_name((snd_pcm_format_t)val),
+        snd_pcm_format_description(
+                           (snd_pcm_format_t)val));
+
+  printf("\nPCM subformats:\n");
+  for (val = 0; val <= SND_PCM_SUBFORMAT_LAST;
+       val++)
+    printf("  %s (%s)\n",
+      snd_pcm_subformat_name((
+        snd_pcm_subformat_t)val),
+      snd_pcm_subformat_description((
+        snd_pcm_subformat_t)val));
+
+  printf("\nPCM states:\n");
+  for (val = 0; val <= SND_PCM_STATE_LAST; val++)
+    printf("  %s\n",
+           snd_pcm_state_name((snd_pcm_state_t)val));
+  */
+
+  /*
+  int rc;
+  snd_pcm_t *handle;
+  snd_pcm_hw_params_t *params;
+  unsigned int val, val2;
+  int dir;
+  snd_pcm_uframes_t frames;
+
+  // Open PCM device for playback.
+  rc = snd_pcm_open(&handle, "default",
+                    SND_PCM_STREAM_PLAYBACK, 0);
+  if (rc < 0) {
+    fprintf(stderr,
+            "unable to open pcm device: %s\n",
+            snd_strerror(rc));
+    exit(1);
+  }
+
+  // Allocate a hardware parameters object.
+  snd_pcm_hw_params_alloca(&params);
+
+  // Fill it in with default values.
+  snd_pcm_hw_params_any(handle, params);
+
+
+  // Display information about the PCM interface
+
+  printf("PCM handle name = '%s'\n",
+         snd_pcm_name(handle));
+
+  printf("PCM state = %s\n",
+         snd_pcm_state_name(snd_pcm_state(handle)));
+
+  snd_pcm_hw_params_get_access(params,
+                          (snd_pcm_access_t *) &val);
+  printf("access type = %s\n",
+         snd_pcm_access_name((snd_pcm_access_t)val));
+
+  snd_pcm_hw_params_get_format(params, &val);
+  printf("format = '%s' (%s)\n",
+    snd_pcm_format_name((snd_pcm_format_t)val),
+    snd_pcm_format_description(
+                             (snd_pcm_format_t)val));
+
+  snd_pcm_hw_params_get_subformat(params,
+                        (snd_pcm_subformat_t *)&val);
+  printf("subformat = '%s' (%s)\n",
+    snd_pcm_subformat_name((snd_pcm_subformat_t)val),
+    snd_pcm_subformat_description(
+                          (snd_pcm_subformat_t)val));
+
+  snd_pcm_hw_params_get_channels(params, &val);
+  printf("channels = %d\n", val);
+
+  snd_pcm_hw_params_get_rate(params, &val, &dir);
+  printf("rate = %d bps\n", val);
+
+  snd_pcm_hw_params_get_period_time(params,
+                                    &val, &dir);
+  printf("period time = %d us\n", val);
+
+  snd_pcm_hw_params_get_period_size(params,
+                                    &frames, &dir);
+  printf("period size = %d frames\n", (int)frames);
+
+  snd_pcm_hw_params_get_buffer_time(params,
+                                    &val, &dir);
+  printf("buffer time = %d us\n", val);
+
+  snd_pcm_hw_params_get_buffer_size(params,
+                         (snd_pcm_uframes_t *) &val);
+  printf("buffer size = %d frames\n", val);
+
+  snd_pcm_hw_params_get_periods(params, &val, &dir);
+  printf("periods per buffer = %d frames\n", val);
+
+  snd_pcm_hw_params_get_rate_numden(params,
+                                    &val, &val2);
+  printf("exact rate = %d/%d bps\n", val, val2);
+
+  val = snd_pcm_hw_params_get_sbits(params);
+  printf("significant bits = %d\n", val);
+
+  snd_pcm_hw_params_get_tick_time(params,
+                                  &val, &dir);
+  printf("tick time = %d us\n", val);
+
+  val = snd_pcm_hw_params_is_batch(params);
+  printf("is batch = %d\n", val);
+
+  val = snd_pcm_hw_params_is_block_transfer(params);
+  printf("is block transfer = %d\n", val);
+
+  val = snd_pcm_hw_params_is_double(params);
+  printf("is double = %d\n", val);
+
+  val = snd_pcm_hw_params_is_half_duplex(params);
+  printf("is half duplex = %d\n", val);
+
+  val = snd_pcm_hw_params_is_joint_duplex(params);
+  printf("is joint duplex = %d\n", val);
+
+  val = snd_pcm_hw_params_can_overrange(params);
+  printf("can overrange = %d\n", val);
+
+  val = snd_pcm_hw_params_can_mmap_sample_resolution(params);
+  printf("can mmap = %d\n", val);
+
+  val = snd_pcm_hw_params_can_pause(params);
+  printf("can pause = %d\n", val);
+
+  val = snd_pcm_hw_params_can_resume(params);
+  printf("can resume = %d\n", val);
+
+  val = snd_pcm_hw_params_can_sync_start(params);
+  printf("can sync start = %d\n", val);
+
+  snd_pcm_close(handle);
+  */
+
+    audio_openHandle(audio_card, &volume_audio_handle);
+
+    volume_elem = audio_findSelem(audio_selem_name, &volume_audio_handle, &volume_audio_sid);
+    if (volume_elem == NULL) {
+      volume_no_device = 1;
+      dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
+      volume_closeAudio();
+      return 0;
+    }
+
+
+    volume_handleOpen = 1;
+  }
+  return 1;
+}
+
 void volume_setVolume(long volume) {
+  volume_initAudio(0);
   if (volume_no_device == 1) {
     return;
   }
 
-  long min, max, cur;
-  float new, newc;
-  snd_mixer_t *audio_handle;
-  snd_mixer_selem_id_t *audio_sid;
 
-  audio_openHandle(audio_card, &audio_handle);
+  int e;
+  if ((e = snd_mixer_selem_set_playback_volume_all(volume_elem, volume)) < 0) {
+    printf("Error Setting Playback Volume! %s\n", snd_strerror(e));
+    volume_closeAudio();
+  }
+}
 
-  snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name, &audio_handle, &audio_sid);
-  if (elem == NULL) {
-    volume_no_device = 1;
-    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
-    audio_closeHandle(&audio_handle);
+
+void volume_setPercent(long volPercent) {
+  if (volPercent < 3) {
+    volPercent = 0;
     return;
   }
-  snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &cur);
-  snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
 
-  // using logarithmic calucations for volume slider 0 - 1.6 amplitude
-  newc = 4550 * log(volume) / 230.2;
-  new = min + (((max - min) * newc) / 100);
+  double vP = (double)((volPercent * 1.2) * .01);
+  double vPd = ((volume_max - volume_min) * pow(10.0, log(vP)));
+  long volVal = vPd + volume_min;
 
-  // Negative Min, Positive Max
-  if (new < min) {
-    volume_cur = min;
-  } else if (new > max) {
-    volume_cur = max;
-  } else {
-    volume_cur = new;
-  }
-
-  snd_mixer_selem_set_playback_volume_all(elem, volume_cur);
-
-  audio_closeHandle(&audio_handle);
+  volume_setVolume(volVal);
 }
+
+
 
 // Maybe initialize with a timeout for multiple volume changes in short time
-int volume_getVolume(long * volume) {
+int volume_getVolume(long * volume, long * dbGain) {
+  
+  snd_mixer_t *volume_get_audio_handle;
+  snd_mixer_selem_id_t *volume_get_audio_sid;
+
+  audio_openHandle("hw:0", &volume_get_audio_handle);
+
+  snd_mixer_elem_t* volume_get_elem = audio_findSelem("PCM", &volume_get_audio_handle, &volume_get_audio_sid);
+  if (volume_elem == NULL) {
+    volume_no_device = 1;
+    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
+    audio_closeHandle(&volume_get_audio_handle);
+    return 0;
+  }
+  
+  if (volume_no_device == 1) {
+    return 0;
+  }
+
+  if (snd_mixer_selem_get_playback_volume(volume_get_elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_cur) < 0) {
+    audio_closeHandle(&volume_get_audio_handle);
+    return 0;
+  }
+
+  int changed = 0;
+  if (*volume != volume_cur) {
+    changed = 1;
+  }
+
+  *volume = volume_cur;
+  double vPd = (double)(*volume - volume_min) / (double)(volume_max - volume_min);
+  *dbGain = (long)((double)(volume_max - volume_min) * log(vPd));
+  
+  audio_closeHandle(&volume_get_audio_handle);
+  return changed;
+}
+
+void volume_range(long *min, long *max, long *cur) {
   if (volume_no_device == 1) {
     return;
   }
 
-  long volume_new;
-  snd_mixer_t *audio_handle;
-  snd_mixer_selem_id_t *audio_sid;
-  audio_openHandle(audio_card, &audio_handle);
-
-  snd_mixer_elem_t* elem = audio_findSelem(audio_selem_name, &audio_handle, &audio_sid);
-  if (elem == NULL) {
-    volume_no_device = 1;
-    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
-    audio_closeHandle(&audio_handle);
-    return 0;
-  }
-
-  snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_new);
-
-  audio_closeHandle(&audio_handle);
-
-  if (volume_new == volume_cur) {
-    *volume = volume_cur;
-    return 0;
-  } else {
-    volume_cur = volume_new;
-    *volume = volume_cur;
-    return 1;
-  }
+  *min = volume_min;
+  *max = volume_max;
+  *cur = volume_cur;
+  return;
 }
+
+void volume_range_get() {
+
+  volume_initAudio(1);
+  if (volume_no_device == 1) {
+    return;
+  }
+
+  if (snd_mixer_selem_get_playback_volume(volume_elem, SND_MIXER_SCHN_FRONT_LEFT, &volume_cur) < 0) {
+    volume_closeAudio();
+    volume_initAudio(1);
+    if (volume_no_device == 1) {
+      return;
+    }
+  };
+  if (snd_mixer_selem_get_playback_volume_range(volume_elem, &volume_min, &volume_max) < 0) {
+    volume_closeAudio();
+  }
+
+  return;
+}
+
+
+
+
+
+
 
 void volume_incrase() {
   size_t cmdSz = strlen("amixer -c 0 set PCM 2db+") + 1;
@@ -122,11 +348,4 @@ void volume_decrease() {
   snprintf(fullpath, cmdSz, "%s", "amixer -c 0 set PCM 2db-");
   // run_system_cmd(fullpath);
   free(fullpath);
-}
-
-double volume_logLinear(double x) {
- // printf("R: %f, P: %f\n", x, ((pow(10, ((x * .01) / 20)) * 1000) / 10));
-
-//  return ((pow(10, (x / 4500)) * 10) / 16);
-  return ((pow(10, ((x * .01) / 20)) * 1000) / 10);
 }

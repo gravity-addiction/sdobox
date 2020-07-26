@@ -16,7 +16,7 @@
 #include "gui/skydiveorbust/skydiveorbust.h"
 
 
-
+int pg_main_volume_move_debounce = 0;
 
 ////////////////
 // Button Callback
@@ -88,14 +88,16 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 // Volume Slider
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
-  gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
-  gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
-  // gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
-  //gslc_tsXSlider* pSlider = (gslc_tsXSlider*)(pElem->pXData);
-  m_nPosVolume = gslc_ElemXSliderGetPos(pGui, pElemRef);
-  long iVolume = m_nPosVolume;
-  volume_setVolume(iVolume);
-  guislice_wrapper_setVolumeDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
+    // Execute Slider Move
+    gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
+    gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
+    // gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
+    //gslc_tsXSlider* pSlider = (gslc_tsXSlider*)(pElem->pXData);
+    m_nPosVolume = gslc_ElemXSliderGetPos(pGui, pElemRef);
+
+    long iVolume = m_nPosVolume;
+    volume_setPercent(iVolume);
+    // guislice_wrapper_setVolumeDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
 
 
 /*
@@ -150,7 +152,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 
   // Define page enum (gui/pages.h)
   int ePage = E_PG_MAIN;
-
+  
   // Create Page in guislice
   gslc_PageAdd(pGui, ePage, m_asPgMainElem, MAX_ELEM_PG_MAIN, m_asPgMainElemRef, MAX_ELEM_PG_MAIN);
 
@@ -275,7 +277,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_mainEl[E_MAIN_EL_VOLUME] = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO, ePage, &m_sXSlider_Volume,
           (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 60), 210, 40},
-          0, 160, m_nPosVolume, 5, false)
+          0, 100, m_nPosVolume, 5, false)
   ) != NULL) {
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
     gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
@@ -369,6 +371,8 @@ void pg_main_init(gslc_tsGui *pGui) {
 void pg_main_open(gslc_tsGui *pGui) {
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
+
+  volume_range_get();
 }
 
 // GUI Thread

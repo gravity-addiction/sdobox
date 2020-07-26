@@ -13,6 +13,7 @@
 uint32_t guislice_wrapper_clockUpdate;
 uint32_t guislice_wrapper_volumeUpdate;
 long guislice_wrapper_volume;
+long guislice_wrapper_db;
 char* m_cPosVolume;
 char *timeStr;
 
@@ -126,29 +127,27 @@ void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int f
   }
 }
 
+
+
+
 void guislice_wrapper_setVolumeDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRefDisplay) {
-  if (guislice_wrapper_volume <= -10200) {
+  printf("WRP: %ld\n", guislice_wrapper_volume);
+  
+  if (guislice_wrapper_volume <= volume_min) {
     snprintf(m_cPosVolume, 32, "Volume: Mute");
   } else {
-    snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (guislice_wrapper_volume * .01));
+    snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (guislice_wrapper_db * .01));
   }
   gslc_ElemSetTxtStr(pGui, pElemRefDisplay, m_cPosVolume);
 }
 
 void guislice_wrapper_setVolume(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate) {
-  if (guislice_wrapper_mirroring() == 0 &&
-    (forceUpdate == 1 || millis() - guislice_wrapper_volumeUpdate > 200)
-  ) {
-    // Reset milli tracking var
-    if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
-      guislice_wrapper_volumeUpdate = millis();
-    }
-    if (volume_getVolume(&guislice_wrapper_volume)) {
-      int iVol = volume_logLinear(guislice_wrapper_volume);
-      gslc_ElemXSliderSetPos(pGui, pElemRef, iVol);
-    }
-  }
+  
 }
+
+
+
+
 
 void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate, gslc_tsElemRef *pElemRefDisplay) {
   if (guislice_wrapper_mirroring() == 0 &&
@@ -158,9 +157,11 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
     if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
       guislice_wrapper_volumeUpdate = millis();
     }
-    if (volume_getVolume(&guislice_wrapper_volume)) {
-
-      int nPos = volume_logLinear(guislice_wrapper_volume);
+    if (volume_getVolume(&guislice_wrapper_volume, &guislice_wrapper_db)) {
+      /*
+      // printf("Vol: %ld\n", guislice_wrapper_volume);
+      // int nPos = 100;
+      // int nPos = volume_logLinear(guislice_wrapper_volume);
 
       gslc_tsElem*      pElem = gslc_GetElemFromRef(pGui, pElemRef);
       gslc_tsXSlider*   pSlider = (gslc_tsXSlider*)(pElem->pXData);
@@ -178,7 +179,7 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
         // - Only need incremental redraw
         gslc_ElemSetRedraw(pGui,pElemRef,GSLC_REDRAW_INC);
       }
-
+*/
       guislice_wrapper_setVolumeDisplay(pGui, pElemRefDisplay);
     }
   }
