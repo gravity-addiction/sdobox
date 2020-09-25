@@ -17,13 +17,15 @@
   
 void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]) {
   for (int p = 0; p < whitelistPinsSize; p++) {
+    printf("Check Pin: %d\n", whitelistedPins[p]);
     pinCache[p] = digitalRead(whitelistedPins[p]);
   }
 }
 
 int lib_buttons_findGPIO(int i_timeout, int isleep) { // timeout in milliseconds to search, i_sleep wait between checks
-  const int whitelistPinsSize = 18;
-  const int whitelistedPins[] = { 2, 3, 4, 7, 8, 9, 15, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
+  const int whitelistPinsSize = 17;
+  // Removed 7 due to ups boards
+  const int whitelistedPins[] = { 2, 3, 4, 8, 9, 15, 16, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 };
   int pinLast[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
   int pinCache[] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
   int pinFound = -2; // -2 for nothing found, -1 will flag timeout

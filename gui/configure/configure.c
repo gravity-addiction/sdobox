@@ -190,7 +190,8 @@ void pg_configure_open(gslc_tsGui *pGui) {
     dbgprintf(DBG_DEBUG, "Rotary Knob Found! %d %d\n", rotaryA, rotaryB);
   }
 
-  lib_buttons_saveConfig("/home/pi/.config/touchapp/touchapp.conf", leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB);
+  mkdir("/home/pi/.config/sdobox", 0775);
+  lib_buttons_saveConfig("/home/pi/.config/sdobox/sdobox.conf", leftBtn, rightBtn, rotaryBtn, rotaryA, rotaryB);
 
 }
 

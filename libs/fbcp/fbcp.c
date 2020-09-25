@@ -94,7 +94,10 @@ int fbcp_alloc() {
   dbgprintf(DBG_INFO, "Primary display is %d x %d\n", fbcpData_display_info.width, fbcpData_display_info.height);
 
 
-  fbcpData_fbfd = open("/dev/fb1", O_RDWR);
+  fbcpData_fbfd = open("/dev/fb2", O_RDWR);
+  if (fbcpData_fbfd == -1) {
+    fbcpData_fbfd = open("/dev/fb1", O_RDWR);
+  }
   if (fbcpData_fbfd == -1) {
     dbgprintf(DBG_ERROR, "Unable to open secondary display\n");
     return 0;

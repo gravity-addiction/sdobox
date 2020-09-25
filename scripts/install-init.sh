@@ -112,14 +112,14 @@ wget -qO - http://sdobox.skydiveorbust.com/pubkey.txt | sudo apt-key add -
 sudo apt update
 sudo apt install sdobox
 
-mkdir -p ~/.config/touchapp
+mkdir -p ~/.config/sdobox
 echo 'rotary_pin_a = 24;
 rotary_pin_b = 25;
 rotary_pin_btn = 23;
 right_pin_btn = 22;
 left_pin_btn = 21;
 debounce_delay = 175;
-btn_hold_delay = 800;' | tee ~/.config/touchapp/touchapp.conf
+btn_hold_delay = 800;' | tee ~/.config/sdobox/sdobox.conf
 
 mkdir ~/shared
 

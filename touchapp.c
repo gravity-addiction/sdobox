@@ -19,7 +19,7 @@
 
 #include <curl/curl.h> // curl
 #include <wiringPi.h> // Gordons Wiring Pi, millis()
-#include <libconfig.h> // Config files ~/.config/touchapp/touchapp.conf
+#include <libconfig.h> // Config files /home/pi/.config/sdobox/sdobox.conf
 
 
 
@@ -41,6 +41,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
+#include "libs/avahi/avahi.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -49,9 +50,9 @@
 #define JSMN_HEADER
 #include "libs/jsmn/jsmn.h" // JSON Parsing
 
-char*    config_path = "/home/pi/.config/touchapp/touchapp.conf";
+char*    config_path = "/home/pi/.config/sdobox/sdobox.conf";
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
-int      m_startPage = 0; // Page Int to start
+int      m_startPage = 0; // Page Int to start, -1 for no page just buttons
 int      m_touchscreenInit = 0; // guislice init successful
 
 void signal_sigint(int sig);
@@ -83,7 +84,7 @@ void signal_sigint(int sig) { // can be called asynchronously
 // Application Configuration
 // ------------------------
 // Fetch Settings from config_path set in touchapp.h
-// default is ~/.config/touchapp/touchapp.conf
+// default is /home/pi/.config/sdobox/sdobox.conf
 void get_config_settings()
 {
   config_t cfg;
@@ -94,8 +95,7 @@ void get_config_settings()
   config_init(&cfg);
 
   // Read the file. If there is an error, report it and exit.
-  if(access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path))
-  {
+  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
     dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
     config_destroy(&cfg);
     return;
@@ -145,7 +145,7 @@ void get_config_settings()
     m_startPage = retInt;
   }
   // Sanity check page int
-  if (m_startPage < 0 || m_startPage >= MAX_PAGES) {
+  if (m_startPage < -1 || m_startPage >= MAX_PAGES) {
     m_startPage = 0;
   }
 
@@ -196,7 +196,6 @@ int main( int argc, char* args[] )
   // ------------------------------------------------
   // Main Quitter flag, 1 quits, 2 hurrys up quitting, and 3 quits rtfn
   m_bQuit = 0;
-  m_startPage = 0;
 
   // Debug printing support
   init_dbg();
@@ -326,21 +325,30 @@ int main( int argc, char* args[] )
   // InitGUI_AdvertGui(strPath);
   if (m_touchscreenInit) {
     // Setup TSLib Calibration
-    system("/opt/sdobox/scripts/xinput/set &");
-    touchscreenPageOpen(&m_gui, m_startPage);
-  
+    // system("/opt/sdobox/scripts/xinput/set &");
     gslc_SetTouchDisabled(&m_gui, false);
     gslc_SetScreenDisabled(&m_gui, false);
     gslc_PageRedrawSet(&m_gui, true);
-    system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
+    // system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
+  }
+
+  // Start Page, -1 for no page, buttons only
+  if (m_startPage > -1) {
+    system("/opt/sdobox/scripts/xinput/disable &");
+    touchscreenPageOpen(&m_gui, m_startPage);
+  } else {
+    system("/opt/sdobox/scripts/xinput/enable &");
+    fbcp_start();
   }
 
   // ------------------------------------------------
   // Main event loop
   // ------------------------------------------------
-  int m_bSleep = 1;
+  int m_bSleep = 1; // true to usleep when main loop has nothing left to do
   int m_tPageCur = touchscreenPageStackCur();
 
+  // avahi_main();
+  
   while (!m_bQuit) {
     if (cbThread[m_tPageCur] &&
         cbThread[m_tPageCur](&m_gui)

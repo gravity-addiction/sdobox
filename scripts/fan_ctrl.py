@@ -9,7 +9,7 @@ import time
 
 # Configuration
 # D2 Fan Pin
-FAN_PIN = 4
+FAN_PIN = 18
 
 WAIT_TIME = 15          # [s] Time to wait between each refresh
 FAN_MIN = 30            # [%] Fan minimum speed.

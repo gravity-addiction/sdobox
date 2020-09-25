@@ -17,7 +17,7 @@
 
 
 int pg_main_volume_move_debounce = 0;
-
+long pg_main_volume_current;
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_settings(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -310,12 +310,23 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 
 }
 
+void pg_mainUpdateVolume() {
+  long volDb, volMin, volMax;
+  volume_getVolumeRange("hw:0", "PCM", &volMin, &volMax);
+  if (volume_getVolume("hw:0", "PCM", &volDb)) {
+    volume_dbToPercent(volDb, volMin, volMax, &pg_main_volume_current);
+  }
+}
 
 void pg_mainButtonRotaryCW() {
-
+  pg_main_volume_current += 5;
+  if (pg_main_volume_current > 100) { pg_main_volume_current = 100; }
+  if (pg_main_volume_current < 0) { pg_main_volume_current = 0; }
+  volume_setPercent(pg_main_volume_current);
 }
 void pg_mainButtonRotaryCCW() {
-
+  pg_main_volume_current -= 5;
+  volume_setPercent(pg_main_volume_current);
 }
 void pg_mainButtonLeftPressed() {
 
@@ -366,6 +377,7 @@ void pg_main_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
+  pg_mainUpdateVolume();
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
 }
