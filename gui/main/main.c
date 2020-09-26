@@ -58,6 +58,14 @@ bool pg_main_cbBtn_vscode(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_
   return true;
 }
 
+bool pg_main_cbBtn_spotify(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  touchscreenPageOpen(pGui, E_PG_SPOTIFY);
+  return true;
+}
+
 bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
@@ -218,6 +226,20 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_VSCODE], false);
   }
 
+
+  // Spotify Button
+  if ((
+    pg_mainEl[E_MAIN_EL_BTN_SPOTIFY] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect){380, 75, 64, 64},
+            "", 0, E_FONT_MONO14, &pg_main_cbBtn_spotify)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_mainEl[E_MAIN_EL_BTN_SPOTIFY], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_BTN_SPOTIFY], GSLC_COL_WHITE, GSLC_COL_WHITE, GSLC_COL_WHITE);
+    gslc_ElemSetTxtAlign(pGui, pg_mainEl[E_MAIN_EL_BTN_SPOTIFY], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_mainEl[E_MAIN_EL_BTN_SPOTIFY], false);
+    gslc_ElemSetFrameEn(pGui, pg_mainEl[E_MAIN_EL_BTN_SPOTIFY], false);
+  }
+
   // Slideshow Button
   if ((
     pg_mainEl[E_MAIN_EL_BTN_SLIDESHOW] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -274,7 +296,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   if ((
     pg_mainEl[E_MAIN_EL_VOLUME] = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO, ePage, &m_sXSlider_Volume,
           (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 60), 210, 40},
-          0, 100, m_nPosVolume, 5, false)
+          0, 104, m_nPosVolume, 5, false)
   ) != NULL) {
     gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
     gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
@@ -319,23 +341,23 @@ void pg_mainUpdateVolume() {
 }
 
 void pg_mainButtonRotaryCW() {
-  pg_main_volume_current += 5;
-  if (pg_main_volume_current > 100) { pg_main_volume_current = 100; }
+  pg_main_volume_current += 2;
+  if (pg_main_volume_current > 104) { pg_main_volume_current = 104; }
   if (pg_main_volume_current < 0) { pg_main_volume_current = 0; }
   volume_setPercent(pg_main_volume_current);
 }
 void pg_mainButtonRotaryCCW() {
-  pg_main_volume_current -= 5;
+  pg_main_volume_current -= 2;
   volume_setPercent(pg_main_volume_current);
 }
 void pg_mainButtonLeftPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
 }
 void pg_mainButtonRightPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh next");
 }
 void pg_mainButtonRotaryPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
 }
 void pg_mainButtonLeftHeld() {
 

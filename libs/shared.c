@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <sys/kd.h>
 #include <assert.h>
+#include <time.h>
 
 #include "libs/shared.h"
 #define JSMN_HEADER
@@ -529,6 +530,31 @@ char * calculateSize(uint64_t size)
     return result;
 }
 
+void swapInts (int *a, int *b) 
+{ 
+  int temp = *a; 
+  *a = *b; 
+  *b = temp; 
+} 
+
+// Fisher yates tool to randomize arr[]
+void fisherYatesRandomize ( int arr[], int n ) 
+{ 
+  // Use a different seed value so that we don't get same 
+  // result each time we run this program 
+  srand ( time(NULL) ); 
+
+  // Start from the last element and swap one by one. We don't 
+  // need to run for the first element that's why i > 0 
+  for (int i = n-1; i > 0; i--) 
+  { 
+    // Pick a random index from 0 to i 
+    int j = rand() % (i+1); 
+
+    // Swap arr[i] with the element at random index 
+    swapInts(&arr[i], &arr[j]); 
+  } 
+} 
 /*
 //---------------------
 // System Commands

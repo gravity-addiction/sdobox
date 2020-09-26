@@ -8,9 +8,23 @@
 #include "libs/dbg/dbg.h"
 
 
-
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 200, "Hello World!");
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_spotify (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 200, "Confirmed!");
+
+  printf("State: %s\n", u_map_get(request->map_url, "state"));
+  char* code = u_map_get(request->map_url, "code");
+  printf("Code: %s\n", code);
+
+  char *fullpath = malloc(strlen("/opt/sdobox/scripts/spotify/register_device_code.sh ") + strlen(code) + 1);
+  sprintf(fullpath, "/opt/sdobox/scripts/spotify/register_device_code.sh %s", code);
+  system(fullpath);
+  free(fullpath);
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -44,7 +58,7 @@ PI_THREAD (websocketApiThread)
   // Add Headers
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
 
-  ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, 0, &callback_hello_world, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", "/H3xx92sk", NULL, 0, &callback_spotify, NULL);
   ulfius_set_default_endpoint(&instance, &websocket_cbDefault, NULL);
 
   // Start the framework

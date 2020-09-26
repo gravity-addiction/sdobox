@@ -30,6 +30,7 @@ extern "C" {
 #define IMG_SCREEN_BLANK         "/opt/sdobox/images/screen/blank.bmp"
 #define IMG_SCREEN_MAIN_1         "/opt/sdobox/images/screen/main.bmp"
 #define IMG_SCREEN_COOKBOOK       "/opt/sdobox/images/screen/cookbook.bmp"
+#define IMG_SCREEN_SPOTIFY       "/opt/sdobox/images/screen/spotify.bmp"
 #define IMG_SCREEN_SYSTEM       "/opt/sdobox/images/screen/system.bmp"
 
 // 64px X 64px images

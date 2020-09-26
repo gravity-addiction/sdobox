@@ -14,7 +14,6 @@ uint32_t guislice_wrapper_clockUpdate;
 uint32_t guislice_wrapper_volumeUpdate;
 long guislice_wrapper_volume;
 long guislice_wrapper_db;
-long guislice_wrapper_dbMin, guislice_wrapper_dbMax;
 char* m_cPosVolume;
 char *timeStr;
 
@@ -64,9 +63,9 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
 
   m_cPosVolume = (char*)calloc(32, sizeof(char));
 
-  // Fill volume ranges for alsa and pulseaudio
-  volume_getVolumeRange("hw:0", "PCM", &guislice_wrapper_dbMin, &guislice_wrapper_dbMax);
-  volume_getVolumeRange("default", "Master", &volume_min, &volume_max);
+  // Fill volume ranges for alsa
+  volume_getVolumeRange("hw:0", "PCM", &volume_min, &volume_max);
+  dbgprintf(DBG_INFO, "Volume Min: %d, Max: %d\n", volume_min, volume_max);
 
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
 
@@ -136,7 +135,7 @@ void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int f
 
 
 void guislice_wrapper_setVolumeDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRefDisplay) {
-  if (guislice_wrapper_db <= guislice_wrapper_dbMin) {
+  if (guislice_wrapper_db <= volume_min) {
     snprintf(m_cPosVolume, 32, "Volume: Mute");
   } else {
     snprintf(m_cPosVolume, 32, "Volume: %0.fdB", (guislice_wrapper_db * .01));
@@ -159,7 +158,7 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
     if (volume_getVolume("hw:0", "PCM", &guislice_wrapper_db)) {
       
       long volPercent = 0;
-      volume_dbToPercent(guislice_wrapper_db, guislice_wrapper_dbMin, guislice_wrapper_dbMax, &volPercent);
+      volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
 
       gslc_tsElem*      pElem = gslc_GetElemFromRef(pGui, pElemRef);
       gslc_tsXSlider*   pSlider = (gslc_tsXSlider*)(pElem->pXData);

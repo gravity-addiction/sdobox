@@ -12,16 +12,14 @@
 
 
 // Default audio server (default / Master when pulseaudio is available, hw:0 / PCM for db readings)
-char *audio_card = "default";
-char *audio_selem_name = "Master";
+char *audio_card = "hw:0";
+char *audio_selem_name = "PCM";
 snd_mixer_t *volume_audio_handle;
 snd_mixer_selem_id_t *volume_audio_sid;
 snd_mixer_elem_t* volume_elem;
 
 
 int volume_no_device = 0; // Lock audio handle when incorrect device is detected
-
-
 
 
 ///////////////////////
@@ -283,12 +281,17 @@ void volume_setPercent(long volPercent) {
     volPercent = 0;
   }
 
+  if (volPercent > 104) {
+    volPercent = 104;
+  }
 
-  double vP = (double)(volPercent * .01);
-  double vPd = ((volume_max - volume_min) * vP);
-  long volVal = vPd + volume_min;
+  long volLog = pow(48, log(104 - volPercent));
+  long volMax = pow(48, log(104));
+  double volP = ((double)volLog / (double)volMax);
+  double volE = (volume_max - volume_min);
+  long volValE = volume_max - volP * volE;
 
-  volume_setVolume(volVal);
+  volume_setVolume(volValE);
 }
 
 
