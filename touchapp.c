@@ -271,6 +271,7 @@ int main( int argc, char* args[] )
   // Initialize MPV library
   mpv_init();
   libMpvSocketThreadStart();
+  libMpvQueueThreadStart();
 
 
 

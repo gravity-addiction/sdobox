@@ -25,15 +25,23 @@ struct libMpvEventThreadData {
   void (*cb)(char*);
 };
 
+int libMpvQueueThreadKill;
+int libMpvQueueThreadRunning;
+
 int libMpvSocketThreadKill;
 int libMpvSocketThreadRunning;
 
+struct queue_root *libMpvEvents_Queue;
+size_t libMpvEvents_QueueLen;
 
 struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA();
 void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventThreadCbData *threads);
 void libMpvCallbackClean(struct libMpvEventThreadCbData *threads);
 void* libMpvCallbackFunc(void* targ);
 int libMpvCallbackAppend(void (*function)(char*));
+
+int libMpvQueueThreadStart();
+void libMpvQueueThreadStop();
 
 int libMpvSocketThreadStart();
 void libMpvSocketThreadStop();

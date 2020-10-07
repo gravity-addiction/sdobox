@@ -12,6 +12,7 @@
 
 // #include <mpv/client.h>
 #include "libs/shared.h"
+#include "mpv_events.h"
 #include "mpv.h"
 
 #include "libs/dbg/dbg.h"
@@ -315,6 +316,12 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
                     goto cleanup;
                     // every other response
                 } else {
+                    struct queue_head *item = new_qhead();
+                    item->action = 0;
+                    item->data = strdup(mpv_rpc_ret);
+                    queue_put(item, libMpvEvents_Queue, &libMpvEvents_QueueLen);
+                    // events that happen while we are waiting for our return data
+                    // these events need to be sent to a mpv event queue for processing
                     dbgprintf(DBG_MPV_READ, "mpvread - ignoring: '%s'\n", mpv_rpc_ret);
                     free(mpv_rpc_ret);
                     // ...and try again
@@ -415,10 +422,10 @@ int mpv_playpause_toggle() {
     }
   } else */
   if (m_is_video_playing) {
-    dbgprintf(DBG_INFO, "E\n");
+    // dbgprintf(DBG_INFO, "E\n");
     return mpv_pause();
   } else {
-    dbgprintf(DBG_INFO, "F\n");
+    // dbgprintf(DBG_INFO, "F\n");
     return mpv_play();
   }
 }

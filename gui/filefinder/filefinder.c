@@ -36,7 +36,7 @@ bool pg_fileFinder_list_check() {
 void pg_fileFinder_slideshow_open(gslc_tsGui *pGui, char* path, char* file) {
   // touchscreenPageOpen(pGui, E_PG_SLIDESHOW);
 
-  libMpvSocketThreadStart();
+  // libMpvSocketThreadStart();
 
   char* fileExt = file_ext(file);
   size_t cmdSz = snprintf(NULL, 0, "loadlist \"%s/%s\" replace\n", path, file) + 1;

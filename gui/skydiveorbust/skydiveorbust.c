@@ -2523,11 +2523,11 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   pg_skydiveorbustButtonSetFuncs();
   ////////////////////////////
   // Start SDOB Thread
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  pg_sdobMpvTimeposThreadStart();
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
-  pg_sdobMpvSocketThreadStart();
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
+  // pg_sdobMpvTimeposThreadStart();
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
+  // pg_sdobMpvSocketThreadStart();
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
   //-/ pg_sdobThreadStart();
 
   // Reset Scorecard Slider to Top
@@ -2544,12 +2544,12 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 void pg_skydiveorbust_close(gslc_tsGui *pGui) {
   ////////////////////////////
   // Stop SDOB Thread
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
   //-/ pg_sdobThreadStop();
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
-  pg_sdobMpvSocketThreadStop();
-  dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  pg_sdobMpvTimeposThreadStop();
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV Socket Thread");
+  // pg_sdobMpvSocketThreadStop();
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
+  // pg_sdobMpvTimeposThreadStop();
 
   mpv_stop();
   fbcp_stop();
