@@ -170,3 +170,9 @@ SystemCtl dev
 sudo apt install libsystemd-dev
 
 ```
+
+
+Change FONTS DPI
+```
+xfconf-query -c xsettings -p /Xft/DPI -s 96
+```
