@@ -23,18 +23,10 @@ enum {
 #define MAX_ELEM_PG_DUBBING      E_DUBBING_EL_MAX
 #define MAX_ELEM_PG_DUBBING_RAM  MAX_ELEM_PG_DUBBING
 
-
 gslc_tsElem pg_dubbingElem[MAX_ELEM_PG_DUBBING];
 gslc_tsElemRef pg_dubbingElemRef[MAX_ELEM_PG_DUBBING_RAM];
 
 gslc_tsElemRef* pg_dubbingEl[E_DUBBING_EL_MAX];
-
-int pg_dubbingSocketThreadKill;
-int pg_dubbingSocketThreadRunning;
-
-int pg_dubbing_fd;
-int pg_dubbing_buf_size;
-char* pg_dubbing_socket_path;
 
 double pg_dubbing_videoSlate;
 double pg_dubbing_videoExit;

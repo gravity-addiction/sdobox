@@ -19,6 +19,7 @@
 #include "libs/mpv/mpv_events.h"
 #include "gui/pages.h"
 #include "libs/fbcp/fbcp.h"
+#include "libs/sdob-socket/sdob-socket.h"
 
 
 void pg_dubbing_setSlateTime() {
@@ -27,6 +28,10 @@ void pg_dubbing_setSlateTime() {
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
     pg_dubbing_videoSlate = atof(retTimePos);
     dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
+    struct queue_head *item = new_qhead();
+    item->data = strdup(retTimePos);
+    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
+
     free(retTimePos);
   }
 }
@@ -37,6 +42,9 @@ void pg_dubbing_setExitTime() {
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
     pg_dubbing_videoExit = atof(retTimePos);
     dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
+    struct queue_head *item = new_qhead();
+    item->data = strdup(retTimePos);
+    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
     free(retTimePos);
 
   }
@@ -209,155 +217,9 @@ void pg_dubbingButtonUnsetFuncs() {
 }
 
 
-
-
-
-// ------------------------
-// MPV Socket Thread
-// ------------------------
-PI_THREAD (pg_dubbingSocketThread)
-{
-  if (pg_dubbingSocketThreadRunning) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting Dubbing Event Thread, Already Started");
-    return NULL;
-  }
-  pg_dubbingSocketThreadRunning = 1;
-
-  if (pg_dubbingSocketThreadKill) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting Dubbing Event Thread, Stop Flag Set");
-    pg_dubbingSocketThreadRunning = 0;
-    return NULL;
-  }
-
-  dbgprintf(DBG_DEBUG, "%s\n", "Starting Dubbing Event Thread");
-
-  struct sockaddr_un svaddr, claddr;
-  ssize_t numBytes;
-  socklen_t len;
-  char pg_dubbing_buf[pg_dubbing_buf_size];
-
-  pg_dubbing_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-  if (pg_dubbing_fd == -1) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Dubbing Socket Error");
-    pg_dubbingSocketThreadKill = 1;
-  }
-
-  if (strlen(pg_dubbing_socket_path) > sizeof(svaddr.sun_path)-1) {
-    dbgprintf(DBG_DEBUG, "Dubbing Socket path to long must be %d chars\n", sizeof(svaddr.sun_path-1));
-    pg_dubbingSocketThreadKill = 1;
-  }
-
-  if(remove(pg_dubbing_socket_path) == -1 && errno != ENOENT) {
-    dbgprintf(DBG_DEBUG, "Error removing socket: %d\n", errno);
-    pg_dubbingSocketThreadKill = 1;
-  }
-  
-  setnonblock(pg_dubbing_fd);
-
-  memset(&svaddr, 0, sizeof(struct sockaddr_un));
-  svaddr.sun_family = AF_UNIX;
-  if (*pg_dubbing_socket_path == '\0') {
-    *svaddr.sun_path = '\0';
-    strncpy(svaddr.sun_path+1, pg_dubbing_socket_path+1, sizeof(svaddr.sun_path)-2);
-  } else {
-    strncpy(svaddr.sun_path, pg_dubbing_socket_path, sizeof(svaddr.sun_path)-1);
-  }
-
-  if (bind(pg_dubbing_fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1) {
-    // MPV Connect Error
-    dbgprintf(DBG_DEBUG, "%s\n", "Dubbing Socket Connect Error");
-    pg_dubbingSocketThreadKill = 1;
-  }
-
-  // Grab MPV Events, sent in JSON format
-  while(!pg_dubbingSocketThreadKill) {
-    if (!fd_is_valid(pg_dubbing_fd)) {
-      // printf("FD Re-Connect: %d, %d\n", pg_dubbing_fd_timer, millis());
-      // try closing fd
-      if (pg_dubbing_fd) { close(pg_dubbing_fd); }
-      // reconnect fd
-      if (bind(pg_dubbing_fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1) {
-        // MPV Connect Error
-        dbgprintf(DBG_DEBUG, "%s\n", "Dubbing Socket ReConnect Error");
-        pg_dubbingSocketThreadKill = 1;
-      }
-    }
-
-
-    // Grab Next Socket Line
-    len = sizeof(struct sockaddr_un);
-    numBytes = recvfrom(pg_dubbing_fd, pg_dubbing_buf, pg_dubbing_buf_size, 0, (struct sockaddr*) &claddr, &len);
-    if (numBytes > 0) {
-      dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
-      dbgprintf(DBG_DEBUG, "%s\n", pg_dubbing_buf);
-
-      char* dubbing_event;
-      char* dubbing_filename;
-      int dubbing_event_len = ta_json_parse(pg_dubbing_buf, "event", &dubbing_event);
-      int dubbing_filename_len = ta_json_parse(pg_dubbing_buf, "filename", &dubbing_filename);
-      CLEAR(pg_dubbing_buf, pg_dubbing_buf_size);
-
-      dbgprintf(DBG_DEBUG, "Event: %s\n", dubbing_event);
-      dbgprintf(DBG_DEBUG, "Filename: %s\n", dubbing_filename);
-
-//      // Do stuff with datagram
-//      char delim[] = " ";
-//      char *cAction = strtok(pg_dubbing_buf, delim);
-//      char *cData = strtok(NULL, delim);
-
-//      dbgprintf(DBG_DEBUG, "Action: %s\n", cAction);
-//      dbgprintf(DBG_DEBUG, "Data: %s\n", cData);
-      // cleanup
-      if (dubbing_event_len) { CLEAR(dubbing_event, dubbing_event_len); }
-      if (dubbing_filename_len) { CLEAR(dubbing_filename, dubbing_filename_len); }
-      
-      usleep(100);
-    } else {
-      usleep(200000);
-    }
-
-  }
-  // close
-
-  dbgprintf(DBG_DEBUG, "%s\n", "Closing Dubbing RPC");
-  pg_dubbingSocketThreadRunning = 0;
-  return NULL;
-}
-
-
-int pg_dubbingSocketThreadStart() {
-  dbgprintf(DBG_DEBUG, "%s\n", "pg_dubbingSocketThreadStart()");
-  if (pg_dubbingSocketThreadRunning) { return 0; }
-
-  dbgprintf(DBG_DEBUG, "SkydiveOrBust Dubbing Socket Thread Spinup: %d\n", pg_dubbingSocketThreadRunning);
-  pg_dubbingSocketThreadKill = 0;
-  return piThreadCreate(pg_dubbingSocketThread);
-}
-
-void pg_dubbingSocketThreadStop() {
-  dbgprintf(DBG_DEBUG, "%s\n", "pg_dubbingSocketThreadStop()");
-  // Shutdown MPV Socket Thread
-  if (pg_dubbingSocketThreadRunning) {
-    pg_dubbingSocketThreadKill = 1;
-    int shutdown_cnt = 0;
-    while (pg_dubbingSocketThreadRunning && shutdown_cnt < 20) {
-      usleep(100000);
-      shutdown_cnt++;
-    }
-    dbgprintf(DBG_DEBUG, "SkydiveOrBust Dubbing Socket Thread Shutdown %d\n", shutdown_cnt);
-  }
-}
-
-
-
 // GUI Init
 void pg_dubbing_init(gslc_tsGui *pGui) {
-  pg_dubbing_socket_path = "/tmp/dubbing.socket";
-  pg_dubbing_buf_size = 256;
   pg_dubbingGuiInit(pGui);
-
-  pg_dubbingSocketThreadKill = 0; // Stopping SDOB Thread
-  pg_dubbingSocketThreadRunning = 0; // Running flag for SDOB Thread
 
   cbInit[E_PG_DUBBING] = NULL;
 }
@@ -367,17 +229,12 @@ void pg_dubbing_init(gslc_tsGui *pGui) {
 void pg_dubbing_open(gslc_tsGui *pGui) {
 
   pg_dubbingButtonSetFuncs();
-
-  dbgprintf(DBG_DEBUG, "%s\n", "Page Dubbing Starting Socket Thread");
-  pg_dubbingSocketThreadStart();
 }
 
 
 void pg_dubbing_close(gslc_tsGui *pGui) {
 
   dbgprintf(DBG_DEBUG, "%s\n", "Page Dubbing Stopping Socket Thread");
-  pg_dubbingSocketThreadStop();
-
 }
 
 int pg_dubbing_thread(gslc_tsGui *pGui) {

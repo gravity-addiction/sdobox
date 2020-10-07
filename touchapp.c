@@ -42,6 +42,7 @@
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
 #include "libs/avahi/avahi.h"
+#include "libs/sdob-socket/sdob-socket.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -273,7 +274,7 @@ int main( int argc, char* args[] )
   libMpvSocketThreadStart();
   libMpvQueueThreadStart();
 
-
+  libSdobSocketThreadStart();
 
   // InitGUI_Keyboard(&m_gui, strPath);
   // InitGUI_Wifi(&m_gui, strPath);
@@ -391,6 +392,9 @@ int main( int argc, char* args[] )
   // Kill MPV
   mpv_stop();
   libMpvSocketThreadStop();
+
+  // Kill SDOB Socket
+  libSdobSocketThreadStop();
 
   if (m_touchscreenInit) {
     // Quit GUIslice

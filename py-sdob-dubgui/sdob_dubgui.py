@@ -2,10 +2,23 @@
 from guizero import App, Combo, PushButton, Text
 from screeninfo import get_monitors
 from python_mpv_jsonipc import MPV
+from threading import Thread
 import socket
 import os
 import time
 os.environ["DISPLAY"] = ":0.0"
+
+sdobSocketKiller = 1
+def thread_sdobSocket():
+    global sdobSocketKiller
+    global csock
+    print('Start Thread Socket')
+    while sdobSocketKiller:
+        (bytes, address) = csock.recvfrom(1024)
+        msg = bytes.decode('utf-8')
+        print('address:', address, 'recv', msg)
+    print('Stop Thread Socket')
+
 
 def globalClicked():
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
@@ -146,8 +159,8 @@ def evStartFile_handler(evData):
 def evStartFile_handler(evData):
     setattr(dataSet, "playing", "0")
 
-ssock_file = '/tmp/dubbing.socket';
-csock_file = '/tmp/client_sock_py';
+ssock_file = '/tmp/sdobox.socket';
+csock_file = '/tmp/sdobox.dubgui.socket';
 
 if os.path.exists(csock_file):
     os.remove(csock_file)
@@ -155,10 +168,15 @@ if os.path.exists(csock_file):
 csock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 csock.bind(csock_file)
 
-
+sdobThread = Thread(target = thread_sdobSocket)
+sdobThread.setDaemon(True)
+sdobThread.start()
 
 app.when_clicked = globalClicked
 app.display()
+
+sdobSocketKiller = 0;
+
 try:
     mpv_player.terminate()
 except:
@@ -171,3 +189,5 @@ except:
 
 if os.path.exists(csock_file):
     os.remove(csock_file)
+
+sdobThread.join()
