@@ -327,7 +327,7 @@ int main( int argc, char* args[] )
   // InitGUI_AdvertGui(strPath);
   if (m_touchscreenInit) {
     // Setup TSLib Calibration
-    // system("/opt/sdobox/scripts/xinput/set &");
+    system("DISPLAY=:0.0 /opt/sdobox/scripts/xinput/set &");
     gslc_SetTouchDisabled(&m_gui, false);
     gslc_SetScreenDisabled(&m_gui, false);
     gslc_PageRedrawSet(&m_gui, true);
