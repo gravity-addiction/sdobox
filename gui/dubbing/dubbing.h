@@ -12,6 +12,10 @@ extern "C" {
 // GUI Page
 enum {
   E_DUBBING_EL_CLOSE,
+  E_DUBBING_EL_SETSLATE,
+  E_DUBBING_EL_STOPVIDEO,
+  E_DUBBING_EL_SETEXIT,
+  E_DUBBING_EL_PLAYPAUSEVIDEO,
   
   E_DUBBING_EL_MAX
 };
@@ -32,6 +36,8 @@ int pg_dubbing_fd;
 int pg_dubbing_buf_size;
 char* pg_dubbing_socket_path;
 
+double pg_dubbing_videoSlate;
+double pg_dubbing_videoExit;
 
 void pg_dubbingButtonRotaryCW();
 void pg_dubbingButtonRotaryCCW();

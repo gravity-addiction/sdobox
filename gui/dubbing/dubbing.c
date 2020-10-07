@@ -21,11 +21,62 @@
 #include "libs/fbcp/fbcp.h"
 
 
+void pg_dubbing_setSlateTime() {
+  char* retTimePos;
+
+  if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+    pg_dubbing_videoSlate = atof(retTimePos);
+    dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
+    free(retTimePos);
+  }
+}
+
+void pg_dubbing_setExitTime() {
+  char* retTimePos;
+
+  if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+    pg_dubbing_videoExit = atof(retTimePos);
+    dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
+    free(retTimePos);
+
+  }
+}
+
 bool pg_dubbing_cbBtn_close(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageGoBack(pGui);
+  return true;
+}
+
+bool pg_dubbing_cbBtn_stopVideo(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  
+  mpv_stop();
+  return true;
+}
+
+bool pg_dubbing_cbBtn_playPauseVideo(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  
+  mpv_playpause_toggle();
+  return true;
+}
+
+bool pg_dubbing_cbBtn_setExit(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  return true;
+}
+
+bool pg_dubbing_cbBtn_setSlate(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
   return true;
 }
 
@@ -44,9 +95,57 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
                pg_dubbingElemRef, MAX_ELEM_PG_DUBBING);
 
 
+  // Set Slate
+  pg_dubbingEl[E_DUBBING_EL_SETSLATE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {0,0,110,110},
+          "Set Slate", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_setSlate);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETSLATE], true);
+
+  // Set Exit
+  pg_dubbingEl[E_DUBBING_EL_SETEXIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {370,0,110,110},
+          "Set Exit", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_setExit);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_SETEXIT], true);
+
+
+  // Stop Video
+  pg_dubbingEl[E_DUBBING_EL_STOPVIDEO] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {0,210,110,110},
+          "Stop Video", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_stopVideo);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_STOPVIDEO], true);
+
+
+  // Play / Pause Video
+  pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {150,210,110,110},
+          "Play / Pause", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_playPauseVideo);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], true);
+
+
+
   // Close Key
   pg_dubbingEl[E_DUBBING_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-          (gslc_tsRect) {370,270,110,50},
+          (gslc_tsRect) {420,270,60,50},
           "Close", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_close);
   gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], GSLC_COL_WHITE);
   gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
@@ -54,27 +153,30 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], false);
   gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], false);
   gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], true);
+
+
+
 }
 
 void pg_dubbingButtonRotaryCW() {
-    mpv_seek(5);
+  mpv_seek(2);
 }
 
 void pg_dubbingButtonRotaryCCW() {
-   mpv_seek(-5);
+  mpv_seek(-2);
 }
 
 
 void pg_dubbingButtonLeftPressed() {
-  mpv_stop();
+  pg_dubbing_setSlateTime();
 }
 
 void pg_dubbingButtonRightPressed() {
-
+  pg_dubbing_setExitTime();
 }
 
 void pg_dubbingButtonRotaryPressed() {
-
+  mpv_playpause_toggle();
 }
 
 void pg_dubbingButtonLeftHeld() {
@@ -130,10 +232,9 @@ PI_THREAD (pg_dubbingSocketThread)
   dbgprintf(DBG_DEBUG, "%s\n", "Starting Dubbing Event Thread");
 
   struct sockaddr_un svaddr, claddr;
-  int j;
   ssize_t numBytes;
   socklen_t len;
-  char buf[pg_dubbing_buf_size];
+  char pg_dubbing_buf[pg_dubbing_buf_size];
 
   pg_dubbing_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (pg_dubbing_fd == -1) {
@@ -185,28 +286,39 @@ PI_THREAD (pg_dubbingSocketThread)
 
     // Grab Next Socket Line
     len = sizeof(struct sockaddr_un);
-    numBytes = recvfrom(pg_dubbing_fd, buf, pg_dubbing_buf_size, 0, (struct sockaddr*) &claddr, &len);
+    numBytes = recvfrom(pg_dubbing_fd, pg_dubbing_buf, pg_dubbing_buf_size, 0, (struct sockaddr*) &claddr, &len);
     if (numBytes > 0) {
       dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
-      dbgprintf(DBG_DEBUG, "%s\n", buf);
+      dbgprintf(DBG_DEBUG, "%s\n", pg_dubbing_buf);
 
-      // for (j = 0; j < numBytes; j++) {
-      //   buf[j] = toupper((unsigned char) buf[j]);
-      // }
+      char* dubbing_event;
+      char* dubbing_filename;
+      int dubbing_event_len = ta_json_parse(pg_dubbing_buf, "event", &dubbing_event);
+      int dubbing_filename_len = ta_json_parse(pg_dubbing_buf, "filename", &dubbing_filename);
+      CLEAR(pg_dubbing_buf, pg_dubbing_buf_size);
 
-      // j = sendto(pg_dubbing_fd, buf, numBytes, 0, (struct sockaddr*) &claddr, len);
-      // if (j != numBytes) {
-      //   dbgprintf(DBG_DEBUG, "%s\n", "Error Sending: %s", strerror(errno));
-      // }
+      dbgprintf(DBG_DEBUG, "Event: %s\n", dubbing_event);
+      dbgprintf(DBG_DEBUG, "Filename: %s\n", dubbing_filename);
+
+//      // Do stuff with datagram
+//      char delim[] = " ";
+//      char *cAction = strtok(pg_dubbing_buf, delim);
+//      char *cData = strtok(NULL, delim);
+
+//      dbgprintf(DBG_DEBUG, "Action: %s\n", cAction);
+//      dbgprintf(DBG_DEBUG, "Data: %s\n", cData);
+      // cleanup
+      if (dubbing_event_len) { CLEAR(dubbing_event, dubbing_event_len); }
+      if (dubbing_filename_len) { CLEAR(dubbing_filename, dubbing_filename_len); }
+      
       usleep(100);
     } else {
       usleep(200000);
     }
 
-
-    
   }
   // close
+
   dbgprintf(DBG_DEBUG, "%s\n", "Closing Dubbing RPC");
   pg_dubbingSocketThreadRunning = 0;
   return NULL;
@@ -268,6 +380,10 @@ void pg_dubbing_close(gslc_tsGui *pGui) {
 
 }
 
+int pg_dubbing_thread(gslc_tsGui *pGui) {
+  return 0;
+}
+
 // GUI Destroy
 void pg_dubbing_destroy(gslc_tsGui *pGui) {
 
@@ -278,7 +394,7 @@ void __attribute__ ((constructor)) pg_dubbing_constructor(void) {
   cbOpen[E_PG_DUBBING] = &pg_dubbing_open;
   cbClose[E_PG_DUBBING] = &pg_dubbing_close;
   // cbThread[E_PG_DUBBING] = &pg_dubbing_thread;
-  // cbDestroy[E_PG_DUBBING] = &pg_dubbing_destroy;
+  cbDestroy[E_PG_DUBBING] = &pg_dubbing_destroy;
   // pg_dubbingQueue = ALLOC_QUEUE_ROOT();
 }
 
