@@ -407,7 +407,7 @@ export LIBRARY_PATH=/opt/vc/lib
 export PKG_CONFIG_PATH=/opt/vc/lib/pkgconfig
 export CPATH=/opt/vc/include
 
-./waf configure --prefix=/usr --enable-rpi --enable-cdda --enable-dvdnav --enable-libbluray
+./waf configure --prefix=/usr --enable-rpi --enable-cdda --enable-dvdnav --enable-libbluray --enable-libmpv-shared
 
 
 echo; echo; echo
