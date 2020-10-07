@@ -28,11 +28,10 @@ void pg_dubbing_setSlateTime() {
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
     pg_dubbing_videoSlate = atof(retTimePos);
     dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
-    struct queue_head *item = new_qhead();
-    item->data = strdup(retTimePos);
-    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
 
-    free(retTimePos);
+    struct queue_head *item = new_qhead();
+    item->data = retTimePos;
+    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
   }
 }
 
@@ -42,11 +41,10 @@ void pg_dubbing_setExitTime() {
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
     pg_dubbing_videoExit = atof(retTimePos);
     dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
-    struct queue_head *item = new_qhead();
-    item->data = strdup(retTimePos);
-    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
-    free(retTimePos);
 
+    struct queue_head *item = new_qhead();
+    item->data = retTimePos;
+    queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
   }
 }
 

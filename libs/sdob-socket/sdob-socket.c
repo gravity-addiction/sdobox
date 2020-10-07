@@ -51,7 +51,7 @@ PI_THREAD (libSdobSocketThread)
   }
 
   if (strlen(libSdobSocket_socket_path) > sizeof(svaddr.sun_path)-1) {
-    dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket path to long must be %d chars\n", sizeof(svaddr.sun_path-1));
+    dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket path to long must be %d chars\n", sizeof(svaddr.sun_path)-1);
     libSdobSocketThreadKill = 1;
   }
 
@@ -125,12 +125,16 @@ PI_THREAD (libSdobSocketThread)
       // Try to Write Something
       struct queue_head *item = queue_get(libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
       if (item) {
-        int jfd = sendto(libSdobSocket_fd, (char*) item->data, strlen((char*) item->data), 0, (struct sockaddr*) &claddr, len);
-        if (jfd != strlen((char*) item->data)) {
-          dbgprintf(DBG_DEBUG, "Error sendto sdobox.socket %s\n", strerror(errno));
+        if (item->data != NULL) {
+          int jfd = sendto(libSdobSocket_fd, (char*) item->data, strlen((char*) item->data), 0, (struct sockaddr*) &claddr, len);
+          if (jfd != strlen((char*) item->data)) {
+            dbgprintf(DBG_DEBUG, "Error sendto sdobox.socket %s\n", strerror(errno));
+          }
+          dbgprintf(DBG_DEBUG, "%s\n", "FREE THE DATA");
+          free(item->data);
         }
+        free(item);
       }
-      free(item);
       pthread_mutex_unlock(&libSdobSocketWriteLock);
       usleep(100);
     } else {

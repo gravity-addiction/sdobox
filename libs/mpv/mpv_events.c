@@ -110,6 +110,7 @@ PI_THREAD (libMpvQueueThread)
           break;
         }
       }
+      if (item->data != NULL) { free(item->data); }
       free(item);
 
       usleep(100);
