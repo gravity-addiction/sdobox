@@ -91,7 +91,7 @@ void touchscreenPageClose(gslc_tsGui *pGui, int ePage) {
 void touchscreenPageDestroy(gslc_tsGui *pGui, int ePage) {
   if (ePage < 0) { return; }
 
-  if (touchscreenPageStackCur() == ePage) {
+  if (m_bQuit == 0 && touchscreenPageStackCur() == ePage) {
     touchscreenPageGoBack(pGui);
   }
   if (cbInit[ePage] == NULL && cbDestroy[ePage]) {
