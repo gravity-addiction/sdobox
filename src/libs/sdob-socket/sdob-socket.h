@@ -12,9 +12,6 @@ int libSdobSocket_fd;
 int libSdobSocket_buf_size;
 char* libSdobSocket_socket_path;
 
-struct queue_root *libSdobSocket_Queue;
-size_t libSdobSocket_QueueLen;
-
 struct queue_root *libSdobSocket_WriteQueue;
 size_t libSdobSocket_WriteQueueLen;
 

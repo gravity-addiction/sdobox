@@ -10,6 +10,8 @@ while getopts ":ia" opt; do
     esac
 done
 
+cd ..
+
 git submodule init
 git submodule update
 
@@ -20,10 +22,8 @@ if [ ! -z $makeonly ]; then
 fi
 
 make clean && make -j4
-cp build/libSDL* ../libs/SDL/
-cp build/.libs/libSDL*.a ../libs/SDL/
-
-
+cp build/libSDL* ../src/libs/SDL/
+cp build/.libs/libSDL*.a ../src/libs/SDL/
 
 if [ ! -z $init ]; then
 #  sudo make install
@@ -38,5 +38,3 @@ else
     sudo make install
   fi
 fi
-
-cd ..

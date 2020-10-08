@@ -98,6 +98,12 @@ PI_THREAD (libSdobSocketThread)
       dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
       dbgprintf(DBG_DEBUG, "%s\n", libSdobSocket_buf);
 
+      char* dubbing_event;
+      int sdobox_event_len = ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
+      if (sdobox_event_len > 0) {
+        printf("Got Event! %s\n", dubbing_event);
+      }
+      free(dubbing_event);
 /*
       char* dubbing_event;
       char* dubbing_filename;
@@ -119,7 +125,9 @@ PI_THREAD (libSdobSocketThread)
       if (dubbing_event_len) { CLEAR(dubbing_event, dubbing_event_len); }
       if (dubbing_filename_len) { CLEAR(dubbing_filename, dubbing_filename_len); }
 */
+      
       usleep(100);
+      CLEAR(libSdobSocket_buf, libSdobSocket_buf_size);
     } else if (libSdobSocket_WriteQueueLen > 0) {
       pthread_mutex_lock(&libSdobSocketWriteLock);
       // Try to Write Something
@@ -157,9 +165,6 @@ int libSdobSocketThreadStart() {
   libSdobSocket_socket_path = "/tmp/sdobox.socket";
   libSdobSocket_buf_size = 512;
 
-  libSdobSocket_Queue = ALLOC_QUEUE_ROOT();
-  libSdobSocket_QueueLen = 0;
-
   libSdobSocket_WriteQueue = ALLOC_QUEUE_ROOT();
   libSdobSocket_WriteQueueLen = 0;
 
@@ -180,9 +185,6 @@ void libSdobSocketThreadStop() {
     }
     dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket Thread Shutdown %d\n", shutdown_cnt);
   }
-
-  free(libSdobSocket_Queue);
-  libSdobSocket_QueueLen = 0;
 
   free(libSdobSocket_WriteQueue);
   libSdobSocket_WriteQueueLen = 0;

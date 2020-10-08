@@ -1,7 +1,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "GUIslice/src/GUIslice.h"
+#include "GUIslice.h"
 #include "GUIslice-wrapper.h"
 #include "gui/keyboard/keyboard.h"
 #include "libs/audio/audio.h"

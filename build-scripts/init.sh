@@ -92,15 +92,15 @@ then
       echo "gpio=$fan_equip=op,dh"| sudo tee -a /boot/config.txt
     fi
 
-    sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" scripts/fan_ctrl.py
-    sudo cp scripts/fan_ctrl.py /opt/sdobox/
+    sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" ../scripts/fan_ctrl.py
+    sudo cp ../scripts/fan_ctrl.py /opt/sdobox/
 
     if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
-      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo cp ../scripts/systemctl/fanctrl.service /lib/systemd/system/
       sudo systemctl enable fanctrl.service
       sudo systemctl start fanctrl.service
     else
-      sudo cp scripts/systemctl/fanctrl.service /lib/systemd/system/
+      sudo cp ../scripts/systemctl/fanctrl.service /lib/systemd/system/
       sudo systemctl daemon-reload
       sudo systemctl restart fanctrl.service
     fi
@@ -108,16 +108,19 @@ then
 fi
 
 
+cd ..
+
 # Init Submodules
 git submodule init
 git submodule update
-
 
 # Copy around files
 sudo mkdir -p /opt/sdobox
 sudo cp -R images /opt/sdobox/
 sudo cp -R scripts /opt/sdobox/
 sudo cp scripts/overlays/* /boot/overlays/
+
+cd "$(dirname "$0")"
 
 
 # Fixup cmdline.txt
@@ -224,7 +227,7 @@ sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
 
 # Activate Startup Idle process for MPV
 if [ ! -f "/lib/systemd/system/mpv.service" ]; then
-  sudo cp scripts/systemctl/mpv.service /lib/systemd/system/
+  sudo cp ../scripts/systemctl/mpv.service /lib/systemd/system/
   sudo systemctl enable mpv.service
   sudo systemctl start mpv.service
 else
@@ -239,12 +242,12 @@ fi
 ./sdobox.sh -a
 
 ## Install to system
-sudo cp touchapp /usr/local/bin/sdobox
-sudo chmod +x /usr/local/bin/sdobox
+sudo ln -s /opt/sdobox/bin/sdobox /usr/local/bin/sdobox
+# sudo chmod +x /usr/local/bin/sdobox
 
 # Activate Startup Idle process for SDOBOX
 if [ ! -f "/lib/systemd/system/sdobox.service" ]; then
-  sudo cp scripts/systemctl/sdobox.service /lib/systemd/system/
+  sudo cp ../scripts/systemctl/sdobox.service /lib/systemd/system/
   sudo systemctl enable sdobox.service
   sudo systemctl start sdobox.service
 else
