@@ -8,8 +8,8 @@ TLEN=$(( ( RANDOM % (128 - 43) )  + 43 ))
 RCODE=$(cat /dev/urandom | tr -dc 'a-z0-9-_~.' | fold -w "${TLEN}" | head -n 1)
 
 # Save Code to Tmp File
-echo "${RCODE}" > /tmp/spotify.code
-CODE=$(cat /tmp/spotify.code)
+echo "${RCODE}" > /opt/sdobox/tmp/spotify.code
+CODE=$(cat /opt/sdobox/tmp/spotify.code)
 
 # Make Auth URL
 URLCODE=$(echo -n "${CODE}" | sha256sum  | cut -f1 -d\  | xxd -r -p | base64url | sed -e "s/=//g" -e "s/\+/-/g" -e "s/\//_/g")

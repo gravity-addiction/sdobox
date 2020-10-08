@@ -49,7 +49,7 @@ esac
 
 if [ ! -z "${METHOD}" ] && [ ! -z "${URL}" ]; then
 
-SPOTIFYJSON=/tmp/spotify.json
+SPOTIFYJSON=/opt/sdobox/tmp/spotify.json
 TOKEN=$(jq -cer .access_token "${SPOTIFYJSON}")
 
 HTTPSTATUS=$(curl -X "${METHOD}" \

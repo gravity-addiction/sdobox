@@ -116,6 +116,7 @@ git submodule update
 
 # Copy around files
 sudo mkdir -p /opt/sdobox
+sudo mkdir -p /opt/sdobox/tmp
 sudo cp -R images /opt/sdobox/
 sudo cp -R scripts /opt/sdobox/
 sudo cp scripts/overlays/* /boot/overlays/

@@ -6,7 +6,7 @@ import os
 
 
 def spotify_request(method, url):
-  f = open('/tmp/spotify.json',) 
+  f = open('/opt/sdobox/tmp/spotify.json',) 
   data = json.load(f)
   f.close()
 

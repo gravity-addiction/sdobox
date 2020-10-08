@@ -4,10 +4,10 @@
 CODEVERIFY=$1
 
 # Fetch Stored Variables
-CODEVERIFIER=$(cat /tmp/spotify.code)
+CODEVERIFIER=$(cat /opt/sdobox/tmp/spotify.code)
 CLIENTID=$(cat /opt/sdobox/scripts/spotify/client)
 
-# Request Access Token from auth code, store reponse in /tmp/spotify.json
+# Request Access Token from auth code, store reponse in /opt/sdobox/tmp/spotify.json
 curl -X "POST" \
 --silent \
 -H 'Content-Type: application/x-www-form-urlencoded' \
@@ -16,5 +16,5 @@ curl -X "POST" \
 -d 'redirect_uri=http://localhost:4004/H3xx92sk' \
 -d "code=${CODEVERIFY}" \
 -d "code_verifier=${CODEVERIFIER}" \
--o /tmp/spotify.json \
+-o /opt/sdobox/tmp/spotify.json \
 https://accounts.spotify.com/api/token
