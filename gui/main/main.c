@@ -70,7 +70,7 @@ bool pg_main_cbBtn_slideshow(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_FILEFINDER);
+  touchscreenPageOpen(pGui, E_PG_DUBBING);
   return true;
 }
 
