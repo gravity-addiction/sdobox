@@ -8,6 +8,7 @@ import subprocess
 import os
 import json
 import time
+import numpy as np
 os.environ["DISPLAY"] = ":0.0"
 
 
@@ -34,15 +35,61 @@ def thread_sdobSocket():
 def thread_getFrames(file):
     global dataSet
     global statusText
-    statusText.value = "Getting Frame Count"
+    statusText.value = "Getting KeyFrame Locations"
     cmd = "ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 \"{}\" | awk -F',' '/K/ {{print $1}}'".format(file)
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     frameList = []
     for line in proc.stdout.readlines():
         frameList.append(line.decode('utf-8').rstrip())
     setattr(dataSet, "frameList", frameList)
-    statusText.value = "Got Frame Count"
+    statusText.value = "Keyframes Found, Finished Looking"
     
+
+def thread_processVideo():
+    global dataSet
+    global statusText
+    
+    videoRoot = '/tmp'
+    videoFiles = []
+    videoExt = '.mp4'
+    videoDest = '/home/pi/Videos/120.mp4'
+
+    if (hasattr(dataSet, "fileext")):
+        videoExt = getattr(dataSet, "fileext")
+
+    if (hasattr(dataSet, "slate")):
+        # Slate
+        sTime = float(getattr(dataSet, "slate")) - 2.0
+        if (sTime < 0):
+            sTime = 0.00
+        eTime = float(getattr(dataSet, "slate")) + 5.0
+        sTimes = splitVideoFileKeyTimes(sTime, eTime)
+        # print("Slate Start Adding", sTime - sTimes[0])
+        # print("Slate End Adding", sTimes[1] - eTime)
+        videoFileName = 'sdobSlate{}'.format(videoExt)
+        videoFile = '{}/{}'.format(videoRoot, videoFileName)
+        videoFiles.append(videoFileName)
+        splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
+
+    if (hasattr(dataSet, "exit")):
+        statusText.value = "Splitting Video Skydive"
+        # Skydive
+        sTime = float(getattr(dataSet, "exit")) - 2.0
+        if (sTime < 0):
+            sTime = 0.00
+        eTime = float(getattr(dataSet, "exit")) + 40.0
+        sTimes = splitVideoFileKeyTimes(sTime, eTime)
+        # print("Skydive Start Adding", sTime - sTimes[0])
+        # print("Skydive End Adding", sTimes[1] - eTime)
+        videoFileName = 'sdobExit{}'.format(videoExt)
+        videoFile = '{}/{}'.format(videoRoot, videoFileName)
+        videoFiles.append(videoFileName)
+        splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
+
+    statusText.value = "Combining Video Slate and Skydive"
+    # Recombine
+    combineVideoFiles(videoRoot, videoFiles, videoDest)
+    statusText.value = "Done Processing Video"
 
 def globalClicked():
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
@@ -74,6 +121,7 @@ def teamChanged(t):
     setattr(dataSet, "team", t)
 
 def submitButton(t, r):
+    # print("Submitting", getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"))
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
         return
 
@@ -85,22 +133,11 @@ def submitButton(t, r):
         
         # Start to Stop
         # splitVideoFile(getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"), "/tmp/test1.mp4")
+        statusText.value = "Processing Video"
+        processVideoThread = Thread(target = thread_processVideo)
+        processVideoThread.setDaemon(True)
+        processVideoThread.start()
         
-        # Slate
-        sTime = float(getattr(dataSet, "slate")) - 2.0;
-        if (sTime < 0):
-            sTime = 0.00
-        eTime = float(getattr(dataSet, "slate")) + 5.0;
-        splitVideoFile(getattr(dataSet, "filename"), sTime, eTime, "/tmp/test1.mp4")
-        # Skydive
-        sTime = float(getattr(dataSet, "exit")) - 2.0;
-        if (sTime < 0):
-            sTime = 0.00
-        eTime = float(getattr(dataSet, "exit")) + 40.0;
-        splitVideoFile(getattr(dataSet, "filename"), sTime, eTime, "/tmp/test2.mp4")
-        # Recombine
-        combineVideoFiles('/tmp', ['test1.mp4', 'test2.mp4'], '/home/pi/Videos/120.mp4')
-
 def combineVideoFiles(rootFolder, videoArr, outputFilename):
     videoListPath = rootFolder + "/sdobVideoList.txt"
     f = open(videoListPath, "w")
@@ -109,52 +146,74 @@ def combineVideoFiles(rootFolder, videoArr, outputFilename):
     f.close()
     vidCmd = 'ffmpeg -y -f concat -i  "{}" -c copy {}'.format(videoListPath, outputFilename)
     os.system(vidCmd)
+    # proc = subprocess.Popen(vidCmd, shell=True, stderr=subprocess.PIPE)
+    # for line in proc.stderr.readlines():
+    #     statusText.value = line.decode('utf-8').rstrip()
 
-def splitVideoFile(filename, startingTime, endingTime, outputFilename):
+def splitVideoFileKeyTimes(startingTime, endingTime):
+    ret = np.zeros(2, dtype = float)
     startTime = 0.00
     endTime = 0.00
     checkStart = float(startingTime)
     checkEnd = float(endingTime)
+    # print(startingTime, endingTime)
     for f in getattr(dataSet, "frameList"):
-        if (float(f) < checkStart):
-            startTime = float(f)
-        if (endTime == 0.00 and float(f) > checkEnd):
-            endTime = float(f)
-        if (startTime != 0.00 and endTime != 0.00):
-            break;
+        # print('Keyframe', f)
+        if (float(f) <= checkStart):
+            ret[0] = float(f)
+        if (endTime == 0.00 and float(f) >= checkEnd):
+            ret[1] = float(f)
+        if (ret[0] != 0.00 and ret[1] != 0.00):
+            break
+    return ret
     
+def splitVideoFile(filename, startTime, endTime, outputFilename):
     extraArgs = ""
     if (endTime != 0.00):
         extraArgs = extraArgs + " -t " + str(endTime - startTime)
     
-    print("StartKey", startTime, "EndKey", endTime)
+    # print("StartKey", startTime, "EndKey", endTime)
     vid1Cmd = 'ffmpeg -y -i "{}" -ss {} {} -c copy {}'.format(filename, startTime, extraArgs, outputFilename)
-    print(vid1Cmd) 
     os.system(vid1Cmd)
-    # os.system('ffmpeg -y -i "{}" -ss {} -t 35 -c copy /tmp/test2.mp4'.format(getattr(dataSet, "filename"), getattr(dataSet, "exit")))
-    # os.system('ffmpeg -y -f concat -i /tmp/test.txt -c copy /home/pi/Videos/AwesomeSauce.mp4');
+    statusText.value = "Done!"
+    # print(vid1Cmd) 
+    # proc = subprocess.Popen(vid1Cmd, shell=True, stderr=subprocess.PIPE)
+    # for line in proc.stderr.readlines():
+    #     statusText.value = line.decode('utf-8').rstrip()
+
 
 def playnewVideo():
     mpv_player.loop = False
-    mpv_player.play("/home/pi/Videos/AwesomeSauce.mp4")
+    mpv_player.play("/home/pi/Videos/120.mp4")
     csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
 
 def openButton():
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
         return
 
-    filename = app.select_file(folder="/media/pi/", filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
-    if (filename == ""):
-        openvideo_btn.text = "Open Video"
-        openvideo_btn.bg = "#cc33cc"
-    else:
+    filename = app.select_file(folder="/media/", filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
+    if (isinstance(filename, str)):
         setattr(dataSet, "filename", filename)
         openvideo_btn.text = os.path.basename(filename)
         openvideo_btn.bg = "#cccc00"
-        csock.sendto(str.encode('{{"event":"filechange","filename":"{}"}}'.format(filename)), ssock_file)
+        try:
+            fExt = os.path.splitext(filename)[1]
+            setattr(dataSet, "fileext", fExt)
+        except:
+            pass
+        
         keyFrameThread = Thread(target = thread_getFrames, args=[filename])
         keyFrameThread.setDaemon(True)
         keyFrameThread.start()
+        try:
+            csock.sendto(str.encode('{{"event":"filechange","filename":"{}"}}'.format(filename)), ssock_file)
+        except:
+            print("Cannot send to sdobox.socket")
+        
+    else:
+    # if (isinstance(filename, (unicode, tuple))):
+        openvideo_btn.text = "Open Video"
+        openvideo_btn.bg = "#cc33cc"
 
 def playButton():
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
@@ -163,7 +222,10 @@ def playButton():
     if (hasattr(dataSet, "filename")):
         mpv_player.loop = False
         mpv_player.play(getattr(dataSet, "filename"))
-        csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
+        try:
+            csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
+        except:
+            print("Cannot send playing to sdobox.socket")
 
 class DataSet(object):
     pass
@@ -240,7 +302,7 @@ playnew_btn.disabled = True
 # move_btn.text_size = fontSize
 # move_btn.disabled = True
 
-statusText = Text(app, text="Status: ", size=16, grid=[0,8,7,1])
+statusText = Text(app, text="", align="left", size=14, grid=[0,10,7,1])
 
 # Bind to key press events with a decorator
 @mpv_player.on_event("start-file")
