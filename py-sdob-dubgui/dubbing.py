@@ -3,7 +3,6 @@ from guizero import App, Combo, PushButton, Text
 from screeninfo import get_monitors
 from python_mpv_jsonipc import MPV
 from threading import Thread
-import ffmpeg
 import socket
 import subprocess
 import os
