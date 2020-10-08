@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=DUBBING
+Exec=/opt/sdobox/bin/dubbing.py
+StartupNotify=true
+Terminal=true
