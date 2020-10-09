@@ -102,11 +102,48 @@ bool pg_dubbing_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   return true;
 }
 
+bool pg_dubbing_cbBtn_usbDrive_A(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  struct queue_head *item = new_qhead();
+  item->data = strdup("{\"event\":\"openvideo\",\"root\":\"/home/pi/Videos\"}");
+  queue_put(item, libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
+
+  return true;
+}
+
+bool pg_dubbing_cbBtn_usbDrive_B(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  return true;
+}
+
+bool pg_dubbing_cbBtn_usbDrive_C(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  return true;
+}
+
+bool pg_dubbing_cbBtn_usbDrive_D(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  return true;
+}
+
+
+
+
 void pg_dubbingGuiInit(gslc_tsGui *pGui) {
   int ePage = E_PG_DUBBING;
 
   gslc_PageAdd(pGui, E_PG_DUBBING, pg_dubbingElem, MAX_ELEM_PG_DUBBING_RAM,
                pg_dubbingElemRef, MAX_ELEM_PG_DUBBING);
+
+
 
 
   // Set Slate
@@ -157,6 +194,57 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
 
 
 
+
+
+  // USB Drive A
+  pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {0,125,110,70},
+          "LOCAL DRIVE", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_usbDrive_A);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_A], true);
+
+    // USB Drive B
+  pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {130,125,110,70},
+          "", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_usbDrive_B);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_B], true);
+
+  // USB Drive C
+  pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {250,125,110,70},
+          "", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_usbDrive_C);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_C], true);
+
+    // USB Drive D
+  pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect) {370,125,110,70},
+          "", 0, E_FONT_MONO14, &pg_dubbing_cbBtn_usbDrive_D);
+  gslc_ElemSetTxtCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], GSLC_COL_WHITE);
+  gslc_ElemSetCol(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetTxtAlign(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], GSLC_ALIGN_MID_MID);
+  gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], false);
+  gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], false);
+  gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_D], true);
+
+
+
+
+
+
   // Close Key
   pg_dubbingEl[E_DUBBING_EL_CLOSE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {420,270,60,50},
@@ -167,8 +255,6 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], false);
   gslc_ElemSetGlowEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], false);
   gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_CLOSE], true);
-
-
 
 }
 

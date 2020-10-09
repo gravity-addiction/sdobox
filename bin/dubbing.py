@@ -17,18 +17,21 @@ def thread_sdobSocket():
     global sdobSocketKiller
     global csock
     global dataSet
-    # print('Start Thread Socket')
+    print('Start Thread Socket')
     while sdobSocketKiller:
-        (bytes, address) = csock.recvfrom(8192)
-        msg = bytes.decode('utf-8')
-        # print('address:', address, 'recv', msg)
-        msgJson = json.loads(msg)
-        if type(msgJson) is dict:
-            for k in msgJson.keys():
-                setattr(dataSet, k, msgJson[k])
-        else:
-            setattr(dataSet, "socketdata", msg)
-            
+        try:
+            (bytes, address) = csock.recvfrom(8196)
+            msg = bytes.decode('utf-8')
+            print('address:', address, 'recv', msg)
+            # msgJson = json.loads(msg)
+            # if type(msgJson) is dict:
+            #    for k in msgJson.keys():
+            #        setattr(dataSet, k, msgJson[k])
+            #        print(k, msgJson[k])
+            #else:
+            #    setattr(dataSet, "socketdata", msg)
+        except:
+            time.sleep(0.2)
     # print('Stop Thread Socket')
 
 
@@ -321,6 +324,8 @@ if os.path.exists(csock_file):
     
 csock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 csock.bind(csock_file)
+csock.setblocking(0)
+csock.sendto(str.encode('{"event":"started"}'), ssock_file)
 
 sdobThread = Thread(target = thread_sdobSocket)
 sdobThread.setDaemon(True)
@@ -337,9 +342,11 @@ except:
     pass
 
 try:
-    csock.close()
+    csock.sendto(str.encode('{"event":"stopped"}'), ssock_file)
 except:
     pass
+finally:
+    csock.close()
 
 if os.path.exists(csock_file):
     os.remove(csock_file)

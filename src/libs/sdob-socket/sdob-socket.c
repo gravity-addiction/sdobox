@@ -26,43 +26,52 @@ static pthread_mutex_t libSdobSocketWriteLock = PTHREAD_MUTEX_INITIALIZER;
 
 PI_THREAD (libSdobSocketThread)
 {
+  // Check if Socket Running
   if (libSdobSocketThreadRunning) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SkydiveOrBust Socket Thread, Already Started");
     return NULL;
   }
   libSdobSocketThreadRunning = 1;
 
+  // Check if Socket is Killed
   if (libSdobSocketThreadKill) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SkydiveOrBust Socket Thread, Stop Flag Set");
     libSdobSocketThreadRunning = 0;
     return NULL;
   }
 
+  // Checks good, lets start
   dbgprintf(DBG_DEBUG, "%s\n", "Starting SkydiveOrBust Socket Thread");
 
+  // Setup Vars
   struct sockaddr_un svaddr, claddr;
   ssize_t numBytes;
   socklen_t len;
   char libSdobSocket_buf[libSdobSocket_buf_size];
 
+  // Open DGram Socket
   libSdobSocket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (libSdobSocket_fd == -1) {
     dbgprintf(DBG_DEBUG, "%s\n", "SkydiveOrBust Socket Error");
     libSdobSocketThreadKill = 1;
   }
 
+   // Socket Path Length
   if (strlen(libSdobSocket_socket_path) > sizeof(svaddr.sun_path)-1) {
     dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket path to long must be %d chars\n", sizeof(svaddr.sun_path)-1);
     libSdobSocketThreadKill = 1;
   }
 
+  // Remove Old Socket
   if(remove(libSdobSocket_socket_path) == -1 && errno != ENOENT) {
     dbgprintf(DBG_DEBUG, "Error removing SkydiveOrBust Socket: %d\n", errno);
     libSdobSocketThreadKill = 1;
   }
   
+  // Non-blocking socket
   setnonblock(libSdobSocket_fd);
 
+  // Create Server Socket
   memset(&svaddr, 0, sizeof(struct sockaddr_un));
   svaddr.sun_family = AF_UNIX;
   if (*libSdobSocket_socket_path == '\0') {
@@ -72,28 +81,30 @@ PI_THREAD (libSdobSocketThread)
     strncpy(svaddr.sun_path, libSdobSocket_socket_path, sizeof(svaddr.sun_path)-1);
   }
 
-  if (bind(libSdobSocket_fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1) {
+  if (bind(libSdobSocket_fd, (struct sockaddr*) &svaddr, sizeof(struct sockaddr_un)) == -1) {
     // MPV Connect Error
     dbgprintf(DBG_DEBUG, "%s\n", "SkydiveOrBust Socket Connect Error");
     libSdobSocketThreadKill = 1;
   }
 
+  
   // Grab MPV Events, sent in JSON format
   while(!libSdobSocketThreadKill) {
-    if (!fd_is_valid(libSdobSocket_fd)) {
-      // try closing fd
-      if (libSdobSocket_fd) { close(libSdobSocket_fd); }
-      // reconnect fd
-      if (bind(libSdobSocket_fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1) {
-        // MPV Connect Error
-        dbgprintf(DBG_DEBUG, "%s\n", "SkydiveOrBust Socket ReConnect Error");
-        libSdobSocketThreadKill = 1;
-      }
-    }
+    len = sizeof(struct sockaddr_un);
 
+//     if (!fd_is_valid(libSdobSocket_fd)) {
+//      // try closing fd
+//      if (libSdobSocket_fd) { close(libSdobSocket_fd); }
+//      // reconnect fd
+//      printf("reconnect sdob socket fd\n");
+//      if (bind(libSdobSocket_fd, (struct sockaddr *)&svaddr, sizeof(struct sockaddr_un)) == -1) {
+//        // MPV Connect Error
+//        dbgprintf(DBG_DEBUG, "%s\n", "SkydiveOrBust Socket ReConnect Error");
+//        libSdobSocketThreadKill = 1;
+//      }
+//    }
     
     // Grab Next Socket Line
-    len = sizeof(struct sockaddr_un);
     numBytes = recvfrom(libSdobSocket_fd, libSdobSocket_buf, libSdobSocket_buf_size, 0, (struct sockaddr*) &claddr, &len);
     if (numBytes > 0) {
       dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
@@ -101,12 +112,13 @@ PI_THREAD (libSdobSocketThread)
 
       char* dubbing_event;
       char* dubbing_data;
-      // int sdobox_event_len = 
-      ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
+      int sdobox_event_len = ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
       int sdobox_data_len = ta_json_parse(libSdobSocket_buf, "data", &dubbing_data);
       
       if (sdobox_data_len > 0) {
         printf("Got Data! %s\n", dubbing_data);
+      } else if (sdobox_event_len > 0) {
+        printf("Got Event! %s\n", dubbing_event);
       }
       free(dubbing_event);
       free(dubbing_data);
@@ -135,21 +147,21 @@ PI_THREAD (libSdobSocketThread)
       usleep(100);
       CLEAR(libSdobSocket_buf, libSdobSocket_buf_size);
     } else if (libSdobSocket_WriteQueueLen > 0) {
-      pthread_mutex_lock(&libSdobSocketWriteLock);
+      // pthread_mutex_lock(&libSdobSocketWriteLock);
       // Try to Write Something
       struct queue_head *item = queue_get(libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
       if (item) {
         if (item->data != NULL) {
-          int jfd = sendto(libSdobSocket_fd, (char*) item->data, strlen((char*) item->data), 0, (struct sockaddr*) &claddr, len);
+          dbgprintf(DBG_DEBUG, "Sending data len: %d - %s\n", strlen((char*) item->data), item->data);
+          int jfd = sendto(libSdobSocket_fd, item->data, strlen((char*) item->data), 0, (struct sockaddr*) &claddr, len);
           if (jfd != strlen((char*) item->data)) {
             dbgprintf(DBG_DEBUG, "Error sendto sdobox.socket %s\n", strerror(errno));
           }
-          dbgprintf(DBG_DEBUG, "%s\n", "FREE THE DATA");
           free(item->data);
         }
         free(item);
       }
-      pthread_mutex_unlock(&libSdobSocketWriteLock);
+      // pthread_mutex_unlock(&libSdobSocketWriteLock);
       usleep(100);
     } else {
       usleep(200000);

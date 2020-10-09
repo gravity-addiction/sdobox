@@ -17,18 +17,31 @@ def thread_sdobSocket():
     global sdobSocketKiller
     global csock
     global dataSet
-    # print('Start Thread Socket')
+    print('Start Thread Socket')
     while sdobSocketKiller:
-        (bytes, address) = csock.recvfrom(512)
-        msg = bytes.decode('utf-8')
-        # print('address:', address, 'recv', msg)
-        msgJson = json.loads(msg)
-        if type(msgJson) is dict:
-            for k in msgJson.keys():
-                setattr(dataSet, k, msgJson[k])
-        else:
-            setattr(dataSet, "socketdata", msg)
-            
+        try:
+            (bytes, address) = csock.recvfrom(8196)
+            msg = bytes.decode('utf-8')
+            print('address:', address, 'recv', msg)
+            msgJson = json.loads(msg)
+            if type(msgJson) is dict:
+                if (msgJson["event"] and msgJson["event"] == "openvideo"):
+                    print("Msg Event", msgJson["event"])
+                    if (msgJson["root"] and msgJson["root"] != ""):
+                        openButton(msgJson["root"])
+                    else:
+                        openButton("/media")
+                        
+                if (msgJson["data"]):
+                    print("Msg Data", msgJson["data"])
+            #    for k in msgJson.keys():
+            #        setattr(dataSet, k, msgJson[k])
+            #        print(k, msgJson[k])
+            else:
+                print("Msg", msg)
+                # setattr(dataSet, "socketdata", msg)
+        except:
+            time.sleep(0.2)
     # print('Stop Thread Socket')
 
 
@@ -187,11 +200,11 @@ def playnewVideo():
     mpv_player.play("/home/pi/Videos/120.mp4")
     csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
 
-def openButton():
+def openButton(startPath = "/media/"):
     if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
         return
 
-    filename = app.select_file(folder="/media/", filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
+    filename = app.select_file(folder=startPath, filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
     if (isinstance(filename, str)):
         setattr(dataSet, "filename", filename)
         openvideo_btn.text = os.path.basename(filename)
@@ -321,6 +334,8 @@ if os.path.exists(csock_file):
     
 csock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 csock.bind(csock_file)
+csock.setblocking(0)
+csock.sendto(str.encode('{"event":"started"}'), ssock_file)
 
 sdobThread = Thread(target = thread_sdobSocket)
 sdobThread.setDaemon(True)
@@ -337,9 +352,11 @@ except:
     pass
 
 try:
-    csock.close()
+    csock.sendto(str.encode('{"event":"stopped"}'), ssock_file)
 except:
     pass
+finally:
+    csock.close()
 
 if os.path.exists(csock_file):
     os.remove(csock_file)
