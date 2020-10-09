@@ -59,7 +59,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   UserInitEnv();
 
   guislice_wrapper_clockUpdate = 0;
-  timeStr = (char *)malloc(32 * sizeof(char));
+  timeStr = (char *)malloc(73 * sizeof(char));
 
   m_cPosVolume = (char*)calloc(32, sizeof(char));
 

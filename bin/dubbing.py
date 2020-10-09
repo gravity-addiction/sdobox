@@ -19,7 +19,7 @@ def thread_sdobSocket():
     global dataSet
     # print('Start Thread Socket')
     while sdobSocketKiller:
-        (bytes, address) = csock.recvfrom(512)
+        (bytes, address) = csock.recvfrom(8192)
         msg = bytes.decode('utf-8')
         # print('address:', address, 'recv', msg)
         msgJson = json.loads(msg)

@@ -33,7 +33,7 @@ PI_THREAD (websocketServerThread)
   int ret;
   struct _u_instance instance;
   struct _static_file_config file_config;
-  char * cert_file = NULL, * key_file = NULL;
+  // char * cert_file = NULL, * key_file = NULL;
 
   dbgprintf(DBG_DEBUG, "Starting websocket server\n");
 

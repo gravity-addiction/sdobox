@@ -3,10 +3,8 @@
 SPOTIFYJSON=/opt/sdobox/tmp/spotify.json
 
 # If not spotify.json exists, grab brand new token
-if [ ! -f "${SPOTIFYJSON}" ]; then
+if [ -f "${SPOTIFYJSON}" ]; then
 # /opt/sdobox/scripts/spotify/register_device_local.sh
-
-else
 
 # Grab client_id from file
 CLIENTID=$(cat /opt/sdobox/scripts/spotify/client)
@@ -25,6 +23,6 @@ https://accounts.spotify.com/api/token)
 # Bad Response, Try Getting Brand New Token
 if [ "${HTTPSTATUS}" -gt 299 ]; then
 rm "${SPOTIFYJSON}"
-# /opt/sdobox/scripts/spotify/register_device_local.sh
+/opt/sdobox/scripts/spotify/register_device_local.sh
 fi
 fi

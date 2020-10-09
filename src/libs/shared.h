@@ -12,9 +12,6 @@ extern "C" {
 
 #define	COUNT_KEY	0
 
-#define JSMN_HEADER
-#include "jsmn/jsmn.h" // JSON Parsing
-
 #define DEBUG 0
 #define CLEAR(x, y) memset(x,'\0',y)
 
@@ -67,8 +64,6 @@ void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz,
 
 int time_to_secs(char* timestamp);
 void secs_to_time(int millisecs, char *retFormat, int retLen);
-int jsoneq(const char *json, jsmntok_t *tok, const char *s);
-int ta_json_parse(char *json, char* prop, char ** ret_var);
 int parseTabbedData(const char *s, char *data[], size_t n);
 
 int cstring_cmp(const void *a, const void *b);

@@ -20,6 +20,7 @@
 #include "libs/mpv/mpv.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/dbg/dbg.h"
+#include "libs/json/json.h"
 
 #include "gui/keyboard/keyboard.h"
 

@@ -43,13 +43,12 @@
 #include "libs/fbbg/fbbg.h"
 #include "libs/avahi/avahi.h"
 #include "libs/sdob-socket/sdob-socket.h"
+#include "libs/json/json.h" // JSON Parsing
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
 
 
-#define JSMN_HEADER
-#include "libs/jsmn/jsmn.h" // JSON Parsing
 
 char*    config_path = "/home/pi/.config/sdobox/sdobox.conf";
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received

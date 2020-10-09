@@ -11,6 +11,8 @@
 #include "libs/dbg/dbg.h"
 
 #include "libs/queue/queue.h"
+#include "libs/json/json.h"
+
 #include "mpv_events.h"
 #include "mpv.h"
 

@@ -17,7 +17,7 @@ int callback_spotify (const struct _u_request * request, struct _u_response * re
   ulfius_set_string_body_response(response, 200, "Confirmed!");
 
   printf("State: %s\n", u_map_get(request->map_url, "state"));
-  char* code = u_map_get(request->map_url, "code");
+  const char* code = u_map_get(request->map_url, "code");
   printf("Code: %s\n", code);
 
   char *fullpath = malloc(strlen("/opt/sdobox/scripts/spotify/register_device_code.sh ") + strlen(code) + 1);

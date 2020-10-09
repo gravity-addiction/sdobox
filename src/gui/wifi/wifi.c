@@ -296,7 +296,8 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   if (pg_wifi_addInput->id == -1) {
     // Add Network Entry
     char* buf;
-    int len = pg_wifi_wpaSendCmdBuf("ADD_NETWORK", &buf);
+    // int len = 
+    pg_wifi_wpaSendCmdBuf("ADD_NETWORK", &buf);
     char *pEnd;
     network_id = strtol(buf, &pEnd, 10);
     if (pEnd == buf

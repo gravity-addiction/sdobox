@@ -15,6 +15,7 @@
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
 #include "libs/queue/queue.h"
+#include "libs/json/json.h"
 
 #include "sdob-socket.h"
 
@@ -96,14 +97,19 @@ PI_THREAD (libSdobSocketThread)
     numBytes = recvfrom(libSdobSocket_fd, libSdobSocket_buf, libSdobSocket_buf_size, 0, (struct sockaddr*) &claddr, &len);
     if (numBytes > 0) {
       dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
-      dbgprintf(DBG_DEBUG, "%s\n", libSdobSocket_buf);
+      // dbgprintf(DBG_DEBUG, "%s\n", libSdobSocket_buf);
 
       char* dubbing_event;
-      int sdobox_event_len = ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
-      if (sdobox_event_len > 0) {
-        printf("Got Event! %s\n", dubbing_event);
+      char* dubbing_data;
+      // int sdobox_event_len = 
+      ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
+      int sdobox_data_len = ta_json_parse(libSdobSocket_buf, "data", &dubbing_data);
+      
+      if (sdobox_data_len > 0) {
+        printf("Got Data! %s\n", dubbing_data);
       }
       free(dubbing_event);
+      free(dubbing_data);
 /*
       char* dubbing_event;
       char* dubbing_filename;
@@ -163,7 +169,7 @@ int libSdobSocketThreadStart() {
   if (libSdobSocketThreadRunning) { return 0; }
 
   libSdobSocket_socket_path = "/tmp/sdobox.socket";
-  libSdobSocket_buf_size = 512;
+  libSdobSocket_buf_size = 8192;
 
   libSdobSocket_WriteQueue = ALLOC_QUEUE_ROOT();
   libSdobSocket_WriteQueueLen = 0;
