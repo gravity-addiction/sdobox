@@ -11,3 +11,6 @@
 [submodule "tslib"]
 	path = tslib
 	url = https://github.com/gravity-addiction/tslib.git
+[submodule "jsmn"]
+	path = jsmn
+	url = https://github.com/gravity-addiction/jsmn
