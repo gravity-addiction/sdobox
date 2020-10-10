@@ -506,9 +506,9 @@ int pg_dubbing_thread(gslc_tsGui *pGui) {
     int rD = 0;
     for (int d = 0; d < dLen; d++) {
       // List Partitions
-      int tPartNumLen = snprintf(NULL, 0, "%d Partitions", libUsbDrivesList[d]->partitionCur) + 1;
+      int tPartNumLen = snprintf(NULL, 0, "%d Partitions", libUsbDrivesList[d]->partitionMax) + 1;
       char *tPartNum = (char*)malloc(tPartNumLen * sizeof(char));
-      snprintf(tPartNum, tPartNumLen, "%d Partitions", libUsbDrivesList[d]->partitionCur);
+      snprintf(tPartNum, tPartNumLen, "%d Partitions", libUsbDrivesList[d]->partitionMax);
 
       if (strcmp(libUsbDrivesList[d]->name, "mmcblk0") == 0) {
         gslc_ElemSetTxtStr(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_AA], (char*)"LOCAL DRIVE");
@@ -517,7 +517,7 @@ int pg_dubbing_thread(gslc_tsGui *pGui) {
       } else if (rD == 0) {
         gslc_ElemSetTxtStr(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_BA], libUsbDrivesList[d]->name);
         gslc_ElemSetTxtStr(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_BB], libUsbDrivesList[d]->drivesize);
-        if (libUsbDrivesList[d]->partitionCur > 1) {
+        if (libUsbDrivesList[d]->partitionMax > 1) {
           gslc_ElemSetTxtStr(pGui, pg_dubbingEl[E_DUBBING_EL_USBDRIVE_BC], tPartNum);
         }
         rD++;
