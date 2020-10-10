@@ -5,6 +5,10 @@
 extern "C" {
 #endif // __cplusplus
 
+struct libUsbDrivesCounter *ALLOC_LIBUSBDRIVES_COUNTER();
+struct libUsbDrivesHardware *ALLOC_LIBUSBDRIVES_HARDWARE();
+struct libUsbDrivesInfo *ALLOC_LIBUSBDRIVES_INFO();
+
 struct libUsbDrivesInfo {
   char *name;
   char *label;

@@ -58,7 +58,7 @@ PI_THREAD (libUsbDrivesThread)
       struct queue_head *item = queue_get(libUsbDrives_Queue, &libUsbDrives_QueueLen);
       if (item != NULL) {
         if (item->data != NULL) {
-          // libUsbDrives_cleanDriveList(libUsbDrivesList, libUsbDrivesCount);
+          libUsbDrives_cleanDriveList(libUsbDrivesList, libUsbDrivesCount);
           // libUsbDrivesCount->cur = 0;
           libUsbDrives_parse_lsblk(item->data, libUsbDrivesList, libUsbDrivesCount);
           free(item->data);
@@ -79,17 +79,9 @@ int libUsbDrivesThreadStart() {
   dbgprintf(DBG_DEBUG, "%s\n", "libUsbDrivesThreadStart()");
   if (libUsbDrivesThreadRunning) { return 0; }
 
-  libUsbDrivesCount = (struct libUsbDrivesCounter*)malloc(sizeof(struct libUsbDrivesCounter) * 5);
-  libUsbDrivesCount->max = 5;
-  libUsbDrivesCount->cur = 0;
-  libUsbDrivesCount->cnt = 0;
-
+  libUsbDrivesCount = ALLOC_LIBUSBDRIVES_COUNTER();
   libUsbDrivesList = (struct libUsbDrivesHardware**)malloc(sizeof(struct libUsbDrivesHardware*) * libUsbDrivesCount->max);
-  for (int dl = 0; dl < libUsbDrivesCount->max; dl++) {
-    libUsbDrivesList[dl] = (struct libUsbDrivesHardware*)malloc(sizeof(struct libUsbDrivesHardware));
-    libUsbDrivesList[dl]->partitionCur = 0;
-    libUsbDrivesList[dl]->partitionMax = 0;
-  }
+
   dbgprintf(DBG_DEBUG, "USB Drives Thread Spinup: %d\n", libUsbDrivesThreadRunning);
   libUsbDrivesThreadKill = 0;
   return piThreadCreate(libUsbDrivesThread);

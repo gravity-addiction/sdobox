@@ -8,7 +8,32 @@
 #include "libs/shared.h"
 #include "usb-drives.h"
 
+struct libUsbDrivesCounter *ALLOC_LIBUSBDRIVES_COUNTER()
+{
+  struct libUsbDrivesCounter *root = (struct libUsbDrivesCounter*)malloc(sizeof(struct libUsbDrivesCounter));
+  root->max = 5;
+  root->cur = 0;
+  root->cnt = 0;
+  return root;
+}
+
+struct libUsbDrivesHardware *ALLOC_LIBUSBDRIVES_HARDWARE()
+{
+  struct libUsbDrivesHardware *root = (struct libUsbDrivesHardware*)malloc(sizeof(struct libUsbDrivesHardware));
+  root->partitionCur = 0;
+  root->partitionMax = 0;
+  return root;
+}
+
+struct libUsbDrivesInfo *ALLOC_LIBUSBDRIVES_INFO()
+{
+  struct libUsbDrivesInfo *root = malloc(sizeof(struct libUsbDrivesInfo));
+  return root;
+}
+
 void libUsbDrives_cleanPartition(struct libUsbDrivesInfo *partition) {
+  if (partition == NULL) { return; }
+
   if (partition->name != NULL) { free(partition->name); }
   if (partition->label != NULL) { free(partition->label); }
   if (partition->mountpoint != NULL) { free(partition->mountpoint); }
@@ -25,19 +50,18 @@ void libUsbDrives_cleanPartitions(struct libUsbDrivesInfo **partitionList, int p
 }
 
 void libUsbDrives_cleanDriveList(struct libUsbDrivesHardware **driveList, struct libUsbDrivesCounter *driveCounter) {
-  for (int l = 0; l < driveCounter->max; ++l) {
+  for (int l = 0; l < driveCounter->cur; ++l) {
     if (driveList[l]->name != NULL) { free(driveList[l]->name); }
     if (driveList[l]->drivesize != NULL) { free(driveList[l]->drivesize); }
 
     for (int p = 0; p < driveList[l]->partitionMax; ++p) {
-      if (driveList[l]->partitions[p] != NULL) {
-        libUsbDrives_cleanPartition(driveList[l]->partitions[p]);
-        free(driveList[l]->partitions[p]);
-      }
+      libUsbDrives_cleanPartition(driveList[l]->partitions[p]);
+      free(driveList[l]->partitions[p]);
     }
     free(driveList[l]->partitions);
     free(driveList[l]);
   }
+  driveCounter->cur = 0;
 }
 
 
@@ -72,12 +96,14 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
 
     int deviceLen = t[0].size;
     if (deviceLen > driveCounter->max) { deviceLen = driveCounter->max; }
-    driveCounter->cur = deviceLen;
 
     for (int device = 0; device < deviceLen; ++device) { // Loop Hardware Devices
       tI++;
       jsmntok_t *deviceInfo = &t[tI];
       int deviceInfoLen = deviceInfo->size;
+      driveList[device] = ALLOC_LIBUSBDRIVES_HARDWARE();
+
+      /*
       // Malloc or cleanu partitions space
       if (driveList[device]->partitionMax == 0) {
         driveList[device]->partitionMax = 5;
@@ -91,6 +117,7 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
         // libUsbDrives_cleanPartitions(driveList[device]->partitions, driveList[device]->partitionCur);
       }
       driveList[device]->partitionCur = 0;
+      */
 
       for (int deviceInfoI = 0; deviceInfoI < deviceInfoLen; deviceInfoI++) { // Loop Properties Of Hardware
         tI++;
@@ -128,12 +155,14 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
           int deviceChildrenLen = deviceChildren->size;
           if (deviceChildrenLen > 0) {
             
-            driveList[device]->partitionCur = deviceChildrenLen;
+            driveList[device]->partitionMax = deviceChildrenLen;
+            driveList[device]->partitions = (struct libUsbDrivesInfo**)malloc(sizeof(struct libUsbDrivesInfo*) * deviceChildrenLen);
             
             for (int deviceChildrenI = 0; deviceChildrenI < deviceChildrenLen; deviceChildrenI++) {
               tI++;
               jsmntok_t *deviceChildInfo = &t[tI];
               int deviceChildInfoLen = deviceChildInfo->size;
+              driveList[device]->partitions[deviceChildrenI] = ALLOC_LIBUSBDRIVES_INFO();
 
               for (int deviceChildInfoI = 0; deviceChildInfoI < deviceChildInfoLen; deviceChildInfoI++) {
                 tI++;
@@ -177,7 +206,7 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
         }
       }
     }
-
+    driveCounter->cur = deviceLen;
     driveCounter->cnt++;
   }
   free(sdob_data);
