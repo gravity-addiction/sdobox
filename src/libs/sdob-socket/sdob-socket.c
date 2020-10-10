@@ -16,13 +16,14 @@
 #include "libs/dbg/dbg.h"
 #include "libs/queue/queue.h"
 #include "libs/json/json.h"
+#include "libs/usb-drives/usb-drives-thread.h"
 
 #include "sdob-socket.h"
 
 // ------------------------
 // SDOBOX Socket Thread
 // ------------------------
-static pthread_mutex_t libSdobSocketWriteLock = PTHREAD_MUTEX_INITIALIZER;
+// static pthread_mutex_t libSdobSocketWriteLock = PTHREAD_MUTEX_INITIALIZER;
 
 PI_THREAD (libSdobSocketThread)
 {
@@ -110,44 +111,40 @@ PI_THREAD (libSdobSocketThread)
       dbgprintf(DBG_DEBUG, "Received %ld bytes from %s\n", (long) numBytes, claddr.sun_path);
       // dbgprintf(DBG_DEBUG, "%s\n", libSdobSocket_buf);
 
-      char* dubbing_event;
-      char* dubbing_data;
-      int sdobox_event_len = ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
-      int sdobox_data_len = ta_json_parse(libSdobSocket_buf, "data", &dubbing_data);
-      
-      if (sdobox_data_len > 0) {
-        printf("Got Data! %s\n", dubbing_data);
-      } else if (sdobox_event_len > 0) {
-        printf("Got Event! %s\n", dubbing_event);
+      char* sdob_event;
+      int sdob_event_len = ta_json_parse(libSdobSocket_buf, "event", &sdob_event);
+
+      char* sdob_syslog;
+      int sdob_syslog_len = ta_json_parse(libSdobSocket_buf, "syslog", &sdob_syslog);
+
+      if (sdob_event_len > 0) { dbgprintf(DBG_DEBUG, "SDOB Event %s\n", sdob_event); }
+      if (sdob_syslog_len > 0) {
+        dbgprintf(DBG_DEBUG, "SDOB SysLog %s\n", sdob_syslog);
+        free(sdob_syslog);
       }
-      free(dubbing_event);
-      free(dubbing_data);
-/*
-      char* dubbing_event;
-      char* dubbing_filename;
-      int dubbing_event_len = ta_json_parse(libSdobSocket_buf, "event", &dubbing_event);
-      int dubbing_filename_len = ta_json_parse(libSdobSocket_buf, "filename", &dubbing_filename);
-      CLEAR(libSdobSocket_buf, libSdobSocket_buf_size);
 
-      dbgprintf(DBG_DEBUG, "Event: %s\n", dubbing_event);
-      dbgprintf(DBG_DEBUG, "Filename: %s\n", dubbing_filename);
+      if (sdob_event_len > 0 && strcmp(sdob_event, "usb-drive") == 0 && libUsbDrivesThreadRunning) {
+        char* tmp;
+        int sdob_data_len = ta_json_parse(libSdobSocket_buf, "data", &tmp);
 
-//      // Do stuff with datagram
-//      char delim[] = " ";
-//      char *cAction = strtok(libSdobSocket_buf, delim);
-//      char *cData = strtok(NULL, delim);
+        if (sdob_data_len > 0) {
+          char *sdob_data = malloc(sdob_data_len + 1);
+          strncpy(sdob_data, tmp, sdob_data_len + 1);
+          free(tmp);
 
-//      dbgprintf(DBG_DEBUG, "Action: %s\n", cAction);
-//      dbgprintf(DBG_DEBUG, "Data: %s\n", cData);
-      // cleanup
-      if (dubbing_event_len) { CLEAR(dubbing_event, dubbing_event_len); }
-      if (dubbing_filename_len) { CLEAR(dubbing_filename, dubbing_filename_len); }
-*/
-      
+          struct queue_head *itemUsbDrives = new_qhead();
+          itemUsbDrives->action = 0;
+          itemUsbDrives->data = sdob_data;
+          queue_put(itemUsbDrives, libUsbDrives_Queue, &libUsbDrives_QueueLen);
+          
+        }
+      }
+      if (sdob_event_len > 0) { free(sdob_event); }
+
       usleep(100);
       CLEAR(libSdobSocket_buf, libSdobSocket_buf_size);
     } else if (libSdobSocket_WriteQueueLen > 0) {
-      // pthread_mutex_lock(&libSdobSocketWriteLock);
+
       // Try to Write Something
       struct queue_head *item = queue_get(libSdobSocket_WriteQueue, &libSdobSocket_WriteQueueLen);
       if (item) {
@@ -161,7 +158,7 @@ PI_THREAD (libSdobSocketThread)
         }
         free(item);
       }
-      // pthread_mutex_unlock(&libSdobSocketWriteLock);
+
       usleep(100);
     } else {
       usleep(200000);

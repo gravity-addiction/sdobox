@@ -44,6 +44,7 @@
 #include "libs/avahi/avahi.h"
 #include "libs/sdob-socket/sdob-socket.h"
 #include "libs/json/json.h" // JSON Parsing
+#include "libs/usb-drives/usb-drives-thread.h"
 
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
@@ -275,6 +276,7 @@ int main( int argc, char* args[] )
 
   libSdobSocketThreadStart();
 
+  libUsbDrivesThreadStart();
   // InitGUI_Keyboard(&m_gui, strPath);
   // InitGUI_Wifi(&m_gui, strPath);
 
@@ -394,6 +396,9 @@ int main( int argc, char* args[] )
 
   // Kill SDOB Socket
   libSdobSocketThreadStop();
+
+  // Kill USB Drives Thread
+  libUsbDrivesThreadStop();
 
   if (m_touchscreenInit) {
     // Quit GUIslice
