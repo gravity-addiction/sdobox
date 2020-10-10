@@ -3,9 +3,10 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -60,12 +61,6 @@ PI_THREAD (libSdobSocketThread)
    // Socket Path Length
   if (strlen(libSdobSocket_socket_path) > sizeof(svaddr.sun_path)-1) {
     dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket path to long must be %d chars\n", sizeof(svaddr.sun_path)-1);
-    libSdobSocketThreadKill = 1;
-  }
-
-  // Remove Old Socket
-  if(remove(libSdobSocket_socket_path) == -1 && errno != ENOENT) {
-    dbgprintf(DBG_DEBUG, "Error removing SkydiveOrBust Socket: %d\n", errno);
     libSdobSocketThreadKill = 1;
   }
   
@@ -182,6 +177,22 @@ int libSdobSocketThreadStart() {
 
   libSdobSocket_WriteQueue = ALLOC_QUEUE_ROOT();
   libSdobSocket_WriteQueueLen = 0;
+
+  // Remove Old Socket
+  struct stat socketInfo;
+  int socketIsFile = stat(libSdobSocket_socket_path, &socketInfo);
+  // printf("SOCKET; File Exists: %d, Mode: %o, UID: %d, S_IFSOCK: %d\n", socketIsFile, socketInfo.st_mode, socketInfo.st_uid, (socketInfo.st_mode ^ S_IFSOCK) % 2);
+  // Is File && Is System Account - More Agressive Approach
+  if (socketIsFile > -1 && socketInfo.st_uid < 1000) {
+    int sysCmdLen = snprintf(NULL, 0, "sudo rm -f %s", libSdobSocket_socket_path) + 1;
+    char *sysCmd = (char *)malloc(sysCmdLen * sizeof(char));
+    snprintf(sysCmd, sysCmdLen, "sudo rm -f %s", libSdobSocket_socket_path);
+    system(sysCmd);
+    free(sysCmd);
+  } else if (socketIsFile > -1 && remove(libSdobSocket_socket_path) == -1 && errno != ENOENT) {
+    dbgprintf(DBG_DEBUG, "Error removing SkydiveOrBust Socket [%s]: %d\n", libSdobSocket_socket_path, errno);
+  }
+  
 
   dbgprintf(DBG_DEBUG, "SkydiveOrBust Socket Thread Spinup: %d\n", libSdobSocketThreadRunning);
   libSdobSocketThreadKill = 0;
