@@ -1,5 +1,5 @@
-#ifndef _USB_DRIVES_H_
-#define _USB_DRIVES_H_
+#ifndef _LIBUSB_DRIVES_H_
+#define _LIBUSB_DRIVES_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,4 +42,4 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // _USB_DRIVES_H_
+#endif // _LIBUSB_DRIVES_H_

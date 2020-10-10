@@ -52,6 +52,7 @@ gslc_tsElemRef* pg_dubbingEl[E_DUBBING_EL_MAX];
 double pg_dubbing_videoSlate;
 double pg_dubbing_videoExit;
 int pg_dubbing_libUsbCnt;
+int pg_dubbing_driveLocalI;
 
 void pg_dubbingButtonRotaryCW();
 void pg_dubbingButtonRotaryCCW();

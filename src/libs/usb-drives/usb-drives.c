@@ -20,7 +20,7 @@ struct libUsbDrivesCounter *ALLOC_LIBUSBDRIVES_COUNTER()
 struct libUsbDrivesHardware *ALLOC_LIBUSBDRIVES_HARDWARE()
 {
   struct libUsbDrivesHardware *root = (struct libUsbDrivesHardware*)malloc(sizeof(struct libUsbDrivesHardware));
-  root->partitionCur = 0;
+  root->partitionCur = -1;
   root->partitionMax = 0;
   return root;
 }

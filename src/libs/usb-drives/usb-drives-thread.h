@@ -1,5 +1,5 @@
-#ifndef LIBUSBDRIVES_H_
-#define LIBUSBDRIVES_H_
+#ifndef _LIBUSB_DRIVES_THREAD_H_
+#define _LIBUSB_DRIVES_THREAD_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,4 +19,4 @@ void libUsbDrivesThreadStop();
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // LIBUSBDRIVES_H_
+#endif // _LIBUSB_DRIVES_THREAD_H_
