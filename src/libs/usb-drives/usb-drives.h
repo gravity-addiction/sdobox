@@ -25,8 +25,7 @@ struct libUsbDrivesHardware **libUsbDrivesList;
 struct libUsbDrivesCounter {
   int max;
   int cur;
-  int pmax;
-  int pcur;
+  int cnt;
 };
 struct libUsbDrivesCounter *libUsbDrivesCount;
 

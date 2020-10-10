@@ -9,11 +9,11 @@
 #include "usb-drives.h"
 
 void libUsbDrives_cleanPartition(struct libUsbDrivesInfo *partition) {
-  // if (partition->name != NULL) { free(partition->name); }
-  // if (partition->label != NULL) { free(partition->label); }
-  // if (partition->mountpoint != NULL) { free(partition->mountpoint); }
-  // if (partition->fstype != NULL) { free(partition->fstype); }
-  // if (partition->drivesize != NULL) { free(partition->drivesize); }
+  if (partition->name != NULL) { free(partition->name); }
+  if (partition->label != NULL) { free(partition->label); }
+  if (partition->mountpoint != NULL) { free(partition->mountpoint); }
+  if (partition->fstype != NULL) { free(partition->fstype); }
+  if (partition->drivesize != NULL) { free(partition->drivesize); }
 }
 
 void libUsbDrives_cleanPartitions(struct libUsbDrivesInfo **partitionList, int partitionCount) {
@@ -25,21 +25,17 @@ void libUsbDrives_cleanPartitions(struct libUsbDrivesInfo **partitionList, int p
 }
 
 void libUsbDrives_cleanDriveList(struct libUsbDrivesHardware **driveList, struct libUsbDrivesCounter *driveCounter) {
-  if (driveCounter->cur < 1) { return; }
-  for (int l = 0; l < driveCounter->max; l++) {
-    if (driveList[l] == NULL) { continue; }
-    // if (driveList[l]->name != NULL) { free(driveList[l]->name); }
-    // if (driveList[l]->drivesize != NULL) { free(driveList[l]->drivesize); }
-    if (driveList[l]->partitionMax > 0) {
-      for (int p = 0; p < driveList[l]->partitionMax; p++) {
-        if (driveList[l]->partitions[p] != NULL) {
-          libUsbDrives_cleanPartition(driveList[l]->partitions[p]);
-          free(driveList[l]->partitions[p]);
-        }
+  for (int l = 0; l < driveCounter->max; ++l) {
+    if (driveList[l]->name != NULL) { free(driveList[l]->name); }
+    if (driveList[l]->drivesize != NULL) { free(driveList[l]->drivesize); }
+
+    for (int p = 0; p < driveList[l]->partitionMax; ++p) {
+      if (driveList[l]->partitions[p] != NULL) {
+        libUsbDrives_cleanPartition(driveList[l]->partitions[p]);
+        free(driveList[l]->partitions[p]);
       }
-      free(driveList[l]->partitions);
     }
-    
+    free(driveList[l]->partitions);
     free(driveList[l]);
   }
 }
@@ -78,7 +74,7 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
     if (deviceLen > driveCounter->max) { deviceLen = driveCounter->max; }
     driveCounter->cur = deviceLen;
 
-    for (int device = 0; device < deviceLen; device++) { // Loop Hardware Devices
+    for (int device = 0; device < deviceLen; ++device) { // Loop Hardware Devices
       tI++;
       jsmntok_t *deviceInfo = &t[tI];
       int deviceInfoLen = deviceInfo->size;
@@ -112,12 +108,13 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
           char *vVal = malloc(vValLen + 1);
           snprintf(vVal, vValLen, "%.*s", deviceInfoTVal->end - deviceInfoTVal->start, sdob_data + deviceInfoTVal->start);
 
-          if (strcmp(vKey, "name") && vValLen) {
+          if (strcmp(vKey, "name") == 0 && vValLen) {
             driveList[device]->name = vVal;
-          } else if (strcmp(vKey, "size") && vValLen) {
+          } else if (strcmp(vKey, "size") == 0 && vValLen) {
             driveList[device]->drivesize = vVal;
+          } else {
+            free(vVal);
           }
-          free(vVal);
           free(vKey);
           // printf("[%d] %.*s - %.*s\n", deviceInfoT->type, deviceInfoT->end - deviceInfoT->start, sdob_data + deviceInfoT->start, deviceInfoTVal->end - deviceInfoTVal->start, sdob_data + deviceInfoTVal->start);
         } else {
@@ -154,18 +151,20 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
                   char *vcVal = malloc(vcValLen + 1);
                   snprintf(vcVal, vcValLen, "%.*s", deviceChildInfoTVal->end - deviceChildInfoTVal->start, sdob_data + deviceChildInfoTVal->start);
 
-                  if (strcmp(vcKey, "name") && vcValLen > 0) {
+
+                  if (strcmp(vcKey, "name") == 0 && vcValLen > 0) {
                     driveList[device]->partitions[deviceChildrenI]->name = vcVal;
-                  } else if (strcmp(vcKey, "label") && vcValLen > 0) {
+                  } else if (strcmp(vcKey, "label") == 0 && vcValLen > 0) {
                     driveList[device]->partitions[deviceChildrenI]->label = vcVal;
-                  } else if (strcmp(vcKey, "mountpoint") && vcValLen > 0) {
+                  } else if (strcmp(vcKey, "mountpoint") == 0 && vcValLen > 0) {
                     driveList[device]->partitions[deviceChildrenI]->mountpoint = vcVal;
-                  } else if (strcmp(vcKey, "fstype") && vcValLen > 0) {
+                  } else if (strcmp(vcKey, "fstype") == 0 && vcValLen > 0) {
                     driveList[device]->partitions[deviceChildrenI]->fstype = vcVal;
-                  } else if (strcmp(vcKey, "size") && vcValLen > 0) {
+                  } else if (strcmp(vcKey, "size") == 0 && vcValLen > 0) {
                     driveList[device]->partitions[deviceChildrenI]->drivesize = vcVal;
+                  } else {
+                    free(vcVal);
                   }
-                  free(vcVal);
                   free(vcKey);
                   // printf("[%d] %.*s - %.*s\n", deviceChildInfoT->type, deviceChildInfoT->end - deviceChildInfoT->start, sdob_data + deviceChildInfoT->start, deviceChildInfoTVal->end - deviceChildInfoTVal->start, sdob_data + deviceChildInfoTVal->start);
                 } else {
@@ -177,8 +176,9 @@ int libUsbDrives_parse_lsblk(char *libSdobSocket_buf, struct libUsbDrivesHardwar
           }
         }
       }
-
     }
+
+    driveCounter->cnt++;
   }
   free(sdob_data);
   return 0;

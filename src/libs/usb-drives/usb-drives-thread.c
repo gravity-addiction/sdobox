@@ -82,8 +82,7 @@ int libUsbDrivesThreadStart() {
   libUsbDrivesCount = (struct libUsbDrivesCounter*)malloc(sizeof(struct libUsbDrivesCounter) * 5);
   libUsbDrivesCount->max = 5;
   libUsbDrivesCount->cur = 0;
-  libUsbDrivesCount->pmax = 0;
-  libUsbDrivesCount->pcur = 0;
+  libUsbDrivesCount->cnt = 0;
 
   libUsbDrivesList = (struct libUsbDrivesHardware**)malloc(sizeof(struct libUsbDrivesHardware*) * libUsbDrivesCount->max);
   for (int dl = 0; dl < libUsbDrivesCount->max; dl++) {
