@@ -520,6 +520,7 @@ text/plain=leafpad.desktop
 echo "[Desktop Entry]
 Type=Application
 Name=MPV
-Exec=lxterminal -t mpv_control -e bash -c \"sleep 0.25; xdotool search --name mpv_control windowactivate; mpv %f\"
+Exec=lxterminal -t mpv_control -e bash -c \"echo 'loadfile \\\"%f\\\" replace' | socat - /tmp/mpv.socket\"
+# Exec=lxterminal -t mpv_control -e bash -c \"sleep 0.25; xdotool search --name mpv_control windowactivate; mpv %f\"
 NoDisplay=true
 Icon=mpv" > ~/.local/share/applications/mpv.desktop
