@@ -13,6 +13,7 @@ extern "C" {
 enum {
   E_USBDRIVE_EL_CLOSE,
   E_USBDRIVE_EL_EJECT,
+  E_USBDRIVE_EL_EJECT_TXTA,
   E_USBDRIVE_EL_POWEROFF,
   E_USBDRIVE_EL_ACTION,
 
@@ -47,10 +48,9 @@ void pg_usbdrive_destroy(gslc_tsGui *pGui);
 void __attribute__ ((constructor)) pg_usbdrive_constructor(void);
 void __attribute__ ((destructor)) pg_usbdrive_destructor(void);
 
+int libUsbDrivesI;
 
-struct libUsbDrivesHardware *usbDriveData;
-
-void pg_usbdrive_loadDrive(struct libUsbDrivesHardware *driveData);
+void pg_usbdrive_loadDrive(int driveI);
 struct vlist_config *pg_usbDrive_listConfig;
 gslc_tsXSlider pg_usbDrive_listSlider;
 

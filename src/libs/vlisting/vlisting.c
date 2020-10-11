@@ -163,6 +163,18 @@ void vlist_sliderMessage(gslc_tsGui *pGui, struct vlist_config *config, char* ms
   gslc_ElemSetTxtStr(pGui, config->refs[0], msg);
 }
 
+void vlist_sliderFill(gslc_tsGui *pGui, struct vlist_config *config) {
+  int pgAdd = config->scroll * config->per;
+  for (int i = 0; i < config->per; ++i) {
+    int iPg = i + pgAdd;
+      if (iPg == config->cur) {
+      gslc_ElemSetFillEn(pGui, config->refs[i], true);
+    } else {
+      gslc_ElemSetFillEn(pGui, config->refs[i], false);
+    }
+  }
+}
+
 void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list, int maxLen) {
   int pgAdd = config->scroll * config->per;
 
@@ -176,11 +188,9 @@ void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list
     } else {
       gslc_ElemSetTxtStr(pGui, config->refs[i], (char*)" ");
     }
-
-    if (iPg == config->cur) {
-      gslc_ElemSetFillEn(pGui, config->refs[i], true);
-    } else {
-      gslc_ElemSetFillEn(pGui, config->refs[i], false);
-    }
   }
+
+  vlist_sliderFill(pGui, config);
 }
+
+

@@ -15,6 +15,7 @@ struct libUsbDrivesInfo {
   char *mountpoint;
   char *fstype;
   char *drivesize;
+  int lock;
 };
 
 struct libUsbDrivesHardware {
@@ -24,6 +25,7 @@ struct libUsbDrivesHardware {
   int partitionMax;
   int partitionLargest;
   struct libUsbDrivesInfo **partitions;
+  int lock;
 };
 struct libUsbDrivesHardware **libUsbDrivesList;
 

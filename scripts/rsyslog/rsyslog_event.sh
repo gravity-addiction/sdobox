@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+SOCKETFILE=/tmp/sdobox.socket
 
 while read input
 do
@@ -19,9 +20,7 @@ if (
   )
 ); then
   ### USB Drive Event
-  SOCKETFILE=/tmp/sdobox.socket
   if [ -S "$SOCKETFILE" ]; then
-  sleep .2
   data=$(lsblk -o name,label,fstype,size,mountpoint --json)
   json='{"event":"usb-drive","syslog":'"${input}"',"data":'"${data}"'}'
   echo "${json}" | socat - "${SOCKETFILE}" > /dev/null 2>&1

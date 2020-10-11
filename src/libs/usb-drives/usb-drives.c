@@ -22,12 +22,14 @@ struct libUsbDrivesHardware *ALLOC_LIBUSBDRIVES_HARDWARE()
   struct libUsbDrivesHardware *root = (struct libUsbDrivesHardware*)malloc(sizeof(struct libUsbDrivesHardware));
   root->partitionCur = -1;
   root->partitionMax = 0;
+  root->lock = 0;
   return root;
 }
 
 struct libUsbDrivesInfo *ALLOC_LIBUSBDRIVES_INFO()
 {
   struct libUsbDrivesInfo *root = malloc(sizeof(struct libUsbDrivesInfo));
+  root->lock = 0;
   return root;
 }
 

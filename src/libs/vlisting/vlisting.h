@@ -47,7 +47,7 @@ void vlist_sliderResetCurPos(gslc_tsGui *pGui, struct vlist_config *config);
 void vlist_sliderClear(gslc_tsGui *pGui, struct vlist_config *config);
 void vlist_sliderMessage(gslc_tsGui *pGui, struct vlist_config *config, char* msg);
 void vlist_sliderDraw(gslc_tsGui *pGui, struct vlist_config *config, char **list, int maxLen);
-
+void vlist_sliderFill(gslc_tsGui *pGui, struct vlist_config *config);
 
 #ifdef __cplusplus
 }

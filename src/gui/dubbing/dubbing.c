@@ -110,7 +110,7 @@ bool pg_dubbing_cbBtn_usbDrive_A(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
-  pg_usbdrive_loadDrive(libUsbDrivesList[pg_dubbing_driveI_A]);
+  pg_usbdrive_loadDrive(pg_dubbing_driveI_A);
 
   return true;
 }
@@ -120,7 +120,7 @@ bool pg_dubbing_cbBtn_usbDrive_B(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
-  pg_usbdrive_loadDrive(libUsbDrivesList[pg_dubbing_driveI_B]);
+  pg_usbdrive_loadDrive(pg_dubbing_driveI_B);
   return true;
 }
 
@@ -129,7 +129,7 @@ bool pg_dubbing_cbBtn_usbDrive_C(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
-  pg_usbdrive_loadDrive(libUsbDrivesList[pg_dubbing_driveI_C]);
+  pg_usbdrive_loadDrive(pg_dubbing_driveI_C);
   return true;
 }
 
@@ -138,7 +138,7 @@ bool pg_dubbing_cbBtn_usbDrive_D(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
-  pg_usbdrive_loadDrive(libUsbDrivesList[pg_dubbing_driveI_D]);
+  pg_usbdrive_loadDrive(pg_dubbing_driveI_D);
   return true;
 }
 
