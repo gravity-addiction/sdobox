@@ -17,6 +17,15 @@
 #include "mpv.h"
 
 
+struct libMpvEventInfo * LIBMPV_EVENTS_INIT_INFO()
+{
+  struct libMpvEventInfo *eventInfo = (struct libMpvEventInfo*)malloc(sizeof(struct libMpvEventInfo));
+  eventInfo->cnt = 0;
+  eventInfo->is_loaded = 0;
+  eventInfo->is_playing = 0;
+  return eventInfo;
+}
+
 struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA()
 {
   struct libMpvEventThreadCbData *threads = (struct libMpvEventThreadCbData*)malloc(sizeof(struct libMpvEventThreadCbData));
@@ -71,7 +80,23 @@ int libMpvCallbackAppend(void (*function)(char*)) {
 
 
 
+void libMpvProcessEvent(char *event) {
+  if (strcmp(event, "start-file") == 0) {
+   libMpvVideoInfo->is_playing = 1;
+  } else if (strcmp(event, "playback-restart") == 0) {
+    libMpvVideoInfo->is_playing = 1;
+  } else if (strcmp(event, "file-loaded") == 0) {
+    libMpvVideoInfo->is_loaded = 1;
+  } else if (strcmp(event, "end-file") == 0) {
+    libMpvVideoInfo->is_playing = 0;
+  } else if (strcmp(event, "idle") == 0) {
+    libMpvVideoInfo->is_loaded = 0;
+  } else {
+    return;
+  }
 
+  libMpvVideoInfo->cnt++;
+}
 
 // ------------------------
 // MPV Event Queue Thread
@@ -104,11 +129,13 @@ PI_THREAD (libMpvQueueThread)
             rcE = ta_json_parse((char *)item->data, "event", &json_event_raw);
             if (rcE > 0) {
                printf("Got Raw %s\n", json_event_raw);
+               libMpvProcessEvent(json_event_raw);
             }
             free(json_event_raw);
           break;
           case 1: // Event Parsed
             printf("Event %s\n", (char *)item->data);
+            libMpvProcessEvent(item->data);
           break;
         }
       }
@@ -251,6 +278,7 @@ int libMpvSocketThreadStart() {
 
   // Create callback struct
   libMpvEventThreads = LIBMPV_EVENTS_INIT_DATA();
+  libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
 
   // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", libMpvSocketThreadRunning);
   libMpvSocketThreadKill = 0;

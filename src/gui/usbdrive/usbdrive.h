@@ -14,11 +14,14 @@ enum {
   E_USBDRIVE_EL_CLOSE,
   E_USBDRIVE_EL_EJECT,
   E_USBDRIVE_EL_POWEROFF,
+  E_USBDRIVE_EL_ACTION,
+
+  E_USBDRIVE_EL_BOX,
 
   E_USBDRIVE_EL_MAX
 };
 
-#define MAX_ELEM_PG_USBDRIVE      E_USBDRIVE_EL_MAX
+#define MAX_ELEM_PG_USBDRIVE      E_USBDRIVE_EL_MAX + 11
 #define MAX_ELEM_PG_USBDRIVE_RAM  MAX_ELEM_PG_USBDRIVE
 
 gslc_tsElem pg_usbdriveElem[MAX_ELEM_PG_USBDRIVE];
@@ -45,14 +48,11 @@ void __attribute__ ((constructor)) pg_usbdrive_constructor(void);
 void __attribute__ ((destructor)) pg_usbdrive_destructor(void);
 
 
-struct usbDriveData {
-  struct libUsbDrivesHardware *drives;
-  int partitionI;
-};
-struct usbDriveData *usbDriveDataset;
+struct libUsbDrivesHardware *usbDriveData;
 
-void pg_usbdrive_loadDrive(struct usbDriveData *driveData);
-
+void pg_usbdrive_loadDrive(struct libUsbDrivesHardware *driveData);
+struct vlist_config *pg_usbDrive_listConfig;
+gslc_tsXSlider pg_usbDrive_listSlider;
 
 #ifdef __cplusplus
 }

@@ -45,6 +45,9 @@ PI_THREAD (libUsbDrivesThread)
   libUsbDrives_Queue = ALLOC_QUEUE_ROOT();
   libUsbDrives_QueueLen = 0;
 
+  // Initialize drive lookup
+  system("/opt/sdobox/scripts/rsyslog/udev_event.sh startup &");
+  
   // Grab MPV Events, sent in JSON format
   while(!libUsbDrivesThreadKill) {
     if (libUsbDrives_QueueLen > 0) {
@@ -85,8 +88,6 @@ int libUsbDrivesThreadStart() {
   dbgprintf(DBG_DEBUG, "USB Drives Thread Spinup: %d\n", libUsbDrivesThreadRunning);
   libUsbDrivesThreadKill = 0;
 
-  // Initialize drive lookup
-  system("/opt/sdobox/scripts/rsyslog/udev_event.sh startup &");
   return piThreadCreate(libUsbDrivesThread);
 }
 

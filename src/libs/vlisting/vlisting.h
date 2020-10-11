@@ -31,6 +31,8 @@ void vlist_sliderDown(struct vlist_config *config);
 void vlist_sliderUp(struct vlist_config *config);
 void vlist_sliderSetPos(gslc_tsGui *pGui, struct vlist_config *config, int i);
 void vlist_sliderSetPosFromCur(gslc_tsGui *pGui, struct vlist_config *config);
+
+int vlist_getBtnIndex(struct vlist_config *config, int i);
 // returns 0 when click is invalid
 int vlist_clickBtn(struct vlist_config *config, int i);
 

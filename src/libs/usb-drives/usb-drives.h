@@ -22,6 +22,7 @@ struct libUsbDrivesHardware {
   char *drivesize;
   int partitionCur;
   int partitionMax;
+  int partitionLargest;
   struct libUsbDrivesInfo **partitions;
 };
 struct libUsbDrivesHardware **libUsbDrivesList;

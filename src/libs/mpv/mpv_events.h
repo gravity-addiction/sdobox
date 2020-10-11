@@ -5,6 +5,14 @@
 extern "C" {
 #endif // __cplusplus
 
+struct libMpvEventInfo {
+  int cnt;
+  int is_loaded;
+  int is_playing;
+};
+struct libMpvEventInfo *libMpvVideoInfo;
+
+
 // Each callback function
 struct libMpvEventThreadCb {
   int id;
