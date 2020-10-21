@@ -1,12 +1,23 @@
 #include <stdio.h>
 #include <ulfius.h>
 #include <wiringPi.h> // Gordons Wiring Pi
+#include <jansson.h>
 
 #include "libs/shared.h"
 #include "lib_websocket.h"
 #include "websocket_api.h"
 #include "libs/dbg/dbg.h"
 
+
+struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
+  struct libUlfiusSDOBNewVideo *eventInfo = (struct libUlfiusSDOBNewVideo*)malloc(sizeof(struct libUlfiusSDOBNewVideo));
+  eventInfo->cnt = 0;
+  // eventInfo->team = strdup((char*)' ');
+  // eventInfo->rnd = strdup((char*)' ');
+  // eventInfo->meet = strdup((char*)' ');
+  // eventInfo->desc = strdup((char*)' ');
+  return eventInfo;
+}
 
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 200, "Hello World!");
@@ -28,6 +39,23 @@ int callback_spotify (const struct _u_request * request, struct _u_response * re
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 204, NULL);
+  json_error_t error;
+  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
+  if (json_nb_sheep == NULL) {
+    printf("Error: %s\n", error.text);
+  } else {
+    libUlfiusSDOBNewVideoInfo->team = strdup(json_string_value(json_object_get(json_nb_sheep, "team")));
+    libUlfiusSDOBNewVideoInfo->rnd = strdup(json_string_value(json_object_get(json_nb_sheep, "rnd")));
+    libUlfiusSDOBNewVideoInfo->meet = strdup(json_string_value(json_object_get(json_nb_sheep, "meet")));
+    libUlfiusSDOBNewVideoInfo->desc = strdup(json_string_value(json_object_get(json_nb_sheep, "desc")));
+  }
+  free(json_nb_sheep);
+
+  libUlfiusSDOBNewVideoInfo->cnt++;
+  return U_CALLBACK_CONTINUE;
+}
 
 // ------------------------
 // Websocket API Thread
@@ -59,6 +87,7 @@ PI_THREAD (websocketApiThread)
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
 
   ulfius_add_endpoint_by_val(&instance, "GET", "/H3xx92sk", NULL, 0, &callback_spotify, NULL);
+  ulfius_add_endpoint_by_val(&instance, "POST", "/p/skydiveorbust/newvideo", NULL, 0, &callback_skydiveorbust_newvideo, NULL);
   ulfius_set_default_endpoint(&instance, &websocket_cbDefault, NULL);
 
   // Start the framework
@@ -79,9 +108,12 @@ PI_THREAD (websocketApiThread)
 }
 
 
+
 int websocket_api_start() {
   dbgprintf(DBG_INFO, "%s\n", "websocketApiThreadStart()");
   if (websocketApiThreadRunning) { return 0; }
+
+  libUlfiusSDOBNewVideoInfo = LIBULFIUS_SDOB_NEWVIDEO();
 
   websocketApiThreadKill = 0;
   return piThreadCreate(websocketApiThread);

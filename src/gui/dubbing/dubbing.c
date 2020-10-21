@@ -107,6 +107,7 @@ bool pg_dubbing_cbBtn_fbcp(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
 
 bool pg_dubbing_cbBtn_usbDrive_A(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (pg_dubbing_driveI_A == -1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
@@ -117,6 +118,7 @@ bool pg_dubbing_cbBtn_usbDrive_A(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 
 bool pg_dubbing_cbBtn_usbDrive_B(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (pg_dubbing_driveI_B == -1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
@@ -126,6 +128,7 @@ bool pg_dubbing_cbBtn_usbDrive_B(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 
 bool pg_dubbing_cbBtn_usbDrive_C(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (pg_dubbing_driveI_C == -1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);
@@ -135,6 +138,7 @@ bool pg_dubbing_cbBtn_usbDrive_C(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 
 bool pg_dubbing_cbBtn_usbDrive_D(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (pg_dubbing_driveI_D == -1) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   touchscreenPageOpen(pGui, E_PG_USBDRIVE);

@@ -5,6 +5,15 @@
 extern "C" {
 #endif // __cplusplus
 
+struct libUlfiusSDOBNewVideo {
+  int cnt;
+  char *team;
+  char *rnd;
+  char *meet;
+  char *desc;
+};
+struct libUlfiusSDOBNewVideo *libUlfiusSDOBNewVideoInfo;
+
 // Thread
 int websocketApiThreadKill;
 int websocketApiThreadRunning;

@@ -46,6 +46,8 @@
 #include "libs/json/json.h" // JSON Parsing
 #include "libs/usb-drives/usb-drives-thread.h"
 
+
+#include "gui/skydiveorbust/skydiveorbust.h"
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
 
@@ -55,6 +57,7 @@ char*    config_path = "/home/pi/.config/sdobox/sdobox.conf";
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
 int      m_startPage = 0; // Page Int to start, -1 for no page just buttons
 int      m_touchscreenInit = 0; // guislice init successful
+int      m_newVideoCnt = 0; // TEMP: Used for tracking incoming scoring videos globally
 
 void signal_sigint(int sig);
 void get_config_settings();
@@ -361,6 +364,21 @@ int main( int argc, char* args[] )
 
     if (lib_buttons_thread()) {
        m_bSleep = 0;
+    }
+
+    // SDOB Video Host Event
+    if (libUlfiusSDOBNewVideoInfo->cnt > 0 && m_newVideoCnt != libUlfiusSDOBNewVideoInfo->cnt) {
+      libUlfiusSDOBNewVideoInfo->cnt = m_newVideoCnt;
+      // dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+      if (m_tPageCur != E_PG_SKYDIVEORBUST) {
+        touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
+        dbgprintf(DBG_DEBUG, "%s", "CHANGE PAGES\n");
+      }
+      sdob_devicehost->isHost = 0;
+      pg_sdobUpdateMeet(&m_gui, libUlfiusSDOBNewVideoInfo->meet);
+      pg_sdobUpdateVideoDesc(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
+      pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+      pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
     }
 
     if (m_bSleep) {

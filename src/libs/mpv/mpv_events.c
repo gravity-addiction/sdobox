@@ -17,8 +17,7 @@
 #include "mpv.h"
 
 
-struct libMpvEventInfo * LIBMPV_EVENTS_INIT_INFO()
-{
+struct libMpvEventInfo * LIBMPV_EVENTS_INIT_INFO() {
   struct libMpvEventInfo *eventInfo = (struct libMpvEventInfo*)malloc(sizeof(struct libMpvEventInfo));
   eventInfo->cnt = 0;
   eventInfo->is_loaded = 0;

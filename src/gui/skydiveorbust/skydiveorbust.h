@@ -50,6 +50,18 @@ int pg_sdobElTotal;
 
 
 /////////////////
+// Host Or Slave Device
+struct pg_sdob_device_host {
+  int cnt;
+  int seenCnt;
+  int isHost;
+  char *host;
+  char *port;
+};
+struct pg_sdob_device_host *sdob_devicehost;
+
+
+/////////////////
 // Scorecard
 enum {
   E_SCORES_BUST,
@@ -96,6 +108,7 @@ struct pg_sdob_video_round_record {
   char* teamnumber;
   char* round;
 };
+int pg_sdob_api_newVideoCnt;
 
 struct pg_sdob_video_round_record* sdob_current_rounds;
 size_t sdob_num_current_rounds;
