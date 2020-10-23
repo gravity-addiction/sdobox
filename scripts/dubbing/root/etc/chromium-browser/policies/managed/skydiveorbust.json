@@ -1,0 +1,12 @@
+{
+  "AutoLaunchProtocolsFromOrigins": {
+    "allowed_origins": [
+      "skydiveorbust.com", "dev.skydiveorbust.com", "localhost", "127.0.0.1"
+    ],
+    "protocol": "dub"
+  },
+  "ExternalProtocolDialogShowAlwaysOpenCheckbox": true,
+  "NewTabPageLocation": "https://skydiveorbust.com/",
+  "HomepageIsNewTabPage": true, 
+  "HomepageLocation": "https://skydiveorbust.com"
+}

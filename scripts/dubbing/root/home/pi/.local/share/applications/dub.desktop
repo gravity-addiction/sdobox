@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Dubbing Launcher
+GenericName=SkydiveOrBust Dub
+Comment=Dub videos to skydive or bust
+Exec=/opt/sdobox/scripts/dubbing/dubbing.sh %u
+NoDisplay=true
+Categories=Video;Audio;AudioVideo;Graphics;Utility
+MimeType=x-scheme-handler/dub;

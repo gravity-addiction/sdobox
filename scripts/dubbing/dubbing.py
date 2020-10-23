@@ -5,6 +5,7 @@ from python_mpv_jsonipc import MPV
 from threading import Thread
 import socket
 import subprocess
+import sys
 import os
 import json
 import time
@@ -249,6 +250,10 @@ class TeamBtns(object):
 class RoundBtns(object):
     pass
 
+
+
+
+# START App Main()
 r = RoundBtns()
 dataSet = DataSet()
 selectedTeam = ""
@@ -335,7 +340,15 @@ if os.path.exists(csock_file):
 csock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
 csock.bind(csock_file)
 csock.setblocking(0)
-csock.sendto(str.encode('{"event":"started"}'), ssock_file)
+
+try:
+  csock.sendto(str.encode('{"event":"started"}'), ssock_file)
+except:
+  pass
+
+# print('Num Args', len(sys.argv), 'arguments')
+# print('Arg list', str(sys.argv))
+statusText.value = sys.argv[1]
 
 sdobThread = Thread(target = thread_sdobSocket)
 sdobThread.setDaemon(True)
