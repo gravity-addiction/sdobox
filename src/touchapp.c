@@ -347,6 +347,9 @@ int main( int argc, char* args[] )
     fbcp_start();
   }
 
+  // Register The Device
+  system("/opt/sdobox/scripts/register_device.sh &");
+
   // ------------------------------------------------
   // Main event loop
   // ------------------------------------------------
@@ -368,17 +371,33 @@ int main( int argc, char* args[] )
 
     // SDOB Video Host Event
     if (libUlfiusSDOBNewVideoInfo->cnt > 0 && m_newVideoCnt != libUlfiusSDOBNewVideoInfo->cnt) {
+      // Update counter to sync with current
       libUlfiusSDOBNewVideoInfo->cnt = m_newVideoCnt;
+
       // dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+
       if (m_tPageCur != E_PG_SKYDIVEORBUST) {
         touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
         dbgprintf(DBG_DEBUG, "%s", "CHANGE PAGES\n");
       }
-      sdob_devicehost->isHost = 0;
+      
+      if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
+        sdob_devicehost->isHost = 1;
+      } else {
+        sdob_devicehost->isHost = 0;
+      }
+      pg_sdobUpdateHostDeviceInfo(&m_gui);
+      
+      pg_sdob_scorecard_clear(&m_gui);
       pg_sdobUpdateMeet(&m_gui, libUlfiusSDOBNewVideoInfo->meet);
       pg_sdobUpdateVideoDesc(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
       pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
       pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+      
+
+      if (sdob_devicehost->isHost == 1) {
+        mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+      }
     }
 
     if (m_bSleep) {
@@ -411,6 +430,7 @@ int main( int argc, char* args[] )
   // Kill MPV
   mpv_stop();
   libMpvSocketThreadStop();
+  mpv_destroy();
 
   // Kill SDOB Socket
   libSdobSocketThreadStop();
