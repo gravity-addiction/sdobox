@@ -5,13 +5,6 @@
 extern "C" {
 #endif // __cplusplus
 
-struct libMpvEventInfo {
-  int cnt;
-  int is_loaded;
-  int is_playing;
-};
-struct libMpvEventInfo *libMpvVideoInfo;
-
 
 // Each callback function
 struct libMpvEventThreadCb {
@@ -53,5 +46,7 @@ void libMpvQueueThreadStop();
 
 int libMpvSocketThreadStart();
 void libMpvSocketThreadStop();
+
+void libmpv_setduration();
 
 #endif // _LIB_MPV_EVENTS_H_

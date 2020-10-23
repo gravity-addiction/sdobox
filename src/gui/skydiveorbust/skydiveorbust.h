@@ -34,6 +34,7 @@ enum {
   E_SDOB_EL_PL_USER_RATE,
   E_SDOB_EL_PL_BACK,
   E_SDOB_EL_PL_PLAY,
+  E_SDOB_EL_PL_STOP,
   E_SDOB_EL_PL_FORWARD,
   E_SDOB_EL_PL_SLIDER,
   E_SDOB_EL_PL_POS,
@@ -47,6 +48,8 @@ gslc_tsElemRef pg_sdobElemRef[E_SDOB_EL_MAX + 150];
 
 gslc_tsElemRef **pg_sdobEl;
 int pg_sdobElTotal;
+
+int pg_sdob_timeline_zoom_workingtime; // 1 - Zooms timeline for working time, 0 - keeps timeline for full video
 
 
 /////////////////
@@ -168,17 +171,6 @@ struct pg_sdob_videolist_folders * PG_SDOB_INIT_VIDEOLIST_FOLDERS();
 
 ////////////////////
 // MPV Player
-struct pg_sdob_player_data {
-  int paused;
-  double position;
-  double duration;
-  double pbrate;
-  double pbrateUser;
-  char *positionStr;
-  char *pbrateStr;
-  char *pbrateUserStr;
-};
-struct pg_sdob_player_data *sdob_player;
 
 struct pg_sdob_player_chapters {
   int len;
@@ -273,7 +265,7 @@ enum {
 
 struct queue_root *pg_sdobQueue;
 size_t pg_sdobQueueLen;
-
+uint16_t pg_sdobPlayerPos; // = 0;
 
 
 void pg_sdobSliderSetCurPos(gslc_tsGui *pGui, int ss);
@@ -283,6 +275,7 @@ void pg_sdobUpdateCount(gslc_tsGui *pGui, gslc_tsElemRef *pElem);
 
 void pg_sdobUpdateVideoRate(gslc_tsGui *pGui, double playback_rate);
 void pg_sdobUpdateUserDefinedVideoRate(gslc_tsGui *pGui, double playback_rate);
+void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui);
 void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateMeet(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char *str);

@@ -14,16 +14,11 @@
 #include "libs/json/json.h"
 
 #include "mpv_events.h"
+#include "mpv_info.h"
 #include "mpv.h"
 
 
-struct libMpvEventInfo * LIBMPV_EVENTS_INIT_INFO() {
-  struct libMpvEventInfo *eventInfo = (struct libMpvEventInfo*)malloc(sizeof(struct libMpvEventInfo));
-  eventInfo->cnt = 0;
-  eventInfo->is_loaded = 0;
-  eventInfo->is_playing = 0;
-  return eventInfo;
-}
+
 
 struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA()
 {
@@ -35,13 +30,14 @@ struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA()
     threads->cbs[c] = NULL;
   }
   return threads;
-};
+}
 
 void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventThreadCbData *threads) {// free cb
   libMpvCallbackClean(threads);
   free(threads->cbs);
   free(threads);
 }
+
 
 void libMpvCallbackClean(struct libMpvEventThreadCbData *threads) {
   for (size_t i = 0; i < threads->len; ++i) {
@@ -80,21 +76,60 @@ int libMpvCallbackAppend(void (*function)(char*)) {
 
 
 void libMpvProcessEvent(char *event) {
-  if (strcmp(event, "start-file") == 0) {
-   libMpvVideoInfo->is_playing = 1;
-  } else if (strcmp(event, "playback-restart") == 0) {
+
+  // Is Playing
+  if (strcmp(event, "start-file") == 0 ||
+      strcmp(event, "play") == 0
+  ) {
     libMpvVideoInfo->is_playing = 1;
+
+  // No Longer Playing
+  } else if (
+    strcmp(event, "end-file") == 0 || 
+    strcmp(event, "pause") == 0
+  ) {
+    libMpvVideoInfo->is_playing = 0;
+
+  // Is Loaded
   } else if (strcmp(event, "file-loaded") == 0) {
     libMpvVideoInfo->is_loaded = 1;
-  } else if (strcmp(event, "end-file") == 0) {
-    libMpvVideoInfo->is_playing = 0;
+
+  // Nothing Loaded
   } else if (strcmp(event, "idle") == 0) {
     libMpvVideoInfo->is_loaded = 0;
+  
+  // Seeking Thru File, Not Playing, and not Paused
+  } else if (strcmp(event, "seek") == 0) {
+    libMpvVideoInfo->is_seeking = 1;
+
+  // No longer Seeking, Playable
+  } else if (strcmp(event, "playback-restart") == 0) {
+    libMpvVideoInfo->is_seeking = 0;
+
+  } else if (strcmp(event, "metadata-update") == 0) {
+    libmpv_setduration();
   } else {
     return;
   }
 
   libMpvVideoInfo->cnt++;
+}
+
+
+
+// Set sdob_player->duration
+void libmpv_setduration() {
+  // Update Duration
+  char* retDur;
+  if ((mpvSocketSinglet("duration", &retDur)) != -1) {
+    dbgprintf(DBG_DEBUG, "Video Duration: Status: %d, %s\n", strlen(retDur), retDur);
+    libMpvVideoInfo->duration = atof(retDur);
+    free(retDur);
+    // printf("Video Duration Dbl: %f\n", sdob_player->duration);
+  } else {
+    // printf("%s\n", "No Video Duration!!");
+    libMpvVideoInfo->duration = 0;
+  }
 }
 
 // ------------------------
@@ -127,13 +162,13 @@ PI_THREAD (libMpvQueueThread)
           case 0: // RAW
             rcE = ta_json_parse((char *)item->data, "event", &json_event_raw);
             if (rcE > 0) {
-               printf("Got Raw %s\n", json_event_raw);
+               dbgprintf(DBG_MPV_EVENT, "Got Raw %s\n", json_event_raw);
                libMpvProcessEvent(json_event_raw);
             }
             free(json_event_raw);
           break;
           case 1: // Event Parsed
-            printf("Event %s\n", (char *)item->data);
+            dbgprintf(DBG_MPV_EVENT, "Event %s\n", (char *)item->data);
             libMpvProcessEvent(item->data);
           break;
         }
@@ -277,7 +312,6 @@ int libMpvSocketThreadStart() {
 
   // Create callback struct
   libMpvEventThreads = LIBMPV_EVENTS_INIT_DATA();
-  libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
 
   // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", libMpvSocketThreadRunning);
   libMpvSocketThreadKill = 0;

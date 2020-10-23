@@ -6,7 +6,6 @@
 #include "libs/buttons/buttons.h"
 #include "libs/vlisting/vlisting.h"
 #include "libs/mpv/mpv.h"
-#include "libs/mpv/mpv_events.h"
 #include "libs/fbcp/fbcp.h"
 
 #include "gui/pages.h"

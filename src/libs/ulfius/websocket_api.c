@@ -12,11 +12,24 @@
 struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
   struct libUlfiusSDOBNewVideo *eventInfo = (struct libUlfiusSDOBNewVideo*)malloc(sizeof(struct libUlfiusSDOBNewVideo));
   eventInfo->cnt = 0;
-  // eventInfo->team = strdup((char*)' ');
-  // eventInfo->rnd = strdup((char*)' ');
-  // eventInfo->meet = strdup((char*)' ');
-  // eventInfo->desc = strdup((char*)' ');
+  eventInfo->team = (char*)malloc(2 * sizeof(char));
+  eventInfo->rnd = (char*)malloc(2 * sizeof(char));
+  eventInfo->meet = (char*)malloc(2 * sizeof(char));
+  eventInfo->desc = (char*)malloc(2 * sizeof(char));
+  eventInfo->host = (char*)malloc(2 * sizeof(char));
+  eventInfo->folder = (char*)malloc(2 * sizeof(char));
+  eventInfo->file = (char*)malloc(2 * sizeof(char));
   return eventInfo;
+}
+
+void LIBULFIUS_SDOB_NEWVIDEO_DESTROY(struct libUlfiusSDOBNewVideo *eventInfo) {
+  free(eventInfo->team);
+  free(eventInfo->rnd);
+  free(eventInfo->meet);
+  free(eventInfo->desc);
+  free(eventInfo->host);
+  free(eventInfo->folder);
+  free(eventInfo->file);
 }
 
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -46,10 +59,15 @@ int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _
   if (json_nb_sheep == NULL) {
     printf("Error: %s\n", error.text);
   } else {
+    // LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
     libUlfiusSDOBNewVideoInfo->team = strdup(json_string_value(json_object_get(json_nb_sheep, "team")));
     libUlfiusSDOBNewVideoInfo->rnd = strdup(json_string_value(json_object_get(json_nb_sheep, "rnd")));
     libUlfiusSDOBNewVideoInfo->meet = strdup(json_string_value(json_object_get(json_nb_sheep, "meet")));
     libUlfiusSDOBNewVideoInfo->desc = strdup(json_string_value(json_object_get(json_nb_sheep, "desc")));
+
+    libUlfiusSDOBNewVideoInfo->host = strdup(json_string_value(json_object_get(json_nb_sheep, "host")));
+    libUlfiusSDOBNewVideoInfo->folder = strdup(json_string_value(json_object_get(json_nb_sheep, "folder")));
+    libUlfiusSDOBNewVideoInfo->file = strdup(json_string_value(json_object_get(json_nb_sheep, "file")));
   }
   free(json_nb_sheep);
 
@@ -130,4 +148,7 @@ void websocket_api_stop() {
     }
     websocketApiThreadKill = 0;
   }
+
+  // LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
+  // free(libUlfiusSDOBNewVideoInfo);
 }

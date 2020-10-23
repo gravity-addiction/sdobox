@@ -13,6 +13,7 @@
 // #include <mpv/client.h>
 #include "libs/shared.h"
 #include "mpv_events.h"
+#include "mpv_info.h"
 #include "mpv.h"
 
 #include "libs/dbg/dbg.h"
@@ -81,29 +82,19 @@ int mpv_init() {
   //}
 
   mpv_socket_fdSelect = -1;
+  
+  // Init Video Player Info
+  libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
 
   mpv_stop();
   mpv_playlist_clear();
 
-  m_is_video_playing = 0;
-  mi_video_fps_frame = 0;
-
-  mpv_video_duration = 0.00;
-  mpv_video_pos = 0.00;
-
-
-  mi_video_fps = 0;
-  m_video_lock = 0;
-
-  mpv_video_rate = 1.0;
-  m_nPosPlayer = 0;
-
-  i_chapter_cnt = 0; // placeholder for chapter count
-
   return 1;
 }
 
-
+void mpv_destroy() {
+  LIBMPV_EVENTS_DESTROY_INFO(libMpvVideoInfo);
+}
 
 
 
@@ -257,21 +248,30 @@ int mpv_cmd(char *cmd_string) {
     return fdWrite;
 }
 
+unsigned int reqId = 1;
+unsigned int reqTop = -1;
 int mpvSocketSinglet(char* prop, char ** json_prop) {
     // dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "mpvsinglet: %s\n", prop);
 
-    char* data_tmp = "{ \"command\": [\"get_property\", \"%s\"] }\n";
-    size_t len = snprintf(NULL, 0, data_tmp, prop) + 1;
+    pthread_mutex_lock(&mpvSocketCmdLock);
+
+    if (++reqId == reqTop) { reqId = 1; } // reset request ids
+
+    char* data_tmp = "{\"command\":[\"get_property\",\"%s\"],\"request_id\": %d}\n";
+    size_t len = snprintf(NULL, 0, data_tmp, prop, reqId) + 1;
     char *data = (char*)malloc(len * sizeof(char));
     if (data == NULL) {
         dbgprintf(DBG_ERROR, "%s\n%s\n", "Error!, No Memory", strerror(errno));
         return -1;
     }
-    snprintf(data, len, data_tmp, prop);
+    snprintf(data, len, data_tmp, prop, reqId);
 
     int result = -1;
+    struct mpv_cmd_status *mpvSocketCmdStatus = (struct mpv_cmd_status *)malloc(sizeof(struct mpv_cmd_status));
 
-    pthread_mutex_lock(&mpvSocketCmdLock);
+    mpvSocketCmdStatus->jsonReqId = (char*)malloc(64 * sizeof(char));
+    mpvSocketCmdStatus->jsonError = (char*)malloc(128 * sizeof(char));
+    mpvSocketCmdStatus->jsonData = (char*)malloc(512 * sizeof(char));
 
     /* set the timeout data structure. */
     mpv_socket_timeout.tv_sec = 2;
@@ -281,8 +281,13 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
         goto cleanup;
     }
     free(data);
+    
+    time_t endTimeout;
+    time_t startTimeout = time(NULL);
+    time_t timeoutSeconds = 10; // 10 Second timeout getting back your cmd
+    endTimeout = startTimeout + timeoutSeconds;
 
-    while (1) {
+    while (startTimeout < endTimeout) {
         /* select returns 0 if timeout, 1 if input available, -1 if error. */
         int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
         if (selT == -1) {
@@ -294,39 +299,31 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
             char* mpv_rpc_ret = NULL;
             int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
             if (rc > 0 && mpv_rpc_ret != NULL) {
-                // error response
-                if (strncmp(mpv_rpc_ret, "{\"error\":\"success\"}", 19) == 0) {
-                    dbgprintf(DBG_MPV_READ,
-                              "Successful Response after request property %s, %s\n",
-                              prop, mpv_rpc_ret);
-                    *json_prop = strdup("true");
+                mpvSocketCmdStatus->resultReqId = ta_json_parse(mpv_rpc_ret, "request_id", &mpvSocketCmdStatus->jsonReqId);
+                mpvSocketCmdStatus->resultError = ta_json_parse(mpv_rpc_ret, "error", &mpvSocketCmdStatus->jsonError);
+                mpvSocketCmdStatus->resultData = ta_json_parse(mpv_rpc_ret, "data", &mpvSocketCmdStatus->jsonData);
+
+                // Successful Response With Data
+                int rReqId = atoi(mpvSocketCmdStatus->jsonReqId);
+                if (rReqId == reqId && mpvSocketCmdStatus->resultError > 0 && strcmp(mpvSocketCmdStatus->jsonError, "success") == 0) {
+                    dbgprintf(DBG_MPV_READ, "mpvread %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
+                    result = ta_json_parse(mpv_rpc_ret, "data", json_prop);
                     free(mpv_rpc_ret);
                     goto cleanup;
-                    // data response
-                } else if (strncmp(mpv_rpc_ret, "{\"error\":", 9) == 0) {
+
+                // Error Response
+                } else if (rReqId == reqId && mpvSocketCmdStatus->resultError > 0) {
                     dbgprintf(DBG_MPV_READ|DBG_ERROR,
                               "Error after requesting property %s, %s\n",
                               prop, mpv_rpc_ret);
                     free(mpv_rpc_ret);
                     goto cleanup;
-                    // data response
-                } else if (strncmp(mpv_rpc_ret, "{\"data\":", 8) == 0) {
-                    dbgprintf(DBG_MPV_READ, "mpvread: '%s'\n", mpv_rpc_ret);
-                    result = ta_json_parse(mpv_rpc_ret, "data", json_prop);
-                    free(mpv_rpc_ret);
-                    goto cleanup;
-                    // every other response
-                } else {
-                    struct queue_head *item = new_qhead();
-                    item->action = 0;
-                    item->data = strdup(mpv_rpc_ret);
-                    queue_put(item, libMpvEvents_Queue, &libMpvEvents_QueueLen);
-                    // events that happen while we are waiting for our return data
-                    // these events need to be sent to a mpv event queue for processing
-                    dbgprintf(DBG_MPV_READ, "mpvread - ignoring: '%s'\n", mpv_rpc_ret);
-                    free(mpv_rpc_ret);
-                    // ...and try again
                 }
+
+                free(mpv_rpc_ret);
+                if (mpvSocketCmdStatus->resultReqId > 0) { CLEAR(mpvSocketCmdStatus->jsonReqId, mpvSocketCmdStatus->resultReqId); }
+                if (mpvSocketCmdStatus->resultError > 0) { CLEAR(mpvSocketCmdStatus->jsonError, mpvSocketCmdStatus->resultError); }
+                if (mpvSocketCmdStatus->resultData > 0) { CLEAR(mpvSocketCmdStatus->jsonData, mpvSocketCmdStatus->resultData); }
             } else {
                 if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
                 goto cleanup;
@@ -335,6 +332,11 @@ int mpvSocketSinglet(char* prop, char ** json_prop) {
     }
 
  cleanup:
+    free(mpvSocketCmdStatus->jsonReqId);
+    free(mpvSocketCmdStatus->jsonError);
+    free(mpvSocketCmdStatus->jsonData);
+    free(mpvSocketCmdStatus);
+
     pthread_mutex_unlock(&mpvSocketCmdLock);
     return result;
 }
@@ -390,43 +392,42 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
 }
 
 int mpv_seek(double distance) {
+  if (!libMpvVideoInfo->is_loaded) { return 0; }
   return mpv_fmt_cmd("seek %f\n", distance);
 }
 
 int mpv_seek_arg(double distance, char* flags) {
+  if (!libMpvVideoInfo->is_loaded) { return 0; }
   return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
 
+void mpv_check_pause() {
+  char* retPlay;
+  if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+    if (strncmp(retPlay, "false", 5) == 0) {
+      libMpvVideoInfo->is_playing = 1;
+    } else {
+      libMpvVideoInfo->is_playing = 0;
+    }
+  }
+}
 int mpv_pause() {
-  m_is_video_playing = 0;
+  libMpvVideoInfo->is_playing = 0;
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "true");
 }
 
 int mpv_play() {
-  m_is_video_playing = 1;
+  libMpvVideoInfo->is_playing = 1;
   // Start Background layer behind mpv images
   // fbbg_start();
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
 }
 
 int mpv_playpause_toggle() {
-  /*char* retPlay;
-  dbgprintf(DBG_INFO, "A");
-  if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
-    dbgprintf(DBG_INFO, "B");
-    if (strncmp(retPlay, "false", 5) == 0) {
-      dbgprintf(DBG_INFO, "C\n");
-      return mpv_play();
-    } else {
-      dbgprintf(DBG_INFO, "D\n");
-      return mpv_pause();
-    }
-  } else */
-  if (m_is_video_playing) {
-    // dbgprintf(DBG_INFO, "E\n");
+  if (!libMpvVideoInfo->is_loaded) { return 0; }
+  if (libMpvVideoInfo->is_playing) {
     return mpv_pause();
   } else {
-    // dbgprintf(DBG_INFO, "F\n");
     return mpv_play();
   }
 }
@@ -435,8 +436,8 @@ int mpv_playpause_toggle() {
 // MPV Player Speed
 double mpv_speed(double spd) {
   mpv_set_prop_double("speed", spd);
-  mpv_video_rate = spd;
-  return mpv_video_rate;
+  libMpvVideoInfo->pbrate = spd;
+  return libMpvVideoInfo->pbrate;
 }
 
 double mpv_speed_adjust(double spd) {
@@ -461,10 +462,10 @@ double mpv_speed_adjust(double spd) {
       new_spd = .2;
     }
     if (number != new_spd) {
-      mpv_speed(new_spd);
+      return mpv_speed(new_spd);
       // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
     }
-    return mpv_video_rate;
+    return libMpvVideoInfo->pbrate;
   }
   return -1;
 }
@@ -472,7 +473,8 @@ double mpv_speed_adjust(double spd) {
 
 void mpv_stop() {
   fbbg_stop();
-  m_is_video_playing = 0;
+  libMpvVideoInfo->is_playing = 0;
+  libMpvVideoInfo->is_loaded = 0;
   mpv_fmt_cmd("stop\n");
 }
 
@@ -510,8 +512,11 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   folder = quotify(folder,&qfolder);
   filename = quotify(filename,&qfilename);
 
+  libMpvVideoInfo->has_file = 1;
+  libMpvVideoInfo->folder = strdup(folder);
+  libMpvVideoInfo->file = strdup(filename);
   int result = mpv_fmt_cmd("loadfile \"%s/%s\" %s %s\n", folder, filename, flag, opts);
-  mpv_play();
+  mpv_pause();
 
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
@@ -530,6 +535,7 @@ void stop_video() {
   // mpv_quit();
   // m_bPosThreadStop = 1;
 }
+
 
 /*
 
@@ -554,7 +560,7 @@ int video_display_fps() {
   ret = mpvSocketSinglet("display-fps", &retFps);
   // debug_print("Video Display FPS: %s\n", retFps);
   char* pEnd;
-  mi_video_fps = strtod(retFps, &pEnd);
+  libMpvVideoInfo->fps = strtod(retFps, &pEnd);
   return ret;
 }
 

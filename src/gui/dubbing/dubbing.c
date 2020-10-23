@@ -16,7 +16,7 @@
 #include "libs/queue/queue.h"
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
-#include "libs/mpv/mpv_events.h"
+#include "libs/mpv/mpv_info.h"
 #include "gui/pages.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/sdob-socket/sdob-socket.h"

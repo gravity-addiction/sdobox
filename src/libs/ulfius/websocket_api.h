@@ -11,6 +11,9 @@ struct libUlfiusSDOBNewVideo {
   char *rnd;
   char *meet;
   char *desc;
+  char *host;
+  char *folder;
+  char *file;
 };
 struct libUlfiusSDOBNewVideo *libUlfiusSDOBNewVideoInfo;
 

@@ -6,6 +6,7 @@
 #include "skydiveorbust.h"
 #include "libs/queue/queue.h"
 #include "libs/mpv/mpv.h"
+#include "libs/mpv/mpv_info.h"
 
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
@@ -229,7 +230,10 @@ void pg_sdobScoringMarks(gslc_tsGui *pGui) {
   if (sdob_judgement->marks->tickCnt < 1) { return; }
 
   for(int i = 0; i < sdob_judgement->marks->tickCnt; ++i) {
-    if (sdob_judgement->marks->arrScorecardTimes[i] >= 0) {
+    if (sdob_judgement->marks->arrScorecardTimes[i] >= 0 && !pg_sdob_timeline_zoom_workingtime) {
+      // Get percent in working time ((mark - sowt) / wt)
+      sdob_judgement->marks->arrScorecardTicks[i] = ((sdob_judgement->marks->arrScorecardTimes[i] / libMpvVideoInfo->duration) * 100);
+    } else if (sdob_judgement->marks->arrScorecardTimes[i] >= 0) {
       // Get percent in working time ((mark - sowt) / wt)
       sdob_judgement->marks->arrScorecardTicks[i] = (((sdob_judgement->marks->arrScorecardTimes[i] - sdob_judgement->sowt) / sdob_judgement->workingTime) * 100);
     } else {
@@ -335,7 +339,7 @@ int pg_sdobSubmitScorecard() {
   syslog (LOG_NOTICE, submit_fmt,
       (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
       (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
-      sdob_player->duration, sdob_judgement->sowt, csv_score);
+      libMpvVideoInfo->duration, sdob_judgement->sowt, csv_score);
   closelog();
 
   if (csv_score != NULL) { free(csv_score); }

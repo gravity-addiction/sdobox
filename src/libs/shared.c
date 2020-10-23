@@ -429,7 +429,7 @@ static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, i
         )
     ) {
       // Add more space for filenames
-      if (count > lsMax) {
+      if (count >= lsMax) {
         lsMax += 128;
         struct fileStruct **newLs = (struct fileStruct **)realloc(*ls, lsMax * sizeof(struct fileStruct *));
         *ls = newLs;

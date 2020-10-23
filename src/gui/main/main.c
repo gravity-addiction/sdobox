@@ -9,7 +9,6 @@
 #include "libs/audio/audio.h"
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
-#include "libs/mpv/mpv_events.h"
 
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"

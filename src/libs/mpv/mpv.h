@@ -5,31 +5,19 @@
 extern "C" {
 #endif // __cplusplus
 
+struct mpv_cmd_status {
+  int resultReqId;
+  int resultError;
+  int resultData;
+  char *jsonReqId;
+  char *jsonError;
+  char *jsonData;
+};
+struct mpv_cmd_status mpvSocketCmdStatus;
+
 char* mpv_socket_path;
 char* mpv_fifo_path;
 int mpv_socket_fd;
-
-double mpv_video_duration; // = 0.00;
-double mpv_video_pos; // = 0.00;
-double mpv_video_rate; // = 1.0;
-
-long long int mi_video_fps_frame; // = 0;
-
-
-
-int       i_video_pos;
-double    mi_video_fps; // = 0;
-int       m_video_lock; // = 0;
-int       m_is_video_playing; // = 0;
-
-
-
-uint16_t  m_nPosPlayer; // = 0;
-
-int       i_chapter_cnt; // placeholder for chapter count
-
-double    m_video_percent_new;
-double    m_video_percent_tmp;
 
 int mpv_socket_fdSelect;
 fd_set mpv_socket_set;
@@ -42,6 +30,7 @@ unsigned int mpv_socket_lastConn;
 int mpv_socket_conn();
 void mpv_socket_close(int fd);
 int mpv_init();
+void mpv_destroy();
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);
@@ -62,6 +51,7 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val);
 int mpv_seek(double distance);
 int mpv_seek_arg(double distance, char* flags);
 
+void mpv_check_pause();
 int mpv_pause();
 int mpv_play();
 int mpv_playpause_toggle();

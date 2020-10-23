@@ -119,6 +119,14 @@ bool pg_system_cbBtn_reconfigButtons(void* pvGui, void *pvElemRef, gslc_teTouch 
 }
 
 
+bool pg_system_cbBtn_registerDevice(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  system("/opt/sdobox/scripts/register_device.sh &");
+  return true;
+}
+
 /////////////////////////////
 //
 // GUI DISPLAY FUNCTIONS
@@ -210,6 +218,7 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   }
 */
 
+/*
   // Update
   if ((
     pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -222,11 +231,12 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
   }
+*/
 
   // Reconfigure Buttons
   if ((
     pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {0, 200, 150, 50},
+            (gslc_tsRect) {0, 270, 150, 50},
             "Configure Buttons", 0, E_FONT_MONO14, &pg_system_cbBtn_reconfigButtons)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], GSLC_COL_WHITE);
@@ -234,6 +244,19 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_RECONFIGBUTTONS], true);
+  }
+
+  // Reconfigure Buttons
+  if ((
+    pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
+            (gslc_tsRect) {180, 270, 150, 50},
+            "Register Device", 0, E_FONT_MONO14, &pg_system_cbBtn_registerDevice)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_RED);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE], true);
+    gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_REGISTERDEVICE], true);
   }
 
   return 1;
