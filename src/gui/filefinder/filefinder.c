@@ -137,7 +137,12 @@ bool pg_fileFinder_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
 
   // If a file is selected try to load it as video.
-  pg_skydiveorbust_loadvideo(pGui, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name);
+  struct pg_sdob_video_data *newVideo = PG_SDOB_INIT_VIDEO_DATA();
+  newVideo->video_type = 0;
+  newVideo->local_folder = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path;
+  newVideo->video_file = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name;
+  pg_skydiveorbust_loadvideo(pGui, newVideo);
+
 
   return true;
 }
@@ -222,7 +227,11 @@ bool pg_fileFinder_cbBtn_e(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
 
   touchscreenPageOpen(pGui, E_PG_SKYDIVEORBUST);
   // If a file is selected try to load it as video.
-  pg_skydiveorbust_loadvideo(pGui, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name);
+  struct pg_sdob_video_data *newVideo = PG_SDOB_INIT_VIDEO_DATA();
+  newVideo->video_type = 0;
+  newVideo->local_folder = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path;
+  newVideo->video_file = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name;
+  pg_skydiveorbust_loadvideo(pGui, newVideo);
   return true;
 }
 

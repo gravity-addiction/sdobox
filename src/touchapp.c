@@ -374,13 +374,14 @@ int main( int argc, char* args[] )
       // Update counter to sync with current
       libUlfiusSDOBNewVideoInfo->cnt = m_newVideoCnt;
 
-      // dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+      dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
 
       if (m_tPageCur != E_PG_SKYDIVEORBUST) {
         touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
-        dbgprintf(DBG_DEBUG, "%s", "CHANGE PAGES\n");
       }
       
+      pg_sdob_scorecard_clear(&m_gui);
+
       if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
         sdob_devicehost->isHost = 1;
       } else {
@@ -388,16 +389,19 @@ int main( int argc, char* args[] )
       }
       pg_sdobUpdateHostDeviceInfo(&m_gui);
       
-      pg_sdob_scorecard_clear(&m_gui);
-      pg_sdobUpdateMeet(&m_gui, libUlfiusSDOBNewVideoInfo->meet);
-      pg_sdobUpdateVideoDesc(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
-      pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
-      pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+
+
+      // Setup Environment for new Video API
+      // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
+      // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
+      // pg_sdobUpdateVideoDesc(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
+      // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+      // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
       
 
-      if (sdob_devicehost->isHost == 1) {
-        mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
-      }
+      // if (sdob_devicehost->isHost == 1) {
+      //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+      // }
     }
 
     if (m_bSleep) {

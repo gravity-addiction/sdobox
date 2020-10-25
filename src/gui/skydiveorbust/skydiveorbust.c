@@ -76,20 +76,52 @@ struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS()
 // Clear Scorecard Marks,
 // Executed thru PG_SDOB_CLEAR_JUDGEMENT
 
+// Initialize Video Data
+struct pg_sdob_video_data * PG_SDOB_INIT_VIDEO_DATA() {
+  struct pg_sdob_video_data *video_data = (struct pg_sdob_video_data*)malloc(sizeof(struct pg_sdob_video_data));
+  video_data->video_type = 0;
+  video_data->video_file = (char*)calloc(256, sizeof(char));
+  video_data->local_folder = (char*)calloc(64, sizeof(char));
+  video_data->url = (char*)calloc(512, sizeof(char));
+  return video_data;
+}
+
+// Clear Video Data
+void PG_SDOB_CLEAR_VIDEO_DATA(struct pg_sdob_video_data *video_data)
+{
+  video_data->video_type = 0;
+  CLEAR(video_data->video_file, 256);
+  CLEAR(video_data->local_folder, 64);
+  CLEAR(video_data->url, 512);
+}
+// Clear Video Data
+void PG_SDOB_FREE_VIDEO_DATA(struct pg_sdob_video_data *video_data)
+{
+  free(video_data->video_file);
+  free(video_data->local_folder);
+  free(video_data->url);
+  free(video_data);
+}
+
 
 // Initialize Judgement Data and Scorecard Marks
 struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
   struct pg_sdob_judgement_data *judgement = (struct pg_sdob_judgement_data*)malloc(sizeof(struct pg_sdob_judgement_data));
+  judgement->video = PG_SDOB_INIT_VIDEO_DATA();
   judgement->marks = PG_SDOB_SCORECARD_INIT_MARKS();
 
   judgement->judge = (char*)calloc(64, sizeof(char));
-  judgement->video_file = (char*)calloc(256, sizeof(char));
-  judgement->meet = (char*)calloc(64, sizeof(char));
+  judgement->event = (char*)calloc(128, sizeof(char));
+  judgement->eventStr = (char*)calloc(128, sizeof(char));
+  judgement->comp = (char*)calloc(128, sizeof(char));
+  judgement->compStr = (char*)calloc(128, sizeof(char));
   judgement->team = (char*)calloc(128, sizeof(char));
   judgement->teamStr = (char*)calloc(128, sizeof(char));
   judgement->round = (char*)calloc(64, sizeof(char));
   judgement->roundStr = (char*)calloc(64, sizeof(char));
 
+  judgement->sopst = -1.0;
+  judgement->prestartTime = 0.0;
   judgement->sowt = -1.0;
   judgement->workingTime = 0.0;
 
@@ -102,12 +134,26 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
 // Clear Judgement Data and Scorecard Marks
 void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 {
+  judgement->sopst = -1.0;
+  judgement->prestartTime = 0.0;
   judgement->sowt = -1.0;
   judgement->workingTime = 0.0;
 
   judgement->score = 0.00;
   judgement->scoreMax = 0.00;
+
+  CLEAR(judgement->judge, 64);
+  CLEAR(judgement->event, 128);
+  CLEAR(judgement->eventStr, 128);
+  CLEAR(judgement->comp, 128);
+  CLEAR(judgement->compStr, 128);
+  CLEAR(judgement->team, 128);
+  CLEAR(judgement->teamStr, 128);
+  CLEAR(judgement->round, 64);
+  CLEAR(judgement->roundStr,64);
+
   CLEAR(judgement->scoreStr, 32);
+  PG_SDOB_CLEAR_VIDEO_DATA(judgement->video);
   PG_SDOB_SCORECARD_CLEAR_MARKS(judgement->marks);
 }
 
@@ -434,19 +480,32 @@ void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char* str) {
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_INITIALS], sdob_judgement->judge);
 }
 
-void pg_sdobUpdateMeet(gslc_tsGui *pGui, char* str) {
+void sdob_selectEventComp(gslc_tsGui* pGui, char* compId, char* compStr) {
+  size_t dispSz = snprintf(NULL, 0, "%s", compStr) + 1;
+  if (dispSz > 0 && dispSz <= 128) {
+    strlcpy(sdob_judgement->comp, compId, 128);
+    snprintf(sdob_judgement->compStr, dispSz, "%s", compStr);
+    gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], sdob_judgement->compStr);
+  }
+}
+
+void pg_sdobUpdateEventFromLocalFolder(gslc_tsGui *pGui, char* str) {
   char *lastslash = strrchr(str, '/');
   if(!lastslash || lastslash == str) {
-    strlcpy(sdob_judgement->meet, str, 64);
+    strlcpy(sdob_judgement->eventStr, str, 64);
   } else {
-    strlcpy(sdob_judgement->meet, lastslash + 1, 64);
+    strlcpy(sdob_judgement->eventStr, lastslash + 1, 64);
   }
-  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], sdob_judgement->meet);
+  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], sdob_judgement->eventStr);
 }
+
+
+
 
 void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
 
-  pg_sdobUpdateMeet(pGui, svr_parsed_meet);
+  // pg_sdobUpdateEventFromLocalFolder(pGui, svr_parsed_meet);
+  // pg_sdobUpdateComp(&m_gui, sdob_judgement->comp, sdob_judgement->compStr);
   pg_sdobUpdateTeam(pGui, sdob_current_rounds[roundIndex].teamnumber);
   pg_sdobUpdateRound(pGui, sdob_current_rounds[roundIndex].round);
 
@@ -457,9 +516,11 @@ void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
     default_working_time = 35.0;
 }
 
+
+
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
-  strlcpy(sdob_judgement->video_file, str, 256);
-  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC], sdob_judgement->video_file);
+  strlcpy(sdob_judgement->video->video_file, str, 256);
+  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], sdob_judgement->video->video_file);
 
   parse_video_rounds(str);
 
@@ -1254,42 +1315,6 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_INITIALS], GSLC_ALIGN_MID_MID);
   }
 
-  // Total Scored Points
-  if ((
-    pg_sdobEl[E_SDOB_EL_SC_COUNT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-        ePage, (gslc_tsRect) {245,71,88,38},
-        (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnScCount)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_ALIGN_MID_MID);
-    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], false);
-  }
-
-  // Video File Description
-  if ((
-    pg_sdobEl[E_SDOB_EL_VIDEO_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-          ePage, (gslc_tsRect) {0,260,230,20},
-          (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnVideoDesc)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC],GSLC_COL_WHITE,GSLC_COL_BLACK,GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC],GSLC_ALIGN_MID_LEFT);
-    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_VIDEO_DESC],false);
-  }
-
-  // Meet Description
-  if ((
-    pg_sdobEl[E_SDOB_EL_MEET_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-          ePage, (gslc_tsRect) {0,240,230,20},
-          (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnMeetDesc)
-  ) != NULL) {
-    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], GSLC_COL_GREEN);
-    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], GSLC_ALIGN_MID_LEFT);
-    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_MEET_DESC], false);
-  }
-
   // Team Description
   if ((
     pg_sdobEl[E_SDOB_EL_TEAM_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1314,6 +1339,20 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], false);
   }
 
+  // Total Scored Points
+  if ((
+    pg_sdobEl[E_SDOB_EL_SC_COUNT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+        ePage, (gslc_tsRect) {245,71,88,38},
+        (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnScCount)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_COL_GREEN);
+    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT], false);
+  }
+
+
+
  // Submit Button
   if ((
     pg_sdobEl[E_SDOB_EL_BTN_SUBMIT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1337,6 +1376,35 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], GSLC_ALIGN_MID_MID);
     gslc_ElemSetFillEn(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], true);
   }
+
+
+
+
+  // Row One Under Scorecard (Event)
+  if ((
+    pg_sdobEl[E_SBOD_EL_DESC_ONE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+          ePage, (gslc_tsRect) {0,240,230,20},
+          (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnMeetDesc)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], GSLC_COL_GREEN);
+    gslc_ElemSetCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], GSLC_ALIGN_MID_LEFT);
+    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], false);
+  }
+
+  // Row Two Under Scorecard (Comp)
+  if ((
+    pg_sdobEl[E_SBOD_EL_DESC_TWO] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+          ePage, (gslc_tsRect) {0,260,230,20},
+          (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnVideoDesc)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], GSLC_COL_GREEN);
+    gslc_ElemSetCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO],GSLC_COL_WHITE,GSLC_COL_BLACK,GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO],GSLC_ALIGN_MID_LEFT);
+    gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO],false);
+  }
+
+
 
   dbgprintf(DBG_DEBUG, "Slot Max: %d, Line Max: %d\n", pg_sdob_slot_max, pg_sdob_line_max);
 
@@ -1641,7 +1709,21 @@ void pg_skydiveorbustButtonLeftPressed() {
   dbgprintf(DBG_DEBUG, "Left Pressed: %d\n", sdob_judgement->marks->selected);
 
   // Scorecard Clicks
-  if (sdob_judgement->marks->selected == 0 && sdob_devicehost->isHost == 1) {
+  if (sdob_judgement->marks->selected == 0 && sdob_judgement->prestartTime > 0 && sdob_devicehost->isHost == 1) {
+    // Reset Prestart Time
+    char* retTimePos;
+    double markTime = 0.00;
+    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+      markTime = atof(retTimePos);
+      free(retTimePos);
+      sdob_judgement->marks->arrScorecardTimes[0] = markTime;
+      struct queue_head *itemSOPST = new_qhead();
+      itemSOPST->action = E_Q_SCORECARD_SCORING_SOPST;
+      itemSOPST->time = markTime;
+      queue_put(itemSOPST, pg_sdobQueue, &pg_sdobQueueLen);
+      pg_sdobScoringSelectionClear(&m_gui);
+    }
+  } else if (sdob_judgement->marks->selected == 0 && sdob_devicehost->isHost == 1) {
     // Reset SOWT
     char* retTimePos;
     double markTime = 0.00;
@@ -1654,7 +1736,6 @@ void pg_skydiveorbustButtonLeftPressed() {
       itemSOWT->time = markTime;
       queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
       pg_sdobScoringSelectionClear(&m_gui);
-
     }
 
   } else if (sdob_judgement->marks->selected < 0) {
@@ -1878,15 +1959,15 @@ void pg_sdobMpvTimeposThreadStop() {
 //
 // Called only from the skydiveorbust page's thread as the result of a queue action.
 //
-static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, char* meet, char* file) {
-  pg_sdobUpdateTeam(pGui, "");
-  pg_sdobUpdateRound(pGui, "");
+static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
+  pg_sdob_clear(pGui);
   pg_sdob_scorecard_clear(pGui);
 
-  mpv_loadfile(meet, file, "replace", "fullscreen=yes");
-  pg_sdobUpdateMeet(pGui, meet);
-  pg_sdobUpdateVideoDesc(pGui, file);
+  mpv_loadfile(newVideo->local_folder, newVideo->video_file, "replace", "fullscreen=yes");
+  // pg_sdobUpdateEventFromLocalFolder(pGui, meet);
+  // pg_sdobUpdateComp(&m_gui, sdob_judgement->comp, sdob_judgement->compStr);
+  // pg_sdobUpdateVideoDesc(pGui, file);
   pg_sdob_pl_sliderForceUpdate = 1;
 }
 
@@ -1895,12 +1976,11 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, char* meet, ch
 // to a new video file.  This creates the queue action responded to by
 // the above function.
 //
-void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* folder, char* file) {
+void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
   struct queue_head *item = new_qhead();
   item->action = E_Q_ACTION_LOADVIDEO;
-  item->cmd = strdup(folder);
-  item->u1.ptr = strdup(file);
-  item->u2.ptr = pGui;
+  item->data = newVideo;
+  item->u1.ptr = pGui;
   assert(pg_sdobQueue);
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 }
@@ -2081,6 +2161,13 @@ void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
 }
 
+void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestartTime) {
+  // Set Start of Working Time
+  pg_sdobSOPSTSet(time, prestartTime);
+
+  pg_sdob_pl_sliderForceUpdate = 1;
+}
+
 void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
   // Reset Ticks to Judge Marks
   // CLEAR_PLAYER_TICKS
@@ -2095,27 +2182,30 @@ void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingT
   pg_sdob_pl_sliderForceUpdate = 1;
 }
 
+void pg_sdob_clear(gslc_tsGui *pGui) {
+  pg_sdobUpdateTeam(pGui, "");
+  pg_sdobUpdateRound(pGui, "");
+  
+  // Reset Scorecard Scroller
+  pg_sdobSliderResetCurPos(pGui);
+  if (!libMpvVideoInfo->is_playing) { pg_sdobUpdatePlayerSlider(pGui); }
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+}
+
 void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s", "Clearing Scorecard\n");
   PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
 
-  // // UNREM TO CLEAN TEAM AND ROUND
-  pg_sdobUpdateTeam(pGui, "");
-  pg_sdobUpdateRound(pGui, "");
-
-  // Reset Scorecard Scroller
-  pg_sdobSliderResetCurPos(pGui);
-
   // Reset SOWT and Video Length
   pg_sdobSOWTReset();
-
-  if (!libMpvVideoInfo->is_playing) { pg_sdobUpdatePlayerSlider(pGui); }
 
   // Return to Chapter Marks
   //-/ pg_sdob_player_video_chapterMarks(pGui);
 
   // CLEAR_PLAYER_TICKS
-  // pg_sdob_player_sliderTicks(pGui, NULL, 0);
+  pg_sdob_player_sliderTicks(pGui, NULL, 0);
 
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
@@ -2176,6 +2266,10 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
           pg_sdob_scorecard_score_selected(pGui, item->selected, item->amt);
         break;
 
+        case E_Q_SCORECARD_SCORING_SOPST:
+          pg_sdob_scorecard_score_sopst(pGui, item->time, default_working_time);
+        break;
+
         case E_Q_SCORECARD_SCORING_SOWT:
           pg_sdob_scorecard_score_sowt(pGui, item->time, default_working_time);
           if (sdob_current_rounds && sdob_num_current_rounds > 1
@@ -2190,8 +2284,9 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
           // Submit scorecard to syslog
           pg_sdobSubmitScorecard();
         // No break, clear scorecard after submit
+        case E_Q_SDOB_CLEAR:
+          pg_sdob_clear(pGui);
         case E_Q_SCORECARD_CLEAR:
-
           pg_sdob_scorecard_clear(pGui);
         break;
 
@@ -2232,9 +2327,8 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
         case E_Q_ACTION_LOADVIDEO:
           pg_skydiveorbust_loadvideo_internal
-            ((gslc_tsGui*)item->u2.ptr, item->cmd, (char*)item->u1.ptr);
-          free(item->cmd);
-          free(item->u1.ptr);
+            ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);
+          free(item->data);
         break;
 
         case E_Q_PLAYER_VIDEO_PAUSE:
@@ -2387,9 +2481,13 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
 void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 
   // Free Judgement Info
+  PG_SDOB_FREE_VIDEO_DATA(sdob_judgement->video);
+
   free(sdob_judgement->judge);
-  free(sdob_judgement->video_file);
-  free(sdob_judgement->meet);
+  free(sdob_judgement->event);
+  free(sdob_judgement->eventStr);
+  free(sdob_judgement->comp);
+  free(sdob_judgement->compStr);
   free(sdob_judgement->team);
   free(sdob_judgement->teamStr);
   free(sdob_judgement->round);

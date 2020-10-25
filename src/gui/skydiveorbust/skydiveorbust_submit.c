@@ -70,7 +70,7 @@ bool pg_sdobSubmitCbDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedraw
   gslc_DrawLine(pGui, pRect.x, pRect.y + 60, pRect.x + pRect.w, pRect.y + 60, GSLC_COL_GRAY);
 
 //  gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_TMP], sdob_judgement->video_file);
-  gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_VIDEOFILE], sdob_judgement->video_file);
+  gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_VIDEOFILE], sdob_judgement->video->video_file);
 
   size_t chapterSz = snprintf(NULL, 0, "Chapter: %d", (sdob_chapters->cur + 1)) + 1;
   if (chapterSz > 0 && chapterSz <= 32) {

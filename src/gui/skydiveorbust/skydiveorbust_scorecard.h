@@ -9,6 +9,7 @@ extern "C" {
 int pg_sdobInsertMark(int markSelected, double markTime, int mark);
 void pg_sdobDeleteMark(int markSelected);
 void pg_sdobMoveMark(int markSelected, int moveAmt);
+int pg_sdobSOPSTSet(double markTime, double prestartTime);
 int pg_sdobSOWTSet(double markTime, double workingTime);
 int pg_sdobSOWTReset();
 int pg_sdobScoringMarkHidden(int markI);

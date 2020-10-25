@@ -7,13 +7,17 @@ extern "C" {
 
 struct libUlfiusSDOBNewVideo {
   int cnt;
-  char *team;
-  char *rnd;
-  char *meet;
-  char *desc;
-  char *host;
-  char *folder;
-  char *file;
+  char *local_folder; // Local File path excluding filename
+  char *video_file; // Filename for local file
+  char *url; // Website URL for video
+  char *team; // teamNumber for event
+  char *rnd; // Round number
+  char *videoId; // Database Video Id
+  char *compId; // Database Comp Id
+  char *compStr; // Display Value for current comp
+  char *slug; // Event slug for URL
+
+  char *host; // device is a host, default 1
 };
 struct libUlfiusSDOBNewVideo *libUlfiusSDOBNewVideoInfo;
 

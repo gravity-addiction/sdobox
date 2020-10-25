@@ -10,6 +10,10 @@
 
 
 
+void pg_sdob_player_clear() {
+  
+}
+
 // Set sdob_chapters->cur
 // Current Video Chapter
 void pg_sdob_player_setChapterCur() {

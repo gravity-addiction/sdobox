@@ -1,6 +1,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <time.h>
+#include <jansson.h>
 
 #include "libs/shared.h"
 #include "skydiveorbust.h"
@@ -132,6 +133,13 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 
 
 
+int pg_sdobSOPSTSet(double markTime, double prestartTime) {
+  sdob_judgement->sopst = markTime;
+  sdob_judgement->prestartTime = prestartTime;
+  // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
+
+  return 1;
+}
 
 int pg_sdobSOWTSet(double markTime, double workingTime) {
   sdob_judgement->sowt = markTime;
@@ -284,6 +292,58 @@ int pg_sdobSubmitScorecard() {
     return 0;
   }
 
+  char* s = NULL;
+
+  json_t *root = json_object();
+  json_t *json_prestarttime = json_object();
+  json_t *json_workingtime = json_object();
+  json_t *json_marks = json_array();
+
+  json_object_set_new(root, "prestartTime", json_prestarttime);
+  json_object_set_new(root, "workingTime", json_workingtime);
+  json_object_set_new(json_workingtime, "start", json_real(sdob_judgement->sowt));
+  json_object_set_new(root, "name", json_string(sdob_judgement->judge));
+  json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
+  json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
+  json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
+  json_object_set_new(root, "marks", json_marks);
+  
+
+  for (size_t s = 0; s < sdob_judgement->marks->size; s++) {
+    json_t *json_mark = json_object();
+    json_array_append(json_marks, json_mark);
+    
+    switch (sdob_judgement->marks->arrScorecardPoints[s]) {
+      case E_SCORES_POINT:
+        json_object_set_new(json_mark, "class", json_string("point"));
+      break;
+      case E_SCORES_BUST:
+        json_object_set_new(json_mark, "class", json_string("bust"));
+      break;
+      case E_SCORES_OMISSION:
+        json_object_set_new(json_mark, "class", json_string("omission"));
+      break;
+      case E_SCORES_SOWT:
+        json_object_set_new(json_mark, "class", json_string("blank"));
+      break;
+      default:
+        json_object_set_new(json_mark, "class", json_string(""));
+      break;
+    }
+    json_object_set_new(json_mark, "time", json_real(sdob_judgement->marks->arrScorecardTimes[s]));
+  }
+  s = json_dumps(root, 0);
+  printf("JSON %s\n", s);
+  free(s);
+  return 1;
+}
+
+int pg_sdobSubmitScorecard_JRSystem() {
+//   Jan 26 12:49:01 Eddie MyAVPlayer[82462]: SUBMISSION/MEET2019 4143,1,JR,0,01/26/2019 12:49:01,Group14-12_2.mp4,403.600000,148.866667,/,/,/,/,O,/,/,/,/,/,O,/,/,/,/,O,/,/,/,/,/,/,/,/
+  if (!sdob_judgement || !sdob_judgement->marks->size) {
+    return 0;
+  }
+
   time_t current_time;
   char c_time_string[26];
   struct tm* tm_info;
@@ -337,8 +397,8 @@ int pg_sdobSubmitScorecard() {
 
   openlog ("touchapp", LOG_NDELAY | LOG_PID, LOG_LOCAL1);
   syslog (LOG_NOTICE, submit_fmt,
-      (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
-      (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
+      (char*)sdob_judgement->video->local_folder, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
+      (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video->video_file,
       libMpvVideoInfo->duration, sdob_judgement->sowt, csv_score);
   closelog();
 

@@ -25,8 +25,8 @@ enum {
   E_SDOB_EL_JUDGE_INITIALS,
   E_SDOB_EL_TEAM_DESC,
   E_SDOB_EL_ROUND_DESC,
-  E_SDOB_EL_MEET_DESC,
-  E_SDOB_EL_VIDEO_DESC,
+  E_SBOD_EL_DESC_ONE,
+  E_SBOD_EL_DESC_TWO,
   E_SDOB_EL_BTN_SUBMIT,
   E_SDOB_EL_BTN_MIRROR,
 
@@ -87,24 +87,37 @@ struct pg_sdob_scorecard_marks {
   int *arrScorecardMilli;
 };
 
+struct pg_sdob_video_data {
+  int    video_type; // 0 - local folder, 1 - url video
+  char*  url; // Website URL for video
+  char*  local_folder; // local folder
+  char*  video_file; // video filename in meet folder
+};
+
 struct pg_sdob_judgement_data {
+  double sopst;
+  double prestartTime;
   double sowt;
   double workingTime;
   double score;
   double scoreMax;
 
   char*  judge; // judge initials
-  char*  video_file; // video filename in meet folder
-  char*  meet; // meet folder
+  char*  event;
+  char*  eventStr;
+  char*  comp;
+  char*  compStr;
   char*  team;
   char*  teamStr;
   char*  round;
   char*  roundStr;
   char*  scoreStr;
 
+  struct pg_sdob_video_data* video;
   struct pg_sdob_scorecard_marks* marks; // skydiveorbust_gui-scorecard.c
 };
 struct pg_sdob_judgement_data *sdob_judgement;
+
 
 struct pg_sdob_video_round_record {
   char* eventname;
@@ -119,6 +132,11 @@ void sdob_selectEventTeamRound(gslc_tsGui*, unsigned roundIndex);
 
 struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS();
 void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc);
+
+struct pg_sdob_video_data * PG_SDOB_INIT_VIDEO_DATA();
+void PG_SDOB_CLEAR_VIDEO_DATA(struct pg_sdob_video_data *video_data);
+void PG_SDOB_FREE_VIDEO_DATA(struct pg_sdob_video_data *video_data);
+
 struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT();
 void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement);
 
@@ -241,6 +259,7 @@ enum {
   E_Q_SCORECARD_UPDATE_MARK,
   E_Q_SCORECARD_DELETE_MARK,
   E_Q_SCORECARD_MOVE_SCORE_SELECTED,
+  E_Q_SCORECARD_SCORING_SOPST,
   E_Q_SCORECARD_SCORING_SOWT,
   E_Q_SCORECARD_SUBMIT_SCORECARD,
   E_Q_SCORECARD_CLEAR,
@@ -260,6 +279,9 @@ enum {
   E_Q_ACTION_VIDEO_RATE_USER,
   E_Q_ACTION_MPV_COMMAND,
   E_Q_ACTION_LOADVIDEO,
+
+  E_Q_SDOB_CLEAR,
+
   E_Q_MAX_QUEUE_TYPES
 };
 
@@ -277,7 +299,8 @@ void pg_sdobUpdateVideoRate(gslc_tsGui *pGui, double playback_rate);
 void pg_sdobUpdateUserDefinedVideoRate(gslc_tsGui *pGui, double playback_rate);
 void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui);
 void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char *str);
-void pg_sdobUpdateMeet(gslc_tsGui *pGui, char *str);
+void pg_sdobUpdateComp(gslc_tsGui *pGui, char *comp, char *compStr);
+void pg_sdobUpdateEventFromLocalFolder(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char *str);
@@ -306,7 +329,7 @@ void pg_sdob_mpv_timepos_thread();
 int pg_sdobThreadStart();
 void pg_sdobThreadStop();
 
-void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, char* meet, char* file);
+void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo);
 void pg_skydiveorbust_init(gslc_tsGui *pGui);
 void pg_skydiveorbust_open(gslc_tsGui *pGui);
 
@@ -317,6 +340,7 @@ void pg_sdob_scorecard_delete_mark(gslc_tsGui *pGui, int selected);
 
 void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt);
 void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
+void pg_sdob_clear(gslc_tsGui *pGui);
 void pg_sdob_scorecard_clear(gslc_tsGui *pGui);
 void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui);
 void pg_sdob_player_sliderForceUpdate();
