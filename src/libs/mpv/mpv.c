@@ -27,12 +27,10 @@
 
 mpv_any_u * MPV_ANY_U_NEW() {
   mpv_any_u * mpvu = (mpv_any_u*)malloc(sizeof(mpv_any_u));
-  mpvu->ptr = malloc(2);
   return mpvu;
 }
 
 void MPV_ANY_U_FREE(mpv_any_u *mpvu) {
-  free(mpvu->ptr);
   free(mpvu);
 }
 
@@ -326,15 +324,15 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         if (rReqId == reqId && json_string_length(rError) > 0) {
           dbgprintf(DBG_MPV_READ, "mpvread %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
           if (strcmp(json_string_value(rError), "success") == 0) {
-            const json_t *rData = json_object_get(root, "data");
+            json_t *rData = json_object_get(root, "data");
             if (rData) {
               switch(json_typeof(rData)) {
                 case JSON_STRING:
                 {
                   mpv_any_u *mpvu = MPV_ANY_U_NEW();
                   mpvu->ptr = strdup(json_string_value(rData));
-                  mpvu->integer = atoi(mpvu->ptr);
-                  mpvu->floating = atof(mpvu->ptr);
+                  // mpvu->integer = atoi(mpvu->ptr);
+                  // mpvu->floating = atof(mpvu->ptr);
                   *json_prop = mpvu;
                   result = json_string_length(rData);
                   break;
@@ -343,10 +341,10 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
                 {
                   mpv_any_u *mpvu = MPV_ANY_U_NEW();
                   mpvu->integer = json_integer_value(rData);
-                  mpvu->floating = (float)mpvu->integer;
-                  int iLen = snprintf(NULL, 0, "%d", mpvu->integer) + 1;
-                  mpvu->ptr = malloc(iLen);
-                  snprintf(mpvu->ptr, iLen, "%d", mpvu->integer);
+                  // mpvu->floating = (float)mpvu->integer;
+                  // int iLen = snprintf(NULL, 0, "%d", mpvu->integer) + 1;
+                  // mpvu->ptr = malloc(iLen);
+                  // snprintf(mpvu->ptr, iLen, "%d", mpvu->integer);
                   *json_prop = mpvu;
                   result = 1;
                   break;
@@ -355,10 +353,10 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
                 {
                   mpv_any_u *mpvu = MPV_ANY_U_NEW();
                   mpvu->floating = json_real_value(rData);
-                  mpvu->integer = (int)mpvu->floating;
-                  int iLen = snprintf(NULL, 0, "%f", mpvu->floating) + 1;
-                  mpvu->ptr = malloc(iLen);
-                  snprintf(mpvu->ptr, iLen, "%f", mpvu->floating);
+                  // mpvu->integer = (int)mpvu->floating;
+                  // int iLen = snprintf(NULL, 0, "%f", mpvu->floating) + 1;
+                  // mpvu->ptr = malloc(iLen);
+                  // snprintf(mpvu->ptr, iLen, "%f", mpvu->floating);
                   *json_prop = mpvu;
                   result = 1;
                   break;
@@ -391,6 +389,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
                 }
               }
             }
+            json_decref(rData);
           }
           free(mpv_rpc_ret);
           goto cleanup;
@@ -406,6 +405,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
           dbgprintf(DBG_MPV_READ, "mpvignore %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
         }
 
+        json_decref(root);
         free(mpv_rpc_ret);
       } else {
         if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
@@ -488,6 +488,7 @@ void mpv_check_pause() {
     } else {
       libMpvVideoInfo->is_playing = 0;
     }
+    free(retPlay->ptr);
     MPV_ANY_U_FREE(retPlay);
   }
 }

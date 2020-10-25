@@ -28,7 +28,7 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (pg_sdob_submit_clearCheck == 1) {
     // Clear Scorecard
     struct queue_head *item = new_qhead();
-    item->action = E_Q_SCORECARD_CLEAR;
+    item->action = E_Q_SCORECARD_CLEAN;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // Close Submit Menu
     pg_sdobSubmitClose(pGui);

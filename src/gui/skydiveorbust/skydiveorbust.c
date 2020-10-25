@@ -136,15 +136,18 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
 void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 {
   judgement->sopst = -1.0;
-  judgement->prestartTime = 0.0;
   judgement->sowt = -1.0;
-  judgement->workingTime = 0.0;
-  judgement->postFreezeFrameTime = 0.0;
-  judgement->tossStartCount = 0;
-
   judgement->score = 0.00;
   judgement->scoreMax = 0.00;
+  CLEAR(judgement->scoreStr, 32);
 
+  PG_SDOB_SCORECARD_CLEAR_MARKS(judgement->marks);
+}
+
+void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
+{
+  judgement->prestartTime = 0.0;
+  judgement->workingTime = 0.0;
   CLEAR(judgement->judge, 64);
   CLEAR(judgement->event, 128);
   CLEAR(judgement->eventStr, 128);
@@ -155,11 +158,8 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
   CLEAR(judgement->round, 64);
   CLEAR(judgement->roundStr,64);
 
-  CLEAR(judgement->scoreStr, 32);
   PG_SDOB_CLEAR_VIDEO_DATA(judgement->video);
-  PG_SDOB_SCORECARD_CLEAR_MARKS(judgement->marks);
 }
-
 ////////////////////////////////////////////////////////////////
 
 // All code related to video rounds processing - the parsing of the
@@ -2265,8 +2265,20 @@ void pg_sdob_clear(gslc_tsGui *pGui) {
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 }
 
+void pg_sdob_scorecard_clean(gslc_tsGui *pGui) {
+  PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
+  // Reset SOWT and Video Length
+  pg_sdobSOWTReset();
+  // CLEAR_PLAYER_TICKS
+  pg_sdob_player_sliderTicks(pGui, NULL, 0);
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+}
+
 void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s", "Clearing Scorecard\n");
+  PG_SDOB_CLEAR_JUDGEMENT_META(sdob_judgement);
   PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
   pg_sdobUpdateScoringSettings(pGui, "fs");
 
@@ -2363,6 +2375,10 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
           pg_sdob_clear(pGui);
         case E_Q_SCORECARD_CLEAR:
           pg_sdob_scorecard_clear(pGui);
+        break;
+
+        case E_Q_SCORECARD_CLEAN:
+          pg_sdob_scorecard_clean(pGui);
         break;
 
         case E_Q_PLAYER_SLIDER_CHAPTERS:

@@ -32,8 +32,9 @@ void pg_dubbing_setSlateTime() {
     pg_dubbing_videoSlate = retTimePos->floating;
     dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
 
-    char *sdata = malloc(strlen("{\"slate\":\"\"}") + strlen(retTimePos->ptr) + 1);
-    sprintf(sdata, "{\"slate\":\"%s\"}", retTimePos->ptr);
+    int sLen = snprintf(NULL, 0, "{\"slate\":\"%f\"}", retTimePos->floating) + 1;
+    char *sdata = malloc(sLen);
+    snprintf(sdata, sLen, "{\"slate\":\"%f\"}", retTimePos->floating);
     MPV_ANY_U_FREE(retTimePos);
 
     struct queue_head *item = new_qhead();
@@ -49,8 +50,9 @@ void pg_dubbing_setExitTime() {
     pg_dubbing_videoExit = retTimePos->floating;
     dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
 
-    char *sdata = malloc(strlen("{\"exit\":\"\"}") + strlen(retTimePos->ptr) + 1);
-    sprintf(sdata, "{\"exit\":\"%s\"}", retTimePos->ptr);
+    int sLen = snprintf(NULL, 0, "{\"exit\":\"%f\"}", retTimePos->floating) + 1;
+    char *sdata = malloc(sLen);
+    snprintf(sdata, sLen, "{\"exit\":\"%f\"}", retTimePos->floating);
     MPV_ANY_U_FREE(retTimePos);
 
     struct queue_head *item = new_qhead();
