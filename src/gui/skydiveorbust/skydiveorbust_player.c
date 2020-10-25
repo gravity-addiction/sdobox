@@ -17,10 +17,10 @@ void pg_sdob_player_clear() {
 // Set sdob_chapters->cur
 // Current Video Chapter
 void pg_sdob_player_setChapterCur() {
-  char* chapterRet;
+  mpv_any_u* chapterRet;
   if ((mpvSocketSinglet("chapter", &chapterRet)) != -1) {
-    sdob_chapters->cur = atoi(chapterRet);
-    free(chapterRet);
+    sdob_chapters->cur = chapterRet->integer;
+    MPV_ANY_U_FREE(chapterRet);
   } else {
     sdob_chapters->cur = -1;
   }
@@ -69,10 +69,10 @@ void pg_sdob_player_video_chapterList(int len) {
       char *cmd = malloc(mallocSz);
       snprintf(cmd, mallocSz, pg_sdob_playerChapterTimeFmt, i_chapter);
 
-      char* retChapterTime;
+      mpv_any_u* retChapterTime;
       if (mpvSocketSinglet(cmd, &retChapterTime) != -1) {
-        sdob_chapters->ptr[i_chapter] = atof(retChapterTime);
-        free(retChapterTime);
+        sdob_chapters->ptr[i_chapter] = retChapterTime->floating;
+        MPV_ANY_U_FREE(retChapterTime);
       } else {
         sdob_chapters->ptr[i_chapter] = -1;
       }
@@ -85,10 +85,10 @@ void pg_sdob_player_video_chapterList(int len) {
 
 
 void pg_sdob_player_video_chapters() {
-  char* retChapters;
+  mpv_any_u* retChapters;
   if ((mpvSocketSinglet("chapter-list/count", &retChapters)) != -1) {
-    pg_sdob_player_video_chapterList(atoi(retChapters));
-    free(retChapters);
+    pg_sdob_player_video_chapterList(retChapters->integer);
+    MPV_ANY_U_FREE(retChapters);
   }
 }
 

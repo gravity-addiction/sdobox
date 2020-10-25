@@ -127,6 +127,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     newVideo->video_type = 0;
     newVideo->local_folder = pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path;
     newVideo->video_file = pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name;
+    free(newVideo->url);
     pg_skydiveorbust_loadvideo(pGui, newVideo);
 
     // Close Menu

@@ -51,7 +51,7 @@ int ta_json_parse(char *json, char* prop, char ** ret_var) {
       buffer = new_buffer;
       /* We may use strndup() to fetch string value */
       size_t bufferSz = snprintf(NULL, 0, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
-      *ret_var = (char*)calloc(bufferSz + 1, sizeof(char));
+      *ret_var = (char*)malloc(bufferSz + 1 * sizeof(char));
       snprintf(*ret_var, bufferSz + 1, "%.*s",  t[i + 1].end - t[i + 1].start, json + t[i + 1].start);
       free(buffer);
       return bufferSz;

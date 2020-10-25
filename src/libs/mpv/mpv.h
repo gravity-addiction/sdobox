@@ -15,6 +15,13 @@ struct mpv_cmd_status {
 };
 struct mpv_cmd_status mpvSocketCmdStatus;
 
+typedef union {
+  void* ptr;
+  int integer;
+  unsigned uinteger;
+  double floating;
+} mpv_any_u;
+
 char* mpv_socket_path;
 char* mpv_fifo_path;
 int mpv_socket_fd;
@@ -26,6 +33,8 @@ unsigned int mpv_socket_lastConn;
 
 // ------------------------------
 // mpv.c
+mpv_any_u * MPV_ANY_U();
+void MPV_ANY_U_FREE(mpv_any_u *mpvu);
 
 int mpv_socket_conn();
 void mpv_socket_close(int fd);
@@ -34,7 +43,7 @@ void mpv_destroy();
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);
-int mpvSocketSinglet(char* prop, char ** json_prop);
+int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop);
 
 // void mpv_setCallbackDouble(int evt, void (*function)(double));
 // void mpv_runCallbackDouble(int evt, double spd);

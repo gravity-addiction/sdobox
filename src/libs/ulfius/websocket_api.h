@@ -21,6 +21,7 @@ struct libUlfiusSDOBNewVideo {
   char *eventStr; // Display Value for current event
   char *compId; // Database Comp Id
   char *compStr; // Display Value for current comp
+  char *es; // fs (default), cfRotations, cf2WaySequentials, cf4waySequentials, fsSpeed
 };
 struct libUlfiusSDOBNewVideo *libUlfiusSDOBNewVideoInfo;
 

@@ -26,6 +26,7 @@ struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
   eventInfo->eventStr = (char*)malloc(2 * sizeof(char));
   eventInfo->compId = (char*)malloc(2 * sizeof(char));
   eventInfo->compStr = (char*)malloc(2 * sizeof(char));
+  eventInfo->es = (char*)malloc(2 * sizeof(char));
 
   return eventInfo;
 }
@@ -44,6 +45,7 @@ void LIBULFIUS_SDOB_NEWVIDEO_DESTROY(struct libUlfiusSDOBNewVideo *eventInfo) {
   free(eventInfo->eventStr);
   free(eventInfo->compId);
   free(eventInfo->compStr);
+  free(eventInfo->es);
 }
 
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -83,10 +85,11 @@ int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _
     libUlfiusSDOBNewVideoInfo->team = strdup(json_string_value(json_object_get(json_nb_sheep, "team")));
     libUlfiusSDOBNewVideoInfo->rnd = strdup(json_string_value(json_object_get(json_nb_sheep, "rnd")));
     libUlfiusSDOBNewVideoInfo->videoId = strdup(json_string_value(json_object_get(json_nb_sheep, "videoId")));
-    libUlfiusSDOBNewVideoInfo->eventId = strdup(json_string_value(json_object_get(json_nb_sheep, "comp")));
+    libUlfiusSDOBNewVideoInfo->eventId = strdup(json_string_value(json_object_get(json_nb_sheep, "eventId")));
     libUlfiusSDOBNewVideoInfo->eventStr = strdup(json_string_value(json_object_get(json_nb_sheep, "slug")));
     libUlfiusSDOBNewVideoInfo->compId = strdup(json_string_value(json_object_get(json_nb_sheep, "compId")));
     libUlfiusSDOBNewVideoInfo->compStr = strdup(json_string_value(json_object_get(json_nb_sheep, "comp")));
+    libUlfiusSDOBNewVideoInfo->es = strdup(json_string_value(json_object_get(json_nb_sheep, "es")));
   }
   free(json_nb_sheep);
 

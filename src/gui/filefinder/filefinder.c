@@ -141,6 +141,7 @@ bool pg_fileFinder_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   newVideo->video_type = 0;
   newVideo->local_folder = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path;
   newVideo->video_file = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name;
+  free(newVideo->url);
   pg_skydiveorbust_loadvideo(pGui, newVideo);
 
 
@@ -231,6 +232,7 @@ bool pg_fileFinder_cbBtn_e(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   newVideo->video_type = 0;
   newVideo->local_folder = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path;
   newVideo->video_file = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name;
+  free(newVideo->url);
   pg_skydiveorbust_loadvideo(pGui, newVideo);
   return true;
 }

@@ -71,6 +71,7 @@ enum {
   E_SCORES_POINT,
   E_SCORES_OMISSION,
   E_SCORES_SOWT,
+  E_SCORES_SOPST,
   MAX_SCORE_MARKS
 };
 struct pg_sdob_scorecard_marks {
@@ -101,6 +102,9 @@ struct pg_sdob_judgement_data {
   double workingTime;
   double score;
   double scoreMax;
+  double postFreezeFrameTime;
+
+  int tossStartCount;
 
   char*  judge; // judge initials
   char*  event;
@@ -305,7 +309,7 @@ void pg_sdobUpdateVideoDescOne(gslc_tsGui *pGui, char* str);
 void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str);
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char *str);
-
+void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str);
 
 
 

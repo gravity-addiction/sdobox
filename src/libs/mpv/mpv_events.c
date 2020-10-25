@@ -120,11 +120,11 @@ void libMpvProcessEvent(char *event) {
 // Set sdob_player->duration
 void libmpv_setduration() {
   // Update Duration
-  char* retDur;
+  mpv_any_u * retDur;
   if ((mpvSocketSinglet("duration", &retDur)) != -1) {
-    dbgprintf(DBG_DEBUG, "Video Duration: Status: %d, %s\n", strlen(retDur), retDur);
-    libMpvVideoInfo->duration = atof(retDur);
-    free(retDur);
+    dbgprintf(DBG_DEBUG, "Video Duration: Status: %d, %s\n", strlen(retDur->ptr), retDur->ptr);
+    libMpvVideoInfo->duration = retDur->floating;
+    MPV_ANY_U_FREE(retDur);
     // printf("Video Duration Dbl: %f\n", sdob_player->duration);
   } else {
     // printf("%s\n", "No Video Duration!!");

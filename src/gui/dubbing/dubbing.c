@@ -26,15 +26,15 @@
 
 
 void pg_dubbing_setSlateTime() {
-  char* retTimePos;
+  mpv_any_u* retTimePos;
 
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-    pg_dubbing_videoSlate = atof(retTimePos);
+    pg_dubbing_videoSlate = retTimePos->floating;
     dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
 
-    char *sdata = malloc(strlen("{\"slate\":\"\"}") + strlen(retTimePos) + 1);
-    sprintf(sdata, "{\"slate\":\"%s\"}", retTimePos);
-    free(retTimePos);
+    char *sdata = malloc(strlen("{\"slate\":\"\"}") + strlen(retTimePos->ptr) + 1);
+    sprintf(sdata, "{\"slate\":\"%s\"}", retTimePos->ptr);
+    MPV_ANY_U_FREE(retTimePos);
 
     struct queue_head *item = new_qhead();
     item->data = sdata;
@@ -43,15 +43,15 @@ void pg_dubbing_setSlateTime() {
 }
 
 void pg_dubbing_setExitTime() {
-  char* retTimePos;
+  mpv_any_u* retTimePos;
 
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-    pg_dubbing_videoExit = atof(retTimePos);
+    pg_dubbing_videoExit = retTimePos->floating;
     dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
 
-    char *sdata = malloc(strlen("{\"exit\":\"\"}") + strlen(retTimePos) + 1);
-    sprintf(sdata, "{\"exit\":\"%s\"}", retTimePos);
-    free(retTimePos);
+    char *sdata = malloc(strlen("{\"exit\":\"\"}") + strlen(retTimePos->ptr) + 1);
+    sprintf(sdata, "{\"exit\":\"%s\"}", retTimePos->ptr);
+    MPV_ANY_U_FREE(retTimePos);
 
     struct queue_head *item = new_qhead();
     item->data = sdata;
