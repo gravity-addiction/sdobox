@@ -156,7 +156,10 @@ void get_config_settings()
   // websocket_api_port (WEBSOCKET_API_PORT)
   if (config_lookup_int(&cfg, "websocket_api_port", &retInt)) {
     WEBSOCKET_API_PORT = retInt;
+  } else {
+    WEBSOCKET_API_PORT = 4004;
   }
+
   if (config_lookup_int(&cfg, "websocket_server_port", &retInt)) {
     WEBSOCKET_SERVER_PORT = retInt;
   }
@@ -380,8 +383,10 @@ int main( int argc, char* args[] )
         touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
       }
       
+      pg_sdob_clear(&m_gui);
       pg_sdob_scorecard_clear(&m_gui);
 
+      // Setup Environment for new Video API
       if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
         sdob_devicehost->isHost = 1;
       } else {
@@ -389,12 +394,34 @@ int main( int argc, char* args[] )
       }
       pg_sdobUpdateHostDeviceInfo(&m_gui);
       
+      if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
+        // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+      } else if (sdob_devicehost->isHost == 1 &&
+                 libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
+                 libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
+      ) {
+        mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
+      }
 
 
-      // Setup Environment for new Video API
+      if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
+        pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+      }
+      if (libUlfiusSDOBNewVideoInfo->rnd[0] != '\0') {
+        pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+      }
+
+      if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
+        pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
+      }
+      if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
+        pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+      }
+      
+
       // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
       // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
-      // pg_sdobUpdateVideoDesc(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
+      // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
       // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
       // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
       

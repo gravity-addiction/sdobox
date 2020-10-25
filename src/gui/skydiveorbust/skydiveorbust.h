@@ -301,7 +301,8 @@ void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui);
 void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateComp(gslc_tsGui *pGui, char *comp, char *compStr);
 void pg_sdobUpdateEventFromLocalFolder(gslc_tsGui *pGui, char *str);
-void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char *str);
+void pg_sdobUpdateVideoDescOne(gslc_tsGui *pGui, char* str);
+void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str);
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char *str);
 

@@ -516,8 +516,6 @@ void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
     default_working_time = 35.0;
 }
 
-
-
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
   strlcpy(sdob_judgement->video->video_file, str, 256);
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], sdob_judgement->video->video_file);
@@ -529,6 +527,18 @@ void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
   }
 }
 
+void pg_sdobUpdateVideoDescOne(gslc_tsGui *pGui, char* str) {
+  strlcpy(sdob_judgement->eventStr, str, 128);
+  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], sdob_judgement->eventStr);
+}
+
+void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str) {
+  strlcpy(sdob_judgement->compStr, str, 128);
+  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], sdob_judgement->compStr);
+}
+
+
+
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char* str) {
   size_t dispSz = snprintf(NULL, 0, "T:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 128) {
@@ -538,7 +548,6 @@ void pg_sdobUpdateTeam(gslc_tsGui *pGui, char* str) {
   }
 }
 
-
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char* str) {
   size_t dispSz = snprintf(NULL, 0, "RND:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 64) {
@@ -547,6 +556,7 @@ void pg_sdobUpdateRound(gslc_tsGui *pGui, char* str) {
     gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], sdob_judgement->roundStr);
   }
 }
+
 
 
 void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
@@ -1967,7 +1977,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   mpv_loadfile(newVideo->local_folder, newVideo->video_file, "replace", "fullscreen=yes");
   // pg_sdobUpdateEventFromLocalFolder(pGui, meet);
   // pg_sdobUpdateComp(&m_gui, sdob_judgement->comp, sdob_judgement->compStr);
-  // pg_sdobUpdateVideoDesc(pGui, file);
+  // pg_sdobUpdateVideoDescTwo(pGui, file);
   pg_sdob_pl_sliderForceUpdate = 1;
 }
 
@@ -2052,7 +2062,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdobUpdateRound(pGui, "");
 
   // Video Desc
-  pg_sdobUpdateVideoDesc(pGui, "");
+  pg_sdobUpdateVideoDescTwo(pGui, "");
 
   pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
 
