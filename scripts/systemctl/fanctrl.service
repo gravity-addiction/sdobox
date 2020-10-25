@@ -4,7 +4,7 @@ Description=PWM Fan Control
 [Service]
 Type=simple
 User=root
-ExecStart=/opt/sdobox/fan_ctrl.py
+ExecStart=/opt/sdobox/bin/fan_ctrl.py
 Restart=on-failure
 
 [Install]

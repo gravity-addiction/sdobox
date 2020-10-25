@@ -93,7 +93,9 @@ then
     fi
 
     sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" ../scripts/fan_ctrl.py
-    sudo cp ../scripts/fan_ctrl.py /opt/sdobox/
+    mkdir -p /opt/sdobox/bin
+    sudo chown -r pi:pi /opt/sdobox
+    cp ../scripts/fan_ctrl.py /opt/sdobox/bin/
 
     if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
       sudo cp ../scripts/systemctl/fanctrl.service /lib/systemd/system/
@@ -117,11 +119,13 @@ git submodule update
 # Copy around files
 sudo mkdir -p /opt/sdobox
 sudo mkdir -p /opt/sdobox/tmp
+sudo chown -r pi:pi /opt/sdobox
 sudo cp -R images /opt/sdobox/
 sudo cp -R scripts /opt/sdobox/
+sudo cp -R bin /opt/sdobox/
 sudo cp scripts/overlays/* /boot/overlays/
 
-cd "$(dirname "$0")"
+cd build-scripts
 
 
 # Fixup cmdline.txt
@@ -258,10 +262,26 @@ else
   sudo systemctl restart sdobox.service
 fi
 
-# Install Headmelted version of Code
-sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
+read -p "Install Headmelted VsCode? Y/n" -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Nn]$ ]]
+then
+  echo "Skipping VSCode"
+else
+  # Install Headmelted version of Code
+  sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
 
-# Open VSCode with SDOBOX as open folder
-# code-oss .
+  # Open VSCode with SDOBOX as open folder
+  # code-oss .
+fi
 
-sudo reboot now
+
+
+read -p "Reboot? Y/n" -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Nn]$ ]]
+then
+  echo "Skipping Reboot"
+else
+  sudo reboot now
+fi
