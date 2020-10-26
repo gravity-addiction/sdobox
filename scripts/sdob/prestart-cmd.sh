@@ -25,7 +25,7 @@ done
 
 function notifyHost() {
   echo "Notify: ${HOST}"
-  curl --header "Content-Type: application/json" --request POST --data '{"sopst":"'"${STARTTIME}"'","pst":"'"${WORKINGTIME}"'"}' "http://${HOST}:4004/p/skydiveorbust/prestart"
+  curl --header "Content-Type: application/json" --request PUT --data '{"sopst":"'"${STARTTIME}"'","pst":"'"${WORKINGTIME}"'"}' "http://${HOST}:4004/p/skydiveorbust/prestart"
 }
 if [ -z "$HOST" ]; then
 
