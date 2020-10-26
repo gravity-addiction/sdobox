@@ -2254,7 +2254,7 @@ void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestar
   pg_sdobSOPSTSet(time, prestartTime);
 
   if (sdob_devicehost->isHost == 1) {
-    system("/opt/sdobox/scripts/sdob/prestart -t 10.56 -wt 60.0");
+    system("/opt/sdobox/scripts/sdob/prestart-cmd.sh -t 10.56 -wt 60.0");
   }
   pg_sdob_pl_sliderForceUpdate = 1;
 }

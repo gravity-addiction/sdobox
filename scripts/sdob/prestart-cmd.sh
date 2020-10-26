@@ -31,7 +31,7 @@ if [ -z "$HOST" ]; then
 
   while IFS= read -r HOST; do
     notifyHost
-  done < "child_hosts"
+  done < "/opt/sdobox/scripts/sdob/child_hosts"
 
 else
   notifyHost

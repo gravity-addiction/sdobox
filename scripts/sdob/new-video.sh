@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# ./newvideo.sh -h zero.local -s 2018_uspa_canopy_nationals -c "2way Seq Open" -t 3201 -r 1 -es "cf2WaySequentials" -d /home/pi/Videos -f 2_28_3201_1_1080p.m3u8
+# ./new-video.sh -h zero.local -s 2018_uspa_canopy_nationals -c "2way Seq Open" -t 3201 -r 1 -es "cf2WaySequentials" -d /home/pi/Videos -f 2_28_3201_1_1080p.m3u8
 POSITIONAL=()
 HOSTER=1
 ES="fs"
@@ -88,7 +88,7 @@ if [ -z "$HOST" ]; then
 
   while IFS= read -r HOST; do
     notifyHost
-  done < "child_hosts"
+  done < "/opt/sdobox/scripts/sdob/child_hosts"
 
 else
   notifyHost
