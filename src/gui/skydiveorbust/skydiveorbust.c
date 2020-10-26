@@ -33,9 +33,7 @@ void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc)
   sc->selected = -1;
   sc->last = -1;
   for (size_t s = 0; s < sc->max; s++) {
-    sc->arrScorecardId[s] = -1;
     sc->arrScorecardPoints[s] = -1;
-    sc->arrScorecardMilli[s] = -1;
     sc->arrScorecardTimes[s] = -1.0;
     sc->arrScorecardTicks[s] = -1.0;
   }
@@ -63,9 +61,7 @@ struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS()
   sc->max = pg_sdob_scorecard_max;
   sc->tickCnt = 0;
 
-  sc->arrScorecardId = (int*)calloc(sc->max, sizeof(int));
   sc->arrScorecardPoints = (int*)calloc(sc->max, sizeof(int));
-  sc->arrScorecardMilli = (int*)calloc(sc->max, sizeof(int));
   sc->arrScorecardTimes = (double*)calloc(sc->max, sizeof(double));
   sc->arrScorecardTicks = (double*)calloc(sc->max, sizeof(double));
 
@@ -82,7 +78,7 @@ struct pg_sdob_video_data * PG_SDOB_INIT_VIDEO_DATA() {
   struct pg_sdob_video_data *video_data = (struct pg_sdob_video_data*)malloc(sizeof(struct pg_sdob_video_data));
   video_data->video_type = 0;
   video_data->video_file = (char*)calloc(256, sizeof(char));
-  video_data->local_folder = (char*)calloc(64, sizeof(char));
+  video_data->local_folder = (char*)calloc(256, sizeof(char));
   video_data->url = (char*)calloc(512, sizeof(char));
   return video_data;
 }
@@ -92,7 +88,7 @@ void PG_SDOB_CLEAR_VIDEO_DATA(struct pg_sdob_video_data *video_data)
 {
   video_data->video_type = 0;
   CLEAR(video_data->video_file, 256);
-  CLEAR(video_data->local_folder, 64);
+  CLEAR(video_data->local_folder, 256);
   CLEAR(video_data->url, 512);
 }
 // Clear Video Data
@@ -110,6 +106,7 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
   judgement->video = PG_SDOB_INIT_VIDEO_DATA();
   judgement->marks = PG_SDOB_SCORECARD_INIT_MARKS();
 
+  judgement->ruleSet = (char*)calloc(64, sizeof(char));
   judgement->judge = (char*)calloc(64, sizeof(char));
   judgement->event = (char*)calloc(128, sizeof(char));
   judgement->eventStr = (char*)calloc(128, sizeof(char));
@@ -149,6 +146,7 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 {
   judgement->prestartTime = 0.0;
   judgement->workingTime = 0.0;
+  CLEAR(judgement->ruleSet, 64);
   CLEAR(judgement->judge, 64);
   CLEAR(judgement->event, 128);
   CLEAR(judgement->eventStr, 128);
@@ -183,7 +181,10 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 // Used to extract a event,team,round from the string, one by one
 #define SVR_PARTIAL   "^_(\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\))"
 
-static regex_t r_svr_wholefilename, r_svr_partial;
+// Extra event,team,round from omniskore saved videos
+#define SVR_OMNISKORE "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
+
+static regex_t r_svr_wholefilename, r_svr_partial, r_svr_omniskore;
 static double default_working_time = 35.0;
 static char svr_parsed_meet[64];
 
@@ -203,11 +204,16 @@ static void init_svr_regexp() {
   compstate = regcomp(&r_svr_partial, SVR_PARTIAL, 0);
   if (compstate)
     regexcompfail("partial", SVR_PARTIAL, compstate, &r_svr_partial);
+
+  compstate = regcomp(&r_svr_omniskore, SVR_OMNISKORE, 0);
+  if (compstate)
+    regexcompfail("omniskore", SVR_OMNISKORE, compstate, &r_svr_omniskore);
 }
 
 static void destroy_svr_regexp() {
   regfree(&r_svr_wholefilename);
   regfree(&r_svr_partial);
+  regfree(&r_svr_omniskore);
 }
 
 static void destroy_sdob_video_rounds() {
@@ -502,9 +508,9 @@ void sdob_selectEventComp(gslc_tsGui* pGui, char* compId, char* compStr) {
 void pg_sdobUpdateEventFromLocalFolder(gslc_tsGui *pGui, char* str) {
   char *lastslash = strrchr(str, '/');
   if(!lastslash || lastslash == str) {
-    strlcpy(sdob_judgement->eventStr, str, 64);
+    strlcpy(sdob_judgement->eventStr, str, 128);
   } else {
-    strlcpy(sdob_judgement->eventStr, lastslash + 1, 64);
+    strlcpy(sdob_judgement->eventStr, lastslash + 1, 128);
   }
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], sdob_judgement->eventStr);
 }
@@ -526,8 +532,9 @@ void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
     default_working_time = 35.0;
 }
 
+
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
-  strlcpy(sdob_judgement->video->video_file, str, 256);
+/*  strlcpy(sdob_judgement->video->video_file, str, 256);
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], sdob_judgement->video->video_file);
 
   parse_video_rounds(str);
@@ -535,6 +542,7 @@ void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
   if (sdob_current_rounds && sdob_num_current_rounds > 0) {
     sdob_selectEventTeamRound(pGui, 0);
   }
+*/
 }
 
 void pg_sdobUpdateVideoDescOne(gslc_tsGui *pGui, char* str) {
@@ -612,35 +620,41 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
 
 
 void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
+  
   if (strcmp(str, "cfRotations") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 90.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else if (strcmp(str, "cf2WaySequentials") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 60.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else if (strcmp(str, "cf4waySequentials") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 120.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else if (strcmp(str, "fsSpeed") == 0) {
     sdob_judgement->prestartTime = 45.0;
     sdob_judgement->workingTime = 0.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else {
     sdob_judgement->prestartTime = 0.0;
     sdob_judgement->workingTime = 35.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, "fs", 64);
 
   }
 }
@@ -756,6 +770,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   gslc_tsRect     pRect     = pElem->rElem;
 
 
+  gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
 
   gslc_DrawFillRect(pGui, pRect, pElem->colElemFill);
   gslc_DrawFrameRect(pGui, pRect, pElem->colElemFrame);
@@ -833,7 +848,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
 
       // Score Result
       if (i_this_mark < pg_sdob_score_count) {
-        // // debug_print("Mark: %d, Milli: %d, Point: %d\n", i_this_mark, sdob_judgement->marks->arrScorecardPoints[i_this_mark], sdob_judgement->marks->arrScorecardMilli[i_this_mark]);
+        // // debug_print("Mark: %d, Point: %d\n", i_this_mark, sdob_judgement->marks->arrScorecardPoints[i_this_mark]);
         switch (sdob_judgement->marks->arrScorecardPoints[i_this_mark]) {
           case E_SCORES_POINT:
             sprintf(result, "%s", "/");
@@ -873,7 +888,6 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
     }
   }
 
-  gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
   return true;
 }
 
@@ -1049,8 +1063,11 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (libMpvVideoInfo->is_loaded) {
     mpv_playpause_toggle();
   } else {
-    mpv_loadfile(libMpvVideoInfo->folder, libMpvVideoInfo->file, "replace", "");
-    mpv_fullscreen(1);
+    struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
+    strlcpy(newVid->local_folder, sdob_judgement->video->local_folder, 256);
+    strlcpy(newVid->video_file, sdob_judgement->video->video_file, 256);
+    strlcpy(newVid->url, sdob_judgement->video->url, 512); 
+    pg_skydiveorbust_loadvideo(pGui, newVid);
   }
 
   return true;
@@ -1095,8 +1112,7 @@ bool pg_sdobPlCbBtnStop(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
 bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  mpv_any_u* retSpeed;
-  double mpvSpeed;
+
 
   // Stop Changing Video Rate
   pg_sdobPlayerVideoRateChanging(pGui, 2);
@@ -1106,6 +1122,11 @@ bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
     pg_sdobScoringSelectionClear(pGui);
   }
 
+  mpv_seek(2);
+
+/*
+  mpv_any_u* retSpeed;
+  double mpvSpeed;
   if (mpvSocketSinglet("speed", &retSpeed) != -1) {
     mpvSpeed = retSpeed->floating;
     MPV_ANY_U_FREE(retSpeed);
@@ -1123,6 +1144,7 @@ bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
     }
     mpv_set_prop_char("pause", "no");
   }
+*/
   return true;
 }
 
@@ -1130,12 +1152,7 @@ bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 // Back Callback
 bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
-
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  mpv_any_u* retSpeed;
-  double mpvSpeed;
-  mpv_any_u* retTimePos;
-  double timePos;
 
   // Stop Changing Video Rate
   pg_sdobPlayerVideoRateChanging(pGui, 2);
@@ -1145,6 +1162,13 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
     pg_sdobScoringSelectionClear(pGui);
   }
 
+  mpv_seek(-2);
+
+/*
+  mpv_any_u* retSpeed;
+  double mpvSpeed;
+  mpv_any_u* retTimePos;
+  double timePos;
   if (mpvSocketSinglet("speed", &retSpeed) != -1) {
     mpvSpeed = retSpeed->floating;
     MPV_ANY_U_FREE(retSpeed);
@@ -1164,6 +1188,7 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
     timePos += (-1.5 * mpvSpeed);
     mpv_fmt_cmd("seek %f\n", timePos);
   }
+*/
   return true;
 }
 
@@ -1173,9 +1198,6 @@ bool pg_sdobPlCbBtnUserDefinedSlow(void* pvGui, void *pvElemRef, gslc_teTouch eT
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  mpv_any_u* retSpeed;
-  double dSpeed = 1.0;
-
   // Stop Changing Video Rate
   pg_sdobPlayerVideoRateChanging(pGui, 2);
 
@@ -1184,14 +1206,12 @@ bool pg_sdobPlCbBtnUserDefinedSlow(void* pvGui, void *pvElemRef, gslc_teTouch eT
     pg_sdobScoringSelectionClear(pGui);
   }
 
-  if (mpvSocketSinglet("speed", &retSpeed) != -1) {
-    dSpeed = retSpeed->floating;
-    MPV_ANY_U_FREE(retSpeed);
-    if (dSpeed >= 1.0) {
-      pg_sdobUpdateVideoRate(pGui, mpv_speed(pg_sdob_player_playback_slow));
-    }
+  if (libMpvVideoInfo->pbrateUser == libMpvVideoInfo->pbrate) {
+    pg_sdobUpdateVideoRate(pGui, mpv_speed(1.0));
+  } else {
+    pg_sdobUpdateVideoRate(pGui, mpv_speed(libMpvVideoInfo->pbrateUser));
   }
-  mpv_play();
+
   return true;
 }
 
@@ -1464,7 +1484,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   // Row One Under Scorecard (Event)
   if ((
     pg_sdobEl[E_SBOD_EL_DESC_ONE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-          ePage, (gslc_tsRect) {0,240,230,20},
+          ePage, (gslc_tsRect) {0,280,230,20},
           (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnMeetDesc)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_ONE], GSLC_COL_GREEN);
@@ -1476,7 +1496,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   // Row Two Under Scorecard (Comp)
   if ((
     pg_sdobEl[E_SBOD_EL_DESC_TWO] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-          ePage, (gslc_tsRect) {0,260,230,20},
+          ePage, (gslc_tsRect) {0,300,230,20},
           (char*)" ", 0, E_FONT_MONO18, &pg_sdobCbBtnVideoDesc)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SBOD_EL_DESC_TWO], GSLC_COL_GREEN);
@@ -1617,7 +1637,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   if ((
     pg_sdobEl[E_SDOB_EL_PL_USER_RATE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
         ePage, (gslc_tsRect) {104,0,64,64},
-        (char*)" ", 0,
+        (char*)"100%", 0,
         E_FONT_MONO2, &pg_sdobPlCbBtnUserDefinedSlow)
   ) != NULL) {
 
@@ -1632,7 +1652,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   // Slider
   if ((
     pg_sdobEl[E_SDOB_EL_PL_SLIDER] = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO,
-          ePage, &pg_sdob_pl_slider, (gslc_tsRect){15,285,450,35},
+          ePage, &pg_sdob_pl_slider, (gslc_tsRect){15,240,450,35},
           0, 1000, pg_sdobPlayerPos, 10, false)
   ) != NULL) {
 
@@ -1646,7 +1666,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   // Video Position Timestamp
   if ((
     pg_sdobEl[E_SDOB_EL_PL_POS] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO,
-        ePage, (gslc_tsRect) {230,245,170,35},
+        ePage, (gslc_tsRect) {230,285,170,35},
         (char*)" ", 0, E_FONT_MONO2)
   ) != NULL) {
 
@@ -1660,7 +1680,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
   // Video Rate
   if ((
     pg_sdobEl[E_SDOB_EL_PL_RATE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
-          ePage, (gslc_tsRect){400,245,80,35},
+          ePage, (gslc_tsRect){400,285,80,35},
           (char*)" ", 0, E_FONT_MONO2, &pg_sdobCbBtnVideoRate)
   ) != NULL) {
 
@@ -1797,7 +1817,7 @@ void pg_skydiveorbustButtonLeftPressed() {
       markTime = retTimePos->floating;
       MPV_ANY_U_FREE(retTimePos);
     }
-    sdob_judgement->marks->arrScorecardTimes[0] = markTime;
+
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_BUST;
@@ -1820,8 +1840,7 @@ void pg_skydiveorbustButtonRightPressed() {
 
   dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
   // Scorecard Clicks
-  
-  
+   
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
     mpv_any_u* retTimePos;
@@ -1831,7 +1850,6 @@ void pg_skydiveorbustButtonRightPressed() {
       MPV_ANY_U_FREE(retTimePos);
     }
 
-    sdob_judgement->marks->arrScorecardTimes[0] = markTime;
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_POINT;
@@ -1909,6 +1927,14 @@ void pg_skydiveorbustButtonRotaryHeld() {
   }
 }
 
+void pg_skydiveorbustButtonDoubleHeld() {
+  if (m_page_stackLen == 0) {
+    touchscreenPageOpen(&m_gui, E_PG_MAIN);
+  } else {
+    touchscreenPageGoBack(&m_gui);
+  }
+}
+
 void pg_skydiveorbustButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, &pg_skydiveorbustButtonRotaryCW);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CCW, &pg_skydiveorbustButtonRotaryCCW);
@@ -1918,6 +1944,7 @@ void pg_skydiveorbustButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_HELD, &pg_skydiveorbustButtonLeftHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_skydiveorbustButtonRightHeld);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_HELD, &pg_skydiveorbustButtonRotaryHeld);
+  lib_buttonsSetCallbackFunc(E_BUTTON_DOUBLE_HELD, &pg_skydiveorbustButtonDoubleHeld);
 }
 
 void pg_skydiveorbustButtonUnsetFuncs() {
@@ -1948,8 +1975,8 @@ void pg_sdob_mpv_timepos_thread() {
       libMpvVideoInfo->duration > 0.00
     ) || pg_sdob_pl_sliderForceUpdate == 1
   ) {
-    pg_sdobUpdatePlayerSlider(&m_gui);
     pg_sdob_pl_sliderForceUpdate = 0;
+    pg_sdobUpdatePlayerSlider(&m_gui);
 
 
     // Check prestart
@@ -1958,7 +1985,6 @@ void pg_sdob_mpv_timepos_thread() {
       sdob_judgement->prestartTime > 0 && sdob_judgement->sopst > -1.0 && 
       (sdob_judgement->prestartTime + sdob_judgement->sopst) <= libMpvVideoInfo->position
     ) {
-
       struct queue_head *itemSOWT = new_qhead();
       itemSOWT->action = E_Q_SCORECARD_SCORING_SOWT;
       itemSOWT->amt = sdob_judgement->workingTime;
@@ -1966,6 +1992,9 @@ void pg_sdob_mpv_timepos_thread() {
       queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
     }
 
+  } else if (sdob_devicehost->isHost == 1 && libMpvVideoInfo->has_seeked == 1 && libMpvVideoInfo->is_seeking == 0) {
+    libMpvVideoInfo->has_seeked = 0;
+    pg_sdobUpdatePlayerSlider(&m_gui);
   }
 }
 
@@ -2027,26 +2056,229 @@ void pg_sdobMpvTimeposThreadStop() {
 
 
 
+int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
+  // attempt to regex match filename to event info
+  regmatch_t matches[4];
+  int m = regexec(&r_svr_wholefilename, newVideo->video_file, 2, matches, 0);
+  if (m) {
+    // not a match, restore default working time
+    printf("video filename '%s' does not match default svr pattern\n", newVideo->video_file);
+    return m;
+  }
+
+  // Store the meet name
+  memset(svr_parsed_meet,0,sizeof(svr_parsed_meet));
+  strncpy(svr_parsed_meet, newVideo->video_file, MIN(63,matches[1].rm_eo));
+  dbgprintf(DBG_INFO|DBG_SVR, "SVR: meet = %s\n", svr_parsed_meet);
+
+  char* subline = newVideo->video_file + matches[1].rm_eo;
+  m = regexec(&r_svr_omniskore, subline, 4, matches, 0);
+  assert(m == 0);
+
+  char *svr_eventname = strndup(subline+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+  char *svr_rnd = strndup(subline+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+  char *svr_team = strndup(subline+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
+
+  dbgprintf(DBG_SVR|DBG_INFO, "SVR: event=%s, team=%s, round=%s\n", svr_eventname, svr_team, svr_rnd);
+
+  pg_sdobUpdateRound(pGui, svr_rnd);
+  pg_sdobUpdateTeam(pGui, svr_team);
+
+  // subline += matches[0].rm_eo;
+  if (strcmp(svr_parsed_meet, "20CFGHOST") == 0) {
+    pg_sdobUpdateVideoDescOne(pGui, "2020 CF Ghost Nationals");
+  } else {
+    pg_sdobUpdateVideoDescOne(pGui, svr_parsed_meet);
+  }
+  // printf("EV: %s", (subline+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so));
+
+  if (strcmp(svr_eventname, "CF2S") == 0 || strcmp(svr_eventname, "CF2SO") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    pg_sdobUpdateVideoDescTwo(pGui, "2way Seq Open");
+  } else if (strcmp(svr_eventname, "CF2SPA") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    pg_sdobUpdateVideoDescTwo(pGui, "2way Seq ProAm");
+  } else if (strcmp(svr_eventname, "CF4S") == 0 || strcmp(svr_eventname, "CF4SO") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
+    pg_sdobUpdateVideoDescTwo(pGui, "4way Seq Open");
+  } else if (strcmp(svr_eventname, "CF4R") == 0 || strcmp(svr_eventname, "CF4RO") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
+    pg_sdobUpdateVideoDescTwo(pGui, "4way Rotes Open");
+  }
+
+
+  
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  gslc_Update(pGui);
+
+  free(svr_eventname);
+  free(svr_rnd);
+  free(svr_team);
+  return 0;
+}
+
+
+int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
+
+  if (newVideo->video_file[0] == '\0') {
+     printf("no filename to load\n");
+     return 1;
+  }
+  // attempt to regex match filename to event info
+  regmatch_t matches[5];
+  int m = regexec(&r_svr_omniskore, newVideo->video_file, 5, matches, 0);
+  if (m) {
+    // not a match, restore default working time
+    printf("video filename '%s' does not match omniskore svr pattern\n", newVideo->video_file);
+    return m;
+  }
+
+  char *svr_event = strndup(newVideo->video_file+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+  char *svr_comp = strndup(newVideo->video_file+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+  char *svr_team = strndup(newVideo->video_file+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
+  char *svr_rnd = strndup(newVideo->video_file+matches[4].rm_so, matches[4].rm_eo - matches[4].rm_so);
+  printf("SVR: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+
+  pg_sdobUpdateRound(pGui, svr_rnd);
+  pg_sdobUpdateTeam(pGui, svr_team);
+/*
+  dbgprintf(DBG_SVR|DBG_INFO, "SVR: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+  
+  if (strcmp(svr_comp, "25") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    pg_sdobUpdateVideoDescTwo(&m_gui, "2way Seq Open");
+  } else if (strcmp(svr_comp, "26") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    pg_sdobUpdateVideoDescTwo(&m_gui, "2way Seq ProAm");
+  } else if (strcmp(svr_comp, "27") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
+    pg_sdobUpdateVideoDescTwo(&m_gui, "4way Seq Open");
+  } else if (strcmp(svr_comp, "28") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
+    pg_sdobUpdateVideoDescTwo(&m_gui, "4way Rotes Open");
+  }
+*/
+
+  free(svr_event);
+  free(svr_comp);
+  free(svr_rnd);
+  free(svr_team);
+  return 0;
+}
 //
 // Called only from the skydiveorbust page's thread as the result of a queue action.
 //
 static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
+  // Clear scorecard and reset interface to defaults
+//  pg_sdob_clear(pGui);
+//  pg_sdob_scorecard_clear(pGui);
+  strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256);
+  strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256);
+  strlcpy(sdob_judgement->video->url, newVideo->url, 512);
 
-  pg_sdob_clear(pGui);
-  pg_sdob_scorecard_clear(pGui);
+  char *eventStr;
+  int ptrCnt = 0;
+  char *compStr;
 
-  mpv_loadfile(newVideo->local_folder, newVideo->video_file, "replace", "fullscreen=yes");
-
-  pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-  if (sdob_devicehost->isHost == 1) {
-    // Push out new video info
-    system("/opt/sdobox/scripts/sdob/new-video.sh -s \"2020_uspa_canopy_nationals\" --comp \"2way Seq Open\" -es \"cf2WaySequentials\" -v 32 -e 3 -c 6 -t 3002 -r 1 --hoster 0 &");
+  // Parse Foldername for comp info
+  // printf("Local Folder: %s\n", sdob_judgement->local_folder);
+  char delim[] = "/";
+  char * ptrFolder = strtok(newVideo->local_folder, delim);
+  compStr = strdup(ptrFolder);
+  while ((ptrFolder = strtok(NULL,delim)) != NULL) {
+    if (ptrCnt == 0) { free(compStr); }
+    if (ptrCnt > 1) { free(eventStr); }
+    eventStr = compStr;
+    compStr = strdup(ptrFolder);
+    ptrCnt++;
   }
-  // pg_sdobUpdateEventFromLocalFolder(pGui, meet);
-  // pg_sdobUpdateComp(&m_gui, sdob_judgement->comp, sdob_judgement->compStr);
-  // pg_sdobUpdateVideoDescTwo(pGui, file);
-  pg_sdob_pl_sliderForceUpdate = 1;
+  free(ptrFolder);
+  
+  PG_SDOB_FREE_VIDEO_DATA(newVideo);
+  
+  // printf("Event Folder: %s\n", eventStr);
+  if (ptrCnt > 1 && strcmp(eventStr, "2018-USPA-CF") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2018 USPA Canopy Nationals", 128);
+  } else if (ptrCnt > 1 && strcmp(sdob_judgement->eventStr, "20CFGHOST") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2020 CF Ghost Nationals", 128);
+  } else if (ptrCnt > 1 && eventStr[0] != '\0') {
+    strlcpy(sdob_judgement->eventStr, eventStr, 128);
+  } else {
+    strlcpy(sdob_judgement->eventStr, "Unknown", 128);
+  }
+  pg_sdobUpdateVideoDescOne(pGui, sdob_judgement->eventStr);
+  if (ptrCnt > 1) { free(eventStr); }
+
+
+  // printf("Comp: %s\n", compStr);
+  if (ptrCnt > 0 && 
+      (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
+       strcmp(compStr, "2S") == 0 || strcmp(compStr, "2SO") == 0)
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    strlcpy(sdob_judgement->compStr, "2way Seq Open", 128);
+
+  } else if (ptrCnt > 0 && 
+              (strcmp(compStr, "CF2SPA") == 0 || strcmp(compStr, "2SPA") == 0)
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    strlcpy(sdob_judgement->compStr, "2way Seq ProAm", 128);
+
+  } else if (ptrCnt > 0 && 
+              (strcmp(compStr, "CF4S") == 0 || strcmp(compStr, "CF4SO") == 0
+              || strcmp(compStr, "4S") == 0 || strcmp(compStr, "4SO") == 0)
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
+    strlcpy(sdob_judgement->compStr, "4way Seq Open", 128);
+
+  } else if (ptrCnt > 0 && 
+              (strcmp(compStr, "CF4R") == 0 || strcmp(compStr, "CF4RO") == 0
+              || strcmp(compStr, "4R") == 0 || strcmp(compStr, "4RO") == 0)
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
+    strlcpy(sdob_judgement->compStr, "4way Rotes Open", 128);
+
+  } else if (ptrCnt > 0 && compStr[0] != '\0') {
+    strlcpy(sdob_judgement->compStr, compStr, 128);
+
+  } else {
+    strlcpy(sdob_judgement->compStr, " ", 128);
+  }
+  pg_sdobUpdateVideoDescTwo(pGui, sdob_judgement->compStr);
+  if (ptrCnt > 0) { free(compStr); }
+
+  if (!pg_skydiveorbust_parse_filename_default(pGui, newVideo)) {
+  
+  } else if (!pg_skydiveorbust_parse_filename_omniskore(pGui, newVideo)) {
+
+  }
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  gslc_Update(pGui);
+
+  if (sdob_devicehost->isHost == 1) {
+    mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
+    mpv_fullscreen(1);
+    pg_sdob_pl_sliderForceUpdate = 1;
+/*
+    fork();
+    // Push out new video info
+    int cmdLen = snprintf(NULL, 0, "/opt/sdobox/scripts/sdob/new-video.sh -s \"%s\" --comp \"%s\" -es \"%s\" -d \"%s\" -f \"%s\" -t \"%s\" -r \"%s\" --hoster 0 &", 
+      sdob_judgement->eventStr, sdob_judgement->compStr, sdob_judgement->ruleSet, sdob_judgement->video->local_folder, 
+      sdob_judgement->video->video_file, sdob_judgement->team, sdob_judgement->round
+    ) + 1;
+    char *cmd = (char*)malloc(cmdLen);
+    snprintf(cmd, cmdLen, "/opt/sdobox/scripts/sdob/new-video.sh -s \"%s\" --comp \"%s\" -es \"%s\" -d \"%s\" -f \"%s\" -t \"%s\" -r \"%s\" --hoster = 0 &", 
+      sdob_judgement->eventStr, sdob_judgement->compStr, sdob_judgement->ruleSet, sdob_judgement->video->local_folder, 
+      sdob_judgement->video->video_file, sdob_judgement->team, sdob_judgement->round
+    );
+    system(cmd);
+    free(cmd);
+*/
+  }
+    
+
 }
 
 //
@@ -2062,6 +2294,467 @@ void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, struct pg_sdob_video_data *new
   assert(pg_sdobQueue);
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 }
+
+
+void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, int mark) {
+  if (sdob_judgement->marks->size) {
+    printf("Mark 0 Time: %f\n", sdob_judgement->marks->arrScorecardTimes[0]);
+  }
+  pg_sdobInsertMark(selected, time, mark);
+  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
+
+  // Display Point in Box
+  int mSize = sdob_judgement->marks->size;
+  // Update Slider Max Positions
+  int sliderMax = (int)(mSize / pg_sdob_slot_max);
+  if (sliderMax != pg_sdob_scroll_max) {
+    pg_sdob_scroll_max = sliderMax;
+  }
+  // Increase line after screen is full
+  if (mSize > pg_sdob_slot_max * pg_sdob_line_max && mSize % pg_sdob_slot_max == 1) {
+    pg_sdobSliderSetCurPos(pGui, pg_sdob_slot_scroll + 1);
+  }
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+
+  // Update Scorecard Ticks
+  pg_sdobScoringMarks(pGui);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+
+  pg_sdobUpdatePlayerSlider(pGui);
+}
+
+void pg_sdob_scorecard_update_mark(gslc_tsGui *pGui, int selected, int mark) {
+  sdob_judgement->marks->arrScorecardPoints[selected] = mark;
+  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+
+  // Update Scorecard Ticks
+  pg_sdobScoringMarks(pGui);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+}
+
+
+void pg_sdob_scorecard_delete_mark(gslc_tsGui *pGui, int selected) {
+  pg_sdobDeleteMark(selected);
+  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+
+  
+  // Update Scorecard Ticks
+  pg_sdobScoringMarks(pGui);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+}
+
+
+void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt) {
+  // Updated Selected Score
+  pg_sdobMoveMark(selected, amt);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+
+  // Make sure the mark is viewable
+  int markHidden = pg_sdobScoringMarkHidden(sdob_judgement->marks->selected);
+  if (markHidden < 0) {
+    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max));
+  } else if (markHidden > 0) {
+    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max) + 1);
+  }
+
+  // Update Scorecard Ticks
+  pg_sdobScoringMarks(pGui);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+}
+
+void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestartTime) {
+  dbgprintf(DBG_DEBUG, "Set Prestart Time at %f for %f\n", time, prestartTime);
+  // Set Start of Working Time
+  pg_sdobSOPSTSet(time, prestartTime);
+  pg_sdob_pl_sliderForceUpdate = 1;
+
+  if (sdob_devicehost->isHost == 1) {
+    /*
+    fork();
+    int cmdLen = snprintf(NULL, 0, "/opt/sdobox/scripts/sdob/prestart-cmd.sh -t %f -wt %f &", time, prestartTime) + 1;
+    char *cmd = (char*)malloc(cmdLen);
+    snprintf(cmd, cmdLen, "/opt/sdobox/scripts/sdob/prestart-cmd.sh -t %f -wt %f &", time, prestartTime);
+    system(cmd);
+    free(cmd);
+    */
+  }
+
+
+}
+
+void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
+  dbgprintf(DBG_DEBUG, "Set Working Time at %f for %f\n", time, workingTime);
+  // Reset Ticks to Judge Marks
+  // CLEAR_PLAYER_TICKS
+  // if (sdob_judgement->sowt == -1.0) {
+  //  pg_sdob_player_sliderTicks(pGui, NULL, 0);
+  //  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  // }
+
+  // Set Start of Working Time
+  pg_sdobSOWTSet(time, workingTime);
+
+  pg_sdob_pl_sliderForceUpdate = 1;
+}
+
+void pg_sdob_clear(gslc_tsGui *pGui) {
+  pg_sdobUpdateTeam(pGui, "");
+  pg_sdobUpdateRound(pGui, "");
+  
+  // Reset Scorecard Scroller
+  pg_sdobSliderResetCurPos(pGui);
+  if (!libMpvVideoInfo->is_playing) { pg_sdobUpdatePlayerSlider(pGui); }
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+}
+
+void pg_sdob_scorecard_clean(gslc_tsGui *pGui) {
+  PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
+  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
+
+  // Reset SOWT and Video Length
+  pg_sdobSOWTReset();
+  // CLEAR_PLAYER_TICKS
+  pg_sdob_player_sliderTicks(pGui, NULL, 0);
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+}
+
+void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
+  dbgprintf(DBG_DEBUG, "%s", "Clearing Scorecard\n");
+  PG_SDOB_CLEAR_JUDGEMENT_META(sdob_judgement);
+  PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
+  pg_sdobUpdateScoringSettings(pGui, "fs");
+  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
+
+  // Reset SOWT and Video Length
+  pg_sdobSOWTReset();
+
+  // Return to Chapter Marks
+  //-/ pg_sdob_player_video_chapterMarks(pGui);
+
+  // CLEAR_PLAYER_TICKS
+  pg_sdob_player_sliderTicks(pGui, NULL, 0);
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+}
+
+
+void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui) {
+  // pg_sdob_player_setduration();
+  //-/ pg_sdob_player_video_chapters();
+  //-/ pg_sdob_player_video_chapterMarks(pGui);
+
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+}
+
+
+void pg_sdob_player_sliderForceUpdate() {
+  pg_sdob_pl_sliderForceUpdate = 1;
+}
+
+
+// GUI Thread
+int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
+  if (m_bQuit) { return 0; } // Quit flag set, do no more work
+
+  if (sdob_devicehost->cnt > sdob_devicehost->seenCnt) {
+    pg_sdobUpdateHostDeviceInfo(pGui);
+    sdob_devicehost->seenCnt = sdob_devicehost->cnt;
+  }
+
+  ////////////////////////
+  if (pg_sdobQueueLen > 0) {
+    // Fetch Items to deal with in queue
+    struct queue_head *item = queue_get(pg_sdobQueue, &pg_sdobQueueLen);
+    if (item) {
+      switch (item->action) {
+        // Buttons, Knob, Keyboard actions
+        case E_Q_SCORECARD_KEY:
+          // if (item->key != NULL) { keyboard_proxy(item->key); }
+        break;
+
+        // Insert Mark
+        case E_Q_SCORECARD_INSERT_MARK:
+          pg_sdob_scorecard_insert_mark(pGui, item->selected, item->time, item->mark);
+        break;
+
+
+        // Update Mark
+        case E_Q_SCORECARD_UPDATE_MARK:
+          pg_sdob_scorecard_update_mark(pGui, item->selected, item->mark);
+        break;
+
+        // Delete Mark
+        case E_Q_SCORECARD_DELETE_MARK:
+          pg_sdob_scorecard_delete_mark(pGui, item->selected);
+        break;
+
+        case E_Q_SCORECARD_MOVE_SCORE_SELECTED:
+          pg_sdob_scorecard_score_selected(pGui, item->selected, item->amt);
+        break;
+
+        case E_Q_SCORECARD_SCORING_SOPST:
+          pg_sdob_scorecard_score_sopst(pGui, item->time, sdob_judgement->prestartTime);
+        break;
+
+        case E_Q_SCORECARD_SCORING_SOWT:
+          pg_sdob_scorecard_score_sowt(pGui, item->time, sdob_judgement->workingTime);
+
+          if (sdob_current_rounds && sdob_num_current_rounds > 1
+              && (!strcmp(sdob_judgement->team, "") || !strcmp(sdob_judgement->round, ""))
+          ) {
+            mpv_pause();
+            touchscreenPageOpen(pGui, E_PG_SDOB_ROUNDLIST);
+          } else {
+            gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+          }
+
+
+        break;
+
+        case E_Q_SCORECARD_SUBMIT_SCORECARD:
+          // Submit scorecard to syslog
+          pg_sdobSubmitScorecard();
+        // No break, clear scorecard after submit
+        case E_Q_SDOB_CLEAR:
+          pg_sdob_clear(pGui);
+        case E_Q_SCORECARD_CLEAR:
+          pg_sdob_scorecard_clear(pGui);
+        break;
+
+        case E_Q_SCORECARD_CLEAN:
+          pg_sdob_scorecard_clean(pGui);
+        break;
+
+        case E_Q_PLAYER_SLIDER_CHAPTERS:
+          pg_sdob_player_chaptersRefresh(pGui);
+        break;
+
+        case E_Q_PLAYER_CHAPTER_CHANGED:
+          // pg_sdob_player_setChapterCur();
+        break;
+
+        case E_Q_PLAYER_VIDEO_INFO:
+          //-/ pg_sdob_player_videoInfo(pGui);
+        break;
+
+        // Writes commands to open FD Socket
+        case E_Q_ACTION_MPV_COMMAND:
+          printf("MPV: %s\n", item->cmd);
+          mpv_cmd(item->cmd);
+        break;
+
+
+        case E_Q_ACTION_PLAY_PAUSE:
+          // toggle_play_pause();
+        break;
+
+
+        case E_Q_ACTION_VIDEO_RATE:
+          pg_sdobUpdateVideoRate(pGui, mpv_speed(item->amt));
+        break;
+
+        case E_Q_ACTION_VIDEO_RATE_ADJUST:
+          pg_sdobUpdateVideoRate(pGui, mpv_speed_adjust(item->amt));
+        break;
+
+        case E_Q_ACTION_VIDEO_RATE_USER:
+          pg_sdobUpdateUserDefinedVideoRate(pGui, libMpvVideoInfo->pbrate);
+        break;
+
+        case E_Q_ACTION_LOADVIDEO:
+          pg_skydiveorbust_loadvideo_internal
+            ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);
+          free(item->data);
+        break;
+
+        case E_Q_PLAYER_VIDEO_PAUSE:
+          mpv_pause();
+        break;
+        case E_Q_PLAYER_VIDEO_UNPAUSE:
+          mpv_play();
+        break;
+        case E_Q_PLAYER_VIDEO_SETPAUSE:
+          if (item->mark == 1) { mpv_play();
+          } else { mpv_pause(); }
+        break;
+        case E_Q_PLAYER_VIDEO_CHECKPAUSE:
+          mpv_check_pause();
+        break;
+
+        case E_Q_PLAYER_SLIDER_UPDATE:
+          pg_sdob_player_sliderForceUpdate();
+        break;
+
+	  default:
+		  printf("Undetected item action: %d\n", item->action);
+          abort();
+		  break;
+      }
+
+      free(item);
+      return 1;
+    }
+  }
+
+
+  ////////////////////////
+  // Player Slider Moved
+  if (pg_sdob_player_move > -1
+    && (millis() - pg_sdob_player_move_debounce) > 750
+  ) {
+
+    // Execute Slider Move
+    if (sdob_judgement->sowt == -1.0 || !pg_sdob_timeline_zoom_workingtime) {
+      mpv_seek_arg(pg_sdob_player_move, "absolute-percent+exact");
+    } else {
+      mpv_seek_arg((sdob_judgement->sowt + (sdob_judgement->workingTime * (pg_sdob_player_move * .01))), "percent");
+    }
+    pg_sdob_player_move_debounce = millis();
+    pg_sdob_player_move = -1;
+    return 1;
+
+  }
+
+
+  // SDOB Video Host Event
+  if (libUlfiusSDOBNewVideoInfo->cnt > 0 && pg_sdob_new_video_cnt != libUlfiusSDOBNewVideoInfo->cnt) {
+    // Update counter to sync with current
+    libUlfiusSDOBNewVideoInfo->cnt = pg_sdob_new_video_cnt;
+
+    dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+
+    // if (m_tPageCur != E_PG_SKYDIVEORBUST) {
+    //   touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
+    // }
+    
+    // pg_sdob_clear(&m_gui);
+    // pg_sdob_scorecard_clear(&m_gui);
+
+    // Setup Environment for new Video API
+    if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
+      sdob_devicehost->isHost = 1;
+    } else {
+      sdob_devicehost->isHost = 0;
+    }
+    pg_sdobUpdateHostDeviceInfo(&m_gui);
+    
+    if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
+      // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+    } else if (sdob_devicehost->isHost == 1 &&
+                libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
+                libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
+    ) {
+      mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
+    }
+
+
+    if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
+      pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+    }
+    if (libUlfiusSDOBNewVideoInfo->rnd[0] != '\0') {
+      pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+    }
+
+    if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
+      pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
+    }
+    if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
+      pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+    }
+
+    pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
+
+    gslc_Update(pGui);
+    // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
+    // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
+    // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
+    // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+    // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+    
+
+    // if (sdob_devicehost->isHost == 1) {
+    //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+    // }
+  }
+  
+  
+  return 0;
+}
+
+
+
+
+
+// ------------------------
+// MPV Output SDOB Thread Thread
+// ------------------------
+PI_THREAD (pg_sdobThread)
+{
+  if (pg_sdobThreadRunning) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SDOB Scoring Queue Thread, Already Started");
+    return NULL;
+  }
+  pg_sdobThreadRunning = 1;
+
+  if (pg_sdobThreadKill) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not SDOB Scoring Queue Thread, Stop Flag Set");
+    pg_sdobThreadRunning = 0;
+    return NULL;
+  }
+
+  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
+
+  while (!pg_sdobThreadKill) {
+    if (!pg_skydiveorbust_thread(&m_gui)) {
+      usleep(250000);
+    }
+  }
+
+  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
+  pg_sdobThreadRunning = 0;
+  return NULL;
+}
+
+
+int pg_sdobThreadStart() {
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStart()");
+  if (pg_sdobThreadRunning) { return 0; }
+
+  pg_sdob_api_newVideoCnt = 0;
+
+  // printf("SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobThreadRunning);
+  pg_sdobThreadKill = 0;
+  return piThreadCreate(pg_sdobThread);
+}
+
+void pg_sdobThreadStop() {
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStop()");
+  // Shutdown MPV FIFO Thread
+  if (pg_sdobThreadRunning) {
+    pg_sdobThreadKill = 1;
+    int shutdown_cnt = 0;
+    while (pg_sdobThreadRunning && shutdown_cnt < 20) {
+      usleep(100000);
+      shutdown_cnt++;
+    }
+    // printf("SkydiveOrBust MPV TimePos Thread Shutdown %d\n", shutdown_cnt);
+  }
+}
+
+
+
+
+
+
+
+
 
 /////////////////////////////////////////////
 // Initialization
@@ -2172,6 +2865,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   pg_sdobUpdateHostDeviceInfo(pGui);
   pg_sdobUpdateScoringSettings(pGui, "fs");
+
+
   ////////////////////////////
   // Start SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
@@ -2187,439 +2882,6 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // Clear function pointer, indicate it's been run
   cbInit[E_PG_SKYDIVEORBUST] = NULL;
 }
-
-
-void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, int mark) {
-  pg_sdobInsertMark(selected, time, mark);
-  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
-
-  // Display Point in Box
-  int mSize = sdob_judgement->marks->size;
-  // Update Slider Max Positions
-  int sliderMax = (int)(mSize / pg_sdob_slot_max);
-  if (sliderMax != pg_sdob_scroll_max) {
-    pg_sdob_scroll_max = sliderMax;
-  }
-  // Increase line after screen is full
-  if (mSize > pg_sdob_slot_max * pg_sdob_line_max && mSize % pg_sdob_slot_max == 1) {
-    pg_sdobSliderSetCurPos(pGui, pg_sdob_slot_scroll + 1);
-  }
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-
-  // Update Scorecard Ticks
-  pg_sdobScoringMarks(pGui);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-
-  pg_sdobUpdatePlayerSlider(pGui);
-}
-
-void pg_sdob_scorecard_update_mark(gslc_tsGui *pGui, int selected, int mark) {
-  sdob_judgement->marks->arrScorecardPoints[selected] = mark;
-  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-
-  // Update Scorecard Ticks
-  pg_sdobScoringMarks(pGui);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-}
-
-
-void pg_sdob_scorecard_delete_mark(gslc_tsGui *pGui, int selected) {
-  pg_sdobDeleteMark(selected);
-  pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-
-  // Update Scorecard Ticks
-  pg_sdobScoringMarks(pGui);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-}
-
-
-void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt) {
-  // Updated Selected Score
-  pg_sdobMoveMark(selected, amt);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-
-  // Make sure the mark is viewable
-  int markHidden = pg_sdobScoringMarkHidden(sdob_judgement->marks->selected);
-  if (markHidden < 0) {
-    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max));
-  } else if (markHidden > 0) {
-    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max) + 1);
-  }
-
-  // Update Scorecard Ticks
-  pg_sdobScoringMarks(pGui);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-}
-
-void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestartTime) {
-  printf("Set Prestart Time at %f for %f\n", time, prestartTime);
-  // Set Start of Working Time
-  pg_sdobSOPSTSet(time, prestartTime);
-
-  if (sdob_devicehost->isHost == 1) {
-    system("/opt/sdobox/scripts/sdob/prestart-cmd.sh -t 10.56 -wt 60.0");
-  }
-  pg_sdob_pl_sliderForceUpdate = 1;
-}
-
-void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
-  printf("Set Working Time at %f for %f\n", time, workingTime);
-  // Reset Ticks to Judge Marks
-  // CLEAR_PLAYER_TICKS
-  if (sdob_judgement->sowt == -1.0) {
-    pg_sdob_player_sliderTicks(pGui, NULL, 0);
-    gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-  }
-
-  // Set Start of Working Time
-  pg_sdobSOWTSet(time, workingTime);
-
-  pg_sdob_pl_sliderForceUpdate = 1;
-}
-
-void pg_sdob_clear(gslc_tsGui *pGui) {
-  pg_sdobUpdateTeam(pGui, "");
-  pg_sdobUpdateRound(pGui, "");
-  
-  // Reset Scorecard Scroller
-  pg_sdobSliderResetCurPos(pGui);
-  if (!libMpvVideoInfo->is_playing) { pg_sdobUpdatePlayerSlider(pGui); }
-
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-}
-
-void pg_sdob_scorecard_clean(gslc_tsGui *pGui) {
-  PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
-  // Reset SOWT and Video Length
-  pg_sdobSOWTReset();
-  // CLEAR_PLAYER_TICKS
-  pg_sdob_player_sliderTicks(pGui, NULL, 0);
-
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-}
-
-void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
-  dbgprintf(DBG_DEBUG, "%s", "Clearing Scorecard\n");
-  PG_SDOB_CLEAR_JUDGEMENT_META(sdob_judgement);
-  PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
-  pg_sdobUpdateScoringSettings(pGui, "fs");
-
-  // Reset SOWT and Video Length
-  pg_sdobSOWTReset();
-
-  // Return to Chapter Marks
-  //-/ pg_sdob_player_video_chapterMarks(pGui);
-
-  // CLEAR_PLAYER_TICKS
-  pg_sdob_player_sliderTicks(pGui, NULL, 0);
-
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-}
-
-
-void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui) {
-  // pg_sdob_player_setduration();
-  //-/ pg_sdob_player_video_chapters();
-  //-/ pg_sdob_player_video_chapterMarks(pGui);
-
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-}
-
-
-void pg_sdob_player_sliderForceUpdate() {
-  pg_sdob_pl_sliderForceUpdate = 1;
-}
-
-
-// GUI Thread
-int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
-  if (m_bQuit) { return 0; } // Quit flag set, do no more work
-
-  if (sdob_devicehost->cnt > sdob_devicehost->seenCnt) {
-    pg_sdobUpdateHostDeviceInfo(pGui);
-    sdob_devicehost->seenCnt = sdob_devicehost->cnt;
-  }
-
-  ////////////////////////
-  if (pg_sdobQueueLen > 0) {
-    // Fetch Items to deal with in queue
-    struct queue_head *item = queue_get(pg_sdobQueue, &pg_sdobQueueLen);
-    if (item) {
-      switch (item->action) {
-        // Buttons, Knob, Keyboard actions
-        case E_Q_SCORECARD_KEY:
-          // if (item->key != NULL) { keyboard_proxy(item->key); }
-        break;
-
-        // Insert Mark
-        case E_Q_SCORECARD_INSERT_MARK:
-          pg_sdob_scorecard_insert_mark(pGui, item->selected, item->time, item->mark);
-        break;
-
-
-        // Update Mark
-        case E_Q_SCORECARD_UPDATE_MARK:
-          pg_sdob_scorecard_update_mark(pGui, item->selected, item->mark);
-        break;
-
-        // Delete Mark
-        case E_Q_SCORECARD_DELETE_MARK:
-          pg_sdob_scorecard_delete_mark(pGui, item->selected);
-        break;
-
-        case E_Q_SCORECARD_MOVE_SCORE_SELECTED:
-          pg_sdob_scorecard_score_selected(pGui, item->selected, item->amt);
-        break;
-
-        case E_Q_SCORECARD_SCORING_SOPST:
-          pg_sdob_scorecard_score_sopst(pGui, item->time, sdob_judgement->prestartTime);
-        break;
-
-        case E_Q_SCORECARD_SCORING_SOWT:
-          pg_sdob_scorecard_score_sowt(pGui, item->time, sdob_judgement->workingTime);
-
-          if (sdob_current_rounds && sdob_num_current_rounds > 1
-              && (!strcmp(sdob_judgement->team, "") || !strcmp(sdob_judgement->round, ""))
-          ) {
-            mpv_pause();
-            touchscreenPageOpen(pGui, E_PG_SDOB_ROUNDLIST);
-          } else {
-            gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-          }
-        break;
-
-        case E_Q_SCORECARD_SUBMIT_SCORECARD:
-          // Submit scorecard to syslog
-          pg_sdobSubmitScorecard();
-        // No break, clear scorecard after submit
-        case E_Q_SDOB_CLEAR:
-          pg_sdob_clear(pGui);
-        case E_Q_SCORECARD_CLEAR:
-          pg_sdob_scorecard_clear(pGui);
-        break;
-
-        case E_Q_SCORECARD_CLEAN:
-          pg_sdob_scorecard_clean(pGui);
-        break;
-
-        case E_Q_PLAYER_SLIDER_CHAPTERS:
-          pg_sdob_player_chaptersRefresh(pGui);
-        break;
-
-        case E_Q_PLAYER_CHAPTER_CHANGED:
-          // pg_sdob_player_setChapterCur();
-        break;
-
-        case E_Q_PLAYER_VIDEO_INFO:
-          //-/ pg_sdob_player_videoInfo(pGui);
-        break;
-
-        // Writes commands to open FD Socket
-        case E_Q_ACTION_MPV_COMMAND:
-          mpv_cmd(item->cmd);
-        break;
-
-
-        case E_Q_ACTION_PLAY_PAUSE:
-          // toggle_play_pause();
-        break;
-
-
-        case E_Q_ACTION_VIDEO_RATE:
-          pg_sdobUpdateVideoRate(pGui, mpv_speed(item->amt));
-        break;
-
-        case E_Q_ACTION_VIDEO_RATE_ADJUST:
-          pg_sdobUpdateVideoRate(pGui, mpv_speed_adjust(item->amt));
-        break;
-
-        case E_Q_ACTION_VIDEO_RATE_USER:
-          pg_sdobUpdateUserDefinedVideoRate(pGui, libMpvVideoInfo->pbrate);
-        break;
-
-        case E_Q_ACTION_LOADVIDEO:
-          pg_skydiveorbust_loadvideo_internal
-            ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);
-          free(item->data);
-        break;
-
-        case E_Q_PLAYER_VIDEO_PAUSE:
-          mpv_pause();
-        break;
-        case E_Q_PLAYER_VIDEO_UNPAUSE:
-          mpv_play();
-        break;
-        case E_Q_PLAYER_VIDEO_SETPAUSE:
-          if (item->mark == 1) { mpv_play();
-          } else { mpv_pause(); }
-        break;
-        case E_Q_PLAYER_VIDEO_CHECKPAUSE:
-          mpv_check_pause();
-        break;
-
-        case E_Q_PLAYER_SLIDER_UPDATE:
-          pg_sdob_player_sliderForceUpdate();
-        break;
-
-	  default:
-		  printf("Undetected item action: %d\n", item->action);
-          abort();
-		  break;
-      }
-
-      free(item);
-      return 1;
-    }
-  }
-
-
-  ////////////////////////
-  // Player Slider Moved
-  if (pg_sdob_player_move > -1
-    && (millis() - pg_sdob_player_move_debounce) > 750
-  ) {
-
-    // Execute Slider Move
-    if (sdob_judgement->sowt == -1.0 || !pg_sdob_timeline_zoom_workingtime) {
-      mpv_seek_arg(pg_sdob_player_move, "absolute-percent+exact");
-    } else {
-      mpv_seek_arg((sdob_judgement->sowt + (sdob_judgement->workingTime * (pg_sdob_player_move * .01))), "percent");
-    }
-    pg_sdob_player_move_debounce = millis();
-    pg_sdob_player_move = -1;
-    return 1;
-
-  }
-
-
-  // SDOB Video Host Event
-  if (libUlfiusSDOBNewVideoInfo->cnt > 0 && pg_sdob_new_video_cnt != libUlfiusSDOBNewVideoInfo->cnt) {
-    // Update counter to sync with current
-    libUlfiusSDOBNewVideoInfo->cnt = pg_sdob_new_video_cnt;
-
-    dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
-
-    // if (m_tPageCur != E_PG_SKYDIVEORBUST) {
-    //   touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
-    // }
-    
-    pg_sdob_clear(&m_gui);
-    pg_sdob_scorecard_clear(&m_gui);
-
-    // Setup Environment for new Video API
-    if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
-      sdob_devicehost->isHost = 1;
-    } else {
-      sdob_devicehost->isHost = 0;
-    }
-    pg_sdobUpdateHostDeviceInfo(&m_gui);
-    
-    if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
-      // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
-    } else if (sdob_devicehost->isHost == 1 &&
-                libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
-                libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
-    ) {
-      mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
-    }
-
-
-    if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
-      pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
-    }
-    if (libUlfiusSDOBNewVideoInfo->rnd[0] != '\0') {
-      pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
-    }
-
-    if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
-      pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
-    }
-    if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
-      pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
-    }
-
-    pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
-
-    // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
-    // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
-    // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
-    // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
-    // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
-    
-
-    // if (sdob_devicehost->isHost == 1) {
-    //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
-    // }
-  }
-  
-  return 0;
-}
-
-
-
-
-
-// ------------------------
-// MPV Output SDOB Thread Thread
-// ------------------------
-PI_THREAD (pg_sdobThread)
-{
-  if (pg_sdobThreadRunning) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SDOB Scoring Queue Thread, Already Started");
-    return NULL;
-  }
-  pg_sdobThreadRunning = 1;
-
-  if (pg_sdobThreadKill) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not SDOB Scoring Queue Thread, Stop Flag Set");
-    pg_sdobThreadRunning = 0;
-    return NULL;
-  }
-
-  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
-
-  while (!pg_sdobThreadKill) {
-    if (!pg_skydiveorbust_thread(&m_gui)) {
-      usleep(250000);
-    }
-  }
-
-  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
-  pg_sdobThreadRunning = 0;
-  return NULL;
-}
-
-
-int pg_sdobThreadStart() {
-  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStart()");
-  if (pg_sdobThreadRunning) { return 0; }
-
-  pg_sdob_api_newVideoCnt = 0;
-
-  // printf("SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobThreadRunning);
-  pg_sdobThreadKill = 0;
-  return piThreadCreate(pg_sdobThread);
-}
-
-void pg_sdobThreadStop() {
-  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStop()");
-  // Shutdown MPV FIFO Thread
-  if (pg_sdobThreadRunning) {
-    pg_sdobThreadKill = 1;
-    int shutdown_cnt = 0;
-    while (pg_sdobThreadRunning && shutdown_cnt < 20) {
-      usleep(100000);
-      shutdown_cnt++;
-    }
-    // printf("SkydiveOrBust MPV TimePos Thread Shutdown %d\n", shutdown_cnt);
-  }
-}
-
 
 
 // GUI Open
@@ -2659,6 +2921,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   PG_SDOB_FREE_VIDEO_DATA(sdob_judgement->video);
   free(sdob_judgement->video);
 
+  free(sdob_judgement->ruleSet);
   free(sdob_judgement->judge);
   free(sdob_judgement->event);
   free(sdob_judgement->eventStr);
@@ -2670,9 +2933,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   free(sdob_judgement->roundStr);
   free(sdob_judgement->scoreStr);
 
-  free(sdob_judgement->marks->arrScorecardId);
   free(sdob_judgement->marks->arrScorecardPoints);
-  free(sdob_judgement->marks->arrScorecardMilli);
   free(sdob_judgement->marks->arrScorecardTimes);
   free(sdob_judgement->marks->arrScorecardTicks);
 

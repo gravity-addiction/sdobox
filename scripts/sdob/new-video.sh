@@ -81,8 +81,8 @@ esac
 done
 
 function notifyHost() {
-  echo "Notify: ${HOST}"
-  curl --header "Content-Type: application/json" --request POST --data '{"host":"'"${HOSTER}"'","slug":"'"${SLUG}"'","videoId":"'"${VIDEOID}"'","eventId":"'"${EVENTID}"'","compId":"'"${COMPID}"'","comp":"'"${COMP}"'","team":"'"${TEAM}"'","rnd":"'"${RND}"'","folder":"'"${FOLDER}"'","file":"'"${FILE}"'","url":"'"${URL}"'","es":"'"${ES}"'"}' "http://${HOST}:4004/p/skydiveorbust/newvideo"
+  # echo "Notify: ${HOST}"
+  curl -s --header "Content-Type: application/json" --request POST --data '{"host":"'"${HOSTER}"'","slug":"'"${SLUG}"'","videoId":"'"${VIDEOID}"'","eventId":"'"${EVENTID}"'","compId":"'"${COMPID}"'","comp":"'"${COMP}"'","team":"'"${TEAM}"'","rnd":"'"${RND}"'","folder":"'"${FOLDER}"'","file":"'"${FILE}"'","url":"'"${URL}"'","es":"'"${ES}"'"}' "http://${HOST}:4004/p/skydiveorbust/newvideo" 2&>1 /dev/null
 }
 if [ -z "$HOST" ]; then
   HOSTNAME=$(hostname -s)

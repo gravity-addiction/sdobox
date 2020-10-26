@@ -14,21 +14,18 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 // Create new Mark
   int curScorecardSize = sdob_judgement->marks->size;
 
-  if (mark == E_SCORES_SOPST && sdob_judgement->marks->size > 0 && sdob_judgement->marks->arrScorecardPoints[0] != E_SCORES_SOPST) {
-    markSelected = 0;
-  }
+  // if (mark == E_SCORES_SOPST && sdob_judgement->marks->size > 0 && sdob_judgement->marks->arrScorecardPoints[0] != E_SCORES_SOPST) {
+  //   markSelected = 0;
+  // }
 
-  int sLen = sdob_judgement->marks->size;
   // Insert before provided selected mark
-  if (markSelected >= 0 && sLen > 0) {
+  if (markSelected >= 0 && curScorecardSize > 0) {
         
     printf("MAKING ROOM!\n");
     
     // Make room!
-    for (size_t i = sLen; i >= markSelected; i--) {
+    for (size_t i = curScorecardSize; i >= markSelected; i--) {
       if (i == 0) { break; }
-      sdob_judgement->marks->arrScorecardId[i] = sdob_judgement->marks->arrScorecardId[i - 1];
-      sdob_judgement->marks->arrScorecardMilli[i] = sdob_judgement->marks->arrScorecardMilli[i - 1];
       sdob_judgement->marks->arrScorecardPoints[i] = sdob_judgement->marks->arrScorecardPoints[i - 1];
       sdob_judgement->marks->arrScorecardTimes[i] = sdob_judgement->marks->arrScorecardTimes[i - 1];
     }
@@ -38,6 +35,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   
   sdob_judgement->marks->size++;
 
+  // Try getting mark time when not present
   mpv_any_u* retTimePos;
   if (markTime < 0) {
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
@@ -46,12 +44,14 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     }
   }
 
-  if (markTime < 0) {
-    // debug_print("%s\n", "Unable to grab video time!");
-    markTime = 0;
-  }
+  // sanity check, never less than 0
+  // if (markTime < 0) {
+  //   // debug_print("%s\n", "Unable to grab video time!");
+  //   markTime = 0;
+  // }
 
-  // dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
+  printf("INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
+  printf("Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
   // Determine which type of mark to insert
   if (markSelected == 0 && sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0) { // Change up Start of Working Time
     mark = E_SCORES_SOPST;
@@ -78,7 +78,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     itemSOWT->mark = mark;
     queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
   }
-  
+
   // Add Marker Time
   sdob_judgement->marks->arrScorecardTimes[markSelected] = markTime;
 
@@ -97,8 +97,6 @@ void pg_sdobDeleteMark(int markSelected) {
 
   // Save Last Records of volatile mem so maybe take it
   int curScorecardSize = sdob_judgement->marks->size;
-  int lastId = sdob_judgement->marks->arrScorecardId[curScorecardSize - 1];
-  int lastMilli = sdob_judgement->marks->arrScorecardMilli[curScorecardSize - 1];
   int lastPoint = sdob_judgement->marks->arrScorecardPoints[curScorecardSize - 1];
   int lastTime = sdob_judgement->marks->arrScorecardTimes[curScorecardSize - 1];
 
@@ -114,16 +112,12 @@ void pg_sdobDeleteMark(int markSelected) {
   } else if (markSelected > 1) {
     // Move everything back one
     for (size_t i = markSelected; i < curScorecardSize - 1; i++) {
-      sdob_judgement->marks->arrScorecardId[i] = sdob_judgement->marks->arrScorecardId[i + 1];
-      sdob_judgement->marks->arrScorecardMilli[i] = sdob_judgement->marks->arrScorecardMilli[i + 1];
       sdob_judgement->marks->arrScorecardPoints[i] = sdob_judgement->marks->arrScorecardPoints[i + 1];
       sdob_judgement->marks->arrScorecardTimes[i] = sdob_judgement->marks->arrScorecardTimes[i + 1];
     }
 
     // Update last record
     if (markSelected < curScorecardSize - 1) {
-      sdob_judgement->marks->arrScorecardId[curScorecardSize - 2] = lastId;
-      sdob_judgement->marks->arrScorecardMilli[curScorecardSize - 2] = lastMilli;
       sdob_judgement->marks->arrScorecardPoints[curScorecardSize - 2] = lastPoint;
       sdob_judgement->marks->arrScorecardTimes[curScorecardSize - 2] = lastTime;
     }
@@ -266,13 +260,13 @@ int pg_sdobScoringMarkHidden(int markI) {
 }
 
 void pg_sdobScoringMarks(gslc_tsGui *pGui) {
-//  printf("Scoreing Marks: ");
+  // printf("Scoreing Marks: %d, Tick Cnt: %d\n", sdob_judgement->marks->size, sdob_judgement->marks->tickCnt);
 
   sdob_judgement->marks->tickCnt = sdob_judgement->marks->size;
   if (sdob_judgement->marks->tickCnt < 1) { return; }
 
   for(int i = 0; i < sdob_judgement->marks->tickCnt; ++i) {
-    if (sdob_judgement->marks->arrScorecardTimes[i] >= 0 && !pg_sdob_timeline_zoom_workingtime) {
+    if (!pg_sdob_timeline_zoom_workingtime) {
       // Get percent in working time ((mark - sowt) / wt)
       sdob_judgement->marks->arrScorecardTicks[i] = ((sdob_judgement->marks->arrScorecardTimes[i] / libMpvVideoInfo->duration) * 100);
     } else if (sdob_judgement->marks->arrScorecardTimes[i] >= 0) {

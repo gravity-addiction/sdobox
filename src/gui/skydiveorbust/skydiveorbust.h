@@ -80,12 +80,10 @@ struct pg_sdob_scorecard_marks {
   int          tickCnt;
   double       *arrScorecardTicks;
   double       *arrScorecardTimes;
-  int          *arrScorecardId;
 
   int selected;
   int size;
   int *arrScorecardPoints;
-  int *arrScorecardMilli;
 };
 
 struct pg_sdob_video_data {
@@ -106,6 +104,7 @@ struct pg_sdob_judgement_data {
 
   int tossStartCount;
 
+  char*  ruleSet;
   char*  judge; // judge initials
   char*  event;
   char*  eventStr;
@@ -328,6 +327,7 @@ void pg_skydiveorbustButtonRotaryPressed();
 void pg_skydiveorbustButtonLeftHeld();
 void pg_skydiveorbustButtonRightHeld();
 void pg_skydiveorbustButtonRotaryHeld();
+void pg_skydiveorbustButtonDoubleHeld();
 void pg_skydiveorbustButtonSetFuncs();
 void pg_skydiveorbustButtonUnsetFuncs();
 

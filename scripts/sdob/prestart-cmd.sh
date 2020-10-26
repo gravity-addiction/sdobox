@@ -29,8 +29,8 @@ esac
 done
 
 function notifyHost() {
-  echo "Notify: ${HOST}"
-  curl --header "Content-Type: application/json" --request PUT --data '{"sopst":"'"${STARTTIME}"'","pst":"'"${WORKINGTIME}"'"}' "http://${HOST}:4004/p/skydiveorbust/prestart"
+  # echo "Notify: ${HOST}"
+  curl -s --header "Content-Type: application/json" --request PUT --data '{"sopst":"'"${STARTTIME}"'","pst":"'"${WORKINGTIME}"'"}' "http://${HOST}:4004/p/skydiveorbust/prestart" 2&>1 /dev/null
 }
 if [ -z "$HOST" ]; then
   HOSTNAME=$(hostname -s)

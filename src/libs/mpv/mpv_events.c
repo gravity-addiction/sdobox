@@ -93,14 +93,17 @@ void libMpvProcessEvent(char *event) {
   // Is Loaded
   } else if (strcmp(event, "file-loaded") == 0) {
     libMpvVideoInfo->is_loaded = 1;
+    libMpvVideoInfo->has_seeked = 1;
 
   // Nothing Loaded
   } else if (strcmp(event, "idle") == 0) {
     libMpvVideoInfo->is_loaded = 0;
-  
+    libMpvVideoInfo->has_seeked = 1;
+    
   // Seeking Thru File, Not Playing, and not Paused
   } else if (strcmp(event, "seek") == 0) {
     libMpvVideoInfo->is_seeking = 1;
+    libMpvVideoInfo->has_seeked = 1;
 
   // No longer Seeking, Playable
   } else if (strcmp(event, "playback-restart") == 0) {
@@ -108,6 +111,7 @@ void libMpvProcessEvent(char *event) {
 
   } else if (strcmp(event, "metadata-update") == 0) {
     libmpv_setduration();
+    libMpvVideoInfo->has_seeked = 1;
   } else {
     return;
   }

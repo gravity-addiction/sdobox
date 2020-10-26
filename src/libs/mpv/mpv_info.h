@@ -11,6 +11,7 @@ struct libMpvPlayerInfo {
   int is_loaded;
   int is_playing;
   int is_seeking;
+  int has_seeked;
   double position;
   double duration;
   double fps;

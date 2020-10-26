@@ -278,6 +278,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
   char *data = (char*)malloc(len * sizeof(char));
   if (data == NULL) {
       dbgprintf(DBG_ERROR, "%s\n%s\n", "Error!, No Memory", strerror(errno));
+      pthread_mutex_unlock(&mpvSocketCmdLock);
       return -1;
   }
   snprintf(data, len, data_tmp, prop, reqId);

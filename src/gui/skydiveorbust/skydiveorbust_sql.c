@@ -145,10 +145,8 @@ int db_video_scores(int id_video) {
   int iMark = 0;
 
   while (sqlite3_step(stmt) == SQLITE_ROW) {
-    scorecard->arrScorecardId[iMark] = sqlite3_column_int(stmt, 1);
     scorecard->arrScorecardPoints[iMark] = sqlite3_column_int(stmt, 3);
     scorecard->arrScorecardTimes[iMark] = sqlite3_column_double(stmt, 4);
-    scorecard->arrScorecardMilli[iMark] = -1;
     iMark++;
   }
   scorecard->size = iMark;
