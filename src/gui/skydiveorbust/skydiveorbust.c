@@ -2164,6 +2164,19 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
 
   pg_sdob_new_video_cnt = 0;
+
+  pg_sdobUpdateHostDeviceInfo(pGui);
+  pg_sdobUpdateScoringSettings(pGui, "fs");
+  ////////////////////////////
+  // Start SDOB Thread
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
+  pg_sdobMpvTimeposThreadStart();
+  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
+  pg_sdobThreadStart();
+
+
+
+
   //////////////////////////////
   // Finish up
   // Clear function pointer, indicate it's been run
@@ -2240,6 +2253,9 @@ void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestar
   // Set Start of Working Time
   pg_sdobSOPSTSet(time, prestartTime);
 
+  if (libMpvVideoInfo->isHost == 1) {
+    system("/opt/sdobox/scripts/sdob/prestart -t 10.56 -wt 60.0")
+  }
   pg_sdob_pl_sliderForceUpdate = 1;
 }
 
@@ -2606,15 +2622,6 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
-
-  pg_sdobUpdateHostDeviceInfo(pGui);
-  pg_sdobUpdateScoringSettings(pGui, "fs");
-  ////////////////////////////
-  // Start SDOB Thread
-  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  pg_sdobMpvTimeposThreadStart();
-  // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
-  pg_sdobThreadStart();
   // Reset Scorecard Slider to Top
   // pg_sdobSliderResetCurPos(pGui);
 
@@ -2627,7 +2634,12 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
 // GUI Close
 void pg_skydiveorbust_close(gslc_tsGui *pGui) {
-  ////////////////////////////
+  
+}
+
+// GUI Destroy
+void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
+////////////////////////////
   // Stop SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
   pg_sdobThreadStop();
@@ -2688,11 +2700,6 @@ void pg_skydiveorbust_close(gslc_tsGui *pGui) {
   free(sdob_player_ticks);
 
   mpv_playlist_clear();
-
-}
-
-// GUI Destroy
-void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 
   // free(sdob_devicehost);
   // printf("Page SkydiveOrBust Destroyed\n");

@@ -102,19 +102,20 @@ int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _
 
 int callback_skydiveorbust_prestart (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
+  
 
   json_error_t error;
   json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
   if (json_nb_sheep == NULL) {
     printf("Error: %s\n", error.text);
   } else {
+    pg_sdob_scorecard_score_sopst(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sopst")), json_real_value(json_object_get(json_nb_sheep, "pst")));
+
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_SOPST;
     item->time = json_real_value(json_object_get(json_nb_sheep, "sopst"));
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
-    // pg_sdob_scorecard_score_sopst(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sopst")), json_real_value(json_object_get(json_nb_sheep, "pst")));
   }
   free(json_nb_sheep);
 
@@ -123,19 +124,20 @@ int callback_skydiveorbust_prestart (const struct _u_request * request, struct _
 
 int callback_skydiveorbust_workingtime (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
+  
 
   json_error_t error;
   json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
   if (json_nb_sheep == NULL) {
     printf("Error: %s\n", error.text);
   } else {
+    pg_sdob_scorecard_score_sowt(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sowt")), json_real_value(json_object_get(json_nb_sheep, "wt")));
+
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_SOWT;
-    item->time = json_real_value(json_object_get(json_nb_sheep, "sopst"));
+    item->time = json_real_value(json_object_get(json_nb_sheep, "sowt"));
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
-    // pg_sdob_scorecard_score_sowt(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sowt")), json_real_value(json_object_get(json_nb_sheep, "wt")));
   }
   free(json_nb_sheep);
   return U_CALLBACK_CONTINUE;

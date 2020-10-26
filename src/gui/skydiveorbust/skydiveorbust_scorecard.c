@@ -13,14 +13,20 @@
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 // Create new Mark
   int curScorecardSize = sdob_judgement->marks->size;
-  sdob_judgement->marks->size++;
 
+  if (mark == E_SCORES_SOPST && sdob_judgement->marks->size > 0 && sdob_judgement->marks->arrScorecardPoints[0] != E_SCORES_SOPST) {
+    markSelected = 0;
+  }
+
+  int sLen = sdob_judgement->marks->size;
   // Insert before provided selected mark
-  if (markSelected >= 0) {
+  if (markSelected >= 0 && sLen > 0) {
+        
     printf("MAKING ROOM!\n");
-    int sLen = sdob_judgement->marks->size;
+    
     // Make room!
     for (size_t i = sLen; i >= markSelected; i--) {
+      if (i == 0) { break; }
       sdob_judgement->marks->arrScorecardId[i] = sdob_judgement->marks->arrScorecardId[i - 1];
       sdob_judgement->marks->arrScorecardMilli[i] = sdob_judgement->marks->arrScorecardMilli[i - 1];
       sdob_judgement->marks->arrScorecardPoints[i] = sdob_judgement->marks->arrScorecardPoints[i - 1];
@@ -30,6 +36,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     markSelected = curScorecardSize;
   }
   
+  sdob_judgement->marks->size++;
+
   mpv_any_u* retTimePos;
   if (markTime < 0) {
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
@@ -45,9 +53,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 
   // dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
   // Determine which type of mark to insert
-  if (markTime >= 0 && markSelected == 0 &&
-      sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0
-  ) { // Change up Start of Working Time
+  if (markSelected == 0 && sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0) { // Change up Start of Working Time
     mark = E_SCORES_SOPST;
 
     struct queue_head *itemSOPST = malloc(sizeof(struct queue_head));
@@ -59,8 +65,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     queue_put(itemSOPST, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else if (
-    (sdob_judgement->prestartTime == 0 && markTime >= 0 && markSelected == 0) || 
-    (sdob_judgement->prestartTime > 0 && markTime >= 0 && markSelected == 1 && sdob_judgement->sowt == -1.0)
+    (sdob_judgement->prestartTime == 0 && markSelected == 0) || 
+    (sdob_judgement->prestartTime > 0 && markSelected == 1 && sdob_judgement->sowt == -1.0)
   ) { // Change up Start of Working Time
     // mark = E_SCORES_SOWT;
 
@@ -159,7 +165,7 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 
 
 int pg_sdobSOPSTSet(double markTime, double prestartTime) {
-  // printf("Setting Prestart Time at %f for %f seconds\n", markTime, prestartTime);
+  printf("Setting Prestart Time at %f for %f seconds\n", markTime, prestartTime);
   sdob_judgement->sopst = markTime;
   sdob_judgement->prestartTime = prestartTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
@@ -327,6 +333,7 @@ int pg_sdobSubmitScorecard() {
   json_t *json_workingtime = json_object();
   json_t *json_marks = json_array();
 
+printf("PS: %f, WT: %f\n", sdob_judgement->prestartTime, sdob_judgement->workingTime);
   json_object_set_new(root, "prestartTime", json_prestarttime);
   json_object_set_new(json_prestarttime, "start", json_real(sdob_judgement->sopst));
   json_object_set_new(json_prestarttime, "time", json_real(sdob_judgement->prestartTime));
