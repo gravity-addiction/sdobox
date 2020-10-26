@@ -57,7 +57,6 @@ char*    config_path = "/home/pi/.config/sdobox/sdobox.conf";
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
 int      m_startPage = 0; // Page Int to start, -1 for no page just buttons
 int      m_touchscreenInit = 0; // guislice init successful
-int      m_newVideoCnt = 0; // TEMP: Used for tracking incoming scoring videos globally
 
 void signal_sigint(int sig);
 void get_config_settings();
@@ -370,66 +369,6 @@ int main( int argc, char* args[] )
 
     if (lib_buttons_thread()) {
        m_bSleep = 0;
-    }
-
-    // SDOB Video Host Event
-    if (libUlfiusSDOBNewVideoInfo->cnt > 0 && m_newVideoCnt != libUlfiusSDOBNewVideoInfo->cnt) {
-      // Update counter to sync with current
-      libUlfiusSDOBNewVideoInfo->cnt = m_newVideoCnt;
-
-      dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
-
-      if (m_tPageCur != E_PG_SKYDIVEORBUST) {
-        touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
-      }
-      
-      pg_sdob_clear(&m_gui);
-      pg_sdob_scorecard_clear(&m_gui);
-
-      // Setup Environment for new Video API
-      if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
-        sdob_devicehost->isHost = 1;
-      } else {
-        sdob_devicehost->isHost = 0;
-      }
-      pg_sdobUpdateHostDeviceInfo(&m_gui);
-      
-      if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
-        // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
-      } else if (sdob_devicehost->isHost == 1 &&
-                 libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
-                 libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
-      ) {
-        mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
-      }
-
-
-      if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
-        pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
-      }
-      if (libUlfiusSDOBNewVideoInfo->rnd[0] != '\0') {
-        pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
-      }
-
-      if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
-        pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
-      }
-      if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
-        pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
-      }
-
-      pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
-
-      // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
-      // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
-      // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
-      // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
-      // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
-      
-
-      // if (sdob_devicehost->isHost == 1) {
-      //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
-      // }
     }
 
     if (m_bSleep) {

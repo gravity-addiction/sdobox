@@ -64,6 +64,7 @@ void mpv_check_pause();
 int mpv_pause();
 int mpv_play();
 int mpv_playpause_toggle();
+int mpv_fullscreen(int fs);
 
 double mpv_speed(double spd);
 double mpv_speed_adjust(double spd);

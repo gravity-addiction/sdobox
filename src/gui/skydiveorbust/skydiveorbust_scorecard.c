@@ -17,6 +17,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 
   // Insert before provided selected mark
   if (markSelected >= 0) {
+    printf("MAKING ROOM!\n");
     int sLen = sdob_judgement->marks->size;
     // Make room!
     for (size_t i = sLen; i >= markSelected; i--) {
@@ -26,26 +27,23 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
       sdob_judgement->marks->arrScorecardTimes[i] = sdob_judgement->marks->arrScorecardTimes[i - 1];
     }
   } else {
-    mpv_any_u* retTimePos;
-    
     markSelected = curScorecardSize;
-    if (markTime < 0) {
-      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-        markTime = retTimePos->floating;
-        MPV_ANY_U_FREE(retTimePos);
-        sdob_judgement->marks->arrScorecardTimes[markSelected] = markTime;
-      }
-    }
-
-    if (markTime < 0) {
-      // debug_print("%s\n", "Unable to grab video time!");
-      markTime = 0;
+  }
+  
+  mpv_any_u* retTimePos;
+  if (markTime < 0) {
+    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+      markTime = retTimePos->floating;
+      MPV_ANY_U_FREE(retTimePos);
     }
   }
 
+  if (markTime < 0) {
+    // debug_print("%s\n", "Unable to grab video time!");
+    markTime = 0;
+  }
+
   // dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
-
-
   // Determine which type of mark to insert
   if (markTime >= 0 && markSelected == 0 &&
       sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0
@@ -75,6 +73,10 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
   }
   
+  // Add Marker Time
+  sdob_judgement->marks->arrScorecardTimes[markSelected] = markTime;
+
+  // Add Marker Class
   if (mark >= 0) {
     sdob_judgement->marks->arrScorecardPoints[markSelected] = mark;
   } else {
@@ -326,10 +328,16 @@ int pg_sdobSubmitScorecard() {
   json_t *json_marks = json_array();
 
   json_object_set_new(root, "prestartTime", json_prestarttime);
+  json_object_set_new(json_prestarttime, "start", json_real(sdob_judgement->sopst));
+  json_object_set_new(json_prestarttime, "time", json_real(sdob_judgement->prestartTime));
   json_object_set_new(root, "workingTime", json_workingtime);
   json_object_set_new(json_workingtime, "start", json_real(sdob_judgement->sowt));
+  json_object_set_new(json_workingtime, "time", json_real(sdob_judgement->workingTime));
   json_object_set_new(root, "name", json_string(sdob_judgement->judge));
+  json_object_set_new(root, "comp", json_string(sdob_judgement->compStr));
   json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
+  json_object_set_new(root, "event", json_string(sdob_judgement->eventStr));
+  json_object_set_new(root, "eventId", json_string(sdob_judgement->event));
   json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
   json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
   json_object_set_new(root, "marks", json_marks);

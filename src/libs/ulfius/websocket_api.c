@@ -7,6 +7,9 @@
 #include "lib_websocket.h"
 #include "websocket_api.h"
 #include "libs/dbg/dbg.h"
+#include "libs/queue/queue.h"
+
+#include "gui/skydiveorbust/skydiveorbust.h"
 
 
 struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
@@ -97,6 +100,47 @@ int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_skydiveorbust_prestart (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 204, NULL);
+
+  json_error_t error;
+  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
+  if (json_nb_sheep == NULL) {
+    printf("Error: %s\n", error.text);
+  } else {
+    struct queue_head *item = new_qhead();
+    item->action = E_Q_SCORECARD_INSERT_MARK;
+    item->mark = E_SCORES_SOPST;
+    item->time = json_real_value(json_object_get(json_nb_sheep, "sopst"));
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // pg_sdob_scorecard_score_sopst(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sopst")), json_real_value(json_object_get(json_nb_sheep, "pst")));
+  }
+  free(json_nb_sheep);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_skydiveorbust_workingtime (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 204, NULL);
+
+  json_error_t error;
+  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
+  if (json_nb_sheep == NULL) {
+    printf("Error: %s\n", error.text);
+  } else {
+    struct queue_head *item = new_qhead();
+    item->action = E_Q_SCORECARD_INSERT_MARK;
+    item->mark = E_SCORES_SOWT;
+    item->time = json_real_value(json_object_get(json_nb_sheep, "sopst"));
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // pg_sdob_scorecard_score_sowt(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sowt")), json_real_value(json_object_get(json_nb_sheep, "wt")));
+  }
+  free(json_nb_sheep);
+  return U_CALLBACK_CONTINUE;
+}
+
 // ------------------------
 // Websocket API Thread
 // ------------------------
@@ -128,6 +172,8 @@ PI_THREAD (websocketApiThread)
 
   ulfius_add_endpoint_by_val(&instance, "GET", "/H3xx92sk", NULL, 0, &callback_spotify, NULL);
   ulfius_add_endpoint_by_val(&instance, "POST", "/p/skydiveorbust/newvideo", NULL, 0, &callback_skydiveorbust_newvideo, NULL);
+  ulfius_add_endpoint_by_val(&instance, "PUT", "/p/skydiveorbust/prestart", NULL, 0, &callback_skydiveorbust_prestart, NULL);
+  ulfius_add_endpoint_by_val(&instance, "PUT", "/p/skydiveorbust/workingtime", NULL, 0, &callback_skydiveorbust_workingtime, NULL);
   ulfius_set_default_endpoint(&instance, &websocket_cbDefault, NULL);
 
   // Start the framework

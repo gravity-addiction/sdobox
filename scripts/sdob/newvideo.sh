@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# ./newvideo.sh -h zero.local -s 2020_cf_ghost_nationals -t 1002 -r 4 -d /home/pi/Videos -f 1302.mp4
+# ./newvideo.sh -h zero.local -s 2018_uspa_canopy_nationals -c "2way Seq Open" -t 3201 -r 1 -es "cf2WaySequentials" -d /home/pi/Videos -f 2_28_3201_1_1080p.m3u8
 POSITIONAL=()
 HOSTER=1
+ES="fs"
 
 while [[ $# -gt 0 ]]
 do
@@ -15,6 +16,11 @@ case "${KEY}" in
   ;;
   -s|--slug)
   SLUG="$2"
+  shift
+  shift
+  ;;
+  -es|--eventsettings)
+  ES="$2"
   shift
   shift
   ;;
@@ -74,6 +80,16 @@ case "${KEY}" in
 esac
 done
 
-while IFS= read -r HOST; do
-  curl --header "Content-Type: application/json" --request POST --data '{"host":"'"${HOSTER}"'","slug":"'"${SLUG}"'","videoId":"'"${VIDEOID}"'","eventId":"'"${EVENTID}"'","compId":"'"${COMPID}"'","comp":"'"${COMP}"'","team":"'"${TEAM}"'","rnd":"'"${RND}"'","folder":"'"${FOLDER}"'","file":"'"${FILE}"'","url":"'"${URL}"'"}' "http://${HOST}:4004/p/skydiveorbust/newvideo"
-done < "child_hosts"
+function notifyHost() {
+  echo "Notify: ${HOST}"
+  curl --header "Content-Type: application/json" --request POST --data '{"host":"'"${HOSTER}"'","slug":"'"${SLUG}"'","videoId":"'"${VIDEOID}"'","eventId":"'"${EVENTID}"'","compId":"'"${COMPID}"'","comp":"'"${COMP}"'","team":"'"${TEAM}"'","rnd":"'"${RND}"'","folder":"'"${FOLDER}"'","file":"'"${FILE}"'","url":"'"${URL}"'","es":"'"${ES}"'"}' "http://${HOST}:4004/p/skydiveorbust/newvideo"
+}
+if [ -z "$HOST" ]; then
+
+  while IFS= read -r HOST; do
+    notifyHost
+  done < "child_hosts"
+
+else
+  notifyHost
+fi

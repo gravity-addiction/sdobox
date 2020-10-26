@@ -504,6 +504,14 @@ int mpv_play() {
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
 }
 
+int mpv_fullscreen(int fs) {
+  if (fs) {
+    return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "fullscreen", "true");
+  } else {
+    return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "fullscreen", "false");
+  }
+}
+
 int mpv_playpause_toggle() {
   if (!libMpvVideoInfo->is_loaded) { return 0; }
   if (libMpvVideoInfo->is_playing) {

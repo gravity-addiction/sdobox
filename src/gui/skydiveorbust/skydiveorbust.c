@@ -22,6 +22,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/json/json.h"
 #include "libs/mpv/mpv_info.h"
+#include "libs/ulfius/websocket_api.h"
 
 #include "gui/keyboard/keyboard.h"
 
@@ -1048,7 +1049,8 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (libMpvVideoInfo->is_loaded) {
     mpv_playpause_toggle();
   } else {
-    mpv_loadfile(libMpvVideoInfo->folder, libMpvVideoInfo->file, "replace", "fullscreen=yes");
+    mpv_loadfile(libMpvVideoInfo->folder, libMpvVideoInfo->file, "replace", "");
+    mpv_fullscreen(1);
   }
 
   return true;
@@ -1794,13 +1796,13 @@ void pg_skydiveorbustButtonLeftPressed() {
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
       markTime = retTimePos->floating;
       MPV_ANY_U_FREE(retTimePos);
-      sdob_judgement->marks->arrScorecardTimes[0] = markTime;
-      item = new_qhead();
-      item->action = E_Q_SCORECARD_INSERT_MARK;
-      item->mark = E_SCORES_BUST;
-      item->time = markTime;
-      queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     }
+    sdob_judgement->marks->arrScorecardTimes[0] = markTime;
+    item = new_qhead();
+    item->action = E_Q_SCORECARD_INSERT_MARK;
+    item->mark = E_SCORES_BUST;
+    item->time = markTime;
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
@@ -1823,17 +1825,18 @@ void pg_skydiveorbustButtonRightPressed() {
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
     mpv_any_u* retTimePos;
-    double markTime = 0.00;
+    double markTime = -1.00;
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
       markTime = retTimePos->floating;
       MPV_ANY_U_FREE(retTimePos);
-      sdob_judgement->marks->arrScorecardTimes[0] = markTime;
-      item = new_qhead();
-      item->action = E_Q_SCORECARD_INSERT_MARK;
-      item->mark = E_SCORES_POINT;
-      item->time = markTime;
-      queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     }
+
+    sdob_judgement->marks->arrScorecardTimes[0] = markTime;
+    item = new_qhead();
+    item->action = E_Q_SCORECARD_INSERT_MARK;
+    item->mark = E_SCORES_POINT;
+    item->time = markTime;
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
@@ -2159,6 +2162,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   // pg_skydiveorbust_loadvideo(pGui, "/home/pi/Videos", "XP.mpg");
 
+
+  pg_sdob_new_video_cnt = 0;
   //////////////////////////////
   // Finish up
   // Clear function pointer, indicate it's been run
@@ -2470,6 +2475,67 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
   }
 
+
+  // SDOB Video Host Event
+  if (libUlfiusSDOBNewVideoInfo->cnt > 0 && pg_sdob_new_video_cnt != libUlfiusSDOBNewVideoInfo->cnt) {
+    // Update counter to sync with current
+    libUlfiusSDOBNewVideoInfo->cnt = pg_sdob_new_video_cnt;
+
+    dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+
+    // if (m_tPageCur != E_PG_SKYDIVEORBUST) {
+    //   touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
+    // }
+    
+    pg_sdob_clear(&m_gui);
+    pg_sdob_scorecard_clear(&m_gui);
+
+    // Setup Environment for new Video API
+    if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
+      sdob_devicehost->isHost = 1;
+    } else {
+      sdob_devicehost->isHost = 0;
+    }
+    pg_sdobUpdateHostDeviceInfo(&m_gui);
+    
+    if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
+      // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+    } else if (sdob_devicehost->isHost == 1 &&
+                libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
+                libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
+    ) {
+      mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
+    }
+
+
+    if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
+      pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+    }
+    if (libUlfiusSDOBNewVideoInfo->rnd[0] != '\0') {
+      pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+    }
+
+    if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
+      pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
+    }
+    if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
+      pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+    }
+
+    pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
+
+    // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
+    // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
+    // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
+    // pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
+    // pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
+    
+
+    // if (sdob_devicehost->isHost == 1) {
+    //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+    // }
+  }
+  
   return 0;
 }
 

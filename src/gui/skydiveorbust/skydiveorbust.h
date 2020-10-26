@@ -159,6 +159,7 @@ int pg_sdob_slot_scroll; // position of vertical scrollbar
 int pg_sdob_score_count; // Number of points to display
 int pg_sdob_scorecard_max; // Initial array resize for storeing marks, currently no realloc functionality
 int pg_sdob_slider_debounce_delay;
+int pg_sdob_new_video_cnt;
 
 int pg_sdob_scorecard_slotid[30];
 gslc_tsElemRef *pg_sdob_scorecard_elemsNum[30];
@@ -312,9 +313,8 @@ void pg_sdobUpdateTeam(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str);
 
-
-
-
+void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestartTime);
+void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
 
 void pg_skydiveorbustGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect);
 void pg_skydiveorbustGuiRedraw(gslc_tsGui *pGui);

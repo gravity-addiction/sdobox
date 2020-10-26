@@ -2,6 +2,7 @@
 
 #include "libs/buttons/buttons.h"
 #include "libs/queue/queue.h"
+#include "libs/mpv/mpv.h"
 #include "gui/pages.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
@@ -47,7 +48,7 @@ bool pg_sdobSubmitCbBtnSubmitScore(void* pvGui,void *pvElemRef,gslc_teTouch eTou
   struct queue_head *item = new_qhead();
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
+  mpv_stop();
   // Close Submit Menu
   pg_sdobSubmitClose(pGui);
   return true;
