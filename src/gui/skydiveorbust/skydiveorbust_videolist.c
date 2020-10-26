@@ -123,13 +123,11 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (pg_sdobVideo_listConfig->cur >= 0) {
-    struct pg_sdob_video_data *newVideo = PG_SDOB_INIT_VIDEO_DATA();
-    newVideo->video_type = 0;
-    newVideo->local_folder = pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path;
-    newVideo->video_file = pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name;
-    free(newVideo->url);
-    pg_skydiveorbust_loadvideo(pGui, newVideo);
-
+    struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
+    strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
+    strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
+    pg_skydiveorbust_loadvideo(pGui, newVid);
+    
     // Close Menu
     pg_sdobVideoListClose(pGui);
   }
