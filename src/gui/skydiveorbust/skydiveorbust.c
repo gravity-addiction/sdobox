@@ -2038,6 +2038,11 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
 
   mpv_loadfile(newVideo->local_folder, newVideo->video_file, "replace", "fullscreen=yes");
 
+  pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+  if (sdob_devicehost->isHost == 1) {
+    // Push out new video info
+    system("/opt/sdobox/scripts/sdob/new-video.sh -s \"2020_uspa_canopy_nationals\" --comp \"2way Seq Open\" -es \"cf2WaySequentials\" -v 32 -e 3 -c 6 -t 3002 -r 1 --hoster 0 &");
+  }
   // pg_sdobUpdateEventFromLocalFolder(pGui, meet);
   // pg_sdobUpdateComp(&m_gui, sdob_judgement->comp, sdob_judgement->compStr);
   // pg_sdobUpdateVideoDescTwo(pGui, file);

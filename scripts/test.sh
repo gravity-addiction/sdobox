@@ -1,4 +1,7 @@
 
-
-ethIp="$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)"
-echo "${ethIp}"
+  HOSTNAME=$(hostname -s)
+  while IFS= read -r HOST; do
+    if [[ ${HOST} != "${HOSTNAME}.local" ]]; then
+      echo ${HOST}
+    fi
+  done < "/opt/sdobox/scripts/sdob/child_hosts"

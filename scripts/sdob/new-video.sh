@@ -85,9 +85,11 @@ function notifyHost() {
   curl --header "Content-Type: application/json" --request POST --data '{"host":"'"${HOSTER}"'","slug":"'"${SLUG}"'","videoId":"'"${VIDEOID}"'","eventId":"'"${EVENTID}"'","compId":"'"${COMPID}"'","comp":"'"${COMP}"'","team":"'"${TEAM}"'","rnd":"'"${RND}"'","folder":"'"${FOLDER}"'","file":"'"${FILE}"'","url":"'"${URL}"'","es":"'"${ES}"'"}' "http://${HOST}:4004/p/skydiveorbust/newvideo"
 }
 if [ -z "$HOST" ]; then
-
+  HOSTNAME=$(hostname -s)
   while IFS= read -r HOST; do
-    notifyHost
+    if [[ ${HOST} != "${HOSTNAME}.local" ]]; then
+      notifyHost
+    fi
   done < "/opt/sdobox/scripts/sdob/child_hosts"
 
 else

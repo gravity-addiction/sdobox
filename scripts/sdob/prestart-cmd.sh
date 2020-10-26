@@ -7,6 +7,11 @@ while [[ $# -gt 0 ]]
 do
 KEY="$1"
 case "${KEY}" in
+  -h|--host)
+  HOST="$2"
+  shift
+  shift
+  ;;
   -t|--time)
   STARTTIME="$2"
   shift
@@ -28,9 +33,11 @@ function notifyHost() {
   curl --header "Content-Type: application/json" --request PUT --data '{"sopst":"'"${STARTTIME}"'","pst":"'"${WORKINGTIME}"'"}' "http://${HOST}:4004/p/skydiveorbust/prestart"
 }
 if [ -z "$HOST" ]; then
-
+  HOSTNAME=$(hostname -s)
   while IFS= read -r HOST; do
-    notifyHost
+    if [[ ${HOST} != "${HOSTNAME}.local" ]]; then
+      notifyHost
+    fi
   done < "/opt/sdobox/scripts/sdob/child_hosts"
 
 else
