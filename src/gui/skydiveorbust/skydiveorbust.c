@@ -2253,8 +2253,8 @@ void pg_sdob_scorecard_score_sopst(gslc_tsGui *pGui, double time, double prestar
   // Set Start of Working Time
   pg_sdobSOPSTSet(time, prestartTime);
 
-  if (libMpvVideoInfo->isHost == 1) {
-    system("/opt/sdobox/scripts/sdob/prestart -t 10.56 -wt 60.0")
+  if (sdob_devicehost->isHost == 1) {
+    system("/opt/sdobox/scripts/sdob/prestart -t 10.56 -wt 60.0");
   }
   pg_sdob_pl_sliderForceUpdate = 1;
 }
