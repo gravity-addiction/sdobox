@@ -227,12 +227,12 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   // Update
   if ((
     pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {180, 170, 104, 64},
+            (gslc_tsRect) {200, 170, 64, 64},
             (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE);
     gslc_ElemSetCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE, GSLC_COL_RED, GSLC_COL_YELLOW);
-    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetTxtAlign(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_ALIGN_BOT_MID);
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
   }
