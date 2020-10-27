@@ -327,7 +327,6 @@ int pg_sdobSubmitScorecard() {
   json_t *json_workingtime = json_object();
   json_t *json_marks = json_array();
 
-printf("PS: %f, WT: %f\n", sdob_judgement->prestartTime, sdob_judgement->workingTime);
   json_object_set_new(root, "prestartTime", json_prestarttime);
   json_object_set_new(json_prestarttime, "start", json_real(sdob_judgement->sopst));
   json_object_set_new(json_prestarttime, "time", json_real(sdob_judgement->prestartTime));

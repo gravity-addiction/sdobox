@@ -29,6 +29,6 @@ void LIBMPV_EVENTS_DESTROY_INFO(struct libMpvPlayerInfo *eventInfo) {
   free(eventInfo->pbrateUserStr);
   free(eventInfo->folder);
   free(eventInfo->file);
-  free(eventInfo);
+  // free(eventInfo);
 }
 

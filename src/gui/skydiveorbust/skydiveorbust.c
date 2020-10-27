@@ -61,9 +61,9 @@ struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS()
   sc->max = pg_sdob_scorecard_max;
   sc->tickCnt = 0;
 
-  sc->arrScorecardPoints = (int*)calloc(sc->max, sizeof(int));
-  sc->arrScorecardTimes = (double*)calloc(sc->max, sizeof(double));
-  sc->arrScorecardTicks = (double*)calloc(sc->max, sizeof(double));
+  sc->arrScorecardPoints = (int*)malloc(sc->max * sizeof(int));
+  sc->arrScorecardTimes = (double*)malloc(sc->max * sizeof(double));
+  sc->arrScorecardTicks = (double*)malloc(sc->max * sizeof(double));
 
   PG_SDOB_SCORECARD_CLEAR_MARKS(sc);
 
@@ -77,9 +77,12 @@ struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS()
 struct pg_sdob_video_data * PG_SDOB_INIT_VIDEO_DATA() {
   struct pg_sdob_video_data *video_data = (struct pg_sdob_video_data*)malloc(sizeof(struct pg_sdob_video_data));
   video_data->video_type = 0;
-  video_data->video_file = (char*)calloc(256, sizeof(char));
-  video_data->local_folder = (char*)calloc(256, sizeof(char));
-  video_data->url = (char*)calloc(512, sizeof(char));
+  video_data->video_file = (char*)malloc(256 * sizeof(char));
+  video_data->local_folder = (char*)malloc(256 * sizeof(char));
+  video_data->url = (char*)malloc(512 * sizeof(char));
+  video_data->video_file[0] = '\0';
+  video_data->local_folder[0] = '\0';
+  video_data->url[0] = '\0';
   return video_data;
 }
 
@@ -106,16 +109,26 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
   judgement->video = PG_SDOB_INIT_VIDEO_DATA();
   judgement->marks = PG_SDOB_SCORECARD_INIT_MARKS();
 
-  judgement->ruleSet = (char*)calloc(64, sizeof(char));
-  judgement->judge = (char*)calloc(64, sizeof(char));
-  judgement->event = (char*)calloc(128, sizeof(char));
-  judgement->eventStr = (char*)calloc(128, sizeof(char));
-  judgement->comp = (char*)calloc(128, sizeof(char));
-  judgement->compStr = (char*)calloc(128, sizeof(char));
-  judgement->team = (char*)calloc(128, sizeof(char));
-  judgement->teamStr = (char*)calloc(128, sizeof(char));
-  judgement->round = (char*)calloc(64, sizeof(char));
-  judgement->roundStr = (char*)calloc(64, sizeof(char));
+  judgement->ruleSet = (char*)malloc(64 * sizeof(char));
+  judgement->ruleSet[0] = '\0';
+  judgement->judge = (char*)malloc(64 * sizeof(char));
+  judgement->judge[0] = '\0';
+  judgement->event = (char*)malloc(128 * sizeof(char));
+  judgement->event[0] = '\0';
+  judgement->eventStr = (char*)malloc(128 * sizeof(char));
+  judgement->eventStr[0] = '\0';
+  judgement->comp = (char*)malloc(128 * sizeof(char));
+  judgement->comp[0] = '\0';
+  judgement->compStr = (char*)malloc(128 * sizeof(char));
+  judgement->compStr[0] = '\0';
+  judgement->team = (char*)malloc(128 * sizeof(char));
+  judgement->team[0] = '\0';
+  judgement->teamStr = (char*)malloc(128 * sizeof(char));
+  judgement->teamStr[0] = '\0';
+  judgement->round = (char*)malloc(64 * sizeof(char));
+  judgement->round[0] = '\0';
+  judgement->roundStr = (char*)malloc(64 * sizeof(char));
+  judgement->roundStr[0] = '\0';
 
   judgement->sopst = -1.0;
   judgement->prestartTime = 0.0;
@@ -126,7 +139,8 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
 
   judgement->score = 0.00;
   judgement->scoreMax = 0.00;
-  judgement->scoreStr = (char*)calloc(32, sizeof(char));
+  judgement->scoreStr = (char*)malloc(32 * sizeof(char));
+  judgement->scoreStr[0] = '\0';
   return judgement;
 }
 
@@ -299,7 +313,7 @@ struct pg_sdob_player_chapters * PG_SDOB_INIT_PLAYER_CHAPTERS() {
   chapters->len = 0;
   chapters->max = 64;
   chapters->cur = -1;
-  chapters->ptr = (double*)calloc(chapters->max, sizeof(double));
+  chapters->ptr = (double*)malloc(chapters->max * sizeof(double));
   return chapters;
 }
 
@@ -309,7 +323,7 @@ struct pg_sdob_player_ticks * PG_SDOB_INIT_PLAYER_TICKS() {
   ticks->len = 0;
   ticks->max = 64;
   pthread_mutex_init(&ticks->lock, NULL);
-  ticks->ptr = (double*)calloc(ticks->max, sizeof(double));
+  ticks->ptr = (double*)malloc(ticks->max * sizeof(double));
   return ticks;
 }
 
@@ -321,9 +335,9 @@ struct pg_sdob_videolist_files * PG_SDOB_INIT_VIDEOLIST_FILES() {
   files->len = 256;
   files->size = 0;
   files->cur = -1;
-  files->list = (char**)calloc(files->max, sizeof(char*));
+  files->list = (char**)malloc(files->max * sizeof(char*));
   for (int i = 0; i < files->max; ++i) {
-    files->list[i] = (char*)calloc(files->len, sizeof(char));
+    files->list[i] = (char*)malloc(files->len * sizeof(char));
   }
   return files;
 }
@@ -335,9 +349,9 @@ struct pg_sdob_videolist_folders * PG_SDOB_INIT_VIDEOLIST_FOLDERS() {
   folders->len = 256;
   folders->size = 0;
   folders->cur = -1;
-  folders->list = (char**)calloc(folders->max, sizeof(char*));
+  folders->list = (char**)malloc(folders->max * sizeof(char*));
   for (int i = 0; i < folders->max; ++i) {
-    folders->list[i] = (char*)calloc(folders->len, sizeof(char));
+    folders->list[i] = (char*)malloc(folders->len * sizeof(char));
   }
   return folders;
 }
@@ -585,6 +599,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
   if ((mpvSocketSinglet("time-pos", &retTime)) != -1) {
     if (retTime == NULL) {
       pg_sdob_player_move_timepos_lock = 0;
+      MPV_ANY_U_FREE(retTime);
       return;
     } else
     if (pg_sdob_player_move > -1) {
@@ -1063,11 +1078,11 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (libMpvVideoInfo->is_loaded) {
     mpv_playpause_toggle();
   } else {
-    struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
-    strlcpy(newVid->local_folder, sdob_judgement->video->local_folder, 256);
-    strlcpy(newVid->video_file, sdob_judgement->video->video_file, 256);
-    strlcpy(newVid->url, sdob_judgement->video->url, 512); 
-    pg_skydiveorbust_loadvideo(pGui, newVid);
+    // struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
+    // strlcpy(newVid->local_folder, sdob_judgement->video->local_folder, 256);
+    // strlcpy(newVid->video_file, sdob_judgement->video->video_file, 256);
+    // strlcpy(newVid->url, sdob_judgement->video->url, 512); 
+    //pg_skydiveorbust_loadvideo(pGui, newVid);
   }
 
   return true;
@@ -2173,9 +2188,10 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   // Clear scorecard and reset interface to defaults
 //  pg_sdob_clear(pGui);
 //  pg_sdob_scorecard_clear(pGui);
-  strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256);
-  strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256);
-  strlcpy(sdob_judgement->video->url, newVideo->url, 512);
+  PG_SDOB_CLEAR_VIDEO_DATA(sdob_judgement->video);
+  if (sdob_judgement->video->local_folder != NULL) { strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256); }
+  if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
+  if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
   char *eventStr;
   int ptrCnt = 0;
@@ -2195,7 +2211,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   }
   free(ptrFolder);
   
-  PG_SDOB_FREE_VIDEO_DATA(newVideo);
+  // PG_SDOB_FREE_VIDEO_DATA(newVideo);
   
   // printf("Event Folder: %s\n", eventStr);
   if (ptrCnt > 1 && strcmp(eventStr, "2018-USPA-CF") == 0) {
@@ -2248,9 +2264,9 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   pg_sdobUpdateVideoDescTwo(pGui, sdob_judgement->compStr);
   if (ptrCnt > 0) { free(compStr); }
 
-  if (!pg_skydiveorbust_parse_filename_default(pGui, newVideo)) {
+  if (!pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video)) {
   
-  } else if (!pg_skydiveorbust_parse_filename_omniskore(pGui, newVideo)) {
+  } else if (!pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video)) {
 
   }
 
@@ -2764,6 +2780,9 @@ void pg_sdobThreadStop() {
 void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Init");
 
+  // Clear function pointer, indicate it's been run
+  cbInit[E_PG_SKYDIVEORBUST] = NULL;
+
   // Dynamically Allocate Page Elements
   pg_sdobElTotal = E_SDOB_EL_MAX + 150;
   pg_sdobElem = (gslc_tsElem *)malloc(pg_sdobElTotal * sizeof(gslc_tsElem));
@@ -2788,8 +2807,6 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   ///////////////////
   // MPV Initializer
   // mpv_init(pGui);
-
-
 
 
 
@@ -2879,8 +2896,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   //////////////////////////////
   // Finish up
-  // Clear function pointer, indicate it's been run
-  cbInit[E_PG_SKYDIVEORBUST] = NULL;
+
 }
 
 

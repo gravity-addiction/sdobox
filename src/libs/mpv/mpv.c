@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <jansson.h>
@@ -92,7 +93,8 @@ int mpv_init() {
   //}
 
   mpv_socket_fdSelect = -1;
-  
+  mpv_socket_timeout = (struct timeval){0};
+
   // Init Video Player Info
   libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
 
@@ -103,7 +105,9 @@ int mpv_init() {
 }
 
 void mpv_destroy() {
+  printf("MPV DESTROY");
   LIBMPV_EVENTS_DESTROY_INFO(libMpvVideoInfo);
+  free(libMpvVideoInfo);
 }
 
 
@@ -226,11 +230,10 @@ int mpv_fd_write(char *data) {
     /* Initialize the file descriptor set. */
     FD_ZERO (&mpv_socket_set);
     FD_SET (mpv_socket_fdSelect, &mpv_socket_set);
-
-    /* Initialize the timeout data structure. */
-    mpv_socket_timeout.tv_sec = 2;
-    mpv_socket_timeout.tv_usec = 0;
   }
+  /* Initialize the timeout data structure. */
+  mpv_socket_timeout.tv_sec = 2;
+  mpv_socket_timeout.tv_usec = 0;
 
 
   dbgprintf(DBG_MPV_WRITE,
@@ -285,14 +288,9 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
 
   int result = -1;
 
-  /* set the timeout data structure. */
-  mpv_socket_timeout.tv_sec = 2;
-  mpv_socket_timeout.tv_usec = 0;
-
   if (!mpv_fd_write(data)) {
-      goto cleanup;
+    goto cleanup;
   }
-  free(data);
   
   time_t endTimeout;
   time_t startTimeout = time(NULL);
@@ -310,7 +308,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
     } else if (selT == 1) {
       char* mpv_rpc_ret = NULL;
       int rc = sgetline(mpv_socket_fdSelect, &mpv_rpc_ret);
-      if (rc > 0 && mpv_rpc_ret != NULL) {
+      if (rc > 0) {
         json_t *root;
         json_error_t error;
         root = json_loads(mpv_rpc_ret, 0, &error);
@@ -409,13 +407,13 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         json_decref(root);
         free(mpv_rpc_ret);
       } else {
-        if (mpv_rpc_ret != NULL) { free(mpv_rpc_ret); }
         goto cleanup;
       }
     }
   }
 
  cleanup:
+  free(data);
   pthread_mutex_unlock(&mpvSocketCmdLock);
 
   return result;
@@ -563,8 +561,6 @@ double mpv_speed_adjust(double spd) {
 
 void mpv_stop() {
   fbbg_stop();
-  libMpvVideoInfo->is_playing = 0;
-  libMpvVideoInfo->is_loaded = 0;
   mpv_fmt_cmd("stop\n");
 }
 
