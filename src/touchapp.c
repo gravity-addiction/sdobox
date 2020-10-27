@@ -401,7 +401,6 @@ int main( int argc, char* args[] )
   // Kill MPV
   mpv_stop();
   libMpvSocketThreadStop();
-  mpv_destroy();
 
   // Kill SDOB Socket
   libSdobSocketThreadStop();
@@ -419,7 +418,8 @@ int main( int argc, char* args[] )
 
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();
-
+  mpv_destroy();
+  
   // Kill any outstanding fbcp instances
   fbcp_stop();
   // Kill any outstanding fbbg instances

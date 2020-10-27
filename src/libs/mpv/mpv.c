@@ -98,7 +98,7 @@ int mpv_init() {
   // Init Video Player Info
   libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
 
-  mpv_stop();
+  // mpv_stop();
   mpv_playlist_clear();
 
   return 1;
@@ -599,8 +599,8 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   filename = quotify(filename,&qfilename);
 
   libMpvVideoInfo->has_file = 1;
-  libMpvVideoInfo->folder = strdup(folder);
-  libMpvVideoInfo->file = strdup(filename);
+  strlcpy(libMpvVideoInfo->folder, folder, 1024);
+  strlcpy(libMpvVideoInfo->file, filename, 512);
   int result = mpv_fmt_cmd("loadfile \"%s/%s\" %s %s\n", folder, filename, flag, opts);
   mpv_pause();
 

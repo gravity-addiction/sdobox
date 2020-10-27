@@ -15,11 +15,16 @@ struct libMpvPlayerInfo * LIBMPV_EVENTS_INIT_INFO() {
   eventInfo->duration = 0.00;
   eventInfo->pbrate = 1.00;
   eventInfo->pbrateUser = 0.75;
-  eventInfo->pbrateStr = (char*)calloc(10, sizeof(char));
-  eventInfo->pbrateUserStr = (char*)calloc(10, sizeof(char));
-  eventInfo->positionStr = (char*)calloc(32, sizeof(char));
-  eventInfo->folder = (char*)calloc(1024, sizeof(char));
-  eventInfo->file = (char*)calloc(512, sizeof(char));
+  eventInfo->pbrateStr = (char*)malloc(10 * sizeof(char));
+  eventInfo->pbrateStr[0] = '\0';
+  eventInfo->pbrateUserStr = (char*)malloc(10 * sizeof(char));
+  eventInfo->pbrateUserStr[0] = '\0';
+  eventInfo->positionStr = (char*)malloc(32 * sizeof(char));
+  eventInfo->positionStr[0] = '\0';
+  eventInfo->folder = (char*)malloc(1024 * sizeof(char));
+  eventInfo->folder[0] = '\0';
+  eventInfo->file = (char*)malloc(512 * sizeof(char));
+  eventInfo->file[0] = '\0';
   return eventInfo;
 }
 

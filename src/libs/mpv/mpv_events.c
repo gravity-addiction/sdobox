@@ -19,7 +19,7 @@
 
 
 
-
+/*
 struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA()
 {
   struct libMpvEventThreadCbData *threads = (struct libMpvEventThreadCbData*)malloc(sizeof(struct libMpvEventThreadCbData));
@@ -62,17 +62,17 @@ int libMpvCallbackAppend(void (*function)(char*)) {
   if (libMpvEventThreads != NULL &&
       libMpvEventThreads->len < libMpvEventThreads->max
   ) {
-    /*
-    struct libMpvEventThreadCb cbs; // = (struct libMpvEventThreadCb*)malloc(sizeof(struct libMpvEventThreadCb));
-    cbs.id = libMpvEventThreads->len;
-    cbs.cb = function;
-    libMpvEventThreads->cbs[libMpvEventThreads->len] = &cbs;
-    */
+    
+    // struct libMpvEventThreadCb cbs; // = (struct libMpvEventThreadCb*)malloc(sizeof(struct libMpvEventThreadCb));
+    // cbs.id = libMpvEventThreads->len;
+    // cbs.cb = function;
+    // libMpvEventThreads->cbs[libMpvEventThreads->len] = &cbs;
+    
     return libMpvEventThreads->len++;
   }
   return -1;
 }
-
+*/
 
 
 void libMpvProcessEvent(char *event) {
@@ -285,7 +285,7 @@ PI_THREAD (libMpvSocketThread)
 
       dbgprintf(DBG_MPV_EVENT, "MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
       free(mpv_event_ret);
-      if (rcE == 0) { continue; }
+      if (rcE < 0) { continue; }
       // for (int tI = 0; tI < libMpvEventThreads->len; ++tI) {
         // pthread_t threads;
         // struct libMpvEventThreadData threadsData; // = (struct libMpvEventThreadData*)malloc(sizeof(struct libMpvEventThreadData));
@@ -315,7 +315,7 @@ int libMpvSocketThreadStart() {
   if (libMpvSocketThreadRunning) { return 0; }
 
   // Create callback struct
-  libMpvEventThreads = LIBMPV_EVENTS_INIT_DATA();
+  // libMpvEventThreads = LIBMPV_EVENTS_INIT_DATA();
 
   // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", libMpvSocketThreadRunning);
   libMpvSocketThreadKill = 0;
@@ -333,7 +333,7 @@ void libMpvSocketThreadStop() {
       shutdown_cnt++;
     }
 
-    LIBMPV_EVENTS_DESTROY_DATA(libMpvEventThreads);
+    // LIBMPV_EVENTS_DESTROY_DATA(libMpvEventThreads);
     // debug_print("SkydiveOrBust MPV Socket Thread Shutdown %d\n", shutdown_cnt);
   }
 }

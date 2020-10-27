@@ -1075,6 +1075,9 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
     pg_sdobScoringSelectionClear(pGui);
   }
 
+printf("Is Loaded: %d\n", libMpvVideoInfo->is_loaded);
+
+
   if (libMpvVideoInfo->is_loaded) {
     mpv_playpause_toggle();
   } else {
@@ -2100,6 +2103,7 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
 
+
   // subline += matches[0].rm_eo;
   if (strcmp(svr_parsed_meet, "20CFGHOST") == 0) {
     pg_sdobUpdateVideoDescOne(pGui, "2020 CF Ghost Nationals");
@@ -2153,7 +2157,7 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   char *svr_comp = strndup(newVideo->video_file+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
   char *svr_team = strndup(newVideo->video_file+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
   char *svr_rnd = strndup(newVideo->video_file+matches[4].rm_so, matches[4].rm_eo - matches[4].rm_so);
-  printf("SVR: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+  printf("SVRZ: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
 
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
@@ -2211,7 +2215,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   }
   free(ptrFolder);
   
-  // PG_SDOB_FREE_VIDEO_DATA(newVideo);
+  PG_SDOB_FREE_VIDEO_DATA(newVideo);
   
   // printf("Event Folder: %s\n", eventStr);
   if (ptrCnt > 1 && strcmp(eventStr, "2018-USPA-CF") == 0) {
@@ -2264,14 +2268,11 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   pg_sdobUpdateVideoDescTwo(pGui, sdob_judgement->compStr);
   if (ptrCnt > 0) { free(compStr); }
 
-  if (!pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video)) {
-  
-  } else if (!pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video)) {
+  pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video);
+  pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video);
 
-  }
-
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  gslc_Update(pGui);
+  // gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  // gslc_Update(pGui);
 
   if (sdob_devicehost->isHost == 1) {
     mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
@@ -2929,10 +2930,6 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
 
-  mpv_stop();
-  fbcp_stop();
-
-
   // Free Judgement Info
   PG_SDOB_FREE_VIDEO_DATA(sdob_judgement->video);
   free(sdob_judgement->video);
@@ -2980,8 +2977,6 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   // Free Ticks
   free(sdob_player_ticks->ptr);
   free(sdob_player_ticks);
-
-  mpv_playlist_clear();
 
   // free(sdob_devicehost);
   // printf("Page SkydiveOrBust Destroyed\n");

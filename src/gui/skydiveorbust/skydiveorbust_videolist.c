@@ -64,10 +64,11 @@ static void refreshVideoList(gslc_tsGui *pGui) {
   // VIDEOS_BASEPATH - subdirs will always have "../" in them.
   char* path_to_load = NULL;
   if (pg_sdobVideo_listConfig->len == 0)
-    path_to_load = VIDEOS_BASEPATH;
+    path_to_load = strdup(VIDEOS_BASEPATH);
   else
-    path_to_load = pg_sdobVideo_list[0]->path;
+    path_to_load = strdup(pg_sdobVideo_list[0]->path);
   pg_sdobVideoList_loadFolder(pGui, path_to_load);
+  free(path_to_load);
 }
 
 void pg_sdobVideoListClose(gslc_tsGui *pGui) {
@@ -84,12 +85,14 @@ void pg_sdobVideoList_gotoFolderCheck(gslc_tsGui *pGui) {
     assert(last_slash);         /* there's no way this should be NULL */
     char* filepath = strndup(p, (last_slash - p));
     pg_sdobVideoList_loadFolder(pGui, filepath);
+    free(filepath);
   }
   else if (pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->mode & S_IFDIR) {
     size_t filepathSz = snprintf(NULL, 0, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
     char *filePath = (char *)malloc(filepathSz * sizeof(char));
     snprintf(filePath, filepathSz, "%s/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
     pg_sdobVideoList_loadFolder(pGui, filePath);
+    free(filePath);
   }
 }
 
@@ -504,13 +507,28 @@ void pg_sdobVideoListButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_HELD, &pg_sdobVideoListButtonRightHeld);
 }
 
+void pg_sdobVideoList_free_filelist() {
+  printf("Clearing: %d\n", pg_sdobVideo_listConfig->len);
+  for (int i = 0; i < pg_sdobVideo_listConfig->len; i++) {
+    free(pg_sdobVideo_list[i]->name);
+    free(pg_sdobVideo_list[i]->path);
+    free(pg_sdobVideo_list[i]);
+  }
+}
+
 void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath) {
+  if (pg_sdobVideo_listConfig->len > 0) {
+    pg_sdobVideoList_free_filelist();
+    free(pg_sdobVideo_list);
+  }
+
   VLIST_CLEAR_CONFIG(pg_sdobVideo_listConfig);
 
-  pg_sdobVideo_listConfig->len =
-    strcmp(folderPath, VIDEOS_BASEPATH) == 0 ?
-    file_list(folderPath, &pg_sdobVideo_list, -1)
-      : file_list_w_up(folderPath, &pg_sdobVideo_list, -1);
+  if (strcmp(folderPath, VIDEOS_BASEPATH) == 0) {
+    pg_sdobVideo_listConfig->len = file_list(folderPath, &pg_sdobVideo_list, -1);
+  } else {
+    pg_sdobVideo_listConfig->len = file_list_w_up(folderPath, &pg_sdobVideo_list, -1);
+  }
 
   qsort(pg_sdobVideo_list, pg_sdobVideo_listConfig->len, sizeof(char *), fileStruct_cmpName);
   VLIST_UPDATE_CONFIG(pg_sdobVideo_listConfig);
@@ -542,7 +560,7 @@ void pg_sdobVideoList_open(gslc_tsGui *pGui) {
 
 // GUI Destroy
 void pg_sdobVideoList_destroy(gslc_tsGui *pGui) {
-
+  // pg_sdobVideoList_free_filelist();
 }
 
 // Setup Constructor

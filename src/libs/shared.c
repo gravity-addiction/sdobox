@@ -399,7 +399,7 @@ static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, i
   struct dirent *ep = NULL;
 
   size_t lsMax = 128;
-  *ls = (struct fileStruct **)calloc(lsMax, sizeof(struct fileStruct*));
+  *ls = (struct fileStruct **)malloc(lsMax * sizeof(struct fileStruct*));
 
   dp = opendir(path);
   if(NULL == dp) {
@@ -435,7 +435,7 @@ static size_t file_list_2(const char *path, struct fileStruct ***ls, int type, i
         *ls = newLs;
       }
       (*ls)[count] = INIT_FILESTRUCT(ep, s);
-      (*ls)[count]->path = (char*)path;
+      (*ls)[count]->path = strdup(path);
       count++;
     }
 

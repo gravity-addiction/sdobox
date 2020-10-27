@@ -77,6 +77,7 @@ int pg_fileFinder_addList(struct fileStruct *ptr) {
 }
 
 void pg_fileFinder_resetList() {
+  printf("RESET LIST\n");
   if (pg_fileFinder_list == NULL || pg_fileFinder_listConfig->len == 0) { return; }
   for (int i = 0; i < pg_fileFinder_listConfig->len; ++i) {
     free(pg_fileFinder_list[i]->name);
