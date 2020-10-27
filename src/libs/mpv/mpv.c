@@ -28,10 +28,12 @@
 
 mpv_any_u * MPV_ANY_U_NEW() {
   mpv_any_u * mpvu = (mpv_any_u*)malloc(sizeof(mpv_any_u));
+  mpvu->hasPtr = 0;
   return mpvu;
 }
 
 void MPV_ANY_U_FREE(mpv_any_u *mpvu) {
+  if (mpvu->hasPtr == 1) { free(mpvu->ptr); }
   free(mpvu);
 }
 
@@ -296,6 +298,8 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
   time_t startTimeout = time(NULL);
   time_t timeoutSeconds = 10; // 10 Second timeout getting back your cmd
   endTimeout = startTimeout + timeoutSeconds;
+  int rReqId = 0;
+  int errSuccess = 1;
 
   while (startTimeout < endTimeout) {
     /* select returns 0 if timeout, 1 if input available, -1 if error. */
@@ -312,84 +316,103 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         json_t *root;
         json_error_t error;
         root = json_loads(mpv_rpc_ret, 0, &error);
-        if (!root) {
-          dbgprintf(DBG_MPV_READ, "json error: '%s'\n", mpv_rpc_ret);
+        // if (!root) {
+        //   dbgprintf(DBG_MPV_READ, "json error: '%s'\n", mpv_rpc_ret);
+        //   free(mpv_rpc_ret);
+        //   goto cleanup;
+        // } else
+        if (json_is_object(root) != 1) {
+          rReqId = 0;
+        } else {
+          // Successful Response With Data
+          json_t *rReqObj = json_object_get(root, "request_id");
+          if (json_is_integer(rReqObj) != 1) {
+            printf("No Request Event\n");
+            rReqId = 0;
+          } else {
+            rReqId = json_integer_value(rReqObj);
+            json_decref(rReqObj);
+          }
         }
-  
-        // Successful Response With Data
-        int rReqId = json_integer_value(json_object_get(root, "request_id"));
-        const json_t *rError = json_object_get(root, "error");
 
-        if (rReqId == reqId && json_string_length(rError) > 0) {
-          dbgprintf(DBG_MPV_READ, "mpvread %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
-          if (strcmp(json_string_value(rError), "success") == 0) {
-            json_t *rData = json_object_get(root, "data");
-            if (rData) {
-              switch(json_typeof(rData)) {
-                case JSON_STRING:
-                {
-                  mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                  mpvu->ptr = strdup(json_string_value(rData));
-                  // mpvu->integer = atoi(mpvu->ptr);
-                  // mpvu->floating = atof(mpvu->ptr);
-                  *json_prop = mpvu;
-                  result = json_string_length(rData);
-                  break;
-                }
-                case JSON_INTEGER:
-                {
-                  mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                  mpvu->integer = json_integer_value(rData);
-                  // mpvu->floating = (float)mpvu->integer;
-                  // int iLen = snprintf(NULL, 0, "%d", mpvu->integer) + 1;
-                  // mpvu->ptr = malloc(iLen);
-                  // snprintf(mpvu->ptr, iLen, "%d", mpvu->integer);
-                  *json_prop = mpvu;
-                  result = 1;
-                  break;
-                }
-                case JSON_REAL:
-                {
-                  mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                  mpvu->floating = json_real_value(rData);
-                  // mpvu->integer = (int)mpvu->floating;
-                  // int iLen = snprintf(NULL, 0, "%f", mpvu->floating) + 1;
-                  // mpvu->ptr = malloc(iLen);
-                  // snprintf(mpvu->ptr, iLen, "%f", mpvu->floating);
-                  *json_prop = mpvu;
-                  result = 1;
-                  break;
-                }
-                case JSON_TRUE:
-                {
-                  mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                  mpvu->floating = 1.0;
-                  mpvu->integer = 1;
-                  mpvu->ptr = strdup("true");
-                  *json_prop = mpvu;
-                  result = 1;
-                  break;
-                }
-                case JSON_FALSE:
-                {
-                  mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                  mpvu->floating = 0.0;
-                  mpvu->integer = 0;
-                  mpvu->ptr = strdup("false");
-                  *json_prop = mpvu;
-                  result = 1;
-                  break;
-                }
-                case JSON_OBJECT:
-                case JSON_ARRAY:
-                case JSON_NULL:
-                {
-                  break;
-                }
+        errSuccess = 1;
+        json_t *rError = json_object_get(root, "error");
+        if (json_is_string(rError) != 1) {
+          printf("No Error String\n");
+        } else {
+          const char *strError = json_string_value(rError);
+          errSuccess = strcmp(strError, "success");
+        }
+        json_decref(rError);
+
+        if (rReqId == reqId && errSuccess == 0) {
+          printf("mpvread %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
+
+          json_t *rData = json_object_get(root, "data");
+          if (json_is_object(rData) != 1) {
+            switch(json_typeof(rData)) {
+              case JSON_STRING:
+              {
+                // printf("STRING\n");
+                mpv_any_u *mpvu = MPV_ANY_U_NEW();
+                mpvu->ptr = strdup(json_string_value(rData));
+                *json_prop = mpvu;
+                result = json_string_length(rData);
+                break;
+              }
+              case JSON_INTEGER:
+              {
+                // printf("INTEGER\n");
+                mpv_any_u *mpvu = MPV_ANY_U_NEW();
+                mpvu->integer = json_integer_value(rData);
+                *json_prop = mpvu;
+                result = 1;
+                break;
+              }
+              case JSON_REAL:
+              {
+                // printf("REAL\n");
+                mpv_any_u *mpvu = MPV_ANY_U_NEW();
+                mpvu->floating = (double)json_number_value(rData);
+                // printf("REAL: %s, %f\n", prop, mpvu->floating);
+                *json_prop = mpvu;
+                result = 1;
+                break;
+              }
+              case JSON_TRUE:
+              {
+                // printf("TRUE\n");
+                mpv_any_u *mpvu = MPV_ANY_U_NEW();
+                mpvu->floating = 1.0;
+                mpvu->integer = 1;
+                mpvu->ptr = strdup("true");
+                mpvu->hasPtr = 1;
+                *json_prop = mpvu;
+                result = 1;
+                break;
+              }
+              case JSON_FALSE:
+              {
+                // printf("FALSE\n");
+                mpv_any_u *mpvu = MPV_ANY_U_NEW();
+                mpvu->floating = 0.0;
+                mpvu->integer = 0;
+                mpvu->ptr = strdup("false");
+                mpvu->hasPtr = 1;
+                *json_prop = mpvu;
+                result = 1;
+                break;
+              }
+              case JSON_OBJECT:
+              case JSON_ARRAY:
+              case JSON_NULL:
+              {
+                // printf("OTHER\n");
+                break;
               }
             }
-            json_decref(rData);
           }
+          json_decref(rData);
           free(mpv_rpc_ret);
           goto cleanup;
 
@@ -403,7 +426,6 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         } else {
           dbgprintf(DBG_MPV_READ, "mpvignore %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
         }
-
         json_decref(root);
         free(mpv_rpc_ret);
       } else {

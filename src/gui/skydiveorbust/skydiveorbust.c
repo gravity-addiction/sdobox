@@ -606,10 +606,17 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
       pg_sdob_player_move_timepos_lock = 0;
       MPV_ANY_U_FREE(retTime);
       return;
-    }
-
+    } 
+    
     dbgprintf(DBG_DEBUG, "Timepos: %f\n", retTime->floating);
-    libMpvVideoInfo->position = retTime->floating;
+    if (retTime->hasPtr == 1) {
+      // printf("Has PTR\n");
+      libMpvVideoInfo->position = atof(retTime->ptr);
+    } else {
+      // printf("No Ptr: %f\n", retTime->floating);
+      libMpvVideoInfo->position = retTime->floating;
+    }
+    
     MPV_ANY_U_FREE(retTime);
   } else {
     libMpvVideoInfo->position = 0;
@@ -1832,7 +1839,9 @@ void pg_skydiveorbustButtonLeftPressed() {
     mpv_any_u* retTimePos;
     double markTime = 0.00;
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      markTime = retTimePos->floating;
+      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+      } else { markTime = retTimePos->floating;
+      }
       MPV_ANY_U_FREE(retTimePos);
     }
 
@@ -1856,17 +1865,20 @@ void pg_skydiveorbustButtonLeftPressed() {
 void pg_skydiveorbustButtonRightPressed() {
   struct queue_head *item;
 
-  dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
+  // dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
   // Scorecard Clicks
-   
+
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
     mpv_any_u* retTimePos;
     double markTime = -1.00;
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      markTime = retTimePos->floating;
+      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+      } else { markTime = retTimePos->floating;
+      }
       MPV_ANY_U_FREE(retTimePos);
     }
+ 
 
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
@@ -1995,7 +2007,6 @@ void pg_sdob_mpv_timepos_thread() {
   ) {
     pg_sdob_pl_sliderForceUpdate = 0;
     pg_sdobUpdatePlayerSlider(&m_gui);
-
 
     // Check prestart
     if (

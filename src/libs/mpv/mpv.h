@@ -17,6 +17,7 @@ struct mpv_cmd_status mpvSocketCmdStatus;
 
 typedef union {
   void* ptr;
+  int hasPtr;
   int integer;
   unsigned uinteger;
   double floating;

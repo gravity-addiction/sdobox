@@ -29,7 +29,9 @@ void pg_dubbing_setSlateTime() {
   mpv_any_u* retTimePos;
 
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-    pg_dubbing_videoSlate = retTimePos->floating;
+    if (retTimePos->hasPtr == 1) { pg_dubbing_videoSlate = atof(retTimePos->ptr);
+    } else { pg_dubbing_videoSlate = retTimePos->floating;
+    }
     dbgprintf(DBG_DEBUG, "Slate: %f\n", pg_dubbing_videoSlate);
 
     int sLen = snprintf(NULL, 0, "{\"slate\":\"%f\"}", retTimePos->floating) + 1;
@@ -47,7 +49,9 @@ void pg_dubbing_setExitTime() {
   mpv_any_u* retTimePos;
 
   if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-    pg_dubbing_videoExit = retTimePos->floating;
+    if (retTimePos->hasPtr == 1) { pg_dubbing_videoExit = atof(retTimePos->ptr);
+    } else { pg_dubbing_videoExit = retTimePos->floating;
+    }
     dbgprintf(DBG_DEBUG, "Exit: %f\n", pg_dubbing_videoExit);
 
     int sLen = snprintf(NULL, 0, "{\"exit\":\"%f\"}", retTimePos->floating) + 1;

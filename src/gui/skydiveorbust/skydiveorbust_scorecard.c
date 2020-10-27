@@ -39,7 +39,9 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   mpv_any_u* retTimePos;
   if (markTime < 0) {
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      markTime = retTimePos->floating;
+      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+      } else { markTime = retTimePos->floating;
+      }
       MPV_ANY_U_FREE(retTimePos);
     }
   }
