@@ -337,7 +337,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         } else {
           const char *strError = json_string_value(rError);
           errSuccess = strcmp(strError, "success");
-          free(&strError);
+          // free(&strError);
         }
         json_decref(rError);
 
