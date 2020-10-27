@@ -158,10 +158,10 @@ void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 
 void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 {
-  judgement->prestartTime = 0.0;
-  judgement->workingTime = 0.0;
-  CLEAR(judgement->ruleSet, 64);
-  CLEAR(judgement->judge, 64);
+  // judgement->prestartTime = 0.0;
+  // judgement->workingTime = 0.0;
+  // CLEAR(judgement->ruleSet, 64);
+  // CLEAR(judgement->judge, 64);
   CLEAR(judgement->event, 128);
   CLEAR(judgement->eventStr, 128);
   CLEAR(judgement->comp, 128);
@@ -171,7 +171,7 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
   CLEAR(judgement->round, 64);
   CLEAR(judgement->roundStr,64);
 
-  PG_SDOB_CLEAR_VIDEO_DATA(judgement->video);
+  // PG_SDOB_CLEAR_VIDEO_DATA(judgement->video);
 }
 ////////////////////////////////////////////////////////////////
 
@@ -1081,9 +1081,6 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   if (sdob_judgement->marks->selected > 0) {
     pg_sdobScoringSelectionClear(pGui);
   }
-
-printf("Is Loaded: %d\n", libMpvVideoInfo->is_loaded);
-
 
   if (libMpvVideoInfo->is_loaded) {
     mpv_playpause_toggle();
@@ -2092,7 +2089,7 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
   int m = regexec(&r_svr_wholefilename, newVideo->video_file, 2, matches, 0);
   if (m) {
     // not a match, restore default working time
-    printf("video filename '%s' does not match default svr pattern\n", newVideo->video_file);
+    dbgprintf(DBG_DEBUG, "video filename '%s' does not match default svr pattern\n", newVideo->video_file);
     return m;
   }
 
@@ -2152,7 +2149,7 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
 int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
   if (newVideo->video_file[0] == '\0') {
-     printf("no filename to load\n");
+     // printf("no filename to load\n");
      return 1;
   }
   // attempt to regex match filename to event info
@@ -2160,7 +2157,7 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   int m = regexec(&r_svr_omniskore, newVideo->video_file, 5, matches, 0);
   if (m) {
     // not a match, restore default working time
-    printf("video filename '%s' does not match omniskore svr pattern\n", newVideo->video_file);
+    dbgprintf(DBG_DEBUG, "video filename '%s' does not match omniskore svr pattern\n", newVideo->video_file);
     return m;
   }
 
@@ -2168,7 +2165,7 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   char *svr_comp = strndup(newVideo->video_file+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
   char *svr_team = strndup(newVideo->video_file+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
   char *svr_rnd = strndup(newVideo->video_file+matches[4].rm_so, matches[4].rm_eo - matches[4].rm_so);
-  printf("SVRZ: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+  dbgprintf(DBG_SVR|DBG_INFO, "SVRZ: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
 
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
@@ -2202,7 +2199,8 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
 static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
   // Clear scorecard and reset interface to defaults
 //  pg_sdob_clear(pGui);
-//  pg_sdob_scorecard_clear(pGui);
+  pg_sdob_scorecard_clear(pGui);
+
   PG_SDOB_CLEAR_VIDEO_DATA(sdob_judgement->video);
   if (sdob_judgement->video->local_folder != NULL) { strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256); }
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
@@ -2282,7 +2280,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video);
   pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video);
 
-  // gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
   // gslc_Update(pGui);
 
   if (sdob_devicehost->isHost == 1) {
@@ -2325,9 +2323,6 @@ void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, struct pg_sdob_video_data *new
 
 
 void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, int mark) {
-  if (sdob_judgement->marks->size) {
-    printf("Mark 0 Time: %f\n", sdob_judgement->marks->arrScorecardTimes[0]);
-  }
   pg_sdobInsertMark(selected, time, mark);
   pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
 
@@ -2456,7 +2451,7 @@ void pg_sdob_scorecard_clear(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s", "Clearing Scorecard\n");
   PG_SDOB_CLEAR_JUDGEMENT_META(sdob_judgement);
   PG_SDOB_CLEAR_JUDGEMENT(sdob_judgement);
-  pg_sdobUpdateScoringSettings(pGui, "fs");
+  // pg_sdobUpdateScoringSettings(pGui, "fs");
   pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
 
   // Reset SOWT and Video Length
@@ -2574,7 +2569,6 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
         // Writes commands to open FD Socket
         case E_Q_ACTION_MPV_COMMAND:
-          printf("MPV: %s\n", item->cmd);
           mpv_cmd(item->cmd);
         break;
 
@@ -2621,7 +2615,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         break;
 
 	  default:
-		  printf("Undetected item action: %d\n", item->action);
+		  dbgprintf(DBG_ERROR, "Undetected item action: %d\n", item->action);
           abort();
 		  break;
       }

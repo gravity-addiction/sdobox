@@ -14,15 +14,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 // Create new Mark
   int curScorecardSize = sdob_judgement->marks->size;
 
-  // if (mark == E_SCORES_SOPST && sdob_judgement->marks->size > 0 && sdob_judgement->marks->arrScorecardPoints[0] != E_SCORES_SOPST) {
-  //   markSelected = 0;
-  // }
-
   // Insert before provided selected mark
   if (markSelected >= 0 && curScorecardSize > 0) {
-        
-    printf("MAKING ROOM!\n");
-    
     // Make room!
     for (size_t i = curScorecardSize; i >= markSelected; i--) {
       if (i == 0) { break; }
@@ -52,8 +45,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   //   markTime = 0;
   // }
 
-  printf("INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
-  printf("Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
+  dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
+  dbgprintf(DBG_DEBUG, "Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
   // Determine which type of mark to insert
   if (markSelected == 0 && sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0) { // Change up Start of Working Time
     mark = E_SCORES_SOPST;
@@ -161,7 +154,7 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 
 
 int pg_sdobSOPSTSet(double markTime, double prestartTime) {
-  printf("Setting Prestart Time at %f for %f seconds\n", markTime, prestartTime);
+  dbgprintf(DBG_DEBUG, "Setting Prestart Time at %f for %f seconds\n", markTime, prestartTime);
   sdob_judgement->sopst = markTime;
   sdob_judgement->prestartTime = prestartTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
@@ -367,8 +360,11 @@ int pg_sdobSubmitScorecard() {
       break;
     }
     json_object_set_new(json_mark, "time", json_real(sdob_judgement->marks->arrScorecardTimes[s]));
+    json_decref(json_mark);
   }
   s = json_dumps(root, 0);
+  json_decref(root);
+
   printf("JSON %s\n", s);
   free(s);
   return 1;

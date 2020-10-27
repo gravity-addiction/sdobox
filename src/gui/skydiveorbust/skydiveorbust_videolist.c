@@ -508,7 +508,6 @@ void pg_sdobVideoListButtonSetFuncs() {
 }
 
 void pg_sdobVideoList_free_filelist() {
-  printf("Clearing: %d\n", pg_sdobVideo_listConfig->len);
   for (int i = 0; i < pg_sdobVideo_listConfig->len; i++) {
     free(pg_sdobVideo_list[i]->name);
     free(pg_sdobVideo_list[i]->path);

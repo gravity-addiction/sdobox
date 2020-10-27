@@ -63,7 +63,6 @@ void touchscreenPageSetCur(gslc_tsGui *pGui, int ePage) {
   gslc_SetPageCur(pGui, ePage);
 
   if (cbOpen[ePage]) {
-    printf("Open Page\n");
     cbOpen[ePage](pGui);
   }
 }

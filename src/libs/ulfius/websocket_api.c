@@ -34,6 +34,7 @@ struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
   return eventInfo;
 }
 
+
 void LIBULFIUS_SDOB_NEWVIDEO_DESTROY(struct libUlfiusSDOBNewVideo *eventInfo) {
   free(eventInfo->host);
 
@@ -74,27 +75,39 @@ int callback_spotify (const struct _u_request * request, struct _u_response * re
 int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
   json_error_t error;
-  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
-  if (json_nb_sheep == NULL) {
+  json_t *json_nb_sheep = ulfius_get_json_body_request(request, &error);
+  if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
     printf("Error: %s\n", error.text);
   } else {
+    const char *key;
+    json_t *value;
+
     // LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
-    libUlfiusSDOBNewVideoInfo->host = strdup(json_string_value(json_object_get(json_nb_sheep, "host")));
+    void *iter = json_object_iter(json_nb_sheep);
+    while (iter) {
+      key = json_object_iter_key(iter);
+      value = json_object_iter_value(iter);
+      char *val = strdup(json_string_value(value));
+      if (strcmp(key, "host") == 0) { free(libUlfiusSDOBNewVideoInfo->host); libUlfiusSDOBNewVideoInfo->host = val; }
+      else if (strcmp(key, "folder") == 0) { free(libUlfiusSDOBNewVideoInfo->local_folder); libUlfiusSDOBNewVideoInfo->local_folder = val; }
+      else if (strcmp(key, "file") == 0) { free(libUlfiusSDOBNewVideoInfo->video_file); libUlfiusSDOBNewVideoInfo->video_file = val; }
+      else if (strcmp(key, "url") == 0) { free(libUlfiusSDOBNewVideoInfo->url); libUlfiusSDOBNewVideoInfo->url = val; }
 
-    libUlfiusSDOBNewVideoInfo->local_folder = strdup(json_string_value(json_object_get(json_nb_sheep, "folder")));
-    libUlfiusSDOBNewVideoInfo->video_file = strdup(json_string_value(json_object_get(json_nb_sheep, "file")));
-    libUlfiusSDOBNewVideoInfo->url = strdup(json_string_value(json_object_get(json_nb_sheep, "url")));
-
-    libUlfiusSDOBNewVideoInfo->team = strdup(json_string_value(json_object_get(json_nb_sheep, "team")));
-    libUlfiusSDOBNewVideoInfo->rnd = strdup(json_string_value(json_object_get(json_nb_sheep, "rnd")));
-    libUlfiusSDOBNewVideoInfo->videoId = strdup(json_string_value(json_object_get(json_nb_sheep, "videoId")));
-    libUlfiusSDOBNewVideoInfo->eventId = strdup(json_string_value(json_object_get(json_nb_sheep, "eventId")));
-    libUlfiusSDOBNewVideoInfo->eventStr = strdup(json_string_value(json_object_get(json_nb_sheep, "slug")));
-    libUlfiusSDOBNewVideoInfo->compId = strdup(json_string_value(json_object_get(json_nb_sheep, "compId")));
-    libUlfiusSDOBNewVideoInfo->compStr = strdup(json_string_value(json_object_get(json_nb_sheep, "comp")));
-    libUlfiusSDOBNewVideoInfo->es = strdup(json_string_value(json_object_get(json_nb_sheep, "es")));
+      else if (strcmp(key, "team") == 0) { free(libUlfiusSDOBNewVideoInfo->team); libUlfiusSDOBNewVideoInfo->team = val; }
+      else if (strcmp(key, "rnd") == 0) { free(libUlfiusSDOBNewVideoInfo->rnd); libUlfiusSDOBNewVideoInfo->rnd = val; }
+      else if (strcmp(key, "videoId") == 0) { free(libUlfiusSDOBNewVideoInfo->videoId); libUlfiusSDOBNewVideoInfo->videoId = val; }
+      else if (strcmp(key, "eventId") == 0) { free(libUlfiusSDOBNewVideoInfo->eventId); libUlfiusSDOBNewVideoInfo->eventId = val; }
+      else if (strcmp(key, "slug") == 0) { free(libUlfiusSDOBNewVideoInfo->eventStr); libUlfiusSDOBNewVideoInfo->eventStr = val; }
+      else if (strcmp(key, "compId") == 0) { free(libUlfiusSDOBNewVideoInfo->compId); libUlfiusSDOBNewVideoInfo->compId = val; }
+      else if (strcmp(key, "comp") == 0) { free(libUlfiusSDOBNewVideoInfo->compStr); libUlfiusSDOBNewVideoInfo->compStr = val; }
+      else if (strcmp(key, "es") == 0) { free(libUlfiusSDOBNewVideoInfo->es); libUlfiusSDOBNewVideoInfo->es = val; }
+      else { free(val); }
+      json_decref(value);
+      iter = json_object_iter_next(json_nb_sheep, iter);
+    }
+    
   }
-  free(json_nb_sheep);
+  json_decref(json_nb_sheep);
 
   libUlfiusSDOBNewVideoInfo->cnt++;
   return U_CALLBACK_CONTINUE;
@@ -106,18 +119,26 @@ int callback_skydiveorbust_prestart (const struct _u_request * request, struct _
 
   json_error_t error;
   json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
-  if (json_nb_sheep == NULL) {
+  if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
     printf("Error: %s\n", error.text);
   } else {
-    pg_sdob_scorecard_score_sopst(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sopst")), json_real_value(json_object_get(json_nb_sheep, "pst")));
+    json_t *json_sopst = json_object_get(json_nb_sheep, "sopst");
+    json_t *json_pst = json_object_get(json_nb_sheep, "pst");
+    double jSopst = (double)json_number_value(json_sopst);
+    double jPst = (double)json_number_value(json_pst);
+    json_decref(json_sopst);
+    json_decref(json_pst);
+
+    pg_sdob_scorecard_score_sopst(&m_gui, jSopst, jPst);
 
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_SOPST;
-    item->time = json_real_value(json_object_get(json_nb_sheep, "sopst"));
+    item->time = jSopst;
+    item->amt = jPst;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   }
-  free(json_nb_sheep);
+  json_decref(json_nb_sheep);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -127,19 +148,27 @@ int callback_skydiveorbust_workingtime (const struct _u_request * request, struc
   
 
   json_error_t error;
-  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
-  if (json_nb_sheep == NULL) {
+  json_t *json_nb_sheep = ulfius_get_json_body_request(request, &error);
+  if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
     printf("Error: %s\n", error.text);
   } else {
-    pg_sdob_scorecard_score_sowt(&m_gui, json_real_value(json_object_get(json_nb_sheep, "sowt")), json_real_value(json_object_get(json_nb_sheep, "wt")));
+    json_t *json_sowt = json_object_get(json_nb_sheep, "sowt");
+    json_t *json_wt = json_object_get(json_nb_sheep, "wt");
+    double jSowt = (double)json_number_value(json_sowt);
+    double jWt = (double)json_number_value(json_wt);
+    json_decref(json_sowt);
+    json_decref(json_wt);
+
+    pg_sdob_scorecard_score_sowt(&m_gui, jSowt, jWt);
 
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_SOWT;
-    item->time = json_real_value(json_object_get(json_nb_sheep, "sowt"));
+    item->time = jSowt;
+    item->amt = jWt;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   }
-  free(json_nb_sheep);
+  json_decref(json_nb_sheep);
   return U_CALLBACK_CONTINUE;
 }
 
