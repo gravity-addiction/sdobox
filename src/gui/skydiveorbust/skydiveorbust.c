@@ -627,7 +627,7 @@ void pg_sdobUpdateComp(gslc_tsGui *pGui, char* compStr) {
     pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
     strlcpy(sdob_judgement->compStr, "2way Seq Open", 128);
 
-  } else if (strcmp(compStr, "CF2SPA") == 0 || strcmp(compStr, "2SPA") == 0) {
+  } else if (strcmp(compStr, "CF2SPA") == 0 || strcmp(compStr, "2SPA") == 0 || strcmp(compStr, "2SA") == 0) {
     pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
     strlcpy(sdob_judgement->compStr, "2way Seq ProAm", 128);
 
