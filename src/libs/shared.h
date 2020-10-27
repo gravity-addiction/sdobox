@@ -75,6 +75,9 @@ size_t file_list(const char *path, struct fileStruct ***ls, int type);
 size_t file_list_w_up(const char *path, struct fileStruct ***ls, int type);
 
 char * calculateSize(uint64_t size);
+void fisherYatesRandomize (int arr[], int n);
+int isNumeric(char* str);
+
 // void run_system_cmd(char *fullpath);
 // int run_system_cmd_with_return(char *fullpath, char *ret, int retsize);
 //-/ void fbcp_start();

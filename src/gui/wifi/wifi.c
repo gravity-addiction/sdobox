@@ -304,7 +304,7 @@ bool pg_wifi_cbBtn_connect(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
         || errno == ERANGE
     ) {
       touchscreenPopupMsgBox(pGui, "Error!", "SSID Value Failed\n%s", buf);
-      printf("Unable to add Network: %s\nNetid: %d\n", buf, network_id);
+      dbgprintf(DBG_DEBUG, "Unable to add Network: %s\nNetid: %d\n", buf, network_id);
       return false;
     }
 

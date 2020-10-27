@@ -86,7 +86,7 @@ void pg_startupCbBtnHostname_Callback(gslc_tsGui *pGui, char* str) {
     size_t hostCmdSz = snprintf(NULL, 0, "/opt/sdobox/scripts/hostname \"%s\" \"%s\"", str, pg_startupHostname) + 1;
     char *hostCmd = (char*)malloc(hostCmdSz * sizeof(char));
     snprintf(hostCmd, hostCmdSz, "/opt/sdobox/scripts/hostname \"%s\" \"%s\"", str, pg_startupHostname);
-        printf("Cmd: %s\n", hostCmd);
+    // printf("Cmd: %s\n", hostCmd);
     system(hostCmd);
     free(hostCmd);
     updateHostname(pGui);

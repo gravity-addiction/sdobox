@@ -138,7 +138,7 @@ int fd_is_connected(int fd)
 {
     unsigned char buf;
     int err = recv(fd, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
-    printf("Connected: %d, Err: %d\n", err, errno);
+    dbgprintf(DBG_DEBUG, "Connected: %d, Err: %d\n", err, errno);
     return 1;
 }
 
@@ -482,11 +482,11 @@ void swapInts (int *a, int *b)
 } 
 
 // Fisher yates tool to randomize arr[]
-void fisherYatesRandomize ( int arr[], int n ) 
+void fisherYatesRandomize (int arr[], int n) 
 { 
   // Use a different seed value so that we don't get same 
   // result each time we run this program 
-  srand ( time(NULL) ); 
+  srand (time(NULL)); 
 
   // Start from the last element and swap one by one. We don't 
   // need to run for the first element that's why i > 0 
@@ -498,7 +498,14 @@ void fisherYatesRandomize ( int arr[], int n )
     // Swap arr[i] with the element at random index 
     swapInts(&arr[i], &arr[j]); 
   } 
-} 
+}
+
+int isNumeric(char* str) {
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (isalpha(str[i]) != 0) { return 1; }
+  }
+  return 0;
+}
 /*
 //---------------------
 // System Commands

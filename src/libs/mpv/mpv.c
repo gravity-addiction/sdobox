@@ -411,7 +411,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
 
         // Error Response
         } else if (rReqId == reqId && errSuccess != 0) {
-            dbgprintf(DBG_MPV_READ|DBG_ERROR,
+            dbgprintf(DBG_MPV_READ|DBG_DEBUG,
                       "Error after requesting property %s, %s\n",
                       prop, mpv_rpc_ret);
 

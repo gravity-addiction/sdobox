@@ -198,7 +198,9 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 // Extra event,team,round from omniskore saved videos
 #define SVR_OMNISKORE "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
 
-static regex_t r_svr_wholefilename, r_svr_partial, r_svr_omniskore;
+#define SVR_TAMMY "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
+
+static regex_t r_svr_wholefilename, r_svr_partial, r_svr_omniskore, r_svr_tammy;
 static double default_working_time = 35.0;
 static char svr_parsed_meet[64];
 
@@ -222,12 +224,17 @@ static void init_svr_regexp() {
   compstate = regcomp(&r_svr_omniskore, SVR_OMNISKORE, 0);
   if (compstate)
     regexcompfail("omniskore", SVR_OMNISKORE, compstate, &r_svr_omniskore);
+
+  compstate = regcomp(&r_svr_tammy, SVR_TAMMY, 0);
+  if (compstate)
+    regexcompfail("tammy", SVR_TAMMY, compstate, &r_svr_tammy);
 }
 
 static void destroy_svr_regexp() {
   regfree(&r_svr_wholefilename);
   regfree(&r_svr_partial);
   regfree(&r_svr_omniskore);
+  regfree(&r_svr_tammy);
 }
 
 static void destroy_sdob_video_rounds() {
@@ -589,6 +596,62 @@ void pg_sdobUpdateRound(gslc_tsGui *pGui, char* str) {
   }
 }
 
+void pg_sdobUpdateEvent(gslc_tsGui *pGui, char* eventStr) {
+
+  // printf("Event Folder: %s\n", eventStr);
+  if (strcmp(eventStr, "2016-USPA-CF") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2016 USPA Nationals", 128);
+  } else if (strcmp(eventStr, "2017-USPA-CF") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2017 USPA Canopy Nationals", 128);
+  } else if (strcmp(eventStr, "2018-USPA-CF") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2018 USPA Canopy Nationals", 128);
+  } else if (strcmp(eventStr, "2019-USPA-CF") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2019 USPA Canopy Nationals", 128);
+  } else if (strcmp(sdob_judgement->eventStr, "20CFGHOST") == 0) {
+    strlcpy(sdob_judgement->eventStr, "2020 CF Ghost Nationals", 128);
+  } else if (eventStr[0] != '\0') {
+    strlcpy(sdob_judgement->eventStr, eventStr, 128);
+  } else {
+    strlcpy(sdob_judgement->eventStr, "Unknown", 128);
+  }
+  pg_sdobUpdateVideoDescOne(pGui, sdob_judgement->eventStr);
+
+}
+
+void pg_sdobUpdateComp(gslc_tsGui *pGui, char* compStr) {
+
+  // printf("Comp: %s\n", compStr);
+  if (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
+       strcmp(compStr, "2S") == 0 || strcmp(compStr, "2SO") == 0
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    strlcpy(sdob_judgement->compStr, "2way Seq Open", 128);
+
+  } else if (strcmp(compStr, "CF2SPA") == 0 || strcmp(compStr, "2SPA") == 0) {
+    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
+    strlcpy(sdob_judgement->compStr, "2way Seq ProAm", 128);
+
+  } else if (strcmp(compStr, "CF4S") == 0 || strcmp(compStr, "CF4SO") == 0
+              || strcmp(compStr, "4S") == 0 || strcmp(compStr, "4SO") == 0
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
+    strlcpy(sdob_judgement->compStr, "4way Seq Open", 128);
+
+  } else if (strcmp(compStr, "CF4R") == 0 || strcmp(compStr, "CF4RO") == 0
+              || strcmp(compStr, "4R") == 0 || strcmp(compStr, "4RO") == 0
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
+    strlcpy(sdob_judgement->compStr, "4way Rotes Open", 128);
+
+  } else if (compStr[0] != '\0') {
+    strlcpy(sdob_judgement->compStr, compStr, 128);
+
+  } else {
+    strlcpy(sdob_judgement->compStr, " ", 128);
+  }
+  pg_sdobUpdateVideoDescTwo(pGui, sdob_judgement->compStr);
+
+}
 
 
 void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
@@ -2106,40 +2169,85 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
   char *svr_rnd = strndup(subline+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
   char *svr_team = strndup(subline+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
 
+  char *eventStr;
+  int ptrCnt = 0;
+  char *compStr;
+
+  // Parse Foldername for comp info
+  // printf("Local Folder: %s\n", sdob_judgement->local_folder);
+  char delim[] = "/";
+  char * ptrFolder = strtok(newVideo->local_folder, delim);
+  compStr = strdup(ptrFolder);
+  while ((ptrFolder = strtok(NULL,delim)) != NULL) {
+    if (ptrCnt == 0) { free(compStr); }
+    if (ptrCnt > 1) { free(eventStr); }
+    eventStr = compStr;
+    compStr = strdup(ptrFolder);
+    ptrCnt++;
+  }
+  free(ptrFolder);
+  
+  PG_SDOB_FREE_VIDEO_DATA(newVideo);
+  
+  if (ptrCnt > 1) {
+    pg_sdobUpdateEvent(pGui, eventStr);
+    free(eventStr);
+  } else {
+    pg_sdobUpdateEvent(pGui, svr_parsed_meet);
+  }
+
+  if (ptrCnt > 0) {
+    pg_sdobUpdateComp(pGui, compStr);
+    free(compStr);
+  } else {
+    pg_sdobUpdateComp(pGui, "");
+  }
+
   dbgprintf(DBG_SVR|DBG_INFO, "SVR: event=%s, team=%s, round=%s\n", svr_eventname, svr_team, svr_rnd);
 
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
 
-
-  // subline += matches[0].rm_eo;
-  if (strcmp(svr_parsed_meet, "20CFGHOST") == 0) {
-    pg_sdobUpdateVideoDescOne(pGui, "2020 CF Ghost Nationals");
-  } else {
-    pg_sdobUpdateVideoDescOne(pGui, svr_parsed_meet);
-  }
-  // printf("EV: %s", (subline+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so));
-
-  if (strcmp(svr_eventname, "CF2S") == 0 || strcmp(svr_eventname, "CF2SO") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    pg_sdobUpdateVideoDescTwo(pGui, "2way Seq Open");
-  } else if (strcmp(svr_eventname, "CF2SPA") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    pg_sdobUpdateVideoDescTwo(pGui, "2way Seq ProAm");
-  } else if (strcmp(svr_eventname, "CF4S") == 0 || strcmp(svr_eventname, "CF4SO") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
-    pg_sdobUpdateVideoDescTwo(pGui, "4way Seq Open");
-  } else if (strcmp(svr_eventname, "CF4R") == 0 || strcmp(svr_eventname, "CF4RO") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
-    pg_sdobUpdateVideoDescTwo(pGui, "4way Rotes Open");
-  }
-
-
-  
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
   gslc_Update(pGui);
 
   free(svr_eventname);
+  free(svr_rnd);
+  free(svr_team);
+  return 0;
+}
+
+
+int pg_skydiveorbust_parse_filename_tammy(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
+
+  if (newVideo->video_file[0] == '\0') {
+     // printf("no filename to load\n");
+     return 1;
+  }
+  // attempt to regex match filename to event info
+  regmatch_t matches[5];
+  int m = regexec(&r_svr_tammy, newVideo->video_file, 5, matches, 0);
+  if (m) {
+    // not a match, restore default working time
+    dbgprintf(DBG_DEBUG, "video filename '%s' does not match tammy svr pattern\n", newVideo->video_file);
+    return m;
+  }
+
+  char *svr_event = strndup(newVideo->video_file+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+  char *svr_comp = strndup(newVideo->video_file+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+  char *svr_rnd = strndup(newVideo->video_file+matches[3].rm_so + 1, matches[3].rm_eo - matches[3].rm_so - 1);
+  char *svr_team = strndup(newVideo->video_file+matches[4].rm_so, matches[4].rm_eo - matches[4].rm_so);
+  dbgprintf(DBG_SVR|DBG_INFO, "SVRZ: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+
+  pg_sdobUpdateRound(pGui, svr_rnd);
+  pg_sdobUpdateTeam(pGui, svr_team);
+  pg_sdobUpdateEvent(pGui, svr_event);
+  pg_sdobUpdateComp(pGui, svr_comp);
+
+  // printf("SVR: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
+
+  free(svr_event);
+  free(svr_comp);
   free(svr_rnd);
   free(svr_team);
   return 0;
@@ -2167,25 +2275,15 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   char *svr_rnd = strndup(newVideo->video_file+matches[4].rm_so, matches[4].rm_eo - matches[4].rm_so);
   dbgprintf(DBG_SVR|DBG_INFO, "SVRZ: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
 
+  if (isNumeric(svr_event) != 0 || isNumeric(svr_comp) != 0) {
+    dbgprintf(DBG_DEBUG, "video filename '%s' does not match omniskore numeric filename parts.\n", newVideo->video_file);
+    return 1;
+  }
+
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
-/*
-  dbgprintf(DBG_SVR|DBG_INFO, "SVR: event=%s, comp=%s, team=%s, round=%s\n", svr_event, svr_comp, svr_team, svr_rnd);
-  
-  if (strcmp(svr_comp, "25") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    pg_sdobUpdateVideoDescTwo(&m_gui, "2way Seq Open");
-  } else if (strcmp(svr_comp, "26") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    pg_sdobUpdateVideoDescTwo(&m_gui, "2way Seq ProAm");
-  } else if (strcmp(svr_comp, "27") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
-    pg_sdobUpdateVideoDescTwo(&m_gui, "4way Seq Open");
-  } else if (strcmp(svr_comp, "28") == 0) {
-    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
-    pg_sdobUpdateVideoDescTwo(&m_gui, "4way Rotes Open");
-  }
-*/
+  pg_sdobUpdateEvent(pGui, svr_event);
+  pg_sdobUpdateComp(pGui, svr_comp);
 
   free(svr_event);
   free(svr_comp);
@@ -2193,6 +2291,8 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   free(svr_team);
   return 0;
 }
+
+
 //
 // Called only from the skydiveorbust page's thread as the result of a queue action.
 //
@@ -2206,79 +2306,13 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
-  char *eventStr;
-  int ptrCnt = 0;
-  char *compStr;
-
-  // Parse Foldername for comp info
-  // printf("Local Folder: %s\n", sdob_judgement->local_folder);
-  char delim[] = "/";
-  char * ptrFolder = strtok(newVideo->local_folder, delim);
-  compStr = strdup(ptrFolder);
-  while ((ptrFolder = strtok(NULL,delim)) != NULL) {
-    if (ptrCnt == 0) { free(compStr); }
-    if (ptrCnt > 1) { free(eventStr); }
-    eventStr = compStr;
-    compStr = strdup(ptrFolder);
-    ptrCnt++;
+  if (pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video) == 0) {
+    dbgprintf(DBG_DEBUG, "Using Default Schema for filename: '%s'\n", sdob_judgement->video);
+  } else if (pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video) == 0) {
+    dbgprintf(DBG_DEBUG, "Using Omniskore Schema for filename: '%s'\n", sdob_judgement->video);
+  } else if (pg_skydiveorbust_parse_filename_tammy(pGui, sdob_judgement->video) == 0) {
+    dbgprintf(DBG_DEBUG, "Using Tammys Schema for filename: '%s'\n", sdob_judgement->video);
   }
-  free(ptrFolder);
-  
-  PG_SDOB_FREE_VIDEO_DATA(newVideo);
-  
-  // printf("Event Folder: %s\n", eventStr);
-  if (ptrCnt > 1 && strcmp(eventStr, "2018-USPA-CF") == 0) {
-    strlcpy(sdob_judgement->eventStr, "2018 USPA Canopy Nationals", 128);
-  } else if (ptrCnt > 1 && strcmp(sdob_judgement->eventStr, "20CFGHOST") == 0) {
-    strlcpy(sdob_judgement->eventStr, "2020 CF Ghost Nationals", 128);
-  } else if (ptrCnt > 1 && eventStr[0] != '\0') {
-    strlcpy(sdob_judgement->eventStr, eventStr, 128);
-  } else {
-    strlcpy(sdob_judgement->eventStr, "Unknown", 128);
-  }
-  pg_sdobUpdateVideoDescOne(pGui, sdob_judgement->eventStr);
-  if (ptrCnt > 1) { free(eventStr); }
-
-
-  // printf("Comp: %s\n", compStr);
-  if (ptrCnt > 0 && 
-      (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
-       strcmp(compStr, "2S") == 0 || strcmp(compStr, "2SO") == 0)
-  ) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    strlcpy(sdob_judgement->compStr, "2way Seq Open", 128);
-
-  } else if (ptrCnt > 0 && 
-              (strcmp(compStr, "CF2SPA") == 0 || strcmp(compStr, "2SPA") == 0)
-  ) {
-    pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
-    strlcpy(sdob_judgement->compStr, "2way Seq ProAm", 128);
-
-  } else if (ptrCnt > 0 && 
-              (strcmp(compStr, "CF4S") == 0 || strcmp(compStr, "CF4SO") == 0
-              || strcmp(compStr, "4S") == 0 || strcmp(compStr, "4SO") == 0)
-  ) {
-    pg_sdobUpdateScoringSettings(pGui, "cf4waySequentials");
-    strlcpy(sdob_judgement->compStr, "4way Seq Open", 128);
-
-  } else if (ptrCnt > 0 && 
-              (strcmp(compStr, "CF4R") == 0 || strcmp(compStr, "CF4RO") == 0
-              || strcmp(compStr, "4R") == 0 || strcmp(compStr, "4RO") == 0)
-  ) {
-    pg_sdobUpdateScoringSettings(pGui, "cfRotations");
-    strlcpy(sdob_judgement->compStr, "4way Rotes Open", 128);
-
-  } else if (ptrCnt > 0 && compStr[0] != '\0') {
-    strlcpy(sdob_judgement->compStr, compStr, 128);
-
-  } else {
-    strlcpy(sdob_judgement->compStr, " ", 128);
-  }
-  pg_sdobUpdateVideoDescTwo(pGui, sdob_judgement->compStr);
-  if (ptrCnt > 0) { free(compStr); }
-
-  pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video);
-  pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video);
 
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
   // gslc_Update(pGui);
