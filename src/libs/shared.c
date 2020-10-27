@@ -14,7 +14,7 @@
 #include <sys/kd.h>
 #include <assert.h>
 #include <time.h>
-
+#include <ctype.h> /* isalpha */
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
 

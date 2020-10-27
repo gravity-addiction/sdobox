@@ -2701,15 +2701,18 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     }
     pg_sdobUpdateHostDeviceInfo(&m_gui);
     
+    
     if (sdob_devicehost->isHost == 1 && libUlfiusSDOBNewVideoInfo->url[0] != '\0') {
-      // mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
+      mpv_loadfile(NULL, libUlfiusSDOBNewVideoInfo->url, "replace", "");
+      mpv_fullscreen(1);
     } else if (sdob_devicehost->isHost == 1 &&
                 libUlfiusSDOBNewVideoInfo->local_folder[0] != '\0' &&
                 libUlfiusSDOBNewVideoInfo->video_file[0] != '\0'
     ) {
-      mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "fullscreen=yes");
+      mpv_loadfile(libUlfiusSDOBNewVideoInfo->local_folder, libUlfiusSDOBNewVideoInfo->video_file, "replace", "");
+      mpv_fullscreen(1);
     }
-
+    
 
     if (libUlfiusSDOBNewVideoInfo->team[0] != '\0') {
       pg_sdobUpdateTeam(&m_gui, libUlfiusSDOBNewVideoInfo->team);
@@ -2724,10 +2727,11 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
       pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
     }
+    if (libUlfiusSDOBNewVideoInfo->es[0] != '\0') {
+      pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
+    }
 
-    pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
-
-    gslc_Update(pGui);
+    // gslc_Update(pGui);
     // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
     // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
     // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
@@ -2738,6 +2742,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     // if (sdob_devicehost->isHost == 1) {
     //   mpv_loadfile(libUlfiusSDOBNewVideoInfo->folder, libUlfiusSDOBNewVideoInfo->file, "replace", "fullscreen=yes");
     // }
+
   }
   
   

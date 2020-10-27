@@ -16,20 +16,32 @@ struct libUlfiusSDOBNewVideo * LIBULFIUS_SDOB_NEWVIDEO() {
   struct libUlfiusSDOBNewVideo *eventInfo = (struct libUlfiusSDOBNewVideo*)malloc(sizeof(struct libUlfiusSDOBNewVideo));
   eventInfo->cnt = 0;
 
-  eventInfo->host = (char*)malloc(2 * sizeof(char));
+  eventInfo->host = (char*)malloc(128 * sizeof(char));
+  eventInfo->host[0] = '\0';
 
-  eventInfo->local_folder = (char*)malloc(2 * sizeof(char));
-  eventInfo->video_file = (char*)malloc(2 * sizeof(char));
-  eventInfo->url = (char*)malloc(2 * sizeof(char));
+  eventInfo->local_folder = (char*)malloc(256 * sizeof(char));
+  eventInfo->local_folder[0] = '\0';
+  eventInfo->video_file = (char*)malloc(256 * sizeof(char));
+  eventInfo->video_file[0] = '\0';
+  eventInfo->url = (char*)malloc(512 * sizeof(char));
+  eventInfo->url[0] = '\0';
 
-  eventInfo->team = (char*)malloc(2 * sizeof(char));
-  eventInfo->rnd = (char*)malloc(2 * sizeof(char));
-  eventInfo->videoId = (char*)malloc(2 * sizeof(char));
-  eventInfo->eventId = (char*)malloc(2 * sizeof(char));
-  eventInfo->eventStr = (char*)malloc(2 * sizeof(char));
-  eventInfo->compId = (char*)malloc(2 * sizeof(char));
-  eventInfo->compStr = (char*)malloc(2 * sizeof(char));
-  eventInfo->es = (char*)malloc(2 * sizeof(char));
+  eventInfo->team = (char*)malloc(64 * sizeof(char));
+  eventInfo->team[0] = '\0';
+  eventInfo->rnd = (char*)malloc(64 * sizeof(char));
+  eventInfo->rnd[0] = '\0';
+  eventInfo->videoId = (char*)malloc(64 * sizeof(char));
+  eventInfo->videoId[0] = '\0';
+  eventInfo->eventId = (char*)malloc(64 * sizeof(char));
+  eventInfo->eventId[0] = '\0';
+  eventInfo->eventStr = (char*)malloc(128 * sizeof(char));
+  eventInfo->eventStr[0] = '\0';
+  eventInfo->compId = (char*)malloc(64 * sizeof(char));
+  eventInfo->compId[0] = '\0';
+  eventInfo->compStr = (char*)malloc(128 * sizeof(char));
+  eventInfo->compStr[0] = '\0';
+  eventInfo->es = (char*)malloc(128 * sizeof(char));
+  eventInfo->es[0] = '\0';
 
   return eventInfo;
 }
@@ -74,56 +86,56 @@ int callback_spotify (const struct _u_request * request, struct _u_response * re
 
 int callback_skydiveorbust_newvideo (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
+
   json_error_t error;
   json_t *json_nb_sheep = ulfius_get_json_body_request(request, &error);
-  if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
-    printf("Error: %s\n", error.text);
+  if (json_is_object(json_nb_sheep) == 0) {
+     printf("Error: %s\n", error.text);
   } else {
-    const char *key;
-    json_t *value;
 
     // LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
     void *iter = json_object_iter(json_nb_sheep);
     while (iter) {
-      key = json_object_iter_key(iter);
-      value = json_object_iter_value(iter);
-      char *val = strdup(json_string_value(value));
-      if (strcmp(key, "host") == 0) { free(libUlfiusSDOBNewVideoInfo->host); libUlfiusSDOBNewVideoInfo->host = val; }
-      else if (strcmp(key, "folder") == 0) { free(libUlfiusSDOBNewVideoInfo->local_folder); libUlfiusSDOBNewVideoInfo->local_folder = val; }
-      else if (strcmp(key, "file") == 0) { free(libUlfiusSDOBNewVideoInfo->video_file); libUlfiusSDOBNewVideoInfo->video_file = val; }
-      else if (strcmp(key, "url") == 0) { free(libUlfiusSDOBNewVideoInfo->url); libUlfiusSDOBNewVideoInfo->url = val; }
+      
+      char *key = (char*)json_object_iter_key(iter);
+      json_t *value = json_object_iter_value(iter);
+      char *val = (char*)json_string_value(value);
 
-      else if (strcmp(key, "team") == 0) { free(libUlfiusSDOBNewVideoInfo->team); libUlfiusSDOBNewVideoInfo->team = val; }
-      else if (strcmp(key, "rnd") == 0) { free(libUlfiusSDOBNewVideoInfo->rnd); libUlfiusSDOBNewVideoInfo->rnd = val; }
-      else if (strcmp(key, "videoId") == 0) { free(libUlfiusSDOBNewVideoInfo->videoId); libUlfiusSDOBNewVideoInfo->videoId = val; }
-      else if (strcmp(key, "eventId") == 0) { free(libUlfiusSDOBNewVideoInfo->eventId); libUlfiusSDOBNewVideoInfo->eventId = val; }
-      else if (strcmp(key, "slug") == 0) { free(libUlfiusSDOBNewVideoInfo->eventStr); libUlfiusSDOBNewVideoInfo->eventStr = val; }
-      else if (strcmp(key, "compId") == 0) { free(libUlfiusSDOBNewVideoInfo->compId); libUlfiusSDOBNewVideoInfo->compId = val; }
-      else if (strcmp(key, "comp") == 0) { free(libUlfiusSDOBNewVideoInfo->compStr); libUlfiusSDOBNewVideoInfo->compStr = val; }
-      else if (strcmp(key, "es") == 0) { free(libUlfiusSDOBNewVideoInfo->es); libUlfiusSDOBNewVideoInfo->es = val; }
-      else { free(val); }
+      if (strcmp(key, "host") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->host, val, 128); }
+      else if (strcmp(key, "folder") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->local_folder, val, 256); }
+      else if (strcmp(key, "file") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->video_file, val, 256); }
+      else if (strcmp(key, "url") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->url, val, 512); }
+
+      else if (strcmp(key, "team") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->team, val, 64); }
+      else if (strcmp(key, "rnd") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->rnd, val, 64); }
+      else if (strcmp(key, "videoId") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->videoId, val, 64); }
+      else if (strcmp(key, "eventId") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->eventId, val, 64); }
+      else if (strcmp(key, "slug") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->eventStr, val, 128); }
+      else if (strcmp(key, "compId") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->compId, val, 64); }
+      else if (strcmp(key, "comp") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->compStr, val, 128); }
+      else if (strcmp(key, "es") == 0) { strlcpy(libUlfiusSDOBNewVideoInfo->es, val, 128); }
+
       json_decref(value);
       iter = json_object_iter_next(json_nb_sheep, iter);
     }
-    
-  }
-  json_decref(json_nb_sheep);
 
-  libUlfiusSDOBNewVideoInfo->cnt++;
+    libUlfiusSDOBNewVideoInfo->cnt++;
+    json_decref(json_nb_sheep);
+  }
+
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_skydiveorbust_prestart (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
   
-
   json_error_t error;
-  json_t * json_nb_sheep = ulfius_get_json_body_request(request, &error);
-  if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
-    printf("Error: %s\n", error.text);
+  json_t *json_prestart = ulfius_get_json_body_request(request, &error);
+  if (json_is_object(json_prestart) == 0) {
+    printf("Not Object Error: %s\n", error.text);
   } else {
-    json_t *json_sopst = json_object_get(json_nb_sheep, "sopst");
-    json_t *json_pst = json_object_get(json_nb_sheep, "pst");
+    json_t *json_sopst = json_object_get(json_prestart, "sopst");
+    json_t *json_pst = json_object_get(json_prestart, "pst");
     double jSopst = (double)json_number_value(json_sopst);
     double jPst = (double)json_number_value(json_pst);
     json_decref(json_sopst);
@@ -137,16 +149,15 @@ int callback_skydiveorbust_prestart (const struct _u_request * request, struct _
     item->time = jSopst;
     item->amt = jPst;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    json_decref(json_prestart);
   }
-  json_decref(json_nb_sheep);
-
+  
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_skydiveorbust_workingtime (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_body_response(response, 204, NULL);
   
-
   json_error_t error;
   json_t *json_nb_sheep = ulfius_get_json_body_request(request, &error);
   if (json_nb_sheep == NULL || json_is_object(json_nb_sheep) != 0) {
@@ -167,8 +178,9 @@ int callback_skydiveorbust_workingtime (const struct _u_request * request, struc
     item->time = jSowt;
     item->amt = jWt;
     queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    json_decref(json_nb_sheep);
   }
-  json_decref(json_nb_sheep);
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -227,7 +239,7 @@ PI_THREAD (websocketApiThread)
 
 
 int websocket_api_start() {
-  dbgprintf(DBG_INFO, "%s\n", "websocketApiThreadStart()");
+  printf("%s\n", "websocketApiThreadStart()");
   if (websocketApiThreadRunning) { return 0; }
 
   libUlfiusSDOBNewVideoInfo = LIBULFIUS_SDOB_NEWVIDEO();
@@ -248,6 +260,6 @@ void websocket_api_stop() {
     websocketApiThreadKill = 0;
   }
 
-  // LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
-  // free(libUlfiusSDOBNewVideoInfo);
+  LIBULFIUS_SDOB_NEWVIDEO_DESTROY(libUlfiusSDOBNewVideoInfo);
+  free(libUlfiusSDOBNewVideoInfo);
 }
