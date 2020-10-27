@@ -67,7 +67,11 @@ bool pg_system_cbBtn_exit(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   if (pg_system_apt_upgrade == 1) { return true; }
-
+  pg_system_apt_upgrade = 1;
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  system("/opt/sdobox/scripts/update-sdob.sh &");
+  gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Upgrading ...");
+/*
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   FILE *fd;
@@ -98,6 +102,7 @@ bool pg_system_cbBtn_upgrade(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   pg_system_apt_upgrade = 0;
   gslc_ElemSetTxtStr(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], "Finished");
   gslc_Update(pGui);
+  */
   return true;
 }
 
@@ -218,11 +223,11 @@ int pg_system_guiInit(gslc_tsGui *pGui)
   }
 */
 
-/*
+
   // Update
   if ((
     pg_systemEl[E_SYSTEM_EL_UPGRADE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
-            (gslc_tsRect) {200, 128, 64, 64},
+            (gslc_tsRect) {200, 170, 64, 64},
             (char*)"", 0, E_FONT_MONO14, &pg_system_cbBtn_upgrade)
   ) != NULL) {
     gslc_ElemSetTxtCol(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], GSLC_COL_WHITE);
@@ -231,7 +236,7 @@ int pg_system_guiInit(gslc_tsGui *pGui)
     gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
     gslc_ElemSetFrameEn(pGui, pg_systemEl[E_SYSTEM_EL_UPGRADE], false);
   }
-*/
+
 
   // Reconfigure Buttons
   if ((
