@@ -3,6 +3,17 @@
 fan_equip=
 disable_swap=
 
+RPI3A="Raspberry Pi 3 Model A Plus"
+RPI3B="Raspberry Pi 3 Model B Plus"
+RPI4B="Raspberry Pi 4 Model B"
+RPIVERSION=$(cat /proc/device-tree/model | tr '\0' '\n')
+
+if [[ $RPIVERSION =~ $RPI3A.* || $RPIVERSION =~ $RPI3B.* ]]; then
+  echo "RPI3 - $RPIVERSION" | fold -s
+elif [[ $RPIVERSION =~ $RPI4B* ]]; then
+  echo "RPI4 - $RPIVERSION" | fold -s
+fi
+
 read -p "Fan Equip? Y/n" -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Nn]$ ]]
@@ -190,9 +201,15 @@ then
   echo 'dtoverlay=waveshare35c:rotate=270'| sudo tee -a /boot/config.txt
 fi
 
-if ! grep -Fxq "gpu_mem=256" /boot/config.txt
+
+
+if ! grep -Fq "gpu_mem=" /boot/config.txt
 then
-  echo 'gpu_mem=256'| sudo tee -a /boot/config.txt
+  if [[ $RPIVERSION =~ $RPI4B* ]]; then
+    echo 'gpu_mem=768'| sudo tee -a /boot/config.txt
+  else
+    echo 'gpu_mem=256'| sudo tee -a /boot/config.txt
+  fi
 fi
 
 
@@ -264,7 +281,7 @@ fi
 
 read -p "Install Headmelted VsCode? Y/n" -n 1 -r
 echo
-if [[ ! $REPLY =~ ^[Nn]$ ]]
+if [[ $REPLY =~ ^[Nn]$ ]]
 then
   echo "Skipping VSCode"
 else
@@ -279,7 +296,7 @@ fi
 
 read -p "Reboot? Y/n" -n 1 -r
 echo
-if [[ ! $REPLY =~ ^[Nn]$ ]]
+if [[ $REPLY =~ ^[Nn]$ ]]
 then
   echo "Skipping Reboot"
 else
