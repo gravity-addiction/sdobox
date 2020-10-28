@@ -105,7 +105,7 @@ then
 
     sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" ../scripts/fan_ctrl.py
     mkdir -p /opt/sdobox/bin
-    sudo chown -r pi:pi /opt/sdobox
+    sudo chown -R pi:pi /opt/sdobox
     cp ../scripts/fan_ctrl.py /opt/sdobox/bin/
 
     if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
