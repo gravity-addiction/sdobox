@@ -372,7 +372,7 @@ int main( int argc, char* args[] )
     }
 
     if (m_bSleep) {
-      usleep(20000);
+      usleep(50000);
     } else {
       m_bSleep = 1; // reset flag to next loop
     }
