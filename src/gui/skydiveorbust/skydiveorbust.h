@@ -356,7 +356,7 @@ void pg_sdob_scorecard_clear(gslc_tsGui *pGui);
 void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui);
 void pg_sdob_player_sliderForceUpdate();
 
-int pg_skydiveorbust_thread(gslc_tsGui *pGui);
+int pg_skydiveorbust_thread();
 void pg_skydiveorbust_destroy(gslc_tsGui *pGui);
 
 

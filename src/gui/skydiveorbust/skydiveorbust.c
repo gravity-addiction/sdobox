@@ -202,9 +202,9 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 
 #define SVR_TAMMY "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
 
-static regex_t r_svr_wholefilename, r_svr_partial, r_svr_omniskore, r_svr_tammy;
+static regex_t r_svr_tammy; // r_svr_wholefilename, r_svr_partial, r_svr_omniskore, 
 static double default_working_time = 35.0;
-static char svr_parsed_meet[64];
+// static char svr_parsed_meet[64];
 
 static void regexcompfail(char* msg, char* expression, int status, regex_t* rptr) {
   char buffer[256];
@@ -215,7 +215,7 @@ static void regexcompfail(char* msg, char* expression, int status, regex_t* rptr
 }
 
 static void init_svr_regexp() {
-  int compstate = regcomp(&r_svr_wholefilename, SVR_WHOLENAME, 0);
+  /*int compstate = regcomp(&r_svr_wholefilename, SVR_WHOLENAME, 0);
   if (compstate)
     regexcompfail("wholename", SVR_WHOLENAME, compstate, &r_svr_wholefilename);
 
@@ -226,16 +226,18 @@ static void init_svr_regexp() {
   compstate = regcomp(&r_svr_omniskore, SVR_OMNISKORE, 0);
   if (compstate)
     regexcompfail("omniskore", SVR_OMNISKORE, compstate, &r_svr_omniskore);
-
-  compstate = regcomp(&r_svr_tammy, SVR_TAMMY, 0);
+  */
+  int compstate = regcomp(&r_svr_tammy, SVR_TAMMY, 0);
   if (compstate)
     regexcompfail("tammy", SVR_TAMMY, compstate, &r_svr_tammy);
 }
 
 static void destroy_svr_regexp() {
+  /*
   regfree(&r_svr_wholefilename);
   regfree(&r_svr_partial);
   regfree(&r_svr_omniskore);
+  */
   regfree(&r_svr_tammy);
 }
 
@@ -249,7 +251,7 @@ static void destroy_sdob_video_rounds() {
   sdob_current_rounds = NULL;
   sdob_num_current_rounds = 0;
 }
-
+/*
 static void parse_video_rounds(char* vfilename) {
 
   regmatch_t matches[4];
@@ -313,7 +315,7 @@ static void parse_video_rounds(char* vfilename) {
 
   dbgprintf(DBG_SVR|DBG_INFO, "SVR: working time set to %.1f\n", default_working_time);
 }
-
+*/
 ////////////////////////////////////////////////////////////////
 
 // Initialize Player Video Chapters
@@ -857,7 +859,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   gslc_tsRect     pRect     = pElem->rElem;
 
 
-  gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
+
 
   gslc_DrawFillRect(pGui, pRect, pElem->colElemFill);
   gslc_DrawFrameRect(pGui, pRect, pElem->colElemFrame);
@@ -973,6 +975,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
       //   gslc_ElemDraw(pGui, E_PG_SKYDIVEORBUST, iXPM);
       // }
     }
+    gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
   }
 
   return true;
@@ -2146,7 +2149,7 @@ void pg_sdobMpvTimeposThreadStop() {
 }
 
 
-
+/*
 int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
   // attempt to regex match filename to event info
@@ -2165,13 +2168,15 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
 
   char* subline = newVideo->video_file + matches[1].rm_eo;
   m = regexec(&r_svr_omniskore, subline, 4, matches, 0);
-  assert(m == 0);
+  if (m) {
+    return m;
+  }
 
   char *svr_eventname = strndup(subline+matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
   char *svr_rnd = strndup(subline+matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
   char *svr_team = strndup(subline+matches[3].rm_so, matches[3].rm_eo - matches[3].rm_so);
 
-  char *eventStr;
+  char *eventStr = NULL;
   int ptrCnt = 0;
   char *compStr;
 
@@ -2181,9 +2186,8 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
   char * ptrFolder = strtok(newVideo->local_folder, delim);
   compStr = strdup(ptrFolder);
   while ((ptrFolder = strtok(NULL,delim)) != NULL) {
-    if (ptrCnt == 0) { free(compStr); }
-    if (ptrCnt > 1) { free(eventStr); }
-    eventStr = compStr;
+    if (ptrCnt > 0) { free(eventStr); }
+    *eventStr = *compStr;
     compStr = strdup(ptrFolder);
     ptrCnt++;
   }
@@ -2200,25 +2204,23 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
 
   if (ptrCnt > 0) {
     pg_sdobUpdateComp(pGui, compStr);
-    free(compStr);
   } else {
     pg_sdobUpdateComp(pGui, "");
   }
-
+  free(compStr);
   dbgprintf(DBG_SVR|DBG_INFO, "SVR: event=%s, team=%s, round=%s\n", svr_eventname, svr_team, svr_rnd);
 
   pg_sdobUpdateRound(pGui, svr_rnd);
   pg_sdobUpdateTeam(pGui, svr_team);
 
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  /***gslc_Update(pGui);*/
 
   free(svr_eventname);
   free(svr_rnd);
   free(svr_team);
   return 0;
 }
-
+*/
 
 int pg_skydiveorbust_parse_filename_tammy(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
@@ -2255,7 +2257,7 @@ int pg_skydiveorbust_parse_filename_tammy(gslc_tsGui *pGui, struct pg_sdob_video
   return 0;
 }
 
-
+/*
 int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
 
   if (newVideo->video_file[0] == '\0') {
@@ -2279,6 +2281,11 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
 
   if (isNumeric(svr_event) != 0 || isNumeric(svr_comp) != 0) {
     dbgprintf(DBG_DEBUG, "video filename '%s' does not match omniskore numeric filename parts.\n", newVideo->video_file);
+    
+    free(svr_event);
+    free(svr_comp);
+    free(svr_rnd);
+    free(svr_team);
     return 1;
   }
 
@@ -2293,6 +2300,7 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
   free(svr_team);
   return 0;
 }
+*/
 
 
 void * syncSlave(void *input) {
@@ -2304,7 +2312,9 @@ void * syncSlave(void *input) {
   ) != 0) {
     dbgprintf(DBG_ERROR, "Unable to send video to: %s\n", ((struct pg_sdob_device_slave_args *)input)->hostName);
   };
-  free(input);
+  free(((struct pg_sdob_device_slave_args *)input)->hostName);
+  free(((struct pg_sdob_device_slave_args *)input)->body);
+  free((struct pg_sdob_device_slave_args *)input);
   pthread_exit(NULL);
 }
 
@@ -2321,12 +2331,13 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->local_folder != NULL) { strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256); }
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
-
-  if (pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video) == 0) {
-    dbgprintf(DBG_DEBUG, "Using Default Schema for filename: '%s'\n", sdob_judgement->video);
-  } else if (pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video) == 0) {
-    dbgprintf(DBG_DEBUG, "Using Omniskore Schema for filename: '%s'\n", sdob_judgement->video);
-  } else if (pg_skydiveorbust_parse_filename_tammy(pGui, sdob_judgement->video) == 0) {
+  
+  // if (pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video) == 0) {
+  //   dbgprintf(DBG_DEBUG, "Using Default Schema for filename: '%s'\n", sdob_judgement->video);
+  // } else if (pg_skydiveorbust_parse_filename_omniskore(pGui, sdob_judgement->video) == 0) {
+  //   dbgprintf(DBG_DEBUG, "Using Omniskore Schema for filename: '%s'\n", sdob_judgement->video);
+  // } else
+  if (pg_skydiveorbust_parse_filename_tammy(pGui, sdob_judgement->video) == 0) {
     dbgprintf(DBG_DEBUG, "Using Tammys Schema for filename: '%s'\n", sdob_judgement->video);
   }
 
@@ -2576,11 +2587,11 @@ void pg_sdob_player_sliderForceUpdate() {
 
 
 // GUI Thread
-int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
+int pg_skydiveorbust_thread() {
   if (m_bQuit) { return 0; } // Quit flag set, do no more work
 
   if (sdob_devicehost->cnt > sdob_devicehost->seenCnt) {
-    pg_sdobUpdateHostDeviceInfo(pGui);
+    pg_sdobUpdateHostDeviceInfo(&m_gui);
     sdob_devicehost->seenCnt = sdob_devicehost->cnt;
   }
 
@@ -2597,36 +2608,36 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
         // Insert Mark
         case E_Q_SCORECARD_INSERT_MARK:
-          pg_sdob_scorecard_insert_mark(pGui, item->selected, item->time, item->mark);
+          pg_sdob_scorecard_insert_mark(&m_gui, item->selected, item->time, item->mark);
         break;
 
 
         // Update Mark
         case E_Q_SCORECARD_UPDATE_MARK:
-          pg_sdob_scorecard_update_mark(pGui, item->selected, item->mark);
+          pg_sdob_scorecard_update_mark(&m_gui, item->selected, item->mark);
         break;
 
         // Delete Mark
         case E_Q_SCORECARD_DELETE_MARK:
-          pg_sdob_scorecard_delete_mark(pGui, item->selected);
+          pg_sdob_scorecard_delete_mark(&m_gui, item->selected);
         break;
 
         case E_Q_SCORECARD_MOVE_SCORE_SELECTED:
-          pg_sdob_scorecard_score_selected(pGui, item->selected, item->amt);
+          pg_sdob_scorecard_score_selected(&m_gui, item->selected, item->amt);
         break;
 
         case E_Q_SCORECARD_SCORING_SOPST:
-          pg_sdob_scorecard_score_sopst(pGui, item->time, sdob_judgement->prestartTime);
+          pg_sdob_scorecard_score_sopst(&m_gui, item->time, sdob_judgement->prestartTime);
         break;
 
         case E_Q_SCORECARD_SCORING_SOWT:
-          pg_sdob_scorecard_score_sowt(pGui, item->time, sdob_judgement->workingTime);
+          pg_sdob_scorecard_score_sowt(&m_gui, item->time, sdob_judgement->workingTime);
 
           if (sdob_current_rounds && sdob_num_current_rounds > 1
               && (!strcmp(sdob_judgement->team, "") || !strcmp(sdob_judgement->round, ""))
           ) {
             mpv_pause();
-            touchscreenPageOpen(pGui, E_PG_SDOB_ROUNDLIST);
+            touchscreenPageOpen(&m_gui, E_PG_SDOB_ROUNDLIST);
           } else {
             gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
           }
@@ -2639,17 +2650,17 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
           pg_sdobSubmitScorecard();
         // No break, clear scorecard after submit
         case E_Q_SDOB_CLEAR:
-          pg_sdob_clear(pGui);
+          pg_sdob_clear(&m_gui);
         case E_Q_SCORECARD_CLEAR:
-          pg_sdob_scorecard_clear(pGui);
+          pg_sdob_scorecard_clear(&m_gui);
         break;
 
         case E_Q_SCORECARD_CLEAN:
-          pg_sdob_scorecard_clean(pGui);
+          pg_sdob_scorecard_clean(&m_gui);
         break;
 
         case E_Q_PLAYER_SLIDER_CHAPTERS:
-          pg_sdob_player_chaptersRefresh(pGui);
+          pg_sdob_player_chaptersRefresh(&m_gui);
         break;
 
         case E_Q_PLAYER_CHAPTER_CHANGED:
@@ -2657,7 +2668,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
         break;
 
         case E_Q_PLAYER_VIDEO_INFO:
-          //-/ pg_sdob_player_videoInfo(pGui);
+          //-/ pg_sdob_player_videoInfo(&m_gui);
         break;
 
         // Writes commands to open FD Socket
@@ -2672,21 +2683,22 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
 
         case E_Q_ACTION_VIDEO_RATE:
-          pg_sdobUpdateVideoRate(pGui, mpv_speed(item->amt));
+          pg_sdobUpdateVideoRate(&m_gui, mpv_speed(item->amt));
         break;
 
         case E_Q_ACTION_VIDEO_RATE_ADJUST:
-          pg_sdobUpdateVideoRate(pGui, mpv_speed_adjust(item->amt));
+          pg_sdobUpdateVideoRate(&m_gui, mpv_speed_adjust(item->amt));
         break;
 
         case E_Q_ACTION_VIDEO_RATE_USER:
-          pg_sdobUpdateUserDefinedVideoRate(pGui, libMpvVideoInfo->pbrate);
+          pg_sdobUpdateUserDefinedVideoRate(&m_gui, libMpvVideoInfo->pbrate);
         break;
 
         case E_Q_ACTION_LOADVIDEO:
           pg_skydiveorbust_loadvideo_internal
             ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);
-          free(item->data);
+          PG_SDOB_FREE_VIDEO_DATA((struct pg_sdob_video_data*)item->data);
+          free((struct pg_sdob_video_data*)item->data);
         break;
 
         case E_Q_PLAYER_VIDEO_PAUSE:
@@ -2804,7 +2816,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
   }
   
-  /***gslc_Update(pGui);*/
+  /***gslc_Update(&m_gui);*/
   return 0;
 }
 
@@ -2832,7 +2844,7 @@ PI_THREAD (pg_sdobThread)
   dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
 
   while (!pg_sdobThreadKill) {
-    if (!pg_skydiveorbust_thread(&m_gui)) {
+    if (!pg_skydiveorbust_thread()) {
       usleep(250000);
     }
   }

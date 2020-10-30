@@ -13,6 +13,7 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Accept: application/json");
     chunk = curl_slist_append(chunk, "Content-Type: application/json; charset: utf-8");
+    chunk = curl_slist_append(chunk, "Connection: close");
     chunk = curl_slist_append(chunk, "Host: dev.skydiveorbust.com");
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/scores/submit");
@@ -21,13 +22,10 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, dataLen);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
     res = curl_easy_perform(curl);
-    // ErrorCheck
-    if (res != CURLE_OK) {
-      return res;
-    }
-    curl_easy_cleanup(curl);
+    
     curl_slist_free_all(chunk);
-    return 0;
+    curl_easy_cleanup(curl);
+    return res;
   }
   return 1;
 }
@@ -50,6 +48,7 @@ int curl_sdob_slave_video(char *data, int dataLen, char* host) {
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Accept: application/json");
     chunk = curl_slist_append(chunk, "Content-Type: application/json; charset: utf-8");
+    chunk = curl_slist_append(chunk, "Connection: close");
     chunk = curl_slist_append(chunk, hostStr);
 
     curl_easy_setopt(curl, CURLOPT_URL, urlStr);
@@ -58,13 +57,11 @@ int curl_sdob_slave_video(char *data, int dataLen, char* host) {
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, dataLen);
     curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
     res = curl_easy_perform(curl);
-    // ErrorCheck
-    if (res != CURLE_OK) {
-      return res;
-    }
-    curl_easy_cleanup(curl);
     curl_slist_free_all(chunk);
-    return 0;
+    curl_easy_cleanup(curl);
+    free(hostStr);
+    free(urlStr);
+    return res;
   }
   return 1;
 }

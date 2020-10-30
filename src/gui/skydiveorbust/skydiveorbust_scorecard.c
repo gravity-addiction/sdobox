@@ -372,7 +372,7 @@ int pg_sdobSubmitScorecard() {
   
   char* md5H;
   int md5x = md5HashFile(dest, &md5H);
-
+ 
   // printf("MD5: %d\n%s\n", md5x, md5H);
   json_object_set_new(root, "md5", json_string(md5H));
 
@@ -401,6 +401,7 @@ int pg_sdobSubmitScorecard() {
   // Cleanup Resources
   free(s);
   if (md5x == 0) { free(md5H); }
+
   return 1;
 }
 
