@@ -365,18 +365,19 @@ int pg_sdobSubmitScorecard() {
     json_object_set_new(json_mark, "time", json_real(sdob_judgement->marks->arrScorecardTimes[s]));
     json_decref(json_mark);
   }
-
+  
   // Create Filepath and MD5 Hash
   char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
   combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
   
   char* md5H;
   int md5x = md5HashFile(dest, &md5H);
- 
-  // printf("MD5: %d\n%s\n", md5x, md5H);
-  json_object_set_new(root, "md5", json_string(md5H));
-
-
+  if (md5x == 0) {
+    // printf("MD5: %d - %s\n", md5x, md5H);
+    json_object_set_new(root, "md5", json_string(md5H));
+    free(md5H);
+  }
+  
   // Grab Device token
   FILE *tokenFile;
   char tokenStr[8];
@@ -400,7 +401,6 @@ int pg_sdobSubmitScorecard() {
 
   // Cleanup Resources
   free(s);
-  if (md5x == 0) { free(md5H); }
 
   return 1;
 }

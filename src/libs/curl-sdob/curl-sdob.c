@@ -20,7 +20,7 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, dataLen);
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 0L);
     res = curl_easy_perform(curl);
     
     curl_slist_free_all(chunk);

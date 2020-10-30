@@ -27,7 +27,6 @@ int md5HashFile(char* filepath, char **md5hash) {
   for (int i = 0, j = 0; i < MD5_DIGEST_LENGTH; i++, j+=2) {
     sprintf(*md5hash + j, "%02x", c[i]);
   }
-  md5hash[sizeof c + 2] = 0;
 
   fclose(inFile);
   return 0;
