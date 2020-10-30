@@ -68,6 +68,7 @@ int parseTabbedData(const char *s, char *data[], size_t n);
 
 int cstring_cmp(const void *a, const void *b);
 int cint_cmp(const void *a, const void *b);
+void combineFilePath(char* destination, const char* path1, const char* path2);
 char *file_ext(char *filename);
 int file_exists(char *filename);
 int fileStruct_cmpName(const void *a, const void *b);

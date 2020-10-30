@@ -2,6 +2,7 @@
 
 cd /home/pi/Downloads/sdobox/
 git pull
+./build-scripts/apt-install.sh
 make -j4
 sudo systemctl stop sdobox.service
 rsync -avs bin /opt/sdobox/

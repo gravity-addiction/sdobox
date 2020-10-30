@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <curl/curl.h>
+
 #include "skydiveorbust_submit.h"
 
 #include "libs/buttons/buttons.h"

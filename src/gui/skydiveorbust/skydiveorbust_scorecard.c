@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <jansson.h>
+#include <curl/curl.h>
 
 #include "libs/shared.h"
 #include "skydiveorbust.h"
+#include "libs/md5/md5.h"
 #include "libs/queue/queue.h"
 #include "libs/mpv/mpv.h"
 #include "libs/mpv/mpv_info.h"
@@ -365,8 +367,40 @@ int pg_sdobSubmitScorecard() {
   s = json_dumps(root, 0);
   json_decref(root);
 
+  char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
+  combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
+  printf("Video File: %s\n%s %s\n", dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
+  char* md5H;
+  int md5x = md5HashFile(dest, &md5H);
+  printf("MD5: %d\n%s\n", md5x, md5H);
+  
+  CURL *curl;
+  CURLcode res;
+
+  curl = curl_easy_init();
+  if (curl) {
+    struct curl_slist *chunk = NULL;
+    chunk = curl_slist_append(chunk, "Accept: application/json");
+    chunk = curl_slist_append(chunk, "Content-Type: application/json; charset: utf-8");
+    chunk = curl_slist_append(chunk, "Host: dev.skydiveorbust.com");
+
+    curl_easy_setopt(curl, CURLOPT_URL, "https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/scores/submit");
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(s));
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    res = curl_easy_perform(curl);
+    // ErrorCheck
+    if (res != CURLE_OK) {
+      printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    }
+    curl_easy_cleanup(curl);
+    curl_slist_free_all(chunk);
+  }
+
   printf("JSON %s\n", s);
   free(s);
+  if (md5x == 0) { free(md5H); }
   return 1;
 }
 
