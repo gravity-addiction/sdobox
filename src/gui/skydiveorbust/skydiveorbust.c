@@ -11,6 +11,7 @@
 #include <wiringPi.h> // Gordons Wiring Pi
 #include <regex.h>
 #include <assert.h>
+#include <jansson.h>
 
 #include "skydiveorbust.h"
 #include "gui/pages.h"
@@ -22,6 +23,7 @@
 #include "libs/dbg/dbg.h"
 #include "libs/json/json.h"
 #include "libs/mpv/mpv_info.h"
+#include "libs/curl-sdob/curl-sdob.h"
 #include "libs/ulfius/websocket_api.h"
 
 #include "gui/keyboard/keyboard.h"
@@ -2293,6 +2295,20 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
 }
 
 
+void * syncSlave(void *input) {
+  // CURL Submit Scorecard to Server
+  if (slave_video(
+      ((struct pg_sdob_device_slave_args *)input)->body,
+      ((struct pg_sdob_device_slave_args *)input)->bodyLen,
+      ((struct pg_sdob_device_slave_args *)input)->hostName
+  ) != 0) {
+    dbgprintf(DBG_ERROR, "Unable to send video to: %s\n", ((struct pg_sdob_device_slave_args *)input)->hostName);
+  };
+  free(input);
+  pthread_exit(NULL);
+}
+
+
 //
 // Called only from the skydiveorbust page's thread as the result of a queue action.
 //
@@ -2321,21 +2337,66 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
     mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
     mpv_fullscreen(1);
     pg_sdob_pl_sliderForceUpdate = 1;
-/*
-    fork();
-    // Push out new video info
-    int cmdLen = snprintf(NULL, 0, "/opt/sdobox/scripts/sdob/new-video.sh -s \"%s\" --comp \"%s\" -es \"%s\" -d \"%s\" -f \"%s\" -t \"%s\" -r \"%s\" --hoster 0 &", 
-      sdob_judgement->eventStr, sdob_judgement->compStr, sdob_judgement->ruleSet, sdob_judgement->video->local_folder, 
-      sdob_judgement->video->video_file, sdob_judgement->team, sdob_judgement->round
-    ) + 1;
-    char *cmd = (char*)malloc(cmdLen);
-    snprintf(cmd, cmdLen, "/opt/sdobox/scripts/sdob/new-video.sh -s \"%s\" --comp \"%s\" -es \"%s\" -d \"%s\" -f \"%s\" -t \"%s\" -r \"%s\" --hoster = 0 &", 
-      sdob_judgement->eventStr, sdob_judgement->compStr, sdob_judgement->ruleSet, sdob_judgement->video->local_folder, 
-      sdob_judgement->video->video_file, sdob_judgement->team, sdob_judgement->round
-    );
-    system(cmd);
-    free(cmd);
-*/
+
+    char* s = NULL;
+
+    json_t *root = json_object();
+
+    json_object_set_new(root, "hoster", json_integer(0));
+    json_object_set_new(root, "slug", json_string(sdob_judgement->eventStr));
+
+    json_object_set_new(root, "comp", json_string(sdob_judgement->compStr));
+    json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
+    json_object_set_new(root, "event", json_string(sdob_judgement->eventStr));
+    json_object_set_new(root, "eventId", json_string(sdob_judgement->event));
+    json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
+    json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
+
+    json_object_set_new(root, "folder", json_string(sdob_judgement->video->local_folder));
+    json_object_set_new(root, "file", json_string(sdob_judgement->video->video_file));
+    json_object_set_new(root, "url", json_string(sdob_judgement->video->url));
+
+    // Dump JSON and decref
+    s = json_dumps(root, 0);
+    json_decref(root);
+
+    char hostName[1024];
+    hostName[1023] = '\0';
+    if (gethostname(hostName, 1023) != -1) {
+      strlcat(hostName, ".local", 1023);
+      
+      FILE * fpHosts;
+      char * hostLine = NULL;
+      size_t hostLen = 0;
+      ssize_t readHost;
+
+      int n = 10;
+      int i = 0;
+      struct pg_sdob_device_slave_args **dataSets = (struct pg_sdob_device_slave_args**)malloc(n * sizeof(struct pg_sdob_device_slave_args*));
+      
+      fpHosts = fopen("/opt/sdobox/scripts/sdob/child_hosts", "r");
+      if (fpHosts) {
+        while ((readHost = getline(&hostLine, &hostLen, fpHosts)) != -1) {
+          stripReturnCarriage(&hostLine);
+          dbgprintf(DBG_DEBUG, "Sending To Slave: %s\n", hostLine);
+          if (strcmp(hostName, hostLine) == 0) { continue; }
+
+          struct pg_sdob_device_slave_args *childData = (struct pg_sdob_device_slave_args *)malloc(sizeof(struct pg_sdob_device_slave_args));
+          childData->hostName = strdup(hostLine);
+          childData->body = strdup(s);
+          childData->bodyLen = strlen(s);
+          dataSets[i] = childData;
+
+          pthread_t tid;
+          pthread_create(&tid, NULL, &syncSlave, dataSets[i]);
+          i++;
+
+        }
+        fclose(fpHosts);
+        if (hostLine) { free(hostLine); }
+      }
+    }
+    free(s);
   }
     
 
@@ -2950,6 +3011,9 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
+  
+  sdob_devicehost->isHost = 1;
+
   // Reset Scorecard Slider to Top
   // pg_sdobSliderResetCurPos(pGui);
 

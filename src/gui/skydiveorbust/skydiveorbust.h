@@ -63,6 +63,11 @@ struct pg_sdob_device_host {
 };
 struct pg_sdob_device_host *sdob_devicehost;
 
+struct pg_sdob_device_slave_args {
+  char* hostName;
+  char *body;
+  int bodyLen;
+};
 
 /////////////////
 // Scorecard

@@ -10,6 +10,7 @@
 #include "libs/queue/queue.h"
 #include "libs/mpv/mpv.h"
 #include "libs/mpv/mpv_info.h"
+#include "libs/curl-sdob/curl-sdob.h"
 
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
@@ -364,41 +365,40 @@ int pg_sdobSubmitScorecard() {
     json_object_set_new(json_mark, "time", json_real(sdob_judgement->marks->arrScorecardTimes[s]));
     json_decref(json_mark);
   }
+
+  // Create Filepath and MD5 Hash
+  char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
+  combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
+  
+  char* md5H;
+  int md5x = md5HashFile(dest, &md5H);
+
+  // printf("MD5: %d\n%s\n", md5x, md5H);
+  json_object_set_new(root, "md5", json_string(md5H));
+
+
+  // Grab Device token
+  FILE *tokenFile;
+  char tokenStr[8];
+  tokenFile = fopen("/opt/sdobox/device.token", "r");
+  if (tokenFile == NULL) {
+    strlcpy(tokenStr, "NOTOKENS", 8);
+  } else {
+    fgets(tokenStr, 8, tokenFile);
+    fclose(tokenFile);
+  }
+  json_object_set_new(root, "device", json_string(tokenStr));
+
+  // Dump JSON and decref
   s = json_dumps(root, 0);
   json_decref(root);
 
-  char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
-  combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
-  printf("Video File: %s\n%s %s\n", dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
-  char* md5H;
-  int md5x = md5HashFile(dest, &md5H);
-  printf("MD5: %d\n%s\n", md5x, md5H);
-  
-  CURL *curl;
-  CURLcode res;
+  // CURL Submit Scorecard to Server
+  if (submit_scorecard(s, (long)strlen(s)) != 0) {
+    dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
+  };
 
-  curl = curl_easy_init();
-  if (curl) {
-    struct curl_slist *chunk = NULL;
-    chunk = curl_slist_append(chunk, "Accept: application/json");
-    chunk = curl_slist_append(chunk, "Content-Type: application/json; charset: utf-8");
-    chunk = curl_slist_append(chunk, "Host: dev.skydiveorbust.com");
-
-    curl_easy_setopt(curl, CURLOPT_URL, "https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/scores/submit");
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, s);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(s));
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-    res = curl_easy_perform(curl);
-    // ErrorCheck
-    if (res != CURLE_OK) {
-      printf("curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    }
-    curl_easy_cleanup(curl);
-    curl_slist_free_all(chunk);
-  }
-
-  printf("JSON %s\n", s);
+  // Cleanup Resources
   free(s);
   if (md5x == 0) { free(md5H); }
   return 1;

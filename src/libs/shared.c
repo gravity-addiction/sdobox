@@ -535,6 +535,15 @@ int isNumeric(char* str) {
   }
   return 0;
 }
+
+void stripReturnCarriage(char **str) {
+  char *src, *dst;
+  for (src = dst = *str; *src != '\0'; src++) {
+    *dst = *src;
+    if (*dst != '\r' && *dst != '\n') { dst++; }
+  }
+  *dst = '\0';
+}
 /*
 //---------------------
 // System Commands
