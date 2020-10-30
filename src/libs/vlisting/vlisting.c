@@ -24,7 +24,7 @@ struct vlist_config * VLIST_INIT_CONFIG(int per, int max) {
 }
 
 void VLIST_UPDATE_CONFIG(struct vlist_config *config) {
-  config->scrollMax = ceil(config->len / config->per);
+  config->scrollMax = ceil((config->len - 1) / config->per);
   if (config->scrollMax < 1) { config->scrollMax = 1; }
 }
 
