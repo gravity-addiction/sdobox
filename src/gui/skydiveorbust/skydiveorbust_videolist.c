@@ -521,7 +521,7 @@ void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath) {
     free(pg_sdobVideo_list);
   }
 
-  VLIST_CLEAR_CONFIG(pg_sdobVideo_listConfig);
+  // VLIST_CLEAR_CONFIG(pg_sdobVideo_listConfig);
 
   if (strcmp(folderPath, VIDEOS_BASEPATH) == 0) {
     pg_sdobVideo_listConfig->len = file_list(folderPath, &pg_sdobVideo_list, -1);
