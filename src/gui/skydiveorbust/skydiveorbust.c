@@ -200,7 +200,7 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
 // Extra event,team,round from omniskore saved videos
 #define SVR_OMNISKORE "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
 
-#define SVR_TAMMY "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)_\\([^_]\\+\\)\\."
+#define SVR_TAMMY "^\\([^_]\\+\\)_\\([^_]\\+\\)_\\(R[^_]\\+\\)_\\([0-9]\\+\\)\\."
 
 static regex_t r_svr_tammy; // r_svr_wholefilename, r_svr_partial, r_svr_omniskore, 
 static double default_working_time = 35.0;
@@ -2310,7 +2310,7 @@ void * syncSlave(void *input) {
       ((struct pg_sdob_device_slave_args *)input)->bodyLen,
       ((struct pg_sdob_device_slave_args *)input)->hostName
   ) != 0) {
-    dbgprintf(DBG_ERROR, "Unable to send video to: %s\n", ((struct pg_sdob_device_slave_args *)input)->hostName);
+    dbgprintf(DBG_DEBUG, "Unable to send video to: %s\n", ((struct pg_sdob_device_slave_args *)input)->hostName);
   };
   free(((struct pg_sdob_device_slave_args *)input)->hostName);
   free(((struct pg_sdob_device_slave_args *)input)->body);
