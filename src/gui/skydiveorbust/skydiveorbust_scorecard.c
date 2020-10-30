@@ -394,7 +394,7 @@ int pg_sdobSubmitScorecard() {
   json_decref(root);
 
   // CURL Submit Scorecard to Server
-  if (submit_scorecard(s, (long)strlen(s)) != 0) {
+  if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
     dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   };
 

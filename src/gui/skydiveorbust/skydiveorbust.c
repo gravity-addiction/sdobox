@@ -2211,7 +2211,7 @@ int pg_skydiveorbust_parse_filename_default(gslc_tsGui *pGui, struct pg_sdob_vid
   pg_sdobUpdateTeam(pGui, svr_team);
 
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  gslc_Update(pGui);
+  /***gslc_Update(pGui);*/
 
   free(svr_eventname);
   free(svr_rnd);
@@ -2297,7 +2297,7 @@ int pg_skydiveorbust_parse_filename_omniskore(gslc_tsGui *pGui, struct pg_sdob_v
 
 void * syncSlave(void *input) {
   // CURL Submit Scorecard to Server
-  if (slave_video(
+  if (curl_sdob_slave_video(
       ((struct pg_sdob_device_slave_args *)input)->body,
       ((struct pg_sdob_device_slave_args *)input)->bodyLen,
       ((struct pg_sdob_device_slave_args *)input)->hostName
@@ -2330,9 +2330,6 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
     dbgprintf(DBG_DEBUG, "Using Tammys Schema for filename: '%s'\n", sdob_judgement->video);
   }
 
-  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  // gslc_Update(pGui);
-
   if (sdob_devicehost->isHost == 1) {
     mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
     mpv_fullscreen(1);
@@ -2349,7 +2346,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
     json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
     json_object_set_new(root, "event", json_string(sdob_judgement->eventStr));
     json_object_set_new(root, "eventId", json_string(sdob_judgement->event));
-    json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
+    json_object_set_new(root, "team", json_string(sdob_judgement->team));
     json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
 
     json_object_set_new(root, "folder", json_string(sdob_judgement->video->local_folder));
@@ -2399,7 +2396,8 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
     free(s);
   }
     
-
+  gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+  /***gslc_Update(pGui);*/
 }
 
 //
@@ -2792,7 +2790,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
       pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
     }
 
-    // gslc_Update(pGui);
+
     // pg_sdobUpdateEventFromLocalFolder(&m_gui, libUlfiusSDOBNewVideoInfo->meetStr);
     // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compId, libUlfiusSDOBNewVideoInfo->comp);
     // pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->desc);
@@ -2806,7 +2804,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 
   }
   
-  
+  /***gslc_Update(pGui);*/
   return 0;
 }
 

@@ -5,8 +5,8 @@
 extern "C" {
 #endif // __cplusplus
 
-int submit_scorecard(char *data, int dataLen);
-int slave_video(char *data, int dataLen, char* host);
+int curl_sdob_submit_scorecard(char *data, int dataLen);
+int curl_sdob_slave_video(char *data, int dataLen, char* host);
 
 #ifdef __cplusplus
 }

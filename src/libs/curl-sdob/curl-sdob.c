@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 
-int submit_scorecard(char *data, int dataLen) {
+int curl_sdob_submit_scorecard(char *data, int dataLen) {
   // Post using CURL
   CURL *curl;
   CURLcode res;
@@ -32,7 +32,7 @@ int submit_scorecard(char *data, int dataLen) {
   return 1;
 }
 
-int slave_video(char *data, int dataLen, char* host) {
+int curl_sdob_slave_video(char *data, int dataLen, char* host) {
   // Post using CURL
   CURL *curl;
   CURLcode res;

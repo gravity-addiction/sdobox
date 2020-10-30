@@ -38,7 +38,7 @@ bool pg_system_cbBtn_powercycleHdmi(void* pvGui, void *pvElemRef, gslc_teTouch e
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   gslc_ElemSetFillEn(pGui, pg_systemEl[E_SYSTEM_EL_POWERCYCLEHDMI], true);
-  gslc_Update(pGui);
+  /***gslc_Update(pGui);*/
   system("/usr/bin/vcgencmd display_power 0");
   usleep(2000000);
   system("/usr/bin/vcgencmd display_power 1");
