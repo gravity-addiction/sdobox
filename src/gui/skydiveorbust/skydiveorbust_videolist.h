@@ -1,5 +1,5 @@
-#ifndef _PAGES_SDOB_SUBMIT_H_
-#define _PAGES_SDOB_SUBMIT_H_
+#ifndef _PAGES_SDOB_VIDEOLIST_H_
+#define _PAGES_SDOB_VIDEOLIST_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,4 +56,4 @@ void __attribute__ ((constructor)) pg_sdobVideoList_setup(void);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // _PAGES_SDOB_SUBMIT_H_
+#endif // _PAGES_SDOB_VIDEOLIST_H_

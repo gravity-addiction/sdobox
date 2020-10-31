@@ -18,6 +18,7 @@ enum {
   E_SDOB_SUBMIT_EL_TXT_SCORE,
   E_SDOB_SUBMIT_EL_TXT_TEAMNUM,
   E_SDOB_SUBMIT_EL_TXT_ROUNDNUM,
+  E_SDOB_SUBMIT_EL_TXT_SUBMITTING,
   E_SDOB_SUBMIT_EL_TXT_TMP,
 
   E_SDOB_SUBMIT_EL_BTN_TMPKB,
@@ -37,6 +38,8 @@ struct pg_sdob_submit_info {
   char scoreStr[32];
 };
 struct pg_sdob_submit_info sdob_submit_info;
+
+int pg_sdob_submit_is_submitting;
 
 // Double press clear button
 int pg_sdob_submit_clearCheck;

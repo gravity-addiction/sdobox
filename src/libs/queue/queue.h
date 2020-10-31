@@ -31,6 +31,8 @@ struct queue_head {
   char *cmd;
   queue_any_u u1;
   queue_any_u u2;
+  void (*cb)(void*);
+  void* cbarg;
 };
 
 struct queue_root *ALLOC_QUEUE_ROOT();

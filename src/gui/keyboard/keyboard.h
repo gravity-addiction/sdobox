@@ -127,6 +127,9 @@ int pg_keyboard_guiKeyboardUpdate(gslc_tsGui* pGui);
 // Initalize GUIslice Elements needed for buttons (pooled)
 int pg_keyboard_guiKeyboard(gslc_tsGui* pGui);
 
+void pg_keyboard_setLowercase(gslc_tsGui *pGui);
+void pg_keyboard_setUppercase(gslc_tsGui *pGui);
+
 
 ////////////////////////////
 // KEYBOARD BASELINE GUISLICE LAYOUT

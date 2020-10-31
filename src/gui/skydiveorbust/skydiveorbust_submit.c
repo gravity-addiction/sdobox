@@ -15,6 +15,11 @@ void pg_sdobSubmitClose(gslc_tsGui *pGui) {
   touchscreenPageGoBack(pGui);
 }
 
+void pg_sdobSubmitDone(gslc_tsGui *pGui) {
+  pg_sdob_submit_is_submitting = 0;
+  gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], " ");
+  pg_sdobSubmitClose(pGui) ;
+}
 ////////////////
 // Button Callback
 bool pg_sdobSubmitCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -47,13 +52,19 @@ bool pg_sdobSubmitCbBtnSubmitScore(void* pvGui,void *pvElemRef,gslc_teTouch eTou
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  pg_sdob_submit_is_submitting = 1;
+  gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], "Please Wait, Submitting scores to server.");
+
   // Submit Scorecard
-  struct queue_head *item = new_qhead();
+   struct queue_head *item = new_qhead();
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+  item->cb = (void*)pg_sdobSubmitDone;
+  item->cbarg = (void*)pGui;
   queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   // Close Submit Menu
-  pg_sdobSubmitClose(pGui);
+  // pg_sdobSubmitClose(pGui);
   return true;
 }
 
@@ -205,6 +216,20 @@ void pg_sdobSubmitGuiInit(gslc_tsGui *pGui) {
   }
 
 
+  // Is Submitting
+  if ((
+    pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect){(rFullscreen.x + 4), rFullscreen.y + 170, (rFullscreen.w - 8), 30},
+          (char*)" ", 0, E_FONT_MONO18)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], GSLC_COL_GREEN);
+    gslc_ElemSetCol(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], GSLC_ALIGN_MID_MID);
+    gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], true);
+    gslc_ElemSetFrameEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], false);
+  }
+
+
   // Cancel Button
   if ((
     pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CANCEL] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -299,6 +324,7 @@ void pg_sdobSubmit_open(gslc_tsGui *pGui) {
   pg_sdobSubmitButtonSetFuncs();
 
   gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], false);
+
   pg_sdob_submit_clearCheck = 0;
 }
 

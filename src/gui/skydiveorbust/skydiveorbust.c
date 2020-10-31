@@ -710,28 +710,28 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
 
 void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
   
-  if (strcmp(str, "cfRotations") == 0) {
+  if (strcmp(str, "cfRotations") == 0 || strcmp(str, "CF4R") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 90.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
-  } else if (strcmp(str, "cf2WaySequentials") == 0) {
+  } else if (strcmp(str, "cf2WaySequentials") == 0 || strcmp(str, "CF2") == 0 || strcmp(str, "CF2S") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 60.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
-  } else if (strcmp(str, "cf4waySequentials") == 0) {
+  } else if (strcmp(str, "cf4waySequentials") == 0 || strcmp(str, "CF4") == 0 || strcmp(str, "CF4S") == 0) {
     sdob_judgement->prestartTime = 30.0;
     sdob_judgement->workingTime = 120.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
-  } else if (strcmp(str, "fsSpeed") == 0) {
+  } else if (strcmp(str, "fsSpeed") == 0 || strcmp(str, "FSSPEED") == 0) {
     sdob_judgement->prestartTime = 45.0;
     sdob_judgement->workingTime = 0.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
@@ -1032,6 +1032,9 @@ bool pg_sdobCbBtnVideoRate(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 bool pg_sdobCbBtnChangeJudge(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
+  pg_keyboard_shiftOn = 1;
   pg_keyboard_show(pGui, 3, sdob_judgement->judge, &pg_sdobUpdateJudgeInitials);
   return true;
 }
@@ -1049,6 +1052,8 @@ bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
   }
   else {
     // Manual mode w/keyboard
+    if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
+    pg_keyboard_shiftOn = 0;
     pg_keyboard_show(pGui, 6, sdob_judgement->team, &pg_sdobUpdateTeam);
   }
 
@@ -1073,6 +1078,8 @@ bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   }
   else {
     // Manual mode w/keyboard
+    if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
+    pg_keyboard_shiftOn = 0;
     pg_keyboard_show(pGui, 3, sdob_judgement->round, &pg_sdobUpdateRound);
   }
 
@@ -1109,7 +1116,7 @@ bool pg_sdobCbBtnVideoDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 bool pg_sdobCbBtnScCount(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_SDOB_VIDEOLIST);
+  touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST);
   return true;
 }
 
@@ -1208,6 +1215,7 @@ bool pg_sdobPlCbBtnStop(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   // item->action = E_Q_PLAYER_VIDEO_STOP;
   // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   mpv_stop();
+  libMpvVideoInfo->is_loaded = 0;
 
   struct queue_head *itemClear = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemClear);
@@ -2312,7 +2320,7 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   pg_sdobUpdateRound(pGui, (char*)" ");
   pg_sdobUpdateTeam(pGui, (char*)" ");
   pg_sdobUpdateEvent(pGui, (char*)" ");
-  pg_sdobUpdateComp(pGui, (char*)" ");
+  // pg_sdobUpdateComp(pGui, (char*)" ");
 
   // if (pg_skydiveorbust_parse_filename_default(pGui, sdob_judgement->video) == 0) {
   //   dbgprintf(DBG_DEBUG, "Using Default Schema for filename: '%s'\n", sdob_judgement->video);
@@ -2514,7 +2522,12 @@ void pg_sdob_clear(gslc_tsGui *pGui) {
   
   // Reset Scorecard Scroller
   pg_sdobSliderResetCurPos(pGui);
-  if (!libMpvVideoInfo->is_playing) { pg_sdobUpdatePlayerSlider(pGui); }
+  if (!libMpvVideoInfo->is_playing) {
+    pg_sdobUpdatePlayerSlider(pGui);
+  }
+  if (!libMpvVideoInfo->is_loaded) {
+    pg_sdobUpdateVideoDescOne(pGui, "Click To Load Video");
+  }
 
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
@@ -2629,7 +2642,9 @@ int pg_skydiveorbust_thread() {
 
         case E_Q_SCORECARD_SUBMIT_SCORECARD:
           // Submit scorecard to syslog
+          // touchscreenPopupMsgBox(&m_gui, "Submitting Score!", "Saving your score.");
           pg_sdobSubmitScorecard();
+          // touchscreenPopupMsgBoxClose(&m_gui);
         // No break, clear scorecard after submit
         case E_Q_SDOB_CLEAR:
           pg_sdob_clear(&m_gui);
@@ -2723,10 +2738,14 @@ int pg_skydiveorbust_thread() {
           }
         break;
 
-	  default:
-		  dbgprintf(DBG_ERROR, "Undetected item action: %d\n", item->action);
+	    default:
+		    dbgprintf(DBG_ERROR, "Undetected item action: %d\n", item->action);
           abort();
-		  break;
+		    break;
+      }
+
+      if (item->cb != NULL) {
+        item->cb(item->cbarg);
       }
 
       free(item);
@@ -3012,7 +3031,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdobThreadStart();
 
 
-
+  pg_sdob_clear(pGui);
 
   //////////////////////////////
   // Finish up

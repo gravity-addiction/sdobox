@@ -43,6 +43,7 @@ void INIT_QUEUE_HEAD(struct queue_head *head)
   head->milli = -1;
   head->time = -1.0;
   head->amt = 0.0;
+  head->cb = NULL;
   //  head->key = calloc(64, sizeof(char));
   //  head->cmd = calloc(256, sizeof(char));
 }

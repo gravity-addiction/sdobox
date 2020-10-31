@@ -27,7 +27,7 @@ bool pg_system_cbBtn_close(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 
 bool pg_system_cbBtn_wifi(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
-  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+  // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // touchscreenPageOpen(pGui, E_PG_WIFI);
   return true;

@@ -263,7 +263,15 @@ void pg_keyboard_setSymbols(gslc_tsGui *pGui, int doSymbols) {
   }
 }
 
+void pg_keyboard_setLowercase(gslc_tsGui *pGui) {
+  pg_keyboard_shiftOn = 0;
+  pg_keyboard_guiKeyboardUpdate(pGui);
+}
 
+void pg_keyboard_setUppercase(gslc_tsGui *pGui) {
+  pg_keyboard_shiftOn = 1;
+  pg_keyboard_guiKeyboardUpdate(pGui);
+}
 
 
 
@@ -649,6 +657,7 @@ int pg_keyboard_guiInit(gslc_tsGui* pGui)
 void pg_keyboard_init(gslc_tsGui *pGui) {
   pg_keyboard_guiInit(pGui);
   pg_keyboard_data = PG_KEYBOARD_INIT_DATA(pGui);
+  pg_keyboard_shiftOn = 0;
 
   cbInit[E_PG_KEYBOARD] = NULL;
 }
@@ -657,14 +666,15 @@ void pg_keyboard_init(gslc_tsGui *pGui) {
 // GUI Open
 void pg_keyboard_open(gslc_tsGui *pGui) {
 
-  // // Set Upper Case
-  // pg_keyboard_data = pg_keyboard_def_upperCase(pg_keyboard_data);
-  // pg_keyboard_shiftOn = 1;
-
-  // Set Lower Case
-  pg_keyboard_data = pg_keyboard_def_upperCase(pGui, pg_keyboard_data);
-  pg_keyboard_shiftOn = 1;
-
+  if (!pg_keyboard_shiftOn) {
+    // Set Lower Case
+    pg_keyboard_data = pg_keyboard_def_lowerCase(pGui, pg_keyboard_data);
+    pg_keyboard_shiftOn = 0;
+  } else {
+    // Set Upper Case
+    pg_keyboard_data = pg_keyboard_def_upperCase(pGui, pg_keyboard_data);
+    pg_keyboard_shiftOn = 1;
+  }
   // Display
   pg_keyboard_guiKeyboardUpdate(pGui);
 }
