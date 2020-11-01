@@ -6,7 +6,7 @@ extern "C" {
 #endif // __cplusplus
 
 struct libMpvPlayerInfo {
-  int cnt;
+  unsigned long int cnt;
   int has_file;
   int is_loaded;
   int is_playing;

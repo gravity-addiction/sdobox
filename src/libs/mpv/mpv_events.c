@@ -19,63 +19,86 @@
 
 
 
-/*
-struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA()
+
+struct libMpvEventsCbData * LIBMPV_EVENTS_INIT_DATA()
 {
-  struct libMpvEventThreadCbData *threads = (struct libMpvEventThreadCbData*)malloc(sizeof(struct libMpvEventThreadCbData));
-  threads->max = 16;
-  threads->len = 0;
-  threads->cbs = (struct libMpvEventThreadCb**)malloc(threads->max * sizeof(struct libMpvEventThreadCb));
-  for (int c = 0; c < threads->max; ++c) {
-    threads->cbs[c] = NULL;
+  struct libMpvEventsCbData *cbList = (struct libMpvEventsCbData*)malloc(sizeof(struct libMpvEventsCbData));
+  cbList->max = 16;
+  cbList->len = 0;
+  cbList->idC = 0;
+  cbList->cbs = (struct libMpvEventsCb**)malloc(cbList->max * sizeof(struct libMpvEventsCb));
+  for (int c = 0; c < cbList->max; ++c) {
+    cbList->cbs[c] = NULL;
   }
-  return threads;
+  return cbList;
 }
 
-void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventThreadCbData *threads) {// free cb
-  libMpvCallbackClean(threads);
-  free(threads->cbs);
-  free(threads);
+void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventsCbData *cbList) {// free cb
+  libMpvCallbackClean(cbList);
+  free(cbList->cbs);
 }
 
 
-void libMpvCallbackClean(struct libMpvEventThreadCbData *threads) {
-  for (size_t i = 0; i < threads->len; ++i) {
-    free(threads->cbs[i]);
-    threads->cbs[i] = NULL;
+void libMpvCallbackClean(struct libMpvEventsCbData *cbList) {
+  for (size_t i = 0; i < cbList->len; ++i) {
+    if (cbList->cbs[i] != NULL) {
+      free(cbList->cbs[i]);
+    }
   }
-  threads->len = 0;
+  cbList->len = 0;
 }
 
+unsigned long int libMpvCallbackAppend(void (*function)(char*)) {
+  if (libMpvEventsCbList != NULL &&
+      libMpvEventsCbList->len < libMpvEventsCbList->max
+  ) {
+    
+    struct libMpvEventsCb *eventCb = (struct libMpvEventsCb*)malloc(sizeof(struct libMpvEventsCb));
+    eventCb->id = libMpvEventsCbList->idC;
+    eventCb->cb = function;
+    libMpvEventsCbList->cbs[libMpvEventsCbList->len] = eventCb;
 
+    libMpvEventsCbList->len++;
+    return libMpvEventsCbList->idC++;
+  }
+  return -1;
+}
+
+void libMpvCallbackRemove(unsigned long int cbListId) {
+  for (size_t i = 0; i < libMpvEventsCbList->len; ++i) {
+    if (libMpvEventsCbList->cbs[i] != NULL && libMpvEventsCbList->cbs[i]->id == cbListId) {
+      for (size_t ix = i + 1; i < (libMpvEventsCbList->len - 1); ++i) {
+        *libMpvEventsCbList->cbs[ix - 1] = *libMpvEventsCbList->cbs[ix];
+      }
+
+      free(libMpvEventsCbList->cbs[libMpvEventsCbList->len - 1]);
+      libMpvEventsCbList->cbs[libMpvEventsCbList->len - 1] = NULL;
+
+      libMpvEventsCbList->len--;
+      return;
+    }
+  }
+}
+
+/*
 void* libMpvCallbackFunc(void* targ) {
   // struct libMpvEventThreadData *data;
   // data = (struct libMpvEventThreadData *) targ;
   printf("Here! %s\n", (char*)targ);
   // data->cb(data->event);
   // free(data);
-  pthread_exit(NULL);
-}
-
-
-int libMpvCallbackAppend(void (*function)(char*)) {
-  if (libMpvEventThreads != NULL &&
-      libMpvEventThreads->len < libMpvEventThreads->max
-  ) {
-    
-    // struct libMpvEventThreadCb cbs; // = (struct libMpvEventThreadCb*)malloc(sizeof(struct libMpvEventThreadCb));
-    // cbs.id = libMpvEventThreads->len;
-    // cbs.cb = function;
-    // libMpvEventThreads->cbs[libMpvEventThreads->len] = &cbs;
-    
-    return libMpvEventThreads->len++;
-  }
-  return -1;
+  // pthread_exit(NULL);
 }
 */
 
 
+
+
 void libMpvProcessEvent(char *event) {
+
+  // Updates an allocated space in memory with a counter
+  // off-threads can rely on the libMpvVideoInfo->cnt as a counter
+  // would like to figure out a way to deal with going over 4,294,967,265 and crashing.
 
   // Is Playing
   if (strcmp(event, "start-file") == 0 ||
@@ -115,8 +138,29 @@ void libMpvProcessEvent(char *event) {
   } else {
     return;
   }
-
   libMpvVideoInfo->cnt++;
+
+
+
+  /*
+    // Apply for callback of event, sends event as char* argument
+    // Setup callback function
+    void mpvEventCb(char* event) {
+      printf("Yay Event: %s\n", event);
+    }
+    // Append callback to mpv_events
+    int mpvEventCbId = libMpvCallbackAppend(&mpvEventCb);
+    // Stop event cbs and clean mpv_events of your cb
+    if (mpvEventCbId > -1) {
+      libMpvCallbackRemove(mpvEventCbId);
+    }
+  */
+  // Process Subscribed Callbacks
+  for (size_t i = 0; i < libMpvEventsCbList->len; ++i) {
+    if (libMpvEventsCbList->cbs[i] != NULL && libMpvEventsCbList->cbs[i]->cb != NULL) {
+      libMpvEventsCbList->cbs[i]->cb(event);
+    }
+  }
 }
 
 
@@ -315,7 +359,7 @@ int libMpvSocketThreadStart() {
   if (libMpvSocketThreadRunning) { return 0; }
 
   // Create callback struct
-  // libMpvEventThreads = LIBMPV_EVENTS_INIT_DATA();
+  libMpvEventsCbList = LIBMPV_EVENTS_INIT_DATA();
 
   // debug_print("SkydiveOrBust MPV Socket Thread Spinup: %d\n", libMpvSocketThreadRunning);
   libMpvSocketThreadKill = 0;
@@ -333,7 +377,8 @@ void libMpvSocketThreadStop() {
       shutdown_cnt++;
     }
 
-    // LIBMPV_EVENTS_DESTROY_DATA(libMpvEventThreads);
+    LIBMPV_EVENTS_DESTROY_DATA(libMpvEventsCbList);
+    free(libMpvEventsCbList);
     // debug_print("SkydiveOrBust MPV Socket Thread Shutdown %d\n", shutdown_cnt);
   }
 }

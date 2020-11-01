@@ -386,6 +386,14 @@ int main( int argc, char* args[] )
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
 
+  if (m_touchscreenInit) {
+    // Quit GUIslice
+    guislice_wrapper_quit(&m_gui);
+
+    // Close all Pages
+    touchScreenPageDestroyAll(&m_gui);
+  }
+
   if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
     websocket_server_stop();
   }
@@ -407,14 +415,6 @@ int main( int argc, char* args[] )
 
   // Kill USB Drives Thread
   libUsbDrivesThreadStop();
-
-  if (m_touchscreenInit) {
-    // Quit GUIslice
-    guislice_wrapper_quit(&m_gui);
-
-    // Close all Pages
-    touchScreenPageDestroyAll(&m_gui);
-  }
 
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();

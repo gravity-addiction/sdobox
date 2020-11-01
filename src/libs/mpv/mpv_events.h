@@ -7,24 +7,27 @@ extern "C" {
 
 
 // Each callback function
-struct libMpvEventThreadCb {
-  int id;
+struct libMpvEventsCb {
+  unsigned long int id;
   void (*cb)(char*);
 };
 
 // collection of callback functions
-struct libMpvEventThreadCbData {
+struct libMpvEventsCbData {
   int max;
   int len;
-  struct libMpvEventThreadCb **cbs;
+  unsigned long int idC;
+  struct libMpvEventsCb **cbs;
 };
-struct libMpvEventThreadCbData *libMpvEventThreads;
+struct libMpvEventsCbData *libMpvEventsCbList;
 
 // information of the callback sent to the thread.
-struct libMpvEventThreadData {
+struct libMpvEventsData {
   char* event;
   void (*cb)(char*);
 };
+
+
 
 int libMpvQueueThreadKill;
 int libMpvQueueThreadRunning;
@@ -35,13 +38,15 @@ int libMpvSocketThreadRunning;
 struct queue_root *libMpvEvents_Queue;
 size_t libMpvEvents_QueueLen;
 
-/*
-struct libMpvEventThreadCbData * LIBMPV_EVENTS_INIT_DATA();
-void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventThreadCbData *threads);
-void libMpvCallbackClean(struct libMpvEventThreadCbData *threads);
-void* libMpvCallbackFunc(void* targ);
-int libMpvCallbackAppend(void (*function)(char*));
-*/
+
+struct libMpvEventsCbData * LIBMPV_EVENTS_INIT_DATA();
+void LIBMPV_EVENTS_DESTROY_DATA(struct libMpvEventsCbData *cbList);
+void libMpvCallbackClean(struct libMpvEventsCbData *cbList);
+unsigned long int libMpvCallbackAppend(void (*function)(char*));
+void libMpvCallbackRemove(unsigned long int cbId);
+// void* libMpvCallbackFunc(void* targ);
+
+
 
 int libMpvQueueThreadStart();
 void libMpvQueueThreadStop();

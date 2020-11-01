@@ -19,10 +19,11 @@
 #include "libs/buttons/buttons.h"
 #include "libs/queue/queue.h"
 #include "libs/mpv/mpv.h"
+#include "libs/mpv/mpv_events.h"
+#include "libs/mpv/mpv_info.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/dbg/dbg.h"
 #include "libs/json/json.h"
-#include "libs/mpv/mpv_info.h"
 #include "libs/curl-sdob/curl-sdob.h"
 #include "libs/ulfius/websocket_api.h"
 
@@ -2774,11 +2775,13 @@ int pg_skydiveorbust_thread() {
 
 
   // SDOB Video Host Event
+  // Incoming Request from sdobox.socket or API socket threads
+  // Using reference counter to try to keep threads cleaner
   if (libUlfiusSDOBNewVideoInfo->cnt > 0 && pg_sdob_new_video_cnt != libUlfiusSDOBNewVideoInfo->cnt) {
     // Update counter to sync with current
     libUlfiusSDOBNewVideoInfo->cnt = pg_sdob_new_video_cnt;
 
-    dbgprintf(DBG_DEBUG, "%s", "New Video Requested\n");
+    dbgprintf(DBG_DEBUG, "%s", "New Video Requested From Socket\n");
 
     // if (m_tPageCur != E_PG_SKYDIVEORBUST) {
     //   touchscreenPageOpen(&m_gui, E_PG_SKYDIVEORBUST);
@@ -2907,8 +2910,18 @@ void pg_sdobThreadStop() {
 
 
 
-
-
+int pg_sdob_MpgEventCbId = -1;
+void pg_sdobMpvEventCb(char* event) {
+  printf("Yay Event: %s\n", event);
+  if (strcmp(event, "file-loaded") == 0) {
+    mpv_any_u* retPath;
+    if ((mpvSocketSinglet("path", &retPath)) != -1) {
+      printf("File Path: %s\n", retPath->ptr);
+      free(retPath->ptr);
+      MPV_ANY_U_FREE(retPath);
+    }
+  }
+}
 
 
 /////////////////////////////////////////////
@@ -3028,8 +3041,10 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStart();
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
-  pg_sdobThreadStart();
+  //pg_sdobThreadStart();
 
+
+  pg_sdob_MpgEventCbId = libMpvCallbackAppend(&pg_sdobMpvEventCb);
 
   pg_sdob_clear(pGui);
 
@@ -3067,7 +3082,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 ////////////////////////////
   // Stop SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
-  pg_sdobThreadStop();
+  //pg_sdobThreadStop();
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
 
@@ -3119,6 +3134,9 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   free(sdob_player_ticks->ptr);
   free(sdob_player_ticks);
 
+  if (pg_sdob_MpgEventCbId > -1) {
+    libMpvCallbackRemove(pg_sdob_MpgEventCbId);
+  }
   // free(sdob_devicehost);
   // printf("Page SkydiveOrBust Destroyed\n");
 }
@@ -3127,7 +3145,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 void __attribute__ ((constructor)) pg_skydiveorbust_constructor(void) {
   cbInit[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_init;
   cbOpen[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_open;
-  // cbThread[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_thread;
+  cbThread[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_thread;
   cbClose[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_close;
   cbDestroy[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_destroy;
   init_svr_regexp();
