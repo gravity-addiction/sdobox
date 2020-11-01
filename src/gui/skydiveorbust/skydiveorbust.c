@@ -3041,7 +3041,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStart();
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
-  //pg_sdobThreadStart();
+  pg_sdobThreadStart();
 
 
   pg_sdob_MpgEventCbId = libMpvCallbackAppend(&pg_sdobMpvEventCb);
@@ -3082,7 +3082,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 ////////////////////////////
   // Stop SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping Thread");
-  //pg_sdobThreadStop();
+  pg_sdobThreadStop();
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
 
@@ -3145,7 +3145,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
 void __attribute__ ((constructor)) pg_skydiveorbust_constructor(void) {
   cbInit[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_init;
   cbOpen[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_open;
-  cbThread[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_thread;
+  // cbThread[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_thread;
   cbClose[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_close;
   cbDestroy[E_PG_SKYDIVEORBUST] = &pg_skydiveorbust_destroy;
   init_svr_regexp();
