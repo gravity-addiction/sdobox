@@ -293,6 +293,8 @@ enum {
   E_Q_ACTION_VIDEO_RATE_USER,
   E_Q_ACTION_MPV_COMMAND,
   E_Q_ACTION_LOADVIDEO,
+  E_Q_ACTION_PARSE_VIDEO_FILENAME,
+  E_Q_ACTION_NOTIFY_SLAVES,
 
   E_Q_SDOB_CLEAR_SELECTING,
   E_Q_SDOB_CLEAR,
@@ -345,10 +347,8 @@ void pg_sdob_mpv_timepos_thread();
 int pg_sdobThreadStart();
 void pg_sdobThreadStop();
 
-void pg_skydiveorbust_loadvideo(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo);
 void pg_skydiveorbust_init(gslc_tsGui *pGui);
 void pg_skydiveorbust_open(gslc_tsGui *pGui);
-
 
 void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, int mark);
 void pg_sdob_scorecard_update_mark(gslc_tsGui *pGui, int selected, int mark);

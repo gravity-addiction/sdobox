@@ -129,7 +129,27 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
     strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
-    pg_skydiveorbust_loadvideo(pGui, newVid);
+
+    // Load Video Into Player
+    struct queue_head *item = new_qhead();
+    item->action = E_Q_ACTION_LOADVIDEO;
+    item->data = newVid;
+    item->u1.ptr = pGui;
+    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // Parse Filename for Comp Info
+    struct queue_head *itemParse = new_qhead();
+    itemParse->action = E_Q_ACTION_PARSE_VIDEO_FILENAME;
+    itemParse->data = newVid;
+    itemParse->u1.ptr = pGui;
+    queue_put(itemParse, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // Notify Slave Devices
+    struct queue_head *itemNotify = new_qhead();
+    itemNotify->action = E_Q_ACTION_NOTIFY_SLAVES;
+    itemNotify->data = newVid;
+    itemNotify->u1.ptr = pGui;
+    queue_put(itemNotify, pg_sdobQueue, &pg_sdobQueueLen);
     
     // Close Menu
     pg_sdobVideoListClose(pGui);

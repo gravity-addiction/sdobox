@@ -7,6 +7,7 @@
 #include "libs/vlisting/vlisting.h"
 #include "libs/mpv/mpv.h"
 #include "libs/fbcp/fbcp.h"
+#include "libs/queue/queue.h"
 
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"
@@ -142,7 +143,12 @@ bool pg_fileFinder_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   newVideo->video_type = 0;
   newVideo->local_folder = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path;
   newVideo->video_file = pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name;
-  pg_skydiveorbust_loadvideo(pGui, newVideo);
+
+  struct queue_head *item = new_qhead();
+  item->action = E_Q_ACTION_LOADVIDEO;
+  item->data = newVideo;
+  item->u1.ptr = pGui;
+  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
 
   return true;
@@ -231,7 +237,13 @@ bool pg_fileFinder_cbBtn_e(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
   strlcpy(newVid->local_folder, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->path, 256);
   strlcpy(newVid->video_file, pg_fileFinder_list[pg_fileFinder_listConfig->cur]->name, 256);
-  pg_skydiveorbust_loadvideo(pGui, newVid);
+
+  struct queue_head *item = new_qhead();
+  item->action = E_Q_ACTION_LOADVIDEO;
+  item->data = newVid;
+  item->u1.ptr = pGui;
+  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
   return true;
 }
 
