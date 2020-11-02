@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from screeninfo import get_monitors
-from python_mpv_jsonipc import MPV
 from threading import Thread
 from os.path import basename, expanduser, isfile, join as joined
 from pathlib import Path
@@ -331,20 +330,24 @@ class Player(Tk.Frame):
     def __init__(self, parent, title=None, video=''):
         Tk.Frame.__init__(self, parent)
 
+        style = ttk.Style()
+        style.configure("TButton", font=("Helvetica", "14"))
+        style.configure("Player.TButton", font=("Helvetica", "20"))
+        style.configure("Split.TButton", padding=30, font=("Helvetica", "20"))
         self.parent = parent  # == root
-        self.parent.title(title or "tkVLCplayer")
+        self.parent.title(title or "Skydive Or Bust Dubbing 1.0")
         self.video = expanduser(video)
 
-        # first, top panel shows video
-
-        self.videopanel = ttk.Frame(self.parent)
+        # first, top panel shows vide
+        self.vWrapper = ttk.Frame(self.parent)
+        self.videopanel = ttk.Frame(self.vWrapper)
         self.canvas = Tk.Canvas(self.videopanel)
         self.canvas.pack(fill=Tk.BOTH, expand=1)
         self.videopanel.pack(fill=Tk.BOTH, expand=1)
-
+        self.vWrapper.pack(side=Tk.LEFT)
         # panel to hold buttons
-        self.buttons_panel = Tk.Frame(self.parent)
-        self.is_buttons_panel_anchor_active = False
+        self.buttons_panel = Tk.Frame(self.vWrapper)
+        self.splitting_panel = Tk.Frame(self.parent)
 
         compcombo = ttk.Frame(self.buttons_panel)
         self.compCombo = ttk.Combobox(compcombo, width=50)
@@ -360,18 +363,18 @@ class Player(Tk.Frame):
         self.compCombo.bind('<<ComboboxSelected>>', self.change_comp)
 
         buttons = ttk.Frame(self.buttons_panel)
-        self.openButton = ttk.Button(buttons, text="Open", command=self.OnOpen)
-        self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay)
-        stop            = ttk.Button(buttons, text="Stop", command=self.OnStop)
-        self.slateButton = ttk.Button(buttons, text="Mark Slate", command=self.onMarkSlate)
-        self.exitButton = ttk.Button(buttons, text="Mark Exit", command=self.onMarkExit)
-        self.uploadButton = ttk.Button(buttons, text="Upload", command=self.onUpload)
+        self.openButton = ttk.Button(buttons, text="Open", command=self.OnOpen, style="Player.TButton")
+        self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay, style="Player.TButton")
+        stop            = ttk.Button(buttons, text="Stop", command=self.OnStop, style="Player.TButton")
+        self.slateButton = ttk.Button(self.splitting_panel, text="Mark Slate", command=self.onMarkSlate, style="Split.TButton")
+        self.exitButton = ttk.Button(self.splitting_panel, text="Mark Exit", command=self.onMarkExit, style="Split.TButton")
+        self.uploadButton = ttk.Button(self.splitting_panel, text="Upload", command=self.onUpload, style="Split.TButton")
         self.openButton.pack(side=Tk.LEFT)
         self.playButton.pack(side=Tk.LEFT)
         stop.pack(side=Tk.LEFT)
-        self.slateButton.pack(side=Tk.LEFT)
-        self.exitButton.pack(side=Tk.LEFT)
-        self.uploadButton.pack(side=Tk.LEFT)
+        self.slateButton.pack(side=Tk.TOP)
+        self.exitButton.pack(side=Tk.TOP)
+        self.uploadButton.pack(side=Tk.TOP)
         buttons.pack(side=Tk.BOTTOM, fill=Tk.X)
 
 
@@ -388,6 +391,7 @@ class Player(Tk.Frame):
 
 
         self.buttons_panel.pack(fill=Tk.BOTH, expand=1)
+        self.splitting_panel.pack(fill=Tk.BOTH, expand=1)
 
         # VLC player
         args = []
@@ -403,7 +407,7 @@ class Player(Tk.Frame):
         # self.buttons_panel.overrideredirect(True)
 
         # Estetic, to keep our video panel at least as wide as our buttons panel.
-        self.parent.minsize(width=502, height=0)
+        self.parent.minsize(width=720, height=480)
 
         self.is_buttons_panel_anchor_active = False
 
@@ -629,8 +633,8 @@ monitorList = get_monitors()
 for m in monitorList:
     print(str(m))
 
-appWidth = 720 # monitorList[0].width
-appHeight = 480 # monitorList[0].height
+appWidth = 480 # monitorList[0].width
+appHeight = 320 # monitorList[0].height
 appMulti = appWidth / 640
 if (appMulti > 1):
     fontSize = int(26 * (appMulti * .85))
