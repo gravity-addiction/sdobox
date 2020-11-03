@@ -1887,13 +1887,16 @@ void pg_skydiveorbustButtonLeftPressed() {
 
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
-    mpv_any_u* retTimePos;
     double markTime = 0.00;
-    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
-      } else { markTime = retTimePos->floating;
+    if (sdob_devicehost->isHost == 1) {
+      mpv_any_u* retTimePos;
+      markTime = 0.00;
+      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+        if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+        } else { markTime = retTimePos->floating;
+        }
+        MPV_ANY_U_FREE(retTimePos);
       }
-      MPV_ANY_U_FREE(retTimePos);
     }
 
     item = new_qhead();
@@ -1920,14 +1923,16 @@ void pg_skydiveorbustButtonRightPressed() {
   // Scorecard Clicks
 
   if (sdob_judgement->marks->selected < 0) {
-    // Add to queue E_Q_SCORECARD_INSERT_MARK
-    mpv_any_u* retTimePos;
-    double markTime = -1.00;
-    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
-      } else { markTime = retTimePos->floating;
+    double markTime = 0.00;
+    if (sdob_devicehost->isHost == 1) {
+      // Add to queue E_Q_SCORECARD_INSERT_MARK
+      mpv_any_u* retTimePos;
+      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+        if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+        } else { markTime = retTimePos->floating;
+        }
+        MPV_ANY_U_FREE(retTimePos);
       }
-      MPV_ANY_U_FREE(retTimePos);
     }
  
 
