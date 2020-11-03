@@ -2841,6 +2841,7 @@ int pg_skydiveorbust_thread() {
     }
     if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
       pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+      pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
     }
     if (libUlfiusSDOBNewVideoInfo->es[0] != '\0') {
       pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
