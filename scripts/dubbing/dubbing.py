@@ -72,6 +72,7 @@ def thread_sdobSocket():
 def thread_getFrames(file):
     global dataSet
     global statusText
+    player.framesFound = 0
     player.progressBar['value'] += 10
     # statusText.value = "Getting KeyFrame Locations"
     cmd = "ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 \"{}\" | awk -F',' '/K/ {{print $1}}'".format(file)
@@ -82,6 +83,7 @@ def thread_getFrames(file):
         frameList.append(lineDec)
     setattr(dataSet, "frameList", frameList)
     player.progressBar['value'] += 10
+    player.framesFound = 1
     player.statusLabel["text"] = "Found Keyframes\n" + player.statusLabel["text"]
     # statusText.value = "Keyframes Found, Finished Looking"
     
@@ -90,6 +92,7 @@ def thread_processVideo():
     global dataSet
     global statusText
     
+    player.isSplitting = 1
     videoRoot = '/tmp'
     videoFiles = []
     videoExt = '.mp4'
@@ -104,6 +107,7 @@ def thread_processVideo():
         vDurationStr  = getattr(dataSet, "duration")
         vDuration = float(vDurationStr)
     except:
+        player.isSplitting = 0
         return
 
     player.progressBar['value'] += 10
@@ -114,9 +118,18 @@ def thread_processVideo():
     if (hasattr(dataSet, "dest")):
         videoDest = getattr(dataSet, "dest") + videoExt
     else:
+        player.isSplitting = 0
         return
 
-
+    i = 0
+    while (i < 100 and player.framesFound == 0):
+        i += 1
+        time.sleep(2)
+    
+    if (player.framesFound == 0):
+        self.showError("Unable to split video.")
+        player.isSplitting = 0
+        return
 
     if (hasattr(dataSet, "slate")):
         # Slate
@@ -197,24 +210,11 @@ def thread_processVideo():
     root.update_idletasks()
 
     player.statusLabel["text"] = "Finished Stitching Video\n" + player.statusLabel["text"]
-    
+    player.isSplitting = 0
     #statusText.value = "Done Processing Video"
 
 
 
-def submitButton():
-    if (hasattr(dataSet, "filename") and getattr(dataSet, "filename") != "" and 
-    hasattr(dataSet, "slate") and getattr(dataSet, "slate") != "" and
-    hasattr(dataSet, "exit") and getattr(dataSet, "exit") != ""):
-        print('Splitting Video At', getattr(dataSet, "slate"), 'and', getattr(dataSet, "exit"))
-        player.statusLabel["text"] = "Splitting Video, Please Wait\n" + player.statusLabel["text"]
-        
-        # Start to Stop
-        # splitVideoFile(getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"), "/tmp/test1.mp4")
-        # statusText.value = "Processing Video"
-        processVideoThread = Thread(target = thread_processVideo)
-        processVideoThread.setDaemon(True)
-        processVideoThread.start()
         
 def combineVideoFiles(rootFolder, videoArr, outputFilename):
     videoListPath = rootFolder + "/sdobVideoList.txt"
@@ -311,6 +311,8 @@ class Player(Tk.Frame):
         self.teamComboOptionsI = []
         self.roundComboOptions = []
         self.videoWt = 120
+        self.framesFound = 0
+        self.isSplitting = 0
         
         style = ttk.Style()
         style.configure("TButton", padding=5, font=("Helvetica", "12"))
@@ -420,6 +422,7 @@ class Player(Tk.Frame):
     def clean_all(self):
         self.statusLabel["text"] = "Cleanup\n" + self.statusLabel["text"]
         self.OnStop()
+        self.framesFound = 0
         setattr(dataSet, "filename", "")
         setattr(dataSet, "dest", "")
         self.compComboOptions = ["Select Competition"]
@@ -433,7 +436,8 @@ class Player(Tk.Frame):
         self.slateButton.configure(style="Split.TButton")
         setattr(dataSet, "exit", "")
         self.exitButton.configure(style="Split.TButton")
-        player.progressBar['value'] = 0
+        self.progressBar['value'] = 0
+        self.isSplitting = 0
 
     def eject_all(self):
         folders = glob("/media/pi/*")
@@ -682,7 +686,20 @@ class Player(Tk.Frame):
         else:
             destFile = "/home/pi/Videos3/" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
             setattr(dataSet, "dest", destFile)
-            submitButton()
+
+            if (self.isSplitting == 0 and 
+            hasattr(dataSet, "filename") and getattr(dataSet, "filename") != "" and 
+            hasattr(dataSet, "slate") and getattr(dataSet, "slate") != "" and
+            hasattr(dataSet, "exit") and getattr(dataSet, "exit") != ""):
+                print('Splitting Video At', getattr(dataSet, "slate"), 'and', getattr(dataSet, "exit"))
+                player.statusLabel["text"] = "Splitting Video, Please Wait\n" + player.statusLabel["text"]
+                
+                # Start to Stop
+                # splitVideoFile(getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"), "/tmp/test1.mp4")
+                # statusText.value = "Processing Video"
+                processVideoThread = Thread(target = thread_processVideo)
+                processVideoThread.setDaemon(True)
+                processVideoThread.start()
 
     def OnTick(self):
         """Timer tick, update the time slider to the video time.
