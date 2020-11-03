@@ -43,10 +43,10 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   }
 
   // sanity check, never less than 0
-  // if (markTime < 0) {
-  //   // debug_print("%s\n", "Unable to grab video time!");
-  //   markTime = 0;
-  // }
+  if (markTime < 0) {
+    // debug_print("%s\n", "Unable to grab video time!");
+    markTime = 0.0;
+  }
 
   dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
   dbgprintf(DBG_DEBUG, "Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
@@ -158,6 +158,7 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 
 int pg_sdobSOPSTSet(double markTime, double prestartTime) {
   dbgprintf(DBG_DEBUG, "Setting Prestart Time at %f for %f seconds\n", markTime, prestartTime);
+  if (markTime < 0) { markTime = 0.0; }
   sdob_judgement->sopst = markTime;
   sdob_judgement->prestartTime = prestartTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
@@ -166,6 +167,7 @@ int pg_sdobSOPSTSet(double markTime, double prestartTime) {
 }
 
 int pg_sdobSOWTSet(double markTime, double workingTime) {
+  if (markTime < 0) { markTime = 0.0; }
   // printf("Setting Working Time at %f for %f seconds\n", markTime, workingTime);
   sdob_judgement->sowt = markTime;
   sdob_judgement->workingTime = workingTime;
