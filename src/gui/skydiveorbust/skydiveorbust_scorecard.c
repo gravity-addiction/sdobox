@@ -33,7 +33,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 
   // Try getting mark time when not present
   mpv_any_u* retTimePos;
-  if (markTime < 0) {
+  if (markTime < 0 && sdob_devicehost->isHost == 1) {
     if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
       if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
       } else { markTime = retTimePos->floating;

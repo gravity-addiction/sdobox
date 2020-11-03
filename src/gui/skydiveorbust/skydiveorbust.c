@@ -2808,6 +2808,10 @@ int pg_skydiveorbust_thread() {
     
     // pg_sdob_clear(&m_gui);
     // pg_sdob_scorecard_clear(&m_gui);
+    if (sdob_judgement->marks->size > 0) {
+      dbgprintf(DBG_DEBUG, "%s", "Currently Scoring, Rejecting New Video Request.\n");
+      return 1;
+    }
 
     // Setup Environment for new Video API
     if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
