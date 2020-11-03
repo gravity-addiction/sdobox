@@ -2816,10 +2816,10 @@ int pg_skydiveorbust_thread() {
     }
 
     // Setup Environment for new Video API
-    if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
-      sdob_devicehost->isHost = 1;
-    } else {
+    if (strcmp(libUlfiusSDOBNewVideoInfo->host, "0") == 0) {
       sdob_devicehost->isHost = 0;
+    } else {
+      sdob_devicehost->isHost = 1;
     }
     pg_sdobUpdateHostDeviceInfo(&m_gui);
     
