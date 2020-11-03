@@ -2364,7 +2364,7 @@ static void pg_skydiveorbust_notify_slaves(gslc_tsGui *pGui) {
     int i = 0;
     struct pg_sdob_device_slave_args **dataSets = (struct pg_sdob_device_slave_args**)malloc(n * sizeof(struct pg_sdob_device_slave_args*));
     
-    fpHosts = fopen("/opt/sdobox/scripts/sdob/child_hosts", "r");
+    fpHosts = fopen("/home/pi/.config/sdobox/child_hosts", "r");
     if (fpHosts) {
       while ((readHost = getline(&hostLine, &hostLen, fpHosts)) != -1) {
         stripReturnCarriage(&hostLine);

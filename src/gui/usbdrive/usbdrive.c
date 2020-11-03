@@ -452,7 +452,7 @@ void pg_usbdriveButtonUnsetFuncs() {
 
 // GUI Init
 void pg_usbdrive_init(gslc_tsGui *pGui) {
-  pg_usbDrive_listConfig = VLIST_INIT_CONFIG(4, 32);
+  pg_usbDrive_listConfig = VLIST_INIT_CONFIG(4, 50);
   pg_usbdriveGuiInit(pGui);
 
   cbInit[E_PG_USBDRIVE] = NULL;
@@ -500,7 +500,7 @@ int pg_usbdrive_thread(gslc_tsGui *pGui) {
     }
 
     // Use new List
-    vlist_sliderDraw(pGui, pg_usbDrive_listConfig, list, 29);
+    vlist_sliderDraw(pGui, pg_usbDrive_listConfig, list, 40);
 
     // Clean list
     for (int l = 0; l < listI; ++l) {

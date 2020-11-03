@@ -261,7 +261,7 @@ class Player(Tk.Frame):
         style.configure("Player.TButton", font=("Helvetica", "20"))
         style.configure("Split.TButton", padding=30, font=("Helvetica", "20"))
         style.configure("TProgressbar", pady=5)
-        style.configure("SplitSelected.TButton", padding=30, background="green", font=("Helvetica", "20"))
+        style.configure("SplitSelected.TButton", padding=30, background="green", activebackground="yellow", highlightbackground="yellow", font=("Helvetica", "20"))
         self.parent = parent  # == root
         self.parent.title(title or "Skydive Or Bust Dubbing 1.0")
         self.video = expanduser(video)
@@ -295,6 +295,7 @@ class Player(Tk.Frame):
         self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay, style="Player.TButton")
         stop            = ttk.Button(buttons, text="Stop", command=self.OnStop, style="Player.TButton")
         self.slateButton = ttk.Button(self.splitting_panel, text="Mark Slate", command=self.onMarkSlate, style="Split.TButton")
+        self.slateButton.configure(state="yellow")
         self.exitButton = ttk.Button(self.splitting_panel, text="Mark Exit", command=self.onMarkExit, style="Split.TButton")
         self.uploadButton = ttk.Button(self.splitting_panel, text="Upload", command=self.onUpload, style="Split.TButton")
         self.progressBar = ttk.Progressbar(self.splitting_panel, orient = Tk.HORIZONTAL, length = 200, mode = 'determinate', style="TProgressbar")

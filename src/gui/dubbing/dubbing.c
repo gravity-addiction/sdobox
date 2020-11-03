@@ -174,7 +174,7 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
                pg_dubbingElemRef, MAX_ELEM_PG_DUBBING);
 
 
-
+/*
 
   // Set Slate
   pg_dubbingEl[E_DUBBING_EL_SETSLATE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -226,7 +226,7 @@ void pg_dubbingGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFrameEn(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], true);
   // gslc_ElemSetVisible(pGui, pg_dubbingEl[E_DUBBING_EL_PLAYPAUSEVIDEO], false);
 
-
+*/
 
 
 
