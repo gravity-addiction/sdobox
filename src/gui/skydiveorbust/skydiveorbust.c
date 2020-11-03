@@ -2832,7 +2832,9 @@ int pg_skydiveorbust_thread() {
       pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
     }
 
-    if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
+    if (libUlfiusSDOBNewVideoInfo->file[0] != '\0') {
+      pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->file);
+    } else if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
       pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
     }
     if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
