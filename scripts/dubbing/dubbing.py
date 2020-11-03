@@ -190,7 +190,8 @@ def thread_processVideo():
     # Recombine
     player.statusLabel["text"] = "Restiching Video Together\n" + player.statusLabel["text"]
     player.OnStop()
-    player.statusLabel["text"] = "Finished Downloading\nUnmount your card before\nremoving it. Must Stop video\nto unmount sdcard\n\n\n" + player.statusLabel["text"]
+    player.eject_all()
+    player.statusLabel["text"] = "Finished Downloading\nYou can remove your sdcards\n\n\n" + player.statusLabel["text"]
     combineVideoFiles(videoRoot, videoFiles, videoDest)
     
     root.update_idletasks()
@@ -350,6 +351,7 @@ class Player(Tk.Frame):
         self.openButton = ttk.Button(buttons, text="Open", command=self.OnOpen, style="Player.TButton")
         self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay, style="Player.TButton")
         stop            = ttk.Button(buttons, text="Stop", command=self.OnStop, style="Player.TButton")
+        eject            = ttk.Button(buttons, text="Eject", command=self.OnEject, style="Player.TButton")
         self.slateButton = ttk.Button(self.splitting_panel, text="Slate", command=self.onMarkSlate, style="Split.TButton")
         self.slateButton.configure(state="yellow")
         self.exitButton = ttk.Button(self.splitting_panel, text="Exit", command=self.onMarkExit, style="Split.TButton")
@@ -363,6 +365,7 @@ class Player(Tk.Frame):
         self.openButton.pack(side=Tk.LEFT)
         self.playButton.pack(side=Tk.LEFT)
         stop.pack(side=Tk.LEFT)
+        eject.pack(side=Tk.LEFT)
         self.slateButton.pack(side=Tk.TOP)
         self.exitButton.pack(side=Tk.TOP)
         self.uploadButton.pack(side=Tk.TOP)
@@ -432,6 +435,14 @@ class Player(Tk.Frame):
         self.exitButton.configure(style="Split.TButton")
         player.progressBar['value'] = 0
 
+    def eject_all(self):
+        folders = glob("/media/pi/*")
+        # folders = [f for f in os.listdir('/media/pi') if os.path.isdir(f)]
+        for f in folders:
+            print(os.path.basename(f))
+            uMountCmd = 'sudo systemctl stop "usbstick-handler@{}"'.format(os.path.basename(f))
+            os.system(uMountCmd)
+            
 
     def list_comps(self):
         for comp in self.compDataset["comps"]:
@@ -530,6 +541,8 @@ class Player(Tk.Frame):
     def OnFullScreen(self, *unused):
         pass
 
+    def OnEject(self):
+        self.eject_all()
 
     def OnOpen(self, *unused):
         """Pop up a new dialow window to choose a file, then play the selected file.
