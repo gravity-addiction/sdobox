@@ -22,7 +22,7 @@
 int pg_usbdrive_thread_usbCnt = -1;
 
 void pg_usbdrive_loadDrive(int driveI) {
-  if (driveI > libUsbDrivesCount->max) { return; }
+  if (driveI > libUsbDrivesCount->max) { libUsbDrivesI = -1; return; }
   libUsbDrivesI = driveI;
   pg_usbDrive_listConfig->len = libUsbDrivesList[libUsbDrivesI]->partitionMax;
   pg_usbDrive_listConfig->cur = -1;
@@ -181,22 +181,26 @@ bool pg_usbdrive_cbBtn_eject(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
     if (libUsbDrivesList[libUsbDrivesI]->partitionCur > -1 &&
         strcmp(libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->mountpoint, "null") == 0
     ) { // No Mount Point
-      size_t cmdSz = snprintf(NULL, 0, "/usr/bin/udisksctl mount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name) + 1;
+      size_t cmdSz = snprintf(NULL, 0, "sudo -u pi /usr/bin/udisksctl mount --block-device /dev/%s --no-user-interaction", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name) + 1;
       char *cmd = (char *)malloc(cmdSz * sizeof(char));
-      snprintf(cmd, cmdSz, "/usr/bin/udisksctl mount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name);
+      snprintf(cmd, cmdSz, "sudo -u pi /usr/bin/udisksctl mount --block-device /dev/%s --no-user-interaction", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name);
       system(cmd);
       free(cmd);
 
+      // printf("MP %s\n", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->mountpoint);
+     
     } else if (libUsbDrivesList[libUsbDrivesI]->partitionCur > -1 && libUsbDrivesList[libUsbDrivesI]->lock == 0) {
-      size_t cmdSz = snprintf(NULL, 0, "/usr/bin/udisksctl unmount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name) + 1;
+      size_t cmdSz = snprintf(NULL, 0, "sudo -u pi /usr/bin/udisksctl unmount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name) + 1;
       char *cmd = (char *)malloc(cmdSz * sizeof(char));
-      snprintf(cmd, cmdSz, "/usr/bin/udisksctl unmount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name);
+      snprintf(cmd, cmdSz, "sudo -u pi /usr/bin/udisksctl unmount --block-device /dev/%s --no-user-interaction &", libUsbDrivesList[libUsbDrivesI]->partitions[libUsbDrivesList[libUsbDrivesI]->partitionCur]->name);
       system(cmd);
       free(cmd);
 
     } else {
       gslc_ElemSetTxtStr(pGui, pg_usbdriveEl[E_USBDRIVE_EL_EJECT], (char*)" ");
     }
+
+    pg_usbdrive_loadDrive(libUsbDrivesI);
   }
 
   return true;
@@ -356,6 +360,7 @@ void pg_usbdriveGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetGlowEn(pGui, pg_usbdriveEl[E_USBDRIVE_EL_EJECT], false);
   gslc_ElemSetFrameEn(pGui, pg_usbdriveEl[E_USBDRIVE_EL_EJECT], true);
 
+/*
   // Power Off Key
   pg_usbdriveEl[E_USBDRIVE_EL_POWEROFF] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
           (gslc_tsRect) {123,210,110,110},
@@ -366,7 +371,7 @@ void pg_usbdriveGuiInit(gslc_tsGui *pGui) {
   gslc_ElemSetFillEn(pGui, pg_usbdriveEl[E_USBDRIVE_EL_POWEROFF], false);
   gslc_ElemSetGlowEn(pGui, pg_usbdriveEl[E_USBDRIVE_EL_POWEROFF], false);
   gslc_ElemSetFrameEn(pGui, pg_usbdriveEl[E_USBDRIVE_EL_POWEROFF], true);
-
+*/
 
   // Open Key
   pg_usbdriveEl[E_USBDRIVE_EL_ACTION] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -504,6 +509,7 @@ int pg_usbdrive_thread(gslc_tsGui *pGui) {
     free(list);
 
     pg_usbdrive_thread_usbCnt = libUsbDrivesCount->cnt;
+    gslc_ElemSetRedraw(pGui, pg_usbdriveEl[E_USBDRIVE_EL_BOX], GSLC_REDRAW_FULL);
   }
   return 0;
 }

@@ -3,6 +3,8 @@ from screeninfo import get_monitors
 from threading import Thread
 from os.path import basename, expanduser, isfile, join as joined
 from pathlib import Path
+from glob import glob
+from subprocess import check_output, CalledProcessError
 import time
 import socket
 import subprocess
@@ -29,44 +31,9 @@ os.environ["DISPLAY"] = ":0.0"
 import vlc
 
 
-compDataset = []
-compComboOptions = ["Select Competition"]
-teamComboOptions = []
-roundComboOptions = []
-
-def get_comps():
-    global compDataset, compComboOptions, teamComboOptions, roundComboOptions
-    response = requests.get("https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/comps");
-    # print(response.status_code)
-    # print(response.json())
-    compDataset = response.json()
-
-    for comp in compDataset["comps"]:
-        compComboOptions.append(comp["name"])
 
 
 
-        
-def change_comp(selected_comp):
-    global player
-    print(type(compDataset))
-    player.teamCombo.clear()
-    player.roundCombo.clear()
-    for compI in range(len(compDataset["comps"])):
-        comp = compDataset["comps"][compI]
-        if (comp["name"] == selected_comp):
-            for teamI in range(len(comp["teams"])):
-                player.teamCombo.insert(teamI, comp["teams"][teamI]["name"])
-
-            for r in range(1, comp["roundCnt"] + 1):
-                teamComboOptions.append("R" + str(r))
-                #player.roundCombo.insert(r, "R" + str(r))
-            for r in range(1, comp["exRoundCnt"] + 1):
-                roundComboOptions.append(comp["exRoundPre"] + str(r + comp["roundCnt"]))
-                #player.roundCombo.insert(r, comp["exRoundPre"] + str(r + comp["roundCnt"]))
-            player.teamCombo['values'] = teamComboOptions
-            player.roundCombo['values'] = roundComboOptions
-            break
 
 
 sdobSocketKiller = 1
@@ -125,7 +92,7 @@ def thread_processVideo():
     videoExt = '.mp4'
     videoDest = '/home/pi/Videos/' + str(time.time)
 
-    player.progressBar['value'] = 20
+    player.progressBar['value'] += 10
     root.update_idletasks()
     if (hasattr(dataSet, "fileext")):
         videoExt = getattr(dataSet, "fileext")
@@ -138,36 +105,38 @@ def thread_processVideo():
  
     if (hasattr(dataSet, "slate")):
         # Slate
-        sTime = float(getattr(dataSet, "slate")) - 2.0
+        sTime = float(getattr(dataSet, "slate")) - 2.5
         if (sTime < 0):
             sTime = 0.00
-        eTime = float(getattr(dataSet, "slate")) + 5.0
+        eTime = float(getattr(dataSet, "slate")) + 2.5
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        print("Slate Start Adding", sTime - sTimes[0])
-        print("Slate End Adding", sTimes[1] - eTime)
-        print("Slate Chopping", sTimes[0], sTimes[1])
+        player.progressBar['value'] += 10
+        # print("Slate Start Adding", sTime - sTimes[0])
+        # print("Slate End Adding", sTimes[1] - eTime)
+        # print("Slate Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobSlate{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-        player.progressBar['value'] = 40
+        player.progressBar['value'] += 10
         root.update_idletasks()
     if (hasattr(dataSet, "exit")):
         #statusText.value = "Splitting Video Skydive"
         # Skydive
-        sTime = float(getattr(dataSet, "exit")) - 2.0
+        sTime = float(getattr(dataSet, "exit")) - 5.0
         if (sTime < 0):
             sTime = 0.00
         eTime = float(getattr(dataSet, "exit")) + 10.0
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        print("Skydive Start Adding", sTime - sTimes[0])
-        print("Skydive End Adding", sTimes[1] - eTime)
-        print("Skydive Chopping", sTimes[0], sTimes[1])
+        player.progressBar['value'] += 10
+        # print("Skydive Start Adding", sTime - sTimes[0])
+        # print("Skydive End Adding", sTimes[1] - eTime)
+        # print("Skydive Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobExit{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-        player.progressBar['value'] = 75
+        player.progressBar['value'] += 10
         root.update_idletasks()
     #statusText.value = "Combining Video Slate and Skydive"
     # Recombine
@@ -176,35 +145,7 @@ def thread_processVideo():
     root.update_idletasks()
     #statusText.value = "Done Processing Video"
 
-def globalClicked():
-    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
-        pass
-        #mpv_player.stop()
-        
-def selectButton(t):
-    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
-        return
 
-    if (hasattr(dataSet, "team") and hasattr(dataSet, "round") and getattr(dataSet, "round") == t + 1):
-        rX = getattr(r, "round_{}".format(str(t)))
-        rX.bg = "blue"
-        setattr(r, "round_{}".format(str(t)), rX)
-        setattr(dataSet, "round", t + 1)
-        print('Playing {} {}'.format(getattr(dataSet, "team"), getattr(dataSet, "round")))
-    else:
-        rKeys = r.__dict__.keys()
-        for k in r.__dict__.keys():
-            rX = getattr(r, k)
-            rX.bg = "white"
-            setattr(r, k, rX)
-    
-        rX = getattr(r, "round_{}".format(str(t)))
-        rX.bg = "orange"
-        setattr(r, "round_{}".format(str(t)), rX)
-        setattr(dataSet, "round", t + 1)
-
-def teamChanged(t):
-    setattr(dataSet, "team", t)
 
 def submitButton():
     if (hasattr(dataSet, "filename") and hasattr(dataSet, "slate") and hasattr(dataSet, "exit")):
@@ -230,6 +171,7 @@ def combineVideoFiles(rootFolder, videoArr, outputFilename):
     #     statusText.value = line.decode('utf-8').rstrip()
 
 def splitVideoFileKeyTimes(startingTime, endingTime):
+    player.progressBar['value'] += 10
     ret = np.zeros(2, dtype = float)
     startTime = 0.00
     endTime = 0.00
@@ -246,6 +188,7 @@ def splitVideoFileKeyTimes(startingTime, endingTime):
         
         if (ret[1] != 0.00):
             break
+    player.progressBar['value'] += 10
     return ret
     
 def splitVideoFile(filename, startTime, endTime, outputFilename):
@@ -263,57 +206,6 @@ def splitVideoFile(filename, startTime, endTime, outputFilename):
     #     statusText.value = line.decode('utf-8').rstrip()
 
 
-def playnewVideo():
-    pass
-    # mpv_player.loop = False
-    # mpv_player.play("/home/pi/Videos/120.mp4")
-    # csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
-
-def openButton(startPath = "/media/"):
-    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
-        return
-
-    filename = app.select_file(folder=startPath, filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
-    if (filename != "" and isinstance(filename, str)):
-        setattr(dataSet, "filename", filename)
-        openvideo_btn.text = os.path.basename(filename)
-        openvideo_btn.bg = "#cccc00"
-        try:
-            fExt = os.path.splitext(filename)[1]
-            setattr(dataSet, "fileext", fExt)
-        except:
-            pass
-        
-        keyFrameThread = Thread(target = thread_getFrames, args=[filename])
-        keyFrameThread.setDaemon(True)
-        keyFrameThread.start()
-        try:
-            csock.sendto(str.encode('{{"event":"filechange","filename":"{}"}}'.format(filename)), ssock_file)
-        except:
-            print("Cannot send to sdobox.socket")
-        
-    else:
-    # if (isinstance(filename, (unicode, tuple))):
-        openvideo_btn.text = "Open Video"
-        openvideo_btn.bg = "#cc33cc"
-
-def playButton():
-    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
-        return
-
-    if (hasattr(dataSet, "filename")):
-        # mpv_player.loop = False
-        # mpv_player.play(getattr(dataSet, "filename"))
-        # try:
-        #     csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
-        # except:
-        #     print("Cannot send playing to sdobox.socket")
-        media_player = vlc.MediaPlayer()
-        media = vlc.Media(getattr(dataSet, "filename"))
-        media_player.set_media(media)
-        media_
-        media_player.play()
-        
 class DataSet(object):
     pass
 
@@ -324,6 +216,22 @@ class RoundBtns(object):
     pass
 
 
+def get_usb_devices():
+    sdb_devices = map(os.path.realpath, glob('/sys/block/sd*'))
+    usb_devices = []
+    for dev in sdb_devices:
+        print(dev)
+        if any(['usb' in dev.split('/')[5]]):
+            usb_devices.append(dev)
+    return dict((os.path.basename(dev), dev) for dev in usb_devices)
+
+def get_mount_points(devices=None):
+    devices = get_usb_devices()
+    print(devices)
+    output = check_output(['mount']).splitlines()
+    is_usb = lambda path: any(dev in path for dev in devices)
+    usb_info = (line for line in output if is_usb(line.split()[0]))
+    return [(info.split()[0], info.split()[2]) for info in usb_info]
 
 # Modified from code orignal to
 # Author: Patrick Fay Date: 23-09-2015
@@ -336,10 +244,18 @@ class Player(Tk.Frame):
     """
     _geometry = ''
     _stopped  = None
+        
 
     def __init__(self, parent, title=None, video=''):
         Tk.Frame.__init__(self, parent)
 
+        print(get_usb_devices())
+        self.compDataset = []
+        self.compComboOptions = ["Select Competition"]
+        self.teamComboOptions = []
+        self.teamComboOptionsI = []
+        self.roundComboOptions = []
+        
         style = ttk.Style()
         style.configure("TButton", font=("Helvetica", "14"))
         style.configure("Player.TButton", font=("Helvetica", "20"))
@@ -363,7 +279,7 @@ class Player(Tk.Frame):
 
         compcombo = ttk.Frame(self.buttons_panel)
         self.compCombo = ttk.Combobox(compcombo, width=50)
-        self.compCombo['values'] = compComboOptions
+        self.compCombo['values'] = self.compComboOptions
 
         self.teamCombo = ttk.Combobox(compcombo, width=50)
         self.roundCombo = ttk.Combobox(compcombo, width=50)
@@ -372,7 +288,7 @@ class Player(Tk.Frame):
         self.roundCombo.pack(side=Tk.TOP)
         compcombo.pack(side=Tk.BOTTOM, fill=Tk.X)
         
-        self.compCombo.bind('<<ComboboxSelected>>', self.change_comp)
+        self.compCombo.bind('<<ComboboxSelected>>', lambda event: self.change_comp())
 
         buttons = ttk.Frame(self.buttons_panel)
         self.openButton = ttk.Button(buttons, text="Open", command=self.OnOpen, style="Player.TButton")
@@ -425,33 +341,70 @@ class Player(Tk.Frame):
 
         self.is_buttons_panel_anchor_active = False
 
-
+        # Download API Data
+        self.get_comps()
+        self.list_comps()
 
         self.OnTick()  # set the timer up
 
 
-    def change_comp(*args):
-        compInd = player.compCombo.current()
-        for compI in range(len(compDataset["comps"])):
-            comp = compDataset["comps"][compI]
+    def clean_all(self):
+        print("Cleaning")
+        self.OnStop()
+        setattr(dataSet, "filename", "")
+        setattr(dataSet, "dest", "")
+        self.compComboOptions.clear()
+        self.teamComboOptions.clear()
+        self.teamComboOptionsI.clear()
+        self.roundComboOptions.clear()
+        self.list_comps()
 
-            if (comp["name"] == compComboOptions[compInd]):
+        setattr(dataSet, "slate", "")
+        self.slateButton.configure(style="Split.TButton")
+        setattr(dataSet, "exit", "")
+        self.exitButton.configure(style="Split.TButton")
+        player.progressBar['value'] = 0
+
+
+    def list_comps(self):
+        for comp in self.compDataset["comps"]:
+            self.compComboOptions.append(comp["name"])
+        self.compCombo['values'] = self.compComboOptions
+
+    def get_comps(self):
+        response = requests.get("https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/comps");
+        # print(response.status_code)
+        # print(response.json())
+        self.compDataset = response.json()
+
+
+
+    def change_comp(self):
+        compInd = self.compCombo.current()
+        for compI in range(len(self.compDataset["comps"])):
+            comp = self.compDataset["comps"][compI]
+
+            if (comp["name"] == self.compComboOptions[compInd]):
  
-                teamComboOptions.clear()
-                roundComboOptions.clear()
+                self.teamComboOptions.clear()
+                self.teamComboOptionsI.clear()
+                self.roundComboOptions.clear()
                 for teamI in range(len(comp["teams"])):
-                    teamComboOptions.append(comp["teams"][teamI]["name"])
-                    # player.teamCombo.insert(teamI, comp["teams"][teamI]["name"])
+                    self.teamComboOptions.append(comp["teams"][teamI]["name"])
+                    if (hasattr(comp["teams"][teamI], "teamNumber")):
+                        self.teamComboOptionsI.append(comp["teams"][teamI]["teamNumber"])
+                    else:
+                        self.teamComboOptionsI.append(str(teamI))
+                    # self.teamCombo.insert(teamI, comp["teams"][teamI]["name"])
 
                 for r in range(1, comp["roundCnt"] + 1):
-                    roundComboOptions.append("R" + str(r))
-                    #player.roundCombo.insert(r, "R" + str(r))
+                    self.roundComboOptions.append("R" + str(r))
+                    
                 for r in range(1, comp["exRoundCnt"] + 1):
-                    roundComboOptions.append(comp["exRoundPre"] + str(r + comp["roundCnt"]))
-                    #player.roundCombo.insert(r, comp["exRoundPre"] + str(r + comp["roundCnt"]))
+                    self.roundComboOptions.append(comp["exRoundPre"] + str(r + comp["roundCnt"]))
 
-                player.teamCombo['values'] = teamComboOptions
-                player.roundCombo['values'] = roundComboOptions
+                self.teamCombo['values'] = self.teamComboOptions
+                self.roundCombo['values'] = self.roundComboOptions
                 break
 
 
@@ -487,15 +440,16 @@ class Player(Tk.Frame):
     def OnOpen(self, *unused):
         """Pop up a new dialow window to choose a file, then play the selected file.
         """
-        # if a file is already running, then stop it.
-        self.OnStop()
+        self.clean_all()
+
         # Create a file dialog opened in the current home directory, where
         # you can display all kind of files, having as title "Choose a video".
-        video = askopenfilename(initialdir = Path(expanduser("~")),
+        video = askopenfilename(initialdir = Path(expanduser("/media/pi")),
                                 title = "Choose a video",
                                 filetypes = (("all files", "*.*"),
                                              ("mp4 files", "*.mp4"),
                                              ("mov files", "*.mov")))
+
         setattr(dataSet, "filename", video)
         self._Play(video)
 
@@ -580,7 +534,7 @@ class Player(Tk.Frame):
         compInd = player.compCombo.current()
         teamInd = player.teamCombo.current()
         roundInd = player.roundCombo.current()
-        destFile = "/home/pi/Videos3/" + str(compInd) + "_" + str(teamInd) + "_" + roundComboOptions[roundInd]
+        destFile = "/home/pi/Videos3/" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
         self.OnStop()
         setattr(dataSet, "dest", destFile)
         submitButton()
@@ -666,8 +620,6 @@ else:
 # app = App(title="Skydive or Bust Dubbing Station", width=appWidth, height=appHeight, layout="grid")
 
 
-# Download API Data
-get_comps()
 
 # disc_combo = Combo(app, options=["Select Discipline", "2way Sequential ProAm", "2way Sequential Open", "4way Sequential Open", "4way Rotations"], command=teamChanged, grid=[0,1,8,1], align="top", width="23")
 # disc_combo.text_size = fontSize
@@ -756,6 +708,7 @@ sdobThread.start()
 root = Tk.Tk()
 player = Player(root)
 root.protocol("WM_DELETE_WINDOW", player.OnClose)
+
 
 # Main Looop
 root.mainloop()
