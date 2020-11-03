@@ -125,6 +125,8 @@ def thread_processVideo():
     videoExt = '.mp4'
     videoDest = '/home/pi/Videos/' + str(time.time)
 
+    player.progressBar['value'] = 20
+    root.update_idletasks()
     if (hasattr(dataSet, "fileext")):
         videoExt = getattr(dataSet, "fileext")
 
@@ -141,31 +143,37 @@ def thread_processVideo():
             sTime = 0.00
         eTime = float(getattr(dataSet, "slate")) + 5.0
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        # print("Slate Start Adding", sTime - sTimes[0])
-        # print("Slate End Adding", sTimes[1] - eTime)
+        print("Slate Start Adding", sTime - sTimes[0])
+        print("Slate End Adding", sTimes[1] - eTime)
+        print("Slate Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobSlate{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-
+        player.progressBar['value'] = 40
+        root.update_idletasks()
     if (hasattr(dataSet, "exit")):
         #statusText.value = "Splitting Video Skydive"
         # Skydive
         sTime = float(getattr(dataSet, "exit")) - 2.0
         if (sTime < 0):
             sTime = 0.00
-        eTime = float(getattr(dataSet, "exit")) + 40.0
+        eTime = float(getattr(dataSet, "exit")) + 10.0
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        # print("Skydive Start Adding", sTime - sTimes[0])
-        # print("Skydive End Adding", sTimes[1] - eTime)
+        print("Skydive Start Adding", sTime - sTimes[0])
+        print("Skydive End Adding", sTimes[1] - eTime)
+        print("Skydive Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobExit{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-
+        player.progressBar['value'] = 75
+        root.update_idletasks()
     #statusText.value = "Combining Video Slate and Skydive"
     # Recombine
     combineVideoFiles(videoRoot, videoFiles, videoDest)
+    player.progressBar['value'] = 100
+    root.update_idletasks()
     #statusText.value = "Done Processing Video"
 
 def globalClicked():
@@ -227,14 +235,16 @@ def splitVideoFileKeyTimes(startingTime, endingTime):
     endTime = 0.00
     checkStart = float(startingTime)
     checkEnd = float(endingTime)
-    # print(startingTime, endingTime)
+    print(startingTime, endingTime)
     for f in getattr(dataSet, "frameList"):
-        # print('Keyframe', f)
+        print('Keyframe', f)
         if (float(f) <= checkStart):
             ret[0] = float(f)
+
         if (endTime == 0.00 and float(f) >= checkEnd):
             ret[1] = float(f)
-        if (ret[0] != 0.00 and ret[1] != 0.00):
+        
+        if (ret[1] != 0.00):
             break
     return ret
     
@@ -334,6 +344,8 @@ class Player(Tk.Frame):
         style.configure("TButton", font=("Helvetica", "14"))
         style.configure("Player.TButton", font=("Helvetica", "20"))
         style.configure("Split.TButton", padding=30, font=("Helvetica", "20"))
+        style.configure("TProgressbar", pady=5)
+        style.configure("SplitSelected.TButton", padding=30, background="green", font=("Helvetica", "20"))
         self.parent = parent  # == root
         self.parent.title(title or "Skydive Or Bust Dubbing 1.0")
         self.video = expanduser(video)
@@ -369,12 +381,14 @@ class Player(Tk.Frame):
         self.slateButton = ttk.Button(self.splitting_panel, text="Mark Slate", command=self.onMarkSlate, style="Split.TButton")
         self.exitButton = ttk.Button(self.splitting_panel, text="Mark Exit", command=self.onMarkExit, style="Split.TButton")
         self.uploadButton = ttk.Button(self.splitting_panel, text="Upload", command=self.onUpload, style="Split.TButton")
+        self.progressBar = ttk.Progressbar(self.splitting_panel, orient = Tk.HORIZONTAL, length = 200, mode = 'determinate', style="TProgressbar")
         self.openButton.pack(side=Tk.LEFT)
         self.playButton.pack(side=Tk.LEFT)
         stop.pack(side=Tk.LEFT)
         self.slateButton.pack(side=Tk.TOP)
         self.exitButton.pack(side=Tk.TOP)
         self.uploadButton.pack(side=Tk.TOP)
+        self.progressBar.pack(side=Tk.TOP)
         buttons.pack(side=Tk.BOTTOM, fill=Tk.X)
 
 
@@ -531,13 +545,10 @@ class Player(Tk.Frame):
         # Try to play, if this fails display an error message
         elif self.player.play():  # == -1
             self.showError("Unable to play the video.")
-        else:
-            self._Pause_Play(True)
-            # set volume slider to audio level
-            vol = self.player.audio_get_volume()
-            if vol > 0:
-                self.volVar.set(vol)
-                self.volSlider.set(vol)
+        # else:
+        self._Pause_Play(True)
+        # set volume slider to audio level
+        self.player.audio_set_volume(0)
 
     def OnStop(self, *unused):
         """Stop the player, resets media.
@@ -551,11 +562,19 @@ class Player(Tk.Frame):
 
     def onMarkSlate(self, *unused):
         if self.player:
-          setattr(dataSet, "slate", self.timeVar.get())
+            cTime = self.player.get_time()
+            if (cTime == -1):
+                return
+            setattr(dataSet, "slate", float(cTime / 1000))
+            self.slateButton.configure(style="SplitSelected.TButton")
 
     def onMarkExit(self, *unused):
-        if self.player:
-          setattr(dataSet, "exit", self.timeVar.get())
+        if self.player:          
+            cTime = self.player.get_time()
+            if (cTime == -1):
+                return
+            setattr(dataSet, "exit", float(cTime / 1000))
+            self.exitButton.configure(style="SplitSelected.TButton")
 
     def onUpload(self, *unused):
         compInd = player.compCombo.current()
@@ -741,7 +760,7 @@ root.protocol("WM_DELETE_WINDOW", player.OnClose)
 # Main Looop
 root.mainloop()
 
-sdobSocketKiller = 0;
+sdobSocketKiller = 0
 
 #try:
 #    mpv_player.terminate()
