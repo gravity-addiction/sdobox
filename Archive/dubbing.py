@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
+from guizero import App, Combo, PushButton, Text
 from screeninfo import get_monitors
+from python_mpv_jsonipc import MPV
 from threading import Thread
 from os.path import basename, expanduser, isfile, join as joined
 from pathlib import Path
-from glob import glob
-from subprocess import check_output, CalledProcessError
 import time
 import socket
 import subprocess
@@ -31,9 +31,41 @@ os.environ["DISPLAY"] = ":0.0"
 import vlc
 
 
+compDataset = []
+compComboOptions = ["Select Competition"]
+teamComboOptions = []
+roundComboOptions = []
+
+def get_comps():
+    global compDataset, compComboOptions, teamComboOptions, roundComboOptions
+    response = requests.get("https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/comps");
+    print(response.status_code)
+    print(response.json())
+    compDataset = response.json()
+
+    print(type(compDataset))
+    for comp in compDataset["comps"]:
+        compComboOptions.append(comp["name"])
 
 
 
+        
+def change_comp(selected_comp):
+    global teamCombo, roundCombo
+    print(type(compDataset))
+    teamCombo.clear()
+    roundCombo.clear()
+    for compI in range(len(compDataset["comps"])):
+        comp = compDataset["comps"][compI]
+        if (comp["name"] == selected_comp):
+            for teamI in range(len(comp["teams"])):
+                teamCombo.insert(teamI, comp["teams"][teamI]["name"])
+
+            for r in range(1, comp["roundCnt"] + 1):
+                roundCombo.insert(r, "R" + str(r))
+            for r in range(1, comp["exRoundCnt"] + 1):
+                roundCombo.insert(r, comp["exRoundPre"] + str(r + comp["roundCnt"]))
+            break
 
 
 sdobSocketKiller = 1
@@ -72,15 +104,14 @@ def thread_sdobSocket():
 def thread_getFrames(file):
     global dataSet
     global statusText
-    # statusText.value = "Getting KeyFrame Locations"
+    statusText.value = "Getting KeyFrame Locations"
     cmd = "ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 \"{}\" | awk -F',' '/K/ {{print $1}}'".format(file)
     proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     frameList = []
     for line in proc.stdout.readlines():
-        lineDec = line.decode('utf-8').rstrip()
-        frameList.append(lineDec)
+        frameList.append(line.decode('utf-8').rstrip())
     setattr(dataSet, "frameList", frameList)
-    # statusText.value = "Keyframes Found, Finished Looking"
+    statusText.value = "Keyframes Found, Finished Looking"
     
 
 def thread_processVideo():
@@ -90,70 +121,88 @@ def thread_processVideo():
     videoRoot = '/tmp'
     videoFiles = []
     videoExt = '.mp4'
-    videoDest = '/home/pi/Videos/' + str(time.time)
+    videoDest = '/home/pi/Videos/120.mp4'
 
-    player.progressBar['value'] += 10
-    root.update_idletasks()
     if (hasattr(dataSet, "fileext")):
         videoExt = getattr(dataSet, "fileext")
 
-    if (hasattr(dataSet, "dest")):
-        videoDest = getattr(dataSet, "dest") + videoExt
-    else:
-        return
-
- 
     if (hasattr(dataSet, "slate")):
         # Slate
-        sTime = float(getattr(dataSet, "slate")) - 2.5
+        sTime = float(getattr(dataSet, "slate")) - 2.0
         if (sTime < 0):
             sTime = 0.00
-        eTime = float(getattr(dataSet, "slate")) + 2.5
+        eTime = float(getattr(dataSet, "slate")) + 5.0
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        player.progressBar['value'] += 10
         # print("Slate Start Adding", sTime - sTimes[0])
         # print("Slate End Adding", sTimes[1] - eTime)
-        # print("Slate Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobSlate{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-        player.progressBar['value'] += 10
-        root.update_idletasks()
+
     if (hasattr(dataSet, "exit")):
-        #statusText.value = "Splitting Video Skydive"
+        statusText.value = "Splitting Video Skydive"
         # Skydive
-        sTime = float(getattr(dataSet, "exit")) - 5.0
+        sTime = float(getattr(dataSet, "exit")) - 2.0
         if (sTime < 0):
             sTime = 0.00
-        eTime = float(getattr(dataSet, "exit")) + 10.0
+        eTime = float(getattr(dataSet, "exit")) + 40.0
         sTimes = splitVideoFileKeyTimes(sTime, eTime)
-        player.progressBar['value'] += 10
         # print("Skydive Start Adding", sTime - sTimes[0])
         # print("Skydive End Adding", sTimes[1] - eTime)
-        # print("Skydive Chopping", sTimes[0], sTimes[1])
         videoFileName = 'sdobExit{}'.format(videoExt)
         videoFile = '{}/{}'.format(videoRoot, videoFileName)
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
-        player.progressBar['value'] += 10
-        root.update_idletasks()
-    #statusText.value = "Combining Video Slate and Skydive"
+
+    statusText.value = "Combining Video Slate and Skydive"
     # Recombine
     combineVideoFiles(videoRoot, videoFiles, videoDest)
-    player.progressBar['value'] = 100
-    root.update_idletasks()
-    #statusText.value = "Done Processing Video"
+    statusText.value = "Done Processing Video"
 
+def globalClicked():
+    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
+        mpv_player.stop()
+        
+def selectButton(t):
+    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
+        return
 
+    if (hasattr(dataSet, "team") and hasattr(dataSet, "round") and getattr(dataSet, "round") == t + 1):
+        rX = getattr(r, "round_{}".format(str(t)))
+        rX.bg = "blue"
+        setattr(r, "round_{}".format(str(t)), rX)
+        setattr(dataSet, "round", t + 1)
+        print('Playing {} {}'.format(getattr(dataSet, "team"), getattr(dataSet, "round")))
+    else:
+        rKeys = r.__dict__.keys()
+        for k in r.__dict__.keys():
+            rX = getattr(r, k)
+            rX.bg = "white"
+            setattr(r, k, rX)
+    
+        rX = getattr(r, "round_{}".format(str(t)))
+        rX.bg = "orange"
+        setattr(r, "round_{}".format(str(t)), rX)
+        setattr(dataSet, "round", t + 1)
 
-def submitButton():
+def teamChanged(t):
+    setattr(dataSet, "team", t)
+
+def submitButton(t, r):
+    # print("Submitting", getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"))
+    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
+        return
+
+    if (hasattr(dataSet, "filename") and hasattr(dataSet, "team") and hasattr(dataSet, "round")):
+        print('Uploading For {:s} Round: {:d}'.format(getattr(dataSet, "team"), getattr(dataSet, "round")))
+
     if (hasattr(dataSet, "filename") and hasattr(dataSet, "slate") and hasattr(dataSet, "exit")):
-        print('Splitting Video At', getattr(dataSet, "slate"), 'and', getattr(dataSet, "exit"))
+        print('Splitting Video At', getattr(dataSet, "slate"), 'and', getattr(dataSet, "exit"));
         
         # Start to Stop
         # splitVideoFile(getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"), "/tmp/test1.mp4")
-        # statusText.value = "Processing Video"
+        statusText.value = "Processing Video"
         processVideoThread = Thread(target = thread_processVideo)
         processVideoThread.setDaemon(True)
         processVideoThread.start()
@@ -171,24 +220,20 @@ def combineVideoFiles(rootFolder, videoArr, outputFilename):
     #     statusText.value = line.decode('utf-8').rstrip()
 
 def splitVideoFileKeyTimes(startingTime, endingTime):
-    player.progressBar['value'] += 10
     ret = np.zeros(2, dtype = float)
     startTime = 0.00
     endTime = 0.00
     checkStart = float(startingTime)
     checkEnd = float(endingTime)
-    print(startingTime, endingTime)
+    # print(startingTime, endingTime)
     for f in getattr(dataSet, "frameList"):
-        print('Keyframe', f)
+        # print('Keyframe', f)
         if (float(f) <= checkStart):
             ret[0] = float(f)
-
         if (endTime == 0.00 and float(f) >= checkEnd):
             ret[1] = float(f)
-        
-        if (ret[1] != 0.00):
+        if (ret[0] != 0.00 and ret[1] != 0.00):
             break
-    player.progressBar['value'] += 10
     return ret
     
 def splitVideoFile(filename, startTime, endTime, outputFilename):
@@ -199,13 +244,64 @@ def splitVideoFile(filename, startTime, endTime, outputFilename):
     # print("StartKey", startTime, "EndKey", endTime)
     vid1Cmd = 'ffmpeg -y -i "{}" -ss {} {} -c copy {}'.format(filename, startTime, extraArgs, outputFilename)
     os.system(vid1Cmd)
-    # statusText.value = "Done!"
+    statusText.value = "Done!"
     # print(vid1Cmd) 
     # proc = subprocess.Popen(vid1Cmd, shell=True, stderr=subprocess.PIPE)
     # for line in proc.stderr.readlines():
     #     statusText.value = line.decode('utf-8').rstrip()
 
 
+def playnewVideo():
+    pass
+    # mpv_player.loop = False
+    # mpv_player.play("/home/pi/Videos/120.mp4")
+    # csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
+
+def openButton(startPath = "/media/"):
+    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
+        return
+
+    filename = app.select_file(folder=startPath, filetypes=[["Media Files", "*.mp4 *.mov *.vob *.wmv *.mpg *.mpeg *.mkv *.m4v *.avi *.ts *.webm"], ["All Files", "*.*"]])
+    if (filename != "" and isinstance(filename, str)):
+        setattr(dataSet, "filename", filename)
+        openvideo_btn.text = os.path.basename(filename)
+        openvideo_btn.bg = "#cccc00"
+        try:
+            fExt = os.path.splitext(filename)[1]
+            setattr(dataSet, "fileext", fExt)
+        except:
+            pass
+        
+        keyFrameThread = Thread(target = thread_getFrames, args=[filename])
+        keyFrameThread.setDaemon(True)
+        keyFrameThread.start()
+        try:
+            csock.sendto(str.encode('{{"event":"filechange","filename":"{}"}}'.format(filename)), ssock_file)
+        except:
+            print("Cannot send to sdobox.socket")
+        
+    else:
+    # if (isinstance(filename, (unicode, tuple))):
+        openvideo_btn.text = "Open Video"
+        openvideo_btn.bg = "#cc33cc"
+
+def playButton():
+    if (hasattr(dataSet, "playing") and getattr(dataSet, "playing") == "1"):
+        return
+
+    if (hasattr(dataSet, "filename")):
+        # mpv_player.loop = False
+        # mpv_player.play(getattr(dataSet, "filename"))
+        # try:
+        #     csock.sendto(str.encode('{"event":"playing"}'), ssock_file)
+        # except:
+        #     print("Cannot send playing to sdobox.socket")
+        media_player = vlc.MediaPlayer()
+        media = vlc.Media(getattr(dataSet, "filename"))
+        media_player.set_media(media)
+        media_
+        media_player.play()
+        
 class DataSet(object):
     pass
 
@@ -216,27 +312,59 @@ class RoundBtns(object):
     pass
 
 
-def get_usb_devices():
-    sdb_devices = map(os.path.realpath, glob('/sys/block/sd*'))
-    usb_devices = []
-    for dev in sdb_devices:
-        print(dev)
-        if any(['usb' in dev.split('/')[5]]):
-            usb_devices.append(dev)
-    return dict((os.path.basename(dev), dev) for dev in usb_devices)
-
-def get_mount_points(devices=None):
-    devices = get_usb_devices()
-    print(devices)
-    output = check_output(['mount']).splitlines()
-    is_usb = lambda path: any(dev in path for dev in devices)
-    usb_info = (line for line in output if is_usb(line.split()[0]))
-    return [(info.split()[0], info.split()[2]) for info in usb_info]
 
 # Modified from code orignal to
 # Author: Patrick Fay Date: 23-09-2015
 libtk = "N/A"
 C_Key = "Control-"  # shortcut key modifier
+class _Tk_Menu(Tk.Menu):
+    _shortcuts_entries = {}
+    _shortcuts_widget  = None
+
+    def add_shortcut(self, label='', key='', command=None, **kwds):
+        '''Like Tk.menu.add_command extended with shortcut key.
+           If needed use modifiers like Shift- and Alt_ or Option-
+           as before the shortcut key character.  Do not include
+           the Command- or Control- modifier nor the <...> brackets
+           since those are handled here, depending on platform and
+           as needed for the binding.
+        '''
+        # <https://TkDocs.com/tutorial/menus.html>
+        if not key:
+            self.add_command(label=label, command=command, **kwds)
+
+        else:  # XXX not tested, not tested, not tested
+            self.add_command(label=label, underline=label.lower().index(key),
+                                          command=command, **kwds)
+            self.bind_shortcut(key, command, label)
+
+    def bind_shortcut(self, key, command, label=None):
+        """Bind shortcut key, default modifier Command/Control.
+        """
+        if self._shortcuts_widget:
+            if C_Key.lower() not in key.lower():
+                key = "<%s%s>" % (C_Key, key.lstrip('<').rstrip('>'))
+            self._shortcuts_widget.bind(key, command)
+            # remember the shortcut key for this menu item
+            if label is not None:
+                item = self.index(label)
+                self._shortcuts_entries[item] = key
+
+    def bind_shortcuts_to(self, widget):
+        '''Set the widget for the shortcut keys, usually root.
+        '''
+        self._shortcuts_widget = widget
+
+    def entryconfig(self, item, **kwds):
+        """Update shortcut key binding if menu entry changed.
+        """
+        Tk.Menu.entryconfig(self, item, **kwds)
+        # adjust the shortcut key binding also
+        if self._shortcuts_widget:
+            key = self._shortcuts_entries.get(item, None)
+            if key is not None and "command" in kwds:
+                self._shortcuts_widget.bind(key, kwds["command"])
+
 
 
 class Player(Tk.Frame):
@@ -244,68 +372,40 @@ class Player(Tk.Frame):
     """
     _geometry = ''
     _stopped  = None
-        
 
     def __init__(self, parent, title=None, video=''):
         Tk.Frame.__init__(self, parent)
 
-        print(get_usb_devices())
-        self.compDataset = []
-        self.compComboOptions = ["Select Competition"]
-        self.teamComboOptions = []
-        self.teamComboOptionsI = []
-        self.roundComboOptions = []
-        
-        style = ttk.Style()
-        style.configure("TButton", font=("Helvetica", "14"))
-        style.configure("Player.TButton", font=("Helvetica", "20"))
-        style.configure("Split.TButton", padding=30, font=("Helvetica", "20"))
-        style.configure("TProgressbar", pady=5)
-        style.configure("SplitSelected.TButton", padding=30, background="green", activebackground="yellow", highlightbackground="yellow", font=("Helvetica", "20"))
         self.parent = parent  # == root
-        self.parent.title(title or "Skydive Or Bust Dubbing 1.0")
+        self.parent.title(title or "tkVLCplayer")
         self.video = expanduser(video)
 
-        # first, top panel shows vide
-        self.vWrapper = ttk.Frame(self.parent)
-        self.videopanel = ttk.Frame(self.vWrapper)
+        # first, top panel shows video
+
+        self.videopanel = ttk.Frame(self.parent)
         self.canvas = Tk.Canvas(self.videopanel)
         self.canvas.pack(fill=Tk.BOTH, expand=1)
         self.videopanel.pack(fill=Tk.BOTH, expand=1)
-        self.vWrapper.pack(side=Tk.LEFT)
+
         # panel to hold buttons
-        self.buttons_panel = Tk.Frame(self.vWrapper)
-        self.splitting_panel = Tk.Frame(self.parent)
-
-        compcombo = ttk.Frame(self.buttons_panel)
-        self.compCombo = ttk.Combobox(compcombo, width=50)
-        self.compCombo['values'] = self.compComboOptions
-
-        self.teamCombo = ttk.Combobox(compcombo, width=50)
-        self.roundCombo = ttk.Combobox(compcombo, width=50)
-        self.compCombo.pack(side=Tk.TOP)
-        self.teamCombo.pack(side=Tk.TOP)
-        self.roundCombo.pack(side=Tk.TOP)
-        compcombo.pack(side=Tk.BOTTOM, fill=Tk.X)
-        
-        self.compCombo.bind('<<ComboboxSelected>>', lambda event: self.change_comp())
+        self.buttons_panel = Tk.Toplevel(self.parent)
+        self.buttons_panel.title("")
+        self.is_buttons_panel_anchor_active = False
 
         buttons = ttk.Frame(self.buttons_panel)
-        self.openButton = ttk.Button(buttons, text="Open", command=self.OnOpen, style="Player.TButton")
-        self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay, style="Player.TButton")
-        stop            = ttk.Button(buttons, text="Stop", command=self.OnStop, style="Player.TButton")
-        self.slateButton = ttk.Button(self.splitting_panel, text="Mark Slate", command=self.onMarkSlate, style="Split.TButton")
-        self.slateButton.configure(state="yellow")
-        self.exitButton = ttk.Button(self.splitting_panel, text="Mark Exit", command=self.onMarkExit, style="Split.TButton")
-        self.uploadButton = ttk.Button(self.splitting_panel, text="Upload", command=self.onUpload, style="Split.TButton")
-        self.progressBar = ttk.Progressbar(self.splitting_panel, orient = Tk.HORIZONTAL, length = 200, mode = 'determinate', style="TProgressbar")
-        self.openButton.pack(side=Tk.LEFT)
+        self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay)
+        stop            = ttk.Button(buttons, text="Stop", command=self.OnStop)
+        self.muteButton = ttk.Button(buttons, text="Mute", command=self.OnMute)
         self.playButton.pack(side=Tk.LEFT)
         stop.pack(side=Tk.LEFT)
-        self.slateButton.pack(side=Tk.TOP)
-        self.exitButton.pack(side=Tk.TOP)
-        self.uploadButton.pack(side=Tk.TOP)
-        self.progressBar.pack(side=Tk.TOP)
+        self.muteButton.pack(side=Tk.LEFT)
+
+        self.volMuted = False
+        self.volVar = Tk.IntVar()
+        self.volSlider = Tk.Scale(buttons, variable=self.volVar, command=self.OnVolume,
+                                  from_=0, to=100, orient=Tk.HORIZONTAL, length=200,
+                                  showvalue=0, label='Volume')
+        self.volSlider.pack(side=Tk.RIGHT)
         buttons.pack(side=Tk.BOTTOM, fill=Tk.X)
 
 
@@ -321,93 +421,26 @@ class Player(Tk.Frame):
         timers.pack(side=Tk.BOTTOM, fill=Tk.X)
 
 
-        self.buttons_panel.pack(fill=Tk.BOTH, expand=1)
-        self.splitting_panel.pack(fill=Tk.BOTH, expand=1)
-
         # VLC player
         args = []
         args.append('--no-xlib')
         self.Instance = vlc.Instance(args)
         self.player = self.Instance.media_player_new()
-        self.player.audio_set_volume(0)
 
         self.parent.bind("<Configure>", self.OnConfigure)  # catch window resize, etc.
         self.parent.update()
 
         # After parent.update() otherwise panel is ignored.
-        # self.buttons_panel.overrideredirect(True)
+        self.buttons_panel.overrideredirect(True)
 
         # Estetic, to keep our video panel at least as wide as our buttons panel.
-        self.parent.minsize(width=720, height=480)
+        self.parent.minsize(width=502, height=0)
 
         self.is_buttons_panel_anchor_active = False
 
-        # Download API Data
-        self.get_comps()
-        self.list_comps()
+        self._AnchorButtonsPanel()
 
         self.OnTick()  # set the timer up
-
-
-    def clean_all(self):
-        print("Cleaning")
-        self.OnStop()
-        setattr(dataSet, "filename", "")
-        setattr(dataSet, "dest", "")
-        self.compComboOptions.clear()
-        self.teamComboOptions.clear()
-        self.teamComboOptionsI.clear()
-        self.roundComboOptions.clear()
-        self.list_comps()
-
-        setattr(dataSet, "slate", "")
-        self.slateButton.configure(style="Split.TButton")
-        setattr(dataSet, "exit", "")
-        self.exitButton.configure(style="Split.TButton")
-        player.progressBar['value'] = 0
-
-
-    def list_comps(self):
-        for comp in self.compDataset["comps"]:
-            self.compComboOptions.append(comp["name"])
-        self.compCombo['values'] = self.compComboOptions
-
-    def get_comps(self):
-        response = requests.get("https://dev.skydiveorbust.com/api/latest/events/2020_cf_ghost_nationals/comps");
-        # print(response.status_code)
-        # print(response.json())
-        self.compDataset = response.json()
-
-
-
-    def change_comp(self):
-        compInd = self.compCombo.current()
-        for compI in range(len(self.compDataset["comps"])):
-            comp = self.compDataset["comps"][compI]
-
-            if (comp["name"] == self.compComboOptions[compInd]):
- 
-                self.teamComboOptions.clear()
-                self.teamComboOptionsI.clear()
-                self.roundComboOptions.clear()
-                for teamI in range(len(comp["teams"])):
-                    self.teamComboOptions.append(comp["teams"][teamI]["name"])
-                    if (hasattr(comp["teams"][teamI], "teamNumber")):
-                        self.teamComboOptionsI.append(comp["teams"][teamI]["teamNumber"])
-                    else:
-                        self.teamComboOptionsI.append(str(teamI))
-                    # self.teamCombo.insert(teamI, comp["teams"][teamI]["name"])
-
-                for r in range(1, comp["roundCnt"] + 1):
-                    self.roundComboOptions.append("R" + str(r))
-                    
-                for r in range(1, comp["exRoundCnt"] + 1):
-                    self.roundComboOptions.append(comp["exRoundPre"] + str(r + comp["roundCnt"]))
-
-                self.teamCombo['values'] = self.teamComboOptions
-                self.roundCombo['values'] = self.roundComboOptions
-                break
-
 
     def OnClose(self, *unused):
         """Closes the window and quit.
@@ -427,42 +460,58 @@ class Player(Tk.Frame):
             self.buttons_panel.unbind("<B1-Motion>")
             self.buttons_panel.unbind("<ButtonRelease-1>")
 
+    def _AnchorButtonsPanel(self):
+        video_height = self.parent.winfo_height()
+        panel_x = self.parent.winfo_x()
+        panel_y = self.parent.winfo_y() + video_height + 23 # 23 seems to put the panel just below our video.
+        panel_height = self.buttons_panel.winfo_height()
+        panel_width = self.parent.winfo_width()
+        self.buttons_panel.geometry("%sx%s+%s+%s" % (panel_width, panel_height, panel_x, panel_y))
+
     def OnConfigure(self, *unused):
         """Some widget configuration changed.
         """
         # <https://www.Tcl.Tk/man/tcl8.6/TkCmd/bind.htm#M12>
         self._geometry = ''  # force .OnResize in .OnTick, recursive?
 
+        if self.is_buttons_panel_anchor_active:
+            self._AnchorButtonsPanel()
 
     def OnFullScreen(self, *unused):
         pass
 
+    def OnMute(self, *unused):
+        """Mute/Unmute audio.
+        """
+        # audio un/mute may be unreliable, see vlc.py docs.
+        self.volMuted = m = not self.volMuted  # self.player.audio_get_mute()
+        self.player.audio_set_mute(m)
+        u = "Unmute" if m else "Mute"
+        self.fileMenu.entryconfig(self.muteIndex, label=u)
+        self.muteButton.config(text=u)
+        # update the volume slider text
+        self.OnVolume()
 
     def OnOpen(self, *unused):
         """Pop up a new dialow window to choose a file, then play the selected file.
         """
-        self.clean_all()
-
+        # if a file is already running, then stop it.
+        self.OnStop()
         # Create a file dialog opened in the current home directory, where
         # you can display all kind of files, having as title "Choose a video".
-        video = askopenfilename(initialdir = Path(expanduser("/media/pi")),
+        video = askopenfilename(initialdir = Path(expanduser("~")),
                                 title = "Choose a video",
                                 filetypes = (("all files", "*.*"),
                                              ("mp4 files", "*.mp4"),
                                              ("mov files", "*.mov")))
-
-        setattr(dataSet, "filename", video)
         self._Play(video)
-
-        keyFrameThread = Thread(target = thread_getFrames, args=[video])
-        keyFrameThread.setDaemon(True)
-        keyFrameThread.start()
 
     def _Pause_Play(self, playing):
         # re-label menu item and button, adjust callbacks
         p = 'Pause' if playing else 'Play'
         c = self.OnPlay if playing is None else self.OnPause
-        
+        self.fileMenu.entryconfig(self.playIndex, label=p, command=c)
+        # self.fileMenu.bind_shortcut('p', c)  # XXX handled
         self.playButton.config(text=p, command=c)
         self._stopped = False
 
@@ -471,7 +520,7 @@ class Player(Tk.Frame):
         if isfile(video):  # Creation
             m = self.Instance.media_new(str(video))  # Path, unicode
             self.player.set_media(m)
-            self.parent.title("Skydive Or Bust Dubbing 1.0")
+            self.parent.title("tkVLCplayer - %s" % (basename(video),))
 
             # set the window id where to render VLC's video output
             h = self.videopanel.winfo_id()  # .winfo_visualid()?
@@ -500,10 +549,38 @@ class Player(Tk.Frame):
         # Try to play, if this fails display an error message
         elif self.player.play():  # == -1
             self.showError("Unable to play the video.")
-        # else:
-        self._Pause_Play(True)
-        # set volume slider to audio level
-        self.player.audio_set_volume(0)
+        else:
+            self._Pause_Play(True)
+            # set volume slider to audio level
+            vol = self.player.audio_get_volume()
+            if vol > 0:
+                self.volVar.set(vol)
+                self.volSlider.set(vol)
+
+    def OnResize(self, *unused):
+        """Adjust the window/frame to the video aspect ratio.
+        """
+        g = self.parent.geometry()
+        if g != self._geometry and self.player:
+            u, v = self.player.video_get_size()  # often (0, 0)
+            if v > 0 and u > 0:
+                # get window size and position
+                g, x, y = g.split('+')
+                w, h = g.split('x')
+                # alternatively, use .winfo_...
+                # w = self.parent.winfo_width()
+                # h = self.parent.winfo_height()
+                # x = self.parent.winfo_x()
+                # y = self.parent.winfo_y()
+                # use the video aspect ratio ...
+                if u > v:  # ... for landscape
+                    # adjust the window height
+                    h = round(float(w) * v / u)
+                else:  # ... for portrait
+                    # adjust the window width
+                    w = round(float(h) * u / v)
+                self.parent.geometry("%sx%s+%s+%s" % (w, h, x, y))
+                self._geometry = self.parent.geometry()  # actual
 
     def OnStop(self, *unused):
         """Stop the player, resets media.
@@ -514,31 +591,6 @@ class Player(Tk.Frame):
             # reset the time slider
             self.timeSlider.set(0)
             self._stopped = True
-
-    def onMarkSlate(self, *unused):
-        if self.player:
-            cTime = self.player.get_time()
-            if (cTime == -1):
-                return
-            setattr(dataSet, "slate", float(cTime / 1000))
-            self.slateButton.configure(style="SplitSelected.TButton")
-
-    def onMarkExit(self, *unused):
-        if self.player:          
-            cTime = self.player.get_time()
-            if (cTime == -1):
-                return
-            setattr(dataSet, "exit", float(cTime / 1000))
-            self.exitButton.configure(style="SplitSelected.TButton")
-
-    def onUpload(self, *unused):
-        compInd = player.compCombo.current()
-        teamInd = player.teamCombo.current()
-        roundInd = player.roundCombo.current()
-        destFile = "/home/pi/Videos3/" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
-        self.OnStop()
-        setattr(dataSet, "dest", destFile)
-        submitButton()
 
     def OnTick(self):
         """Timer tick, update the time slider to the video time.
@@ -560,8 +612,8 @@ class Player(Tk.Frame):
         # adjust window to video aspect ratio, done periodically
         # on purpose since the player.video_get_size() only
         # returns non-zero sizes after playing for a while
-        # if not self._geometry:
-        #     self.OnResize()
+        if not self._geometry:
+            self.OnResize()
 
     def OnTime(self, *unused):
         if self.player:
@@ -588,6 +640,18 @@ class Player(Tk.Frame):
                 self.player.set_time(int(t * 1e3))  # milliseconds
                 self.timeSliderUpdate = time.time()
 
+    def OnVolume(self, *unused):
+        """Volume slider changed, adjust the audio volume.
+        """
+        vol = min(self.volVar.get(), 100)
+        v_M = "%d%s" % (vol, " (Muted)" if self.volMuted else '')
+        self.volSlider.config(label="Volume " + v_M)
+        if self.player and not self._stopped:
+            # .audio_set_volume returns 0 if success, -1 otherwise,
+            # e.g. if the player is stopped or doesn't have media
+            if self.player.audio_set_volume(vol):  # and self.player.get_media():
+                self.showError("Failed to set the volume: %s." % (v_M,))
+
     def showError(self, message):
         """Display a simple error dialog.
         """
@@ -602,13 +666,13 @@ dataSet = DataSet()
 selectedTeam = ""
 selectedRound = 0
 
-# mpv_palyer = MPV(start_mpv=False, ipc_socket="/tmp/mpv.socket")
+mpv_player = MPV(start_mpv=False, ipc_socket="/tmp/mpv.socket")
 monitorList = get_monitors()
 for m in monitorList:
     print(str(m))
 
-appWidth = 480 # monitorList[0].width
-appHeight = 320 # monitorList[0].height
+appWidth = 720 # monitorList[0].width
+appHeight = 480 # monitorList[0].height
 appMulti = appWidth / 640
 if (appMulti > 1):
     fontSize = int(26 * (appMulti * .85))
@@ -618,9 +682,11 @@ else:
     fontSizeMin = 16
 
 
-# app = App(title="Skydive or Bust Dubbing Station", width=appWidth, height=appHeight, layout="grid")
+app = App(title="Skydive or Bust Dubbing Station", width=appWidth, height=appHeight, layout="grid")
 
 
+# Download API Data
+get_comps()
 
 # disc_combo = Combo(app, options=["Select Discipline", "2way Sequential ProAm", "2way Sequential Open", "4way Sequential Open", "4way Rotations"], command=teamChanged, grid=[0,1,8,1], align="top", width="23")
 # disc_combo.text_size = fontSize
@@ -630,19 +696,19 @@ else:
 # team_combo.text_size = fontSize
 # team_combo.bg = "#33cc33"
 
-#openvideo_btn = PushButton(app, command=openButton, text="Open Video", width="17", grid=[0,4,3,1])
-#openvideo_btn.text_size = fontSizeMin
-#openvideo_btn.bg = "#cc33cc"
+openvideo_btn = PushButton(app, command=openButton, text="Open Video", width="17", grid=[0,4,3,1])
+openvideo_btn.text_size = fontSizeMin
+openvideo_btn.bg = "#cc33cc"
 
-#playvideo_btn = PushButton(app, command=playButton, text="Play Video", width="17", grid=[3,4,3,1])
-#playvideo_btn.text_size = fontSizeMin
+playvideo_btn = PushButton(app, command=playButton, text="Play Video", width="17", grid=[3,4,3,1])
+playvideo_btn.text_size = fontSizeMin
 
-#compCombo = Combo(app, options=compComboOptions, grid=[0,5,5,1], command=change_comp, align="left")
-#compCombo.text_size = fontSize
-#teamCombo = Combo(app, options=teamComboOptions, grid=[0,6,5,1], align="left")
-#teamCombo.text_size = fontSize
-#roundCombo = Combo(app, options=roundComboOptions, grid=[0,7,5,1], align="left")
-#roundCombo.text_size = fontSize
+compCombo = Combo(app, options=compComboOptions, grid=[0,5,5,1], command=change_comp, align="left")
+compCombo.text_size = fontSize
+teamCombo = Combo(app, options=teamComboOptions, grid=[0,6,5,1], align="left")
+teamCombo.text_size = fontSize
+roundCombo = Combo(app, options=roundComboOptions, grid=[0,7,5,1], align="left")
+roundCombo.text_size = fontSize
 # for x in range(0, 6):
 #     rX = PushButton(app, command=selectButton, args=[x], text=str(x + 1), grid=[x, 5])
 #     rX.text_size = fontSize
@@ -659,28 +725,28 @@ else:
 
 
 
-#update_btn = PushButton(app, command=submitButton, args=[selectedTeam, selectedRound], text="Upload Video", grid=[0,8,3,1])
-#update_btn.text_size = fontSize
-#update_btn.disabled = True
+update_btn = PushButton(app, command=submitButton, args=[selectedTeam, selectedRound], text="Upload Video", grid=[0,8,3,1])
+update_btn.text_size = fontSize
+update_btn.disabled = True
 
-#playnew_btn = PushButton(app, command=playnewVideo, text="Play New Video", grid=[4,8,3,1])
-#playnew_btn.text_size = fontSize
-#playnew_btn.disabled = True
+playnew_btn = PushButton(app, command=playnewVideo, text="Play New Video", grid=[4,8,3,1])
+playnew_btn.text_size = fontSize
+playnew_btn.disabled = True
 
 # move_btn = PushButton(app, command=submitButton, args=[selectedTeam, selectedRound], text="Move Video", grid=[3,7,3,1])
 # move_btn.text_size = fontSize
 # move_btn.disabled = True
 
-#statusText = Text(app, text="", align="left", size=14, grid=[0,10,7,1])
+statusText = Text(app, text="", align="left", size=14, grid=[0,10,7,1])
 
 # Bind to key press events with a decorator
-#@mpv_player.on_event("start-file")
-#def evStartFile_handler(evData):
-#    setattr(dataSet, "playing", "1")
+@mpv_player.on_event("start-file")
+def evStartFile_handler(evData):
+    setattr(dataSet, "playing", "1")
     
-#@mpv_player.on_event("end-file")
-#def evStartFile_handler(evData):
-#    setattr(dataSet, "playing", "0")
+@mpv_player.on_event("end-file")
+def evStartFile_handler(evData):
+    setattr(dataSet, "playing", "0")
 
 ssock_file = '/tmp/sdobox.socket';
 csock_file = '/tmp/sdobox.dubbing.socket';
@@ -705,21 +771,22 @@ sdobThread = Thread(target = thread_sdobSocket)
 sdobThread.setDaemon(True)
 sdobThread.start()
 
+app.when_clicked = globalClicked
+
 # Add vlc player
 root = Tk.Tk()
 player = Player(root)
 root.protocol("WM_DELETE_WINDOW", player.OnClose)
 
-
 # Main Looop
-root.mainloop()
+app.display()
 
-sdobSocketKiller = 0
+sdobSocketKiller = 0;
 
-#try:
-#    mpv_player.terminate()
-#except:
-#    pass
+try:
+    mpv_player.terminate()
+except:
+    pass
 
 try:
     csock.sendto(str.encode('{"event":"stopped"}'), ssock_file)

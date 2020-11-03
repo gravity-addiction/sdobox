@@ -1887,13 +1887,16 @@ void pg_skydiveorbustButtonLeftPressed() {
 
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
-    mpv_any_u* retTimePos;
     double markTime = 0.00;
-    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
-      } else { markTime = retTimePos->floating;
+    if (sdob_devicehost->isHost == 1) {
+      mpv_any_u* retTimePos;
+      markTime = 0.00;
+      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+        if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+        } else { markTime = retTimePos->floating;
+        }
+        MPV_ANY_U_FREE(retTimePos);
       }
-      MPV_ANY_U_FREE(retTimePos);
     }
 
     item = new_qhead();
@@ -1920,14 +1923,16 @@ void pg_skydiveorbustButtonRightPressed() {
   // Scorecard Clicks
 
   if (sdob_judgement->marks->selected < 0) {
-    // Add to queue E_Q_SCORECARD_INSERT_MARK
-    mpv_any_u* retTimePos;
-    double markTime = -1.00;
-    if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
-      if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
-      } else { markTime = retTimePos->floating;
+    double markTime = 0.00;
+    if (sdob_devicehost->isHost == 1) {
+      // Add to queue E_Q_SCORECARD_INSERT_MARK
+      mpv_any_u* retTimePos;
+      if ((mpvSocketSinglet("time-pos", &retTimePos)) != -1) {
+        if (retTimePos->hasPtr == 1) { markTime = atof(retTimePos->ptr);
+        } else { markTime = retTimePos->floating;
+        }
+        MPV_ANY_U_FREE(retTimePos);
       }
-      MPV_ANY_U_FREE(retTimePos);
     }
  
 
@@ -2346,6 +2351,8 @@ static void pg_skydiveorbust_notify_slaves(gslc_tsGui *pGui) {
   json_object_set_new(root, "file", json_string(sdob_judgement->video->video_file));
   json_object_set_new(root, "url", json_string(sdob_judgement->video->url));
 
+  json_object_set_new(root, "es", json_string(sdob_judgement->ruleSet));
+
   // Dump JSON and decref
   s = json_dumps(root, 0);
   json_decref(root);
@@ -2364,7 +2371,7 @@ static void pg_skydiveorbust_notify_slaves(gslc_tsGui *pGui) {
     int i = 0;
     struct pg_sdob_device_slave_args **dataSets = (struct pg_sdob_device_slave_args**)malloc(n * sizeof(struct pg_sdob_device_slave_args*));
     
-    fpHosts = fopen("/opt/sdobox/scripts/sdob/child_hosts", "r");
+    fpHosts = fopen("/home/pi/.config/sdobox/child_hosts", "r");
     if (fpHosts) {
       while ((readHost = getline(&hostLine, &hostLen, fpHosts)) != -1) {
         stripReturnCarriage(&hostLine);
@@ -2803,6 +2810,10 @@ int pg_skydiveorbust_thread() {
     
     // pg_sdob_clear(&m_gui);
     // pg_sdob_scorecard_clear(&m_gui);
+    if (sdob_judgement->marks->size > 0) {
+      dbgprintf(DBG_DEBUG, "%s", "Currently Scoring, Rejecting New Video Request.\n");
+      return 1;
+    }
 
     // Setup Environment for new Video API
     if (strcmp(libUlfiusSDOBNewVideoInfo->host, "1") == 0) {
@@ -2832,11 +2843,16 @@ int pg_skydiveorbust_thread() {
       pg_sdobUpdateRound(&m_gui, libUlfiusSDOBNewVideoInfo->rnd);
     }
 
-    if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
+    if (libUlfiusSDOBNewVideoInfo->video_file[0] != '\0') {
+      pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->video_file);
+    } else if (libUlfiusSDOBNewVideoInfo->eventStr[0] != '\0') {
       pg_sdobUpdateVideoDescOne(&m_gui, libUlfiusSDOBNewVideoInfo->eventStr);
+    } else {
+      pg_sdobUpdateVideoDescOne(&m_gui, (char*)" ");
     }
     if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
       pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+      // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
     }
     if (libUlfiusSDOBNewVideoInfo->es[0] != '\0') {
       pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
