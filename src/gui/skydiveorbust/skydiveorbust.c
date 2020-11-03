@@ -2351,6 +2351,8 @@ static void pg_skydiveorbust_notify_slaves(gslc_tsGui *pGui) {
   json_object_set_new(root, "file", json_string(sdob_judgement->video->video_file));
   json_object_set_new(root, "url", json_string(sdob_judgement->video->url));
 
+  json_object_set_new(root, "es", json_string(sdob_judgement->ruleSet));
+
   // Dump JSON and decref
   s = json_dumps(root, 0);
   json_decref(root);
@@ -2850,7 +2852,7 @@ int pg_skydiveorbust_thread() {
     }
     if (libUlfiusSDOBNewVideoInfo->compStr[0] != '\0') {
       pg_sdobUpdateVideoDescTwo(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
-      pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
+      // pg_sdobUpdateComp(&m_gui, libUlfiusSDOBNewVideoInfo->compStr);
     }
     if (libUlfiusSDOBNewVideoInfo->es[0] != '\0') {
       pg_sdobUpdateScoringSettings(&m_gui, libUlfiusSDOBNewVideoInfo->es);
