@@ -2,5 +2,3 @@
 
 MP=$1
 sudo /usr/bin/pumount /dev/${MP}
-sleep 1
-sudo rm -r "/media/pi/${MP}"

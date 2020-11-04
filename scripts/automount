@@ -5,8 +5,8 @@ FS_TYPE=`lsblk -o name,fstype | grep ${PART} | awk '{print $2}'`
 
 if [ ${FS_TYPE} = "exfat" ]
 then
-  sudo /bin/mkdir -p /media/pi/${PART}
-  sudo /bin/mount -t exfat /dev/${PART} /media/pi/${PART}
+  /bin/mkdir -p /media/pi/${PART}
+  /bin/mount -t exfat /dev/${PART} /media/pi/${PART}
 else
-  /usr/bin/pmount --umask 000 --noatime -w --sync /dev/${PART} /media/${PART}
+  /usr/bin/pmount --umask 000 --noatime -w --sync /dev/${PART} /media/pi/${PART}
 fi

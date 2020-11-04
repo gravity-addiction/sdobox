@@ -5,6 +5,7 @@ from os.path import basename, expanduser, isfile, join as joined
 from pathlib import Path
 from glob import glob
 from subprocess import check_output, CalledProcessError
+from datetime import datetime
 import time
 import socket
 import subprocess
@@ -96,7 +97,7 @@ def thread_processVideo():
     videoRoot = '/tmp'
     videoFiles = []
     videoExt = '.mp4'
-    videoDest = '/home/pi/Videos/' + str(time.time)
+    videoDest = '/home/pi/Videos/' + datetime.now().strftime("%Y%m%d-%H%M%s")
 
 
     compInd = player.compCombo.current()
@@ -163,6 +164,7 @@ def thread_processVideo():
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
         player.progressBar['value'] += 10
         root.update_idletasks()
+        player._Play(videoFile) 
 
     if (hasattr(dataSet, "exit")):
         #statusText.value = "Splitting Video Skydive"
@@ -182,7 +184,7 @@ def thread_processVideo():
             eTime = -1
 
         # Check Overage
-        eTime += player.videoWt
+        eTime += player.videoWt + 10
         if (eTime > vDuration):
             eTime = vDuration
 
@@ -205,6 +207,7 @@ def thread_processVideo():
     player.OnStop()
     player.eject_all()
     player.statusLabel["text"] = "Finished Downloading\nYou can remove your sdcards\n\n\n" + player.statusLabel["text"]
+
     combineVideoFiles(videoRoot, videoFiles, videoDest)
     
     root.update_idletasks()
@@ -354,8 +357,8 @@ class Player(Tk.Frame):
         self.playButton = ttk.Button(buttons, text="Play", command=self.OnPlay, style="Player.TButton")
         stop            = ttk.Button(buttons, text="Stop", command=self.OnStop, style="Player.TButton")
         eject            = ttk.Button(buttons, text="Eject", command=self.OnEject, style="Player.TButton")
+        
         self.slateButton = ttk.Button(self.splitting_panel, text="Slate", command=self.onMarkSlate, style="Split.TButton")
-        self.slateButton.configure(state="yellow")
         self.exitButton = ttk.Button(self.splitting_panel, text="Exit", command=self.onMarkExit, style="Split.TButton")
         self.uploadButton = ttk.Button(self.splitting_panel, text="Upload", command=self.onUpload, style="Split.TButton")
 
@@ -442,11 +445,26 @@ class Player(Tk.Frame):
     def eject_all(self):
         folders = glob("/media/pi/*")
         # folders = [f for f in os.listdir('/media/pi') if os.path.isdir(f)]
+        cleanFolder = 1
         for f in folders:
-            print(os.path.basename(f))
-            uMountCmd = 'sudo systemctl stop "usbstick-handler@{}"'.format(os.path.basename(f))
-            os.system(uMountCmd)
-            
+            mPointCmd = '/bin/mountpoint "{}"'.format(f)
+            mpRes = os.system(mPointCmd)
+            if (mpRes >> 8 == 0):
+                uMountCmd = 'sudo systemctl stop "usbstick-handler@{}"'.format(os.path.basename(f))
+                umRes = os.system(uMountCmd)
+                if (umRes >> 8):
+                    cleanFolder = 0
+
+            mpRes = os.system(mPointCmd)
+            if (mpRes >> 8 == 0):
+                cleanFolder = 0
+            else:
+                os.rmdir(f)
+
+        if (cleanFolder == 1):
+            self.showError("Successful Ejection, remove your sdcard")
+        else:
+            self.showError("Failed to eject sdcard, try again")
 
     def list_comps(self):
         for comp in self.compDataset["comps"]:
@@ -684,7 +702,7 @@ class Player(Tk.Frame):
             self.showError("Missing Info:\n" + errStr)
             return
         else:
-            destFile = "/home/pi/Videos3/" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
+            destFile = "/home/pi/Videos3/" + datetime.now().strftime("%Y%m%d-%H%M%s") + "-" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
             setattr(dataSet, "dest", destFile)
 
             if (self.isSplitting == 0 and 
