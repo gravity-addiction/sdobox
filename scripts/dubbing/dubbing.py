@@ -424,17 +424,23 @@ class Player(Tk.Frame):
 
 
     def clean_all(self):
+        print("Cleaning")
         self.statusLabel["text"] = "Cleanup\n" + self.statusLabel["text"]
         self.OnStop()
         self.framesFound = 0
         setattr(dataSet, "filename", "")
         setattr(dataSet, "dest", "")
-        self.compComboOptions = ["Select Competition"]
-        self.teamComboOptions = []
-        self.teamComboOptionsI = []
-        self.roundComboOptions = []
-        self.compCombo["values"] = self.compComboOptions
-        self.list_comps()
+        
+        #self.compComboOptions = ["Select Competition"]
+        #self.teamComboOptions = []
+        #self.teamComboOptionsI = []
+        #self.roundComboOptions = []
+        #self.compCombo["values"] = self.compComboOptions
+        #self.compCombo.current(0)
+        #self.teamComboOptions.clear()
+        #self.teamComboOptionsI.clear()
+        #self.roundComboOptions.clear()
+        #self.list_comps()
 
         setattr(dataSet, "slate", "")
         self.slateButton.configure(style="Split.TButton")
@@ -519,7 +525,7 @@ class Player(Tk.Frame):
                 self.roundComboOptions.clear()
                 for teamI in range(len(comp["teams"])):
                     self.teamComboOptions.append(comp["teams"][teamI]["name"])
-                    if (hasattr(comp["teams"][teamI], "teamNumber")):
+                    if (comp["teams"][teamI]["teamNumber"] != ""):
                         self.teamComboOptionsI.append(comp["teams"][teamI]["teamNumber"])
                     else:
                         self.teamComboOptionsI.append("0000" + str(teamI))
