@@ -889,7 +889,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
         gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
 
       } else if (i_this_mark == 0 && sdob_judgement->prestartTime > 0.0 && sdob_judgement->sopst > -1.0) {
-        sprintf(score, "%s", "P");
+        sprintf(score, "%s", "X");
         gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
 
 
@@ -2075,6 +2075,7 @@ void pg_sdob_mpv_timepos_thread() {
       itemSOWT->amt = sdob_judgement->workingTime;
       itemSOWT->time = (sdob_judgement->prestartTime + sdob_judgement->sopst);
       queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
+      sendBeep();
     }
 
   } else if (sdob_devicehost->isHost == 1 && libMpvVideoInfo->has_seeked == 1 && libMpvVideoInfo->is_seeking == 0) {
@@ -2639,8 +2640,6 @@ int pg_skydiveorbust_thread() {
           ) {
             mpv_pause();
             touchscreenPageOpen(&m_gui, E_PG_SDOB_ROUNDLIST);
-          } else {
-            gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
           }
           gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
           gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);

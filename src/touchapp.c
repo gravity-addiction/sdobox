@@ -352,6 +352,7 @@ int main( int argc, char* args[] )
   // Register The Device
   system("/opt/sdobox/scripts/register_device.sh &");
 
+fprintf(stdout, "\aBeep!\n");
   // ------------------------------------------------
   // Main event loop
   // ------------------------------------------------

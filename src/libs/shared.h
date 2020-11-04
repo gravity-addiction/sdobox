@@ -79,7 +79,7 @@ char * calculateSize(uint64_t size);
 void fisherYatesRandomize (int arr[], int n);
 int isNumeric(char* str);
 void stripReturnCarriage(char **str);
-
+void sendBeep();
 // void run_system_cmd(char *fullpath);
 // int run_system_cmd_with_return(char *fullpath, char *ret, int retsize);
 //-/ void fbcp_start();

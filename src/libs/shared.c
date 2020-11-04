@@ -544,6 +544,10 @@ void stripReturnCarriage(char **str) {
   }
   *dst = '\0';
 }
+
+void sendBeep() {
+  system("/opt/sdobox/scripts/beep.sh &");
+}
 /*
 //---------------------
 // System Commands
