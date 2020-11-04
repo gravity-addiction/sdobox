@@ -164,7 +164,7 @@ def thread_processVideo():
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
         player.progressBar['value'] += 10
         root.update_idletasks()
-        player._Play(videoFile) 
+        player._Play(videoFile)
 
     if (hasattr(dataSet, "exit")):
         #statusText.value = "Splitting Video Skydive"
@@ -198,13 +198,14 @@ def thread_processVideo():
         videoFiles.append(videoFileName)
         splitVideoFile(getattr(dataSet, "filename"), sTimes[0], sTimes[1], videoFile)
         player.progressBar['value'] += 10
+        player.OnStop()
         root.update_idletasks()
+        player._Play(videoFile)
 
     player.progressBar['value'] = 100
     #statusText.value = "Combining Video Slate and Skydive"
     # Recombine
     player.statusLabel["text"] = "Restiching Video Together\n" + player.statusLabel["text"]
-    player.OnStop()
     player.eject_all()
     player.statusLabel["text"] = "Finished Downloading\nYou can remove your sdcards\n\n\n" + player.statusLabel["text"]
 
@@ -521,7 +522,7 @@ class Player(Tk.Frame):
                     if (hasattr(comp["teams"][teamI], "teamNumber")):
                         self.teamComboOptionsI.append(comp["teams"][teamI]["teamNumber"])
                     else:
-                        self.teamComboOptionsI.append(str(teamI))
+                        self.teamComboOptionsI.append("0000" + str(teamI))
                     # self.teamCombo.insert(teamI, comp["teams"][teamI]["name"])
 
                 for r in range(1, comp["roundCnt"] + 1):
@@ -702,7 +703,21 @@ class Player(Tk.Frame):
             self.showError("Missing Info:\n" + errStr)
             return
         else:
-            destFile = "/home/pi/Videos3/" + datetime.now().strftime("%Y%m%d-%H%M%s") + "-" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
+            destFile = "/home/pi/Videos3/" +  datetime.now().strftime("%Y%m%d%H%M") + "_"
+            #destFile = destFile + "20CFGH_"
+
+            if (compInd == 1):
+                destFile = destFile + "CF2SO_"
+            elif (compInd == 2):
+                destFile = destFile + "CF2SPA_"
+            elif (compInd == 3):
+                destFile = destFile + "CF4O_"
+            elif (compInd == 4):
+                destFile = destFile + "CF4R_"
+            
+            destFile = destFile + "R" + str(roundInd + 1) + "_" + self.teamComboOptionsI[teamInd]
+
+            # destFile = "/home/pi/Videos3/" + datetime.now().strftime("%Y%m%d-%H%M%s") + "-" + str(compInd) + "_" + str(teamInd) + "_" + str(roundInd)
             setattr(dataSet, "dest", destFile)
 
             if (self.isSplitting == 0 and 
@@ -712,6 +727,7 @@ class Player(Tk.Frame):
                 print('Splitting Video At', getattr(dataSet, "slate"), 'and', getattr(dataSet, "exit"))
                 player.statusLabel["text"] = "Splitting Video, Please Wait\n" + player.statusLabel["text"]
                 
+                self.OnStop()
                 # Start to Stop
                 # splitVideoFile(getattr(dataSet, "filename"), getattr(dataSet, "slate"), getattr(dataSet, "exit"), "/tmp/test1.mp4")
                 # statusText.value = "Processing Video"
