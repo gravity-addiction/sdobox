@@ -450,8 +450,8 @@ class Player(Tk.Frame):
         self.isSplitting = 0
 
     def eject_all(self):
-        folders = glob("/media/pi/*")
-        # folders = [f for f in os.listdir('/media/pi') if os.path.isdir(f)]
+        folders = glob("/media/*")
+        # folders = [f for f in os.listdir('/media') if os.path.isdir(f)]
         cleanFolder = 1
         for f in folders:
             mPointCmd = '/bin/mountpoint "{}"'.format(f)
@@ -466,7 +466,10 @@ class Player(Tk.Frame):
             if (mpRes >> 8 == 0):
                 cleanFolder = 0
             else:
-                os.rmdir(f)
+                try:
+                    os.rmdir(f)
+                except:
+                    pass
 
         if (cleanFolder == 1):
             self.showError("Successful Ejection, remove your sdcard")
@@ -580,7 +583,7 @@ class Player(Tk.Frame):
 
         # Create a file dialog opened in the current home directory, where
         # you can display all kind of files, having as title "Choose a video".
-        video = askopenfilename(initialdir = Path(expanduser("/media/pi")),
+        video = askopenfilename(initialdir = Path(expanduser("/media")),
                                 title = "Choose a video",
                                 filetypes = (("all files", "*.*"),
                                              ("mp4 files", "*.mp4"),
