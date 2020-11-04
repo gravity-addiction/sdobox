@@ -184,7 +184,7 @@ def thread_processVideo():
             eTime = -1
 
         # Check Overage
-        eTime += player.videoWt + 10
+        eTime += player.videoWt + 40
         if (eTime > vDuration):
             eTime = vDuration
 
@@ -208,13 +208,14 @@ def thread_processVideo():
     player.statusLabel["text"] = "Restiching Video Together\n" + player.statusLabel["text"]
     player.eject_all()
     player.statusLabel["text"] = "Finished Downloading\nYou can remove your sdcards\n\n\n" + player.statusLabel["text"]
+    player.isSplitting = 0
+    root.update_idletasks()
+    
 
     combineVideoFiles(videoRoot, videoFiles, videoDest)
-    
+    player.statusLabel["text"] = "Finished Stitching Video\n" + player.statusLabel["text"]
     root.update_idletasks()
 
-    player.statusLabel["text"] = "Finished Stitching Video\n" + player.statusLabel["text"]
-    player.isSplitting = 0
     #statusText.value = "Done Processing Video"
 
 
@@ -387,7 +388,8 @@ class Player(Tk.Frame):
         timers = ttk.Frame(self.buttons_panel)
         self.timeVar = Tk.DoubleVar()
         self.timeSliderLast = 0
-        self.timeSlider = Tk.Scale(timers, variable=self.timeVar, command=self.OnTime,
+        #self.timeSlider = Tk.Scale(timers, variable=self.timeVar, command=self.OnTime,
+        self.timeSlider = Tk.Scale(timers, command=self.OnTime,
                                    from_=0, to=1000, orient=Tk.HORIZONTAL, length=400,
                                    showvalue=0)  # label='Time',
         self.timeSlider.pack(side=Tk.BOTTOM, fill=Tk.X, expand=1)
@@ -420,7 +422,7 @@ class Player(Tk.Frame):
         self.get_comps()
         self.list_comps()
 
-        self.OnTick()  # set the timer up
+        # self.OnTick()  # set the timer up
 
 
     def clean_all(self):
@@ -548,10 +550,14 @@ class Player(Tk.Frame):
     def OnClose(self, *unused):
         """Closes the window and quit.
         """
-        # print("_quit: bye")
-        self.parent.quit()  # stops mainloop
-        self.parent.destroy()  # this is necessary on Windows to avoid
-        # ... Fatal Python Error: PyEval_RestoreThread: NULL tstate
+
+        if (self.isSplitting == 1):
+            self.showError("Please wait until video is done processing.")
+        else:
+            # print("_quit: bye")
+            self.parent.quit()  # stops mainloop
+            self.parent.destroy()  # this is necessary on Windows to avoid
+            # ... Fatal Python Error: PyEval_RestoreThread: NULL tstate
 
     def _DetectButtonsPanelDragging(self, _):
         """If our last click was on the boarder
@@ -769,8 +775,9 @@ class Player(Tk.Frame):
 
     def OnTime(self, *unused):
         if self.player:
+            print("Move Slider")
             t = self.timeVar.get()
-            if self.timeSliderLast != int(t):
+            # if self.timeSliderLast != int(t):
                 # this is a hack. The timer updates the time slider.
                 # This change causes this rtn (the 'slider has changed' rtn)
                 # to be invoked.  I can't tell the difference between when
@@ -789,8 +796,8 @@ class Player(Tk.Frame):
                 # routine wait for at least 2 seconds before it starts
                 # updating the slider again (so the timer doesn't start
                 # fighting with the user).
-                self.player.set_time(int(t * 1e3))  # milliseconds
-                self.timeSliderUpdate = time.time()
+            self.player.set_time(int(t * 1e3))  # milliseconds
+                # self.timeSliderUpdate = time.time()
 
     def showError(self, message):
         """Display a simple error dialog.
