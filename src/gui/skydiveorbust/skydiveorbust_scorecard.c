@@ -372,14 +372,16 @@ int pg_sdobSubmitScorecard() {
   char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
   combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
   
-  char* md5H;
-  int md5x = md5HashFile(dest, &md5H);
-  if (md5x == 0) {
-    // printf("MD5: %d - %s\n", md5x, md5H);
-    json_object_set_new(root, "md5", json_string(md5H));
-    free(md5H);
+  if (sdob_devicehost->isHost == 1) {
+    char* md5H;
+    int md5x = md5HashFile(dest, &md5H);
+    if (md5x == 0) {
+      // printf("MD5: %d - %s\n", md5x, md5H);
+      json_object_set_new(root, "md5", json_string(md5H));
+      free(md5H);
+    }
   }
-  
+
   // Grab Device token
   FILE *tokenFile;
   char tokenStr[8];
