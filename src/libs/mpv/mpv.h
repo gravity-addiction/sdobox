@@ -87,6 +87,8 @@ int check_avsync();
 int video_display_fps();
 int video_estimated_display_fps();
 
+int mpv_volume_mute();
+int mpv_volume_on();
 
 #ifdef __cplusplus
 }

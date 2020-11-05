@@ -3077,6 +3077,9 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   pg_sdob_clear(pGui);
 
+  // Remove MPV Player Volume
+  mpv_volume_mute();
+
   //////////////////////////////
   // Finish up
 
@@ -3168,6 +3171,8 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   }
   // free(sdob_devicehost);
   // printf("Page SkydiveOrBust Destroyed\n");
+
+  mpv_volume_on();
 }
 
 

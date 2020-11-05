@@ -527,6 +527,13 @@ int mpv_fullscreen(int fs) {
   }
 }
 
+int mpv_volume_mute() {
+  return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %d]}\n", "volume", 0);
+}
+int mpv_volume_on() {
+  return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %d]}\n", "volume", 100);
+}
+
 int mpv_playpause_toggle() {
   if (!libMpvVideoInfo->is_loaded) { return 0; }
   if (libMpvVideoInfo->is_playing) {
