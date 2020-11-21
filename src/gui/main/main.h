@@ -29,7 +29,7 @@ enum {
   E_MAIN_EL_MAX
 };
 
-#define MAX_ELEM_PG_MAIN      E_MAIN_EL_MAX + 11
+#define MAX_ELEM_PG_MAIN      E_MAIN_EL_MAX + 11 + 50
 #define MAX_ELEM_PG_MAIN_RAM  MAX_ELEM_PG_MAIN
 
 gslc_tsElem m_asPgMainElem[MAX_ELEM_PG_MAIN_RAM];

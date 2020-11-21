@@ -8,6 +8,7 @@
 
 #include "libs/audio/audio.h"
 #include "libs/buttons/buttons.h"
+#include "libs/dbg/dbg.h"
 
 #include "gui/pages.h"
 

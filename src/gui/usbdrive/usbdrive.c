@@ -18,6 +18,7 @@
 #include "libs/sdob-socket/sdob-socket.h"
 #include "libs/vlisting/vlisting.h"
 #include "libs/usb-drives/usb-drives.h"
+#include "libs/dbg/dbg.h"
 
 int pg_usbdrive_thread_usbCnt = -1;
 

@@ -11,6 +11,7 @@
 #include "libs/mpv/mpv.h"
 #include "libs/mpv/mpv_info.h"
 #include "libs/curl-sdob/curl-sdob.h"
+#include "libs/dbg/dbg.h"
 
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {

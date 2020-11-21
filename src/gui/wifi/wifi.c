@@ -6,6 +6,7 @@
 #include "libs/shared.h"
 #include "lib_wifi_wpa.h"
 #include "lib_wifi_networks.h"
+#include "libs/dbg/dbg.h"
 #include "wifi.h"
 
 #include "gui/pages.h"

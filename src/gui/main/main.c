@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <math.h>
+#include <libgen.h>       // For path parsing
 #include "main.h"
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -171,6 +172,7 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
   /////////////////////
   // Page Defined Elements
 
+  gslc_DrawLine(pGui, 5, 5, 100, 100, GSLC_COL_WHITE);
   // Chromium Browser Button
   if ((
     pg_mainEl[E_MAIN_EL_BTN_CHROMIUM] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,

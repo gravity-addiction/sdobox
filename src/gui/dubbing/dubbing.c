@@ -21,6 +21,7 @@
 #include "libs/fbcp/fbcp.h"
 #include "libs/sdob-socket/sdob-socket.h"
 #include "libs/usb-drives/usb-drives.h"
+#include "libs/dbg/dbg.h"
 
 #include "gui/usbdrive/usbdrive.h"
 
