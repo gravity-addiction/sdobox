@@ -37,8 +37,8 @@ void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc)
   sc->last = -1;
   for (size_t s = 0; s < sc->max; s++) {
     sc->arrScorecardPoints[s] = -1;
-    sc->arrScorecardTimes[s] = -1.0;
-    sc->arrScorecardTicks[s] = -1.0;
+    sc->arrScorecardTimes[s] = 0;
+    sc->arrScorecardTicks[s] = 0;
   }
 }
 
@@ -66,7 +66,7 @@ struct pg_sdob_scorecard_marks * PG_SDOB_SCORECARD_INIT_MARKS()
 
   sc->arrScorecardPoints = (int*)malloc(sc->max * sizeof(int));
   sc->arrScorecardTimes = (double*)malloc(sc->max * sizeof(double));
-  sc->arrScorecardTicks = (double*)malloc(sc->max * sizeof(double));
+  sc->arrScorecardTicks = (uint16_t*)malloc(sc->max * sizeof(uint16_t));
 
   PG_SDOB_SCORECARD_CLEAR_MARKS(sc);
 
@@ -325,7 +325,7 @@ struct pg_sdob_player_chapters * PG_SDOB_INIT_PLAYER_CHAPTERS() {
   chapters->len = 0;
   chapters->max = 64;
   chapters->cur = -1;
-  chapters->ptr = (double*)malloc(chapters->max * sizeof(double));
+  chapters->ptr = (uint16_t*)malloc(chapters->max * sizeof(uint16_t));
   return chapters;
 }
 
@@ -335,7 +335,7 @@ struct pg_sdob_player_ticks * PG_SDOB_INIT_PLAYER_TICKS() {
   ticks->len = 0;
   ticks->max = 64;
   pthread_mutex_init(&ticks->lock, NULL);
-  ticks->ptr = (double*)malloc(ticks->max * sizeof(double));
+  ticks->ptr = (uint16_t*)malloc(ticks->max * sizeof(uint16_t));
   return ticks;
 }
 

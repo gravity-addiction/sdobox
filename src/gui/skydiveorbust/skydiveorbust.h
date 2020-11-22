@@ -82,8 +82,8 @@ enum {
 struct pg_sdob_scorecard_marks {
   int          max;
   int          last;
-  int          tickCnt;
-  double       *arrScorecardTicks;
+  uint8_t      tickCnt;
+  uint16_t     *arrScorecardTicks;
   double       *arrScorecardTimes;
 
   int selected;
@@ -200,18 +200,18 @@ struct pg_sdob_videolist_folders * PG_SDOB_INIT_VIDEOLIST_FOLDERS();
 // MPV Player
 
 struct pg_sdob_player_chapters {
-  int len;
-  int max;
-  int cur;
-  double *ptr;
+  uint8_t len;
+  uint8_t max;
+  uint8_t cur;
+  uint16_t *ptr;
 };
 struct pg_sdob_player_chapters *sdob_chapters;
 
 struct pg_sdob_player_ticks {
-  int len;
-  int max;
+  uint8_t len;
+  uint8_t max;
   pthread_mutex_t lock;
-  double *ptr;
+  uint16_t *ptr;
 };
 struct pg_sdob_player_ticks *sdob_player_ticks;
 

@@ -101,13 +101,13 @@ void guislice_wrapper_mirror_toggle(gslc_tsGui *pGui) {
   if (!fbcp_toggle()) {
     usleep(50000);
     gslc_SetTouchDisabled(pGui, false);
-    gslc_SetScreenDisabled(pGui, false);
+    gslc_SetScreenDisableRedraw(pGui, false);
     gslc_PageRedrawSet(pGui, true);
     system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
   } else {
     xdotool_wrapper_wakeUp();
     gslc_SetTouchDisabled(pGui, true);
-    gslc_SetScreenDisabled(pGui, true);
+    gslc_SetScreenDisableRedraw(pGui, true);
     gslc_PageRedrawSet(pGui, false);
     system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 1 &");
   }

@@ -335,7 +335,7 @@ int main( int argc, char* args[] )
     // Setup TSLib Calibration
     system("DISPLAY=:0.0 /opt/sdobox/scripts/xinput/set &");
     gslc_SetTouchDisabled(&m_gui, false);
-    gslc_SetScreenDisabled(&m_gui, false);
+    gslc_SetScreenDisableRedraw(&m_gui, false);
     gslc_PageRedrawSet(&m_gui, true);
     // system("DISPLAY=:0.0 xinput set-prop 'ADS7846 Touchscreen' 'Device Enabled' 0 &");
   }

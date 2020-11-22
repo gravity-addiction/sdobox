@@ -37,12 +37,12 @@ void pg_sdob_player_video_chapterMarks(gslc_tsGui *pGui) {
     return;
   }
 
-  double *tickMarks = (double*)calloc(sdob_chapters->len, sizeof(double));
+  uint16_t *tickMarks = (uint16_t*)calloc(sdob_chapters->len, sizeof(uint16_t));
   if (tickMarks == NULL) { return; }
 
   for (size_t i_chapter = 0; i_chapter < sdob_chapters->len; i_chapter++) {
     if (sdob_chapters->ptr[i_chapter]) {
-      tickMarks[i_chapter] = (sdob_chapters->ptr[i_chapter] / libMpvVideoInfo->duration) * 100;
+      tickMarks[i_chapter] = (sdob_chapters->ptr[i_chapter] / libMpvVideoInfo->duration) * 1000;
     } else {
       tickMarks[i_chapter] = -1;
     }
@@ -58,8 +58,8 @@ void pg_sdob_player_video_chapterList(int len) {
   sdob_chapters->len = len;
   if (len > sdob_chapters->max) {
     sdob_chapters->max += 64;
-    size_t chapterListSz = (sizeof(double) * sdob_chapters->max);
-    double *oldList = realloc(sdob_chapters->ptr, chapterListSz);
+    size_t chapterListSz = (sizeof(uint16_t) * sdob_chapters->max);
+    uint16_t *oldList = realloc(sdob_chapters->ptr, chapterListSz);
     sdob_chapters->ptr = oldList;
   }
 
@@ -95,7 +95,7 @@ void pg_sdob_player_video_chapters() {
 
 
 
-void pg_sdob_player_sliderTicks(gslc_tsGui *pGui, double *tickMarks, int tickCnt) {
+void pg_sdob_player_sliderTicks(gslc_tsGui *pGui, uint16_t *tickMarks, uint8_t tickCnt) {
   if (tickCnt < 1) {
     gslc_ElemXSliderSetTicks(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], NULL, 0);
     return;
@@ -105,15 +105,15 @@ void pg_sdob_player_sliderTicks(gslc_tsGui *pGui, double *tickMarks, int tickCnt
   if (tickCnt > sdob_player_ticks->max) {
     // printf("Upping Ticks\n");
     sdob_player_ticks->max += 64;
-    double * oldTicks;
-    oldTicks = realloc(sdob_player_ticks->ptr, (sdob_player_ticks->max * sizeof(double)));
+    uint16_t * oldTicks;
+    oldTicks = realloc(sdob_player_ticks->ptr, (sdob_player_ticks->max * sizeof(uint16_t)));
     sdob_player_ticks->ptr = oldTicks;
   }
 
   sdob_player_ticks->len = tickCnt;
   for (size_t t = 0; t < sdob_player_ticks->max; ++t) {
     if (t < tickCnt) {
-      sdob_player_ticks->ptr[t] = tickMarks[t];
+      sdob_player_ticks->ptr[t] = tickMarks[t] * 10;
     } else {
       sdob_player_ticks->ptr[t] = -1;
     }

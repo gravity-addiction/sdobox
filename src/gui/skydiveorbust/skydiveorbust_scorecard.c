@@ -274,7 +274,7 @@ void pg_sdobScoringMarks(gslc_tsGui *pGui) {
       // Get percent in working time ((mark - sowt) / wt)
       sdob_judgement->marks->arrScorecardTicks[i] = (((sdob_judgement->marks->arrScorecardTimes[i] - sdob_judgement->sowt) / sdob_judgement->workingTime) * 100);
     } else {
-      sdob_judgement->marks->arrScorecardTicks[i] = -1.0;
+      sdob_judgement->marks->arrScorecardTicks[i] = 0;
     }
   }
 
