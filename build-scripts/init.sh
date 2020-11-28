@@ -301,9 +301,15 @@ cd "${PWDSRC}"
 ./tslib.sh -i
 
 # Compile and install MPV
-cd "${PWDSRC}"
-./mpv.sh -i
 
+cd "${PWDSRC}"
+if [[ $fan_equip = -1 ]];
+then
+  echo "Starting MPV Fanless, brave move, cutting num of processors used down to 2"
+  ./mpv.sh 2
+else
+  ./mpv.sh
+fi
 
 # Activate Startup Idle process for MPV
 cd "${PWDSRC}"

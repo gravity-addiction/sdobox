@@ -14,7 +14,7 @@ done
 PWDSRC=`dirname "$(readlink -f "$0")"`
 cd "${PWDSRC}/../SDL"
 
-git submodule init update
+git submodule update --init
 
 if [ ! -z $makeonly ]; then
   ./autogen.sh

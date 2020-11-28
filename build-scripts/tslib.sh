@@ -4,7 +4,7 @@ init=
 PWDSRC=`dirname "$(readlink -f "$0")"`
 cd "${PWDSRC}/../tslib"
 
-git submodule init update
+git submodule update --init
 
 ./autogen.sh
 ./configure
