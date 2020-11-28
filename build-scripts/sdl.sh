@@ -10,12 +10,12 @@ while getopts ":ia" opt; do
     esac
 done
 
-cd ..
+# Get full path to this folder
+PWDSRC=`dirname "$(readlink -f "$0")"`
+cd "${PWDSRC}/../SDL"
 
-git submodule init
-git submodule update
+git submodule init update
 
-cd SDL
 if [ ! -z $makeonly ]; then
   ./autogen.sh
   ./configure --enable-sndio=no

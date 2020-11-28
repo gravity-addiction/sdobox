@@ -6,6 +6,12 @@ echo "------------------------------"
 echo "Big thanks to RPI_Mike on https://www.raspberrypi.org/forums/viewtopic.php?f=38&t=199775 for putting most of this script together"
 echo "If you're out there Mike look forward to your further input on this script"
 echo; echo
+
+# Get full path to this folder
+PWDSRC=`dirname "$(readlink -f "$0")"`
+cd "${PWDSRC}"
+
+
 echo "Determine which Raspberry Pi Version we're working with." | fold -s
 RPI3A="Raspberry Pi 3 Model A Plus"
 RPI3B="Raspberry Pi 3 Model B Plus"
@@ -20,7 +26,6 @@ else
   echo "Unknown - $RPIVERSION" | fold -s
   exit
 fi
-
 
 echo; echo
 
