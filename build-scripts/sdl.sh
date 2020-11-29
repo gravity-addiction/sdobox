@@ -14,11 +14,11 @@ done
 PWDSRC=`dirname "$(readlink -f "$0")"`
 cd "${PWDSRC}/../SDL"
 
-git submodule update --init
+#git submodule update --init
 
 if [ ! -z $makeonly ]; then
   ./autogen.sh
-  ./configure --enable-sndio=no
+  ./configure --enable-sndio=no --enable-directfb=no
 fi
 
 make clean && make -j4
