@@ -47,11 +47,17 @@
 
 - build-scripts/
 
+
     apt-install.sh - list of apt libraries that are required for development
+
     init.sh - Goto installer script. Can we re-ran multiple times
-        mpv.sh - downloads and installs third party utilities and compiles ffmpeg / mpv
-        tslib.sh - downloads and install tslib library
-        sdobox.sh - download sdobox development libraries and compiles
+
+    mpv.sh - downloads and installs third party utilities and compiles ffmpeg / mpv
+
+    tslib.sh - downloads and install tslib library
+
+    sdobox.sh - download sdobox development libraries and compiles
+
     sdl.sh - Downloads modified SDL12 branch and compiles to libSDL for sdobox libs
 
 
