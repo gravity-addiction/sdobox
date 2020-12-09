@@ -5,6 +5,8 @@
 extern "C" {
 #endif // __cplusplus
 
+char *audio_card;
+char *audio_selem_name;
 long volume_min;
 long volume_max;
 

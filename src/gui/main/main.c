@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "libs/audio/audio.h"
+#include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
 
@@ -17,7 +18,9 @@
 
 
 int pg_main_volume_move_debounce = 0;
+int pg_main_volume_move_delay = 250;
 long pg_main_volume_current;
+long pg_main_volume_new = -1;
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_settings(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -96,39 +99,18 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 // Volume Slider
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
-    // Execute Slider Move
-    gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
-    gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
-    // gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
-    //gslc_tsXSlider* pSlider = (gslc_tsXSlider*)(pElem->pXData);
-    m_nPosVolume = gslc_ElemXSliderGetPos(pGui, pElemRef);
-
-    long iVolume = m_nPosVolume;
-    volume_setPercent(iVolume);
-/*
-  // Fetch the new RGB component from the slider
-  switch (pElem->nId) {
-    case E_SLIDER_R:
-      m_nPosR = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    case E_SLIDER_G:
-      m_nPosG = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    case E_SLIDER_B:
-      m_nPosB = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    default:
-      break;
-  }
-
-  // Calculate the new RGB value
-  gslc_tsColor colRGB = (gslc_tsColor){m_nPosR,m_nPosG,m_nPosB};
-
-  // Update the color box
-  gslc_tsElemRef* pElemColor = gslc_PageFindElemById(pGui,E_PG_MAIN,E_ELEM_COLOR);
-  gslc_ElemSetCol(pGui, pElemColor, GSLC_COL_WHITE, colRGB, GSLC_COL_WHITE);
-*/
+  pg_main_volume_new = nPos;
   return true;
+}
+
+void pg_main_volDebounceCheck() {
+  if (pg_main_volume_new < 0) { return; }
+  unsigned int i_now = millis();
+  if ((i_now - pg_main_volume_move_debounce) < pg_main_volume_move_delay) { return; }
+  pg_main_volume_move_debounce = millis();
+  pg_main_volume_current = pg_main_volume_new;
+  pg_main_volume_new = -1;
+  volume_setPercent(pg_main_volume_current);
 }
 
 
@@ -335,21 +317,19 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 
 void pg_mainUpdateVolume() {
   long volDb, volMin, volMax;
-  volume_getVolumeRange("hw:0", "PCM", &volMin, &volMax);
-  if (volume_getVolume("hw:0", "PCM", &volDb)) {
+  volume_getVolumeRange(audio_card, audio_selem_name, &volMin, &volMax);
+  if (volume_getVolume(audio_card, audio_selem_name, &volDb)) {
     volume_dbToPercent(volDb, volMin, volMax, &pg_main_volume_current);
   }
 }
 
 void pg_mainButtonRotaryCW() {
-  pg_main_volume_current += 2;
-  if (pg_main_volume_current > 104) { pg_main_volume_current = 104; }
-  if (pg_main_volume_current < 0) { pg_main_volume_current = 0; }
-  volume_setPercent(pg_main_volume_current);
+  pg_main_volume_new = pg_main_volume_current + 2;
+  if (pg_main_volume_new > 104) { pg_main_volume_new = 104; }
 }
 void pg_mainButtonRotaryCCW() {
-  pg_main_volume_current -= 2;
-  volume_setPercent(pg_main_volume_current);
+  pg_main_volume_new = pg_main_volume_current - 2;
+  if (pg_main_volume_new < 0) { pg_main_volume_new = 0; }
 }
 void pg_mainButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
@@ -361,10 +341,10 @@ void pg_mainButtonRotaryPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
 }
 void pg_mainButtonLeftHeld() {
-
+  backlight_off();
 }
 void pg_mainButtonRightHeld() {
-
+  backlight_on();
 }
 void pg_mainButtonRotaryHeld() {
   guislice_wrapper_mirror_toggle(&m_gui);
@@ -409,7 +389,7 @@ void pg_main_open(gslc_tsGui *pGui) {
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
   guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
-
+  pg_main_volDebounceCheck();
   return 0;
 }
 

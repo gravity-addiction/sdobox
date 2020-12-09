@@ -60,8 +60,8 @@ int volume_initAudio(int runTest) {
     }
   }
 
-  if (volume_handleOpen == 0) {
-    /*
+  if (volume_no_device == 0 && volume_handleOpen == 0) {
+  /*
   int val;
 
   printf("ALSA library version: %s\n",
@@ -139,7 +139,7 @@ int volume_initAudio(int runTest) {
   printf("access type = %s\n",
          snd_pcm_access_name((snd_pcm_access_t)val));
 
-  snd_pcm_hw_params_get_format(params, &val);
+  snd_pcm_hw_params_get_format(params, (snd_pcm_format_t *) &val);
   printf("format = '%s' (%s)\n",
     snd_pcm_format_name((snd_pcm_format_t)val),
     snd_pcm_format_description(
@@ -184,9 +184,9 @@ int volume_initAudio(int runTest) {
   val = snd_pcm_hw_params_get_sbits(params);
   printf("significant bits = %d\n", val);
 
-  snd_pcm_hw_params_get_tick_time(params,
-                                  &val, &dir);
-  printf("tick time = %d us\n", val);
+  // snd_pcm_hw_params_get_tick_time(params,
+  //                                 &val, &dir);
+  // printf("tick time = %d us\n", val);
 
   val = snd_pcm_hw_params_is_batch(params);
   printf("is batch = %d\n", val);
@@ -264,9 +264,7 @@ void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPerce
 // Set playback volume control for persistant handle
 void volume_setVolume(long volume) {
   volume_initAudio(0);
-  if (volume_no_device == 1) {
-    return;
-  }
+  if (volume_no_device == 1) { return; }
 
   int e;
   if ((e = snd_mixer_selem_set_playback_volume_all(volume_elem, volume)) < 0) {
@@ -298,21 +296,12 @@ void volume_setPercent(long volPercent) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // Maybe initialize with a timeout for multiple volume changes in short time
 long curDb;
 int volume_getVolume(char* card, char* device, long * dbGain) {
-  
+  volume_initAudio(0);
+  if (volume_no_device == 1) { return 0; }
+
   snd_mixer_t *volume_get_audio_handle;
   snd_mixer_selem_id_t *volume_get_audio_sid;
 
@@ -343,10 +332,10 @@ int volume_getVolume(char* card, char* device, long * dbGain) {
 
 
 
-
-
 int volume_getVolumeRange(char* card, char* device, long * dbMin, long *dbMax) {
-  
+  volume_initAudio(0);
+  if (volume_no_device == 1) { return 0; }
+
   snd_mixer_t *volume_get_audio_handle;
   snd_mixer_selem_id_t *volume_get_audio_sid;
 
@@ -368,6 +357,8 @@ int volume_getVolumeRange(char* card, char* device, long * dbMin, long *dbMax) {
   
   return 0;
 }
+
+
 
 
 
