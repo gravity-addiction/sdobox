@@ -64,7 +64,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   m_cPosVolume = (char*)calloc(32, sizeof(char));
 
   // Fill volume ranges for alsa
-  volume_getVolumeRange("hw:0", "PCM", &volume_min, &volume_max);
+  volume_getVolumeRange(audio_card, audio_selem_name, &volume_min, &volume_max);
   dbgprintf(DBG_INFO, "Volume Min: %d, Max: %d\n", volume_min, volume_max);
 
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
@@ -155,7 +155,7 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
     if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
       guislice_wrapper_volumeUpdate = millis();
     }
-    if (volume_getVolume("hw:0", "PCM", &guislice_wrapper_db)) {
+    if (volume_getVolume(audio_card, audio_selem_name, &guislice_wrapper_db)) {
       
       long volPercent = 0;
       volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
