@@ -64,23 +64,23 @@ git submodule init
 git submodule update
 
 # Create Opt folders
-if [ -d "/opt/sdobox" ]; then
+if [ ! -d "/opt/sdobox" ]; then
   sudo mkdir -p /opt/sdobox
   sudo chown -R pi:pi /opt/sdobox
 fi
-if [ -d "/opt/sdobox/bin" ]; then
+if [ ! -d "/opt/sdobox/bin" ]; then
   sudo mkdir -p /opt/sdobox/bin
   sudo chown -R pi:pi /opt/sdobox/bin
 fi
-if [ -d "/opt/sdobox/images" ]; then
+if [ ! -d "/opt/sdobox/images" ]; then
   sudo mkdir -p /opt/sdobox/images
   sudo chown -R pi:pi /opt/sdobox/images
 fi
-if [ -d "/opt/sdobox/scripts" ]; then
+if [ ! -d "/opt/sdobox/scripts" ]; then
   sudo mkdir -p /opt/sdobox/scripts
   sudo chown -R pi:pi /opt/sdobox/scripts
 fi
-if [ -d "/opt/sdobox/tmp" ]; then
+if [ ! -d "/opt/sdobox/tmp" ]; then
   sudo mkdir -p /opt/sdobox/tmp
   sudo chown -R pi:pi /opt/sdobox/tmp
 fi
