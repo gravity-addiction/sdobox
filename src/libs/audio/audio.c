@@ -20,7 +20,8 @@ snd_mixer_elem_t* volume_elem;
 
 
 int volume_no_device = 0; // Lock audio handle when incorrect device is detected
-
+int volume_move_debounce = 0;
+int volume_move_delay = 250;
 
 ///////////////////////
 // Audio core creation and destruction of audio alsa handles
@@ -250,6 +251,15 @@ int volume_initAudio(int runTest) {
 ///////////////////////
 
 
+void volume_debounceCheck() {
+  if (volume_new < 0) { return; }
+  unsigned int i_now = millis();
+  if ((i_now - volume_move_debounce) < volume_move_delay) { return; }
+  volume_move_debounce = millis();
+  volume_cur = volume_new;
+  volume_new = -1;
+  volume_setPercent(volume_cur);
+}
 
 
 // Convert volume value from log db to scale percentage
@@ -283,6 +293,8 @@ void volume_setVolume(long volume) {
     dbgprintf(DBG_ERROR, "Error Setting Playback Volume! %s\n", snd_strerror(e));
     volume_closeAudio();
   }
+
+  volume_cur = volume;
 }
 
 void volume_setPercent(long volPercent) {
@@ -312,8 +324,8 @@ void volume_setPercent(long volPercent) {
 
 
 
+
 // Maybe initialize with a timeout for multiple volume changes in short time
-long curDb;
 int volume_getVolume(char* card, char* device, long * dbGain) {
   volume_initAudio(0);
   if (volume_no_device == 1) { return 0; }
@@ -331,6 +343,7 @@ int volume_getVolume(char* card, char* device, long * dbGain) {
     return 0;
   }
 
+  int curDb;
   if (snd_mixer_selem_get_playback_volume(volume_get_elem, SND_MIXER_SCHN_FRONT_LEFT, &curDb) < 0) {
     audio_closeHandle(&volume_get_audio_handle);
     return 0;

@@ -59,16 +59,17 @@ HTTPSTATUS=$(curl -X "${METHOD}" \
 -H "Authorization: Bearer ${TOKEN}" \
 https://api.spotify.com/v1/me/${URL})
 
-echo "${HTTPSTATUS}"
+# echo "${HTTPSTATUS}"
 if [ -f "${SPOTIFYJSON}" ] && [ "${HTTPSTATUS}" -gt 299 ]; then
+  echo "Refreshing Spotify Token"
   # Try Refreshing Token
   /opt/sdobox/scripts/spotify/register_device_refresh.sh
 
-  curl -X "$1" \
+  curl -X "${METHOD}" \
   --write-out '%{http_code}' \
   --silent \
   -H "Authorization: Bearer ${TOKEN}" \
-  https://api.spotify.com/v1/me/$2
+  https://api.spotify.com/v1/me/${URL}
 fi
 fi
 

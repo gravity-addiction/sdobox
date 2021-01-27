@@ -9,6 +9,13 @@ char *audio_card;
 char *audio_selem_name;
 long volume_min;
 long volume_max;
+long volume_cur;
+long volume_new;
+
+int volume_move_debounce;
+int volume_move_delay;
+
+void volume_debounceCheck();
 
 // Convert volume value from log db to scale percentage
 void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPercent);

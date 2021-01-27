@@ -17,10 +17,6 @@
 #include "gui/skydiveorbust/skydiveorbust.h"
 
 
-int pg_main_volume_move_debounce = 0;
-int pg_main_volume_move_delay = 250;
-long pg_main_volume_current;
-long pg_main_volume_new = -1;
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_settings(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -99,18 +95,8 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 // Volume Slider
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
-  pg_main_volume_new = nPos;
+  volume_new = nPos;
   return true;
-}
-
-void pg_main_volDebounceCheck() {
-  if (pg_main_volume_new < 0) { return; }
-  unsigned int i_now = millis();
-  if ((i_now - pg_main_volume_move_debounce) < pg_main_volume_move_delay) { return; }
-  pg_main_volume_move_debounce = millis();
-  pg_main_volume_current = pg_main_volume_new;
-  pg_main_volume_new = -1;
-  volume_setPercent(pg_main_volume_current);
 }
 
 
@@ -320,20 +306,20 @@ void pg_mainUpdateVolume() {
   volume_getVolumeRange(audio_card, audio_selem_name, &volMin, &volMax);
   if (volume_getVolume(audio_card, audio_selem_name, &volLvl)) {
     if (volMin < 0) {
-      volume_dbToPercent(volLvl, volMin, volMax, &pg_main_volume_current);
+      volume_dbToPercent(volLvl, volMin, volMax, &volume_cur);
     } else {
-      pg_main_volume_current = (volLvl * 100) / (volMax - volMin);
+      volume_cur = (volLvl * 100) / (volMax - volMin);
     }
   }
 }
 
 void pg_mainButtonRotaryCW() {
-  pg_main_volume_new = pg_main_volume_current + 2;
-  if (pg_main_volume_new > 104) { pg_main_volume_new = 104; }
+  volume_new = volume_cur + 8;
+  if (volume_new > 104) { volume_new = 104; }
 }
 void pg_mainButtonRotaryCCW() {
-  pg_main_volume_new = pg_main_volume_current - 2;
-  if (pg_main_volume_new < 0) { pg_main_volume_new = 0; }
+  volume_new = volume_cur - 8;
+  if (volume_new < 0) { volume_new = 0; }
 }
 void pg_mainButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
@@ -393,7 +379,7 @@ void pg_main_open(gslc_tsGui *pGui) {
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
   guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
-  pg_main_volDebounceCheck();
+  volume_debounceCheck();
   return 0;
 }
 
