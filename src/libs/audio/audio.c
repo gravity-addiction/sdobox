@@ -12,8 +12,8 @@
 
 
 // Default audio server (default / Master when pulseaudio is available, hw:0 / PCM for db readings)
-char *audio_card = "hw:0";
-char *audio_selem_name = "PCM";
+char *audio_card = "default";
+char *audio_selem_name = "Master";
 snd_mixer_t *volume_audio_handle;
 snd_mixer_selem_id_t *volume_audio_sid;
 snd_mixer_elem_t* volume_elem;
@@ -51,6 +51,17 @@ int volume_handleOpen = 0;
 void volume_closeAudio() {
   audio_closeHandle(&volume_audio_handle);
   volume_handleOpen = 0;
+}
+
+int volume_openAudio(char* card, char* selem) {
+  audio_openHandle("default", &volume_audio_handle);
+  volume_elem = audio_findSelem("Master", &volume_audio_handle, &volume_audio_sid);
+  if (volume_elem == NULL) {
+    dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", selem);
+    volume_closeAudio();
+    return 0;
+  }
+  return 1;
 }
 
 int volume_initAudio(int runTest) {
@@ -221,16 +232,15 @@ int volume_initAudio(int runTest) {
   snd_pcm_close(handle);
   */
 
-    audio_openHandle(audio_card, &volume_audio_handle);
-
-    volume_elem = audio_findSelem(audio_selem_name, &volume_audio_handle, &volume_audio_sid);
-    if (volume_elem == NULL) {
-      volume_no_device = 1;
-      dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", audio_selem_name);
-      volume_closeAudio();
+    if (volume_openAudio("default", "Master") == 1) {
+      audio_card = strdup("default");
+      audio_selem_name = strdup("Master");
+    } else if (volume_openAudio("hw:0", "PCM") == 1) {
+      audio_card = strdup("hw:0");
+      audio_selem_name = strdup("PCM");
+    } else {
       return 0;
     }
-
 
     volume_handleOpen = 1;
   }
@@ -244,10 +254,12 @@ int volume_initAudio(int runTest) {
 
 // Convert volume value from log db to scale percentage
 void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPercent) {
+  // Set to 0% when below minimum
   if (volValue < volMin) {
     *volPercent = 0;
     return;
   }
+  // Set to 100% when above max
   if (volValue > volMax) {
     *volPercent = 100;
     return;
@@ -283,11 +295,15 @@ void volume_setPercent(long volPercent) {
     volPercent = 104;
   }
 
-  long volLog = pow(48, log(104 - volPercent));
-  long volMax = pow(48, log(104));
-  double volP = ((double)volLog / (double)volMax);
-  double volE = (volume_max - volume_min);
-  long volValE = volume_max - volP * volE;
+  long volValE = (volPercent * volume_max) / 104;
+
+  if (volume_min < 0) {
+    long volLog = pow(48, log(104 - volPercent));
+    long volMax = pow(48, log(104));
+    double volP = ((double)volLog / (double)volMax);
+    double volE = (volume_max - volume_min);
+    volValE = volume_max - volP * volE;
+  }
 
   volume_setVolume(volValE);
 }

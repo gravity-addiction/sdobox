@@ -316,10 +316,14 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 }
 
 void pg_mainUpdateVolume() {
-  long volDb, volMin, volMax;
+  long volLvl, volMin, volMax;
   volume_getVolumeRange(audio_card, audio_selem_name, &volMin, &volMax);
-  if (volume_getVolume(audio_card, audio_selem_name, &volDb)) {
-    volume_dbToPercent(volDb, volMin, volMax, &pg_main_volume_current);
+  if (volume_getVolume(audio_card, audio_selem_name, &volLvl)) {
+    if (volMin < 0) {
+      volume_dbToPercent(volLvl, volMin, volMax, &pg_main_volume_current);
+    } else {
+      pg_main_volume_current = (volLvl * 100) / (volMax - volMin);
+    }
   }
 }
 

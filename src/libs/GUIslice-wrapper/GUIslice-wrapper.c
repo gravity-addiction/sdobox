@@ -158,7 +158,11 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
     if (volume_getVolume(audio_card, audio_selem_name, &guislice_wrapper_db)) {
       
       long volPercent = 0;
-      volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
+      if (volume_min < 0) {
+        volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
+      } else {
+        volPercent = (guislice_wrapper_db * 100) / (volume_max - volume_min);
+      }
 
       gslc_tsElem*      pElem = gslc_GetElemFromRef(pGui, pElemRef);
       gslc_tsXSlider*   pSlider = (gslc_tsXSlider*)(pElem->pXData);
