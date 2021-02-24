@@ -292,7 +292,11 @@ int pg_sdobSubmitScorecard() {
   time(&current_time);
   tm_info = localtime(&current_time);
   strftime(c_time_string, 26, "%m/%d/%Y %H:%M:%S", tm_info);
-  char* submit_fmt = "SUBMISSION/%s %s,%s,%s,0,%s,%s,%f,%f,%s";
+  const char submit_fmt[] =
+    "SUBMISSION/%s %s,%s,%s%02u," /* meet,team,round,sortkey, */
+    "%s,0,%s,%s,"                 /* Judges, nreviews, judgetime, filename, */
+    "%f,%f,%s"                    /* duration, sowt, assessments */
+    ;
 
   // Mark plus comma for each space
   size_t markSpace = (sdob_judgement->marks->size * 2);
@@ -336,6 +340,7 @@ int pg_sdobSubmitScorecard() {
     csv_score[csvLen] = '\0';
   }
 
+  const unsigned round_number = atoi(sdob_judgement->round);
 
   // If /home/pi/submitscore exists/executable, invoke it.  This is in addition to the logging
   // which can be useful for backup.
@@ -347,8 +352,10 @@ int pg_sdobSubmitScorecard() {
 
     if (stat(action_script,&sb) == 0 && (sb.st_mode & S_IXUSR)) {
       int size = snprintf(submission, sizeof(submission),
-                          submit_fmt, (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
-                          (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
+                          submit_fmt,
+                          sdob_judgement->meet, sdob_judgement->team, sdob_judgement->round,
+                          /* sort key */ sdob_judgement->team, round_number,
+                          sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
                           sdob_player->duration, sdob_judgement->sowt, csv_score);
       assert(size < sizeof(submission));
 
@@ -369,9 +376,10 @@ int pg_sdobSubmitScorecard() {
   // Also do this...
   openlog ("touchapp", LOG_NDELAY | LOG_PID, LOG_LOCAL1);
   syslog (LOG_NOTICE, submit_fmt,
-      (char*)sdob_judgement->meet, (char*)sdob_judgement->team, (char*)sdob_judgement->round,
-      (char*)sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
-      sdob_player->duration, sdob_judgement->sowt, csv_score);
+          sdob_judgement->meet, sdob_judgement->team, sdob_judgement->round,
+          sdob_judgement->round, round_number,
+          sdob_judgement->judge, c_time_string, sdob_judgement->video_file,
+          sdob_player->duration, sdob_judgement->sowt, csv_score);
   closelog();
 
   if (csv_score != NULL) { free(csv_score); }
