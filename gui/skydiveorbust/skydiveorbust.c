@@ -23,6 +23,7 @@
 
 #include "gui/keyboard/keyboard.h"
 
+static void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
 
 void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc)
 {
@@ -452,6 +453,13 @@ void sdob_selectEventTeamRound(gslc_tsGui* pGui, unsigned roundIndex) {
     default_working_time = 50.0;
   else
     default_working_time = 35.0;
+
+  double sowt = pg_sdobSetRetrieveExternalSOWT(sdob_judgement->meet, sdob_judgement->team, sdob_judgement->round,
+                                               -1.0);
+  if (sowt >= 0.0 && finite(sowt)) {
+    // pg_sdobSOWTSet(sowt, default_working_time);
+    pg_sdob_scorecard_score_sowt(pGui, sowt, default_working_time);
+  }
 }
 
 void pg_sdobUpdateVideoDesc(gslc_tsGui *pGui, char* str) {
@@ -2035,8 +2043,6 @@ void pg_sdobMpvSocketThreadStop() {
 // Called only from the skydiveorbust page's thread as the result of a queue action.
 //
 static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, char* meet, char* file) {
-  pg_sdobUpdateTeam(pGui, "");
-  pg_sdobUpdateRound(pGui, "");
 
   pg_sdob_scorecard_clear(pGui);
 
@@ -2044,6 +2050,14 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, char* meet, ch
   pg_sdobUpdateMeet(pGui, meet);
   pg_sdobUpdateVideoDesc(pGui, file);
   pg_sdob_pl_sliderForceUpdate = 1;
+
+  double
+    markTime = pg_sdobSetRetrieveExternalSOWT(sdob_judgement->meet, sdob_judgement->team, sdob_judgement->round,
+                                              -1.0);
+  if (markTime >= 0.0 && finite(markTime)) {
+    // pg_sdobSOWTSet(markTime, sdob_judgement->workingTime);
+    pg_sdob_scorecard_insert_mark(pGui,-1,markTime,1);
+  }
 }
 
 //
@@ -2171,6 +2185,9 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
 
 void pg_sdob_scorecard_insert_mark(gslc_tsGui *pGui, int selected, double time, int mark) {
+
+  dbgprintf(DBG_DEBUG, "pg_sdob_scorecard_insert_mark: selected=%d, time=%f, mark=%d\n", selected, time, mark);
+
   pg_sdobInsertMark(selected, time, mark);
   pg_sdobUpdateCount(pGui, pg_sdobEl[E_SDOB_EL_SC_COUNT]);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
@@ -2235,7 +2252,7 @@ void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
 }
 
-void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
+static void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime) {
   // Reset Ticks to Judge Marks
   // CLEAR_PLAYER_TICKS
   if (sdob_judgement->sowt == -1.0) {

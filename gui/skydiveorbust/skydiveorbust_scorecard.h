@@ -17,6 +17,8 @@ void pg_sdobScoringSelectionClear(gslc_tsGui *pGui);
 void pg_sdobScoringSelectionLastHidden(gslc_tsGui *pGui);
 int pg_sdobSubmitScorecard();
 
+double pg_sdobSetRetrieveExternalSOWT(const char* meet, const char* team, const char* round, double sowt);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

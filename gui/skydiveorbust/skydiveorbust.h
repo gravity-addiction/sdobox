@@ -309,7 +309,7 @@ void pg_sdob_scorecard_update_mark(gslc_tsGui *pGui, int selected, int mark);
 void pg_sdob_scorecard_delete_mark(gslc_tsGui *pGui, int selected);
 
 void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt);
-void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
+  // void pg_sdob_scorecard_score_sowt(gslc_tsGui *pGui, double time, double workingTime);
 void pg_sdob_scorecard_clear(gslc_tsGui *pGui);
 void pg_sdob_player_chaptersRefresh(gslc_tsGui *pGui);
 void pg_sdob_player_sliderForceUpdate();

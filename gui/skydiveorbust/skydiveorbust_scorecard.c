@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <math.h>
 
 #include "shared.h"
 #include "skydiveorbust.h"
@@ -133,11 +134,52 @@ void pg_sdobMoveMark(int markSelected, int moveAmt) {
 }
 
 
+double pg_sdobSetRetrieveExternalSOWT(const char* meet, const char* team, const char* round, double sowt) {
+  // sowt must be relative to the start of the file, so if anything "not" > 0 is provided (like nan or negative)
+  // then this is purely a retrieval.
+  // If no answer exists, nan is returned.
+  // notify the world of this sowt:
+  char cmdbuf[256];
+  snprintf(cmdbuf, sizeof(cmdbuf), "/opt/sdobox/bin/submitsowt %s %s %s %.5f",
+           meet, team, round, sowt);
+  errno = 0;
+  FILE* f = popen(cmdbuf, "r");
+  if (!f) {
+    dbgprintf(DBG_DEBUG, "call to popen with '%s' failed, %s\n", cmdbuf, strerror(errno));
+    return sowt;                /* allow the user to continue with this value */
+  }
 
-
-
+  char replybuf[256];
+  char* rptr = replybuf;
+  char* const rptr_end = &replybuf[sizeof(replybuf)-1]; /* leave behind 1 for terminator */
+  while(!feof(f) && !ferror(f) && rptr < rptr_end) {
+    size_t rresult = fread(rptr, 1, rptr_end - rptr, f);
+    if (rresult > 0)
+      rptr += rresult;
+  }
+  if (ferror(f))
+    dbgprintf(DBG_DEBUG, "error reading response from submitsowt: %s\n", strerror(errno));
+  fclose(f);
+  *rptr = '\0';
+  char* endptr = NULL;
+  double result = strtod(replybuf, &endptr);
+  if (endptr > replybuf && result > 0.0 && finite(result)) {
+    dbgprintf(DBG_INFO, "success reading back result from submitsowt: %f\n", result);
+    return result;
+  }
+  else {
+    dbgprintf(DBG_DEBUG, "failure parsing response from submitsowt: '%s', %s\n", replybuf, strerror(errno));
+    return sowt;
+  }
+}
 
 int pg_sdobSOWTSet(double markTime, double workingTime) {
+
+  markTime = pg_sdobSetRetrieveExternalSOWT(sdob_judgement->meet, sdob_judgement->team, sdob_judgement->round,
+                                            markTime);
+
+  sdob_judgement->marks->arrScorecardTimes[0] = markTime;
+
   sdob_judgement->sowt = markTime;
   sdob_judgement->workingTime = workingTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
