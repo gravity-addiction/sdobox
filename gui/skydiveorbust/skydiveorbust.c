@@ -2225,9 +2225,27 @@ void pg_sdob_scorecard_score_selected(gslc_tsGui *pGui, int selected, double amt
   // Make sure the mark is viewable
   int markHidden = pg_sdobScoringMarkHidden(sdob_judgement->marks->selected);
   if (markHidden < 0) {
-    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max));
+    if (sdob_judgement->marks->selected < 30) {
+      pg_sdobSliderSetCurPos(pGui, 0);
+    } else if (sdob_judgement->marks->selected >= 30 && sdob_judgement->marks->selected < 45) {
+      pg_sdobSliderSetCurPos(pGui, 1);
+    } else if (sdob_judgement->marks->selected >= 45 && sdob_judgement->marks->selected < 60) {
+      pg_sdobSliderSetCurPos(pGui, 2);
+    } else if (sdob_judgement->marks->selected >= 60 && sdob_judgement->marks->selected < 75) {
+      pg_sdobSliderSetCurPos(pGui, 3);
+    }
+    // pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max));
   } else if (markHidden > 0) {
-    pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max) + 1);
+    // pg_sdobSliderSetCurPos(pGui, (int)(sdob_judgement->marks->selected % pg_sdob_line_max) + 1);
+    if (sdob_judgement->marks->selected < 30) {
+      pg_sdobSliderSetCurPos(pGui, 0);
+    } else if (sdob_judgement->marks->selected >= 30 && sdob_judgement->marks->selected < 45) {
+      pg_sdobSliderSetCurPos(pGui, 1);
+    } else if (sdob_judgement->marks->selected >= 45 && sdob_judgement->marks->selected < 60) {
+      pg_sdobSliderSetCurPos(pGui, 2);
+    } else if (sdob_judgement->marks->selected >= 60 && sdob_judgement->marks->selected < 75) {
+      pg_sdobSliderSetCurPos(pGui, 3);
+    }
   }
 
   // Update Scorecard Ticks
