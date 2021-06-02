@@ -5,7 +5,7 @@ DEBUG = -O1 -g
 CC = gcc
 GSLC_INCLUDES = -I./GUIslice/src
 INCLUDE = -I./src -I./jsmn $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
-CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
+CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -DUSER_CONFIG_LOADED -DUSER_CONFIG_INC_FILE -DUSER_CONFIG_INC_FNAME=\"../../src/libs/GUIslice-wrapper/rpi-sdl1-default-tslib.h\"
 LDFLAGS = -L/usr/local/lib -L/opt/vc/lib -Llibs
 LDLIB_EXTRA = -fopenmp -lwiringPi -lconfig -liw -lmpv -lxml2 -lsystemd -lGLESv2 -lEGL -lopenmaxil -lbcm_host -lvcos \
 -lvchiq_arm -lpthread -lsqlite3 -lulfius -lorcania -lasound -lxdo -lavahi-client -lavahi-common -ljansson -lcurl \

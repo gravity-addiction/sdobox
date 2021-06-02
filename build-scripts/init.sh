@@ -2,7 +2,13 @@
 
 fan_equip=
 disable_swap=
+do_reboot=
 
+# Get full path to this folder
+PWDSRC=`dirname "$(readlink -f "$0")"`
+cd "${PWDSRC}"
+
+# Determine Version of Raspberry Pi
 RPI3A="Raspberry Pi 3 Model A Plus"
 RPI3B="Raspberry Pi 3 Model B Plus"
 RPI4B="Raspberry Pi 4 Model B"
@@ -17,6 +23,18 @@ elif [[ $RPIVERSION =~ $RPI4B* ]]; then
   echo "RPI4 - $RPIVERSION - Kernel: $KERNELV" | fold -s
 fi
 
+# Determine OS Kernel Version
+KERNELVERSIONRAW=`(uname -r)`
+KERNELVERSION=( ${KERNELVERSIONRAW//./ } )
+
+if [[ $KERNELVERSION -eq 4 ]]; then
+  echo "Kernel 4 - $KERNELVERSION" | fold -s
+else # [[ $KERNELVERSION -eq 5 ]]; then
+  echo "Kernel $KERNELVERSION" | fold -s
+fi
+
+
+# Ask User about Attached Fan
 read -p "Fan Equip? Y/n" -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Nn]$ ]]
@@ -32,21 +50,63 @@ then
   disable_swap="true"
 fi
 
+read -p "Reboot When Finished? Y/n" -n 1 -r
+echo
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+  do_reboot="true"
+fi
+
+# Add & Generate en_US.UTF to system locales
+sudo sed -i '/en_US.UTF/s/^# //' /etc/locale.gen
+sudo locale-gen
+
+# Init Submodules
+cd "${PWDSRC}/.."
+git submodule init
+git submodule update
+
+# Create Opt folders
+if [ ! -d "/opt/sdobox" ]; then
+  sudo mkdir -p /opt/sdobox
+  sudo chown -R pi:pi /opt/sdobox
+fi
+if [ ! -d "/opt/sdobox/bin" ]; then
+  sudo mkdir -p /opt/sdobox/bin
+  sudo chown -R pi:pi /opt/sdobox/bin
+fi
+if [ ! -d "/opt/sdobox/images" ]; then
+  sudo mkdir -p /opt/sdobox/images
+  sudo chown -R pi:pi /opt/sdobox/images
+fi
+if [ ! -d "/opt/sdobox/scripts" ]; then
+  sudo mkdir -p /opt/sdobox/scripts
+  sudo chown -R pi:pi /opt/sdobox/scripts
+fi
+if [ ! -d "/opt/sdobox/tmp" ]; then
+  sudo mkdir -p /opt/sdobox/tmp
+  sudo chown -R pi:pi /opt/sdobox/tmp
+fi
+
 
 
 # Setup RPI4 Pinouts
-if ! /usr/bin/gpio -v | grep -Fq "gpio version: 2.52"; then
-  echo 
-  echo
-  echo "Installing GPIO Drivers"
-  echo
-  wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
-  sudo dpkg -i wiringpi-latest.deb
-fi
+cd "${PWDSRC}"
+./wiringpi.sh
+# if ! /usr/bin/gpio -v | grep -Fq "gpio version: 2.52"; then
+#   echo 
+#   echo
+#   echo "Installing GPIO Drivers"
+#   echo
+#   wget -nc -q --show-progress https://project-downloads.drogon.net/wiringpi-latest.deb
+#   sudo dpkg -i wiringpi-latest.deb
+# fi
+
+
 
 if [ ! -z $fan_equip ];
 then
-
+  cd "${PWDSRC}"
   echo 
   echo
   echo "Onboard Fan Detection"
@@ -142,13 +202,14 @@ sudo cp -R scripts /opt/sdobox/
 sudo cp -R bin /opt/sdobox/
 sudo chown -R pi:pi /opt/sdobox
 
-if [[ $KERNELR -eq 5 ]]; then
-  sudo cp scripts/overlays/* /boot/overlays/
-else
-  sudo cp scripts/overlays/kernel4x/* /boot/overlays/
-fi
-
 cd build-scripts
+# Copy overlays to boot folder
+cd "${PWDSRC}"
+if [[ $KERNELVERSION -eq 4 ]]; then
+  sudo cp ../scripts/overlays/kernel4x/* /boot/overlays/
+else # [[ $KERNELVERSION -eq 5 ]]; then
+  sudo cp ../scripts/overlays/kernel5x/* /boot/overlays/
+fi
 
 
 # Fixup cmdline.txt
@@ -213,8 +274,6 @@ then
   echo 'dtoverlay=waveshare35c:rotate=270'| sudo tee -a /boot/config.txt
 fi
 
-
-
 if ! grep -Fq "gpu_mem=" /boot/config.txt
 then
   if [[ $RPIVERSION =~ $RPI4B* ]]; then
@@ -235,32 +294,52 @@ then
 fi
 
 
-# Add & Generate en_US.UTF to system locales
-sudo sed -i '/en_US.UTF/s/^# //' /etc/locale.gen
-sudo locale-gen
+
 
 # Update Apt
 # updated waveshare overlay to work with kernel 5.4
 # sudo apt-mark hold raspberrypi-bootloader
 # sudo apt-mark hold raspberrypi-kernel
 
+## Holding Back to kernel 4
+# sudo apt-mark unhold raspberrypi-bootloader
+# sudo apt-mark unhold raspberrypi-kernel
+
+# Update everything to latest
 sudo apt update
 sudo apt dist-upgrade -y
+
+cd "${PWDSRC}"
+./apt-install.sh
+
 
 # Add Touchscreen touch support
 echo 'SUBSYSTEM=="input", ATTRS{name}=="ADS7846 Touchscreen", ENV{DEVNAME}=="*event*", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1", SYMLINK+="input/touchscreen"' | sudo tee /etc/udev/rules.d/95-ads7846.rules
 sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
 
+
 # Compile and install SDL libraries
+cd "${PWDSRC}"
 ./sdl.sh -i -a
 
+
 # Compile and install TSLib Libraries
+cd "${PWDSRC}"
 ./tslib.sh -i
 
 # Compile and install MPV
-./mpv.sh -i
+
+cd "${PWDSRC}"
+if [[ $fan_equip = -1 ]];
+then
+  echo "Starting MPV Fanless, brave move, cutting num of processors used down to 2"
+  ./mpv.sh 2
+else
+  ./mpv.sh
+fi
 
 # Activate Startup Idle process for MPV
+cd "${PWDSRC}"
 if [ ! -f "/lib/systemd/system/mpv.service" ]; then
   sudo cp ../scripts/systemctl/mpv.service /lib/systemd/system/
   sudo systemctl enable mpv.service
@@ -274,13 +353,17 @@ fi
 
 
 # Compile SDOBOX Project
+cd "${PWDSRC}"
 ./sdobox.sh -a
+
+
 
 ## Install to system
 sudo ln -s /opt/sdobox/bin/sdobox /usr/local/bin/sdobox
 # sudo chmod +x /usr/local/bin/sdobox
 
 # Activate Startup Idle process for SDOBOX
+cd "${PWDSRC}"
 if [ ! -f "/lib/systemd/system/sdobox.service" ]; then
   sudo cp ../scripts/systemctl/sdobox.service /lib/systemd/system/
   sudo systemctl enable sdobox.service
@@ -292,26 +375,27 @@ else
   sudo systemctl restart sdobox.service
 fi
 
-read -p "Install Headmelted VsCode? Y/n" -n 1 -r
-echo
-if [[ $REPLY =~ ^[Nn]$ ]]
+# read -p "Install Headmelted VsCode? Y/n" -n 1 -r
+# echo
+# if [[ $REPLY =~ ^[Nn]$ ]]
+# then
+#   echo "Skipping VSCode"
+# else
+#   # Install Headmelted version of Code
+#   sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
+#
+#   # Open VSCode with SDOBOX as open folder
+#   # code-oss .
+# fi
+
+
+
+
+if [ $do_reboot ]
 then
-  echo "Skipping VSCode"
-else
-  # Install Headmelted version of Code
-  sudo su -c '. <( wget -O - https://code.headmelted.com/installers/apt.sh )'
-
-  # Open VSCode with SDOBOX as open folder
-  # code-oss .
-fi
-
-
-
-read -p "Reboot? Y/n" -n 1 -r
-echo
-if [[ $REPLY =~ ^[Nn]$ ]]
-then
-  echo "Skipping Reboot"
-else
+  echo "Rebooting"
   sudo reboot now
 fi
+
+echo
+echo "Init Completed!"

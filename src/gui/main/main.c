@@ -8,6 +8,7 @@
 #include <time.h>
 
 #include "libs/audio/audio.h"
+#include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
 #include "libs/mpv/mpv.h"
 
@@ -16,8 +17,6 @@
 #include "gui/skydiveorbust/skydiveorbust.h"
 
 
-int pg_main_volume_move_debounce = 0;
-long pg_main_volume_current;
 ////////////////
 // Button Callback
 bool pg_main_cbBtn_settings(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
@@ -96,38 +95,8 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 // Volume Slider
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
-    // Execute Slider Move
-    gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
-    gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
-    // gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui, pElemRef);
-    //gslc_tsXSlider* pSlider = (gslc_tsXSlider*)(pElem->pXData);
-    m_nPosVolume = gslc_ElemXSliderGetPos(pGui, pElemRef);
-
-    long iVolume = m_nPosVolume;
-    volume_setPercent(iVolume);
-/*
-  // Fetch the new RGB component from the slider
-  switch (pElem->nId) {
-    case E_SLIDER_R:
-      m_nPosR = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    case E_SLIDER_G:
-      m_nPosG = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    case E_SLIDER_B:
-      m_nPosB = gslc_ElemXSliderGetPos(pGui,pElemRef);
-      break;
-    default:
-      break;
-  }
-
-  // Calculate the new RGB value
-  gslc_tsColor colRGB = (gslc_tsColor){m_nPosR,m_nPosG,m_nPosB};
-
-  // Update the color box
-  gslc_tsElemRef* pElemColor = gslc_PageFindElemById(pGui,E_PG_MAIN,E_ELEM_COLOR);
-  gslc_ElemSetCol(pGui, pElemColor, GSLC_COL_WHITE, colRGB, GSLC_COL_WHITE);
-*/
+  m_nPosVolume = nPos;
+  volume_new = nPos;
   return true;
 }
 
@@ -299,8 +268,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
           (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 60), 210, 40},
           0, 104, m_nPosVolume, 5, false)
   ) != NULL) {
-    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_YELLOW, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 10, GSLC_COL_GRAY_DK2);
+    // gslc_ElemXSliderSetStyleCustom(pGui, pg_mainEl[E_MAIN_EL_VOLUME], pg_mainPosVolumeTicks, true, true); //true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
     gslc_ElemXSliderSetPosFunc(pGui, pg_mainEl[E_MAIN_EL_VOLUME], &CbSlidePosVolume);
   }
 
@@ -334,22 +304,26 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 }
 
 void pg_mainUpdateVolume() {
-  long volDb, volMin, volMax;
-  volume_getVolumeRange("hw:0", "PCM", &volMin, &volMax);
-  if (volume_getVolume("hw:0", "PCM", &volDb)) {
-    volume_dbToPercent(volDb, volMin, volMax, &pg_main_volume_current);
+  long volLvl, volMin, volMax;
+  volume_getVolumeRange(&volMin, &volMax);
+  if (volume_getVolume(&volLvl)) {
+    if (volMin < 0) {
+      volume_dbToPercent(volLvl, volMin, volMax, &volume_cur);
+    } else {
+      volume_cur = (volLvl * 100) / (volMax - volMin);
+    }
   }
 }
 
 void pg_mainButtonRotaryCW() {
-  pg_main_volume_current += 2;
-  if (pg_main_volume_current > 104) { pg_main_volume_current = 104; }
-  if (pg_main_volume_current < 0) { pg_main_volume_current = 0; }
-  volume_setPercent(pg_main_volume_current);
+  volume_new = m_nPosVolume + 8;
+  if (volume_new > 104) { volume_new = 104; }
+  m_nPosVolume = volume_new;
 }
 void pg_mainButtonRotaryCCW() {
-  pg_main_volume_current -= 2;
-  volume_setPercent(pg_main_volume_current);
+  volume_new = m_nPosVolume - 8;
+  if (volume_new < 0) { volume_new = 0; }
+  m_nPosVolume = volume_new;
 }
 void pg_mainButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
@@ -361,10 +335,10 @@ void pg_mainButtonRotaryPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
 }
 void pg_mainButtonLeftHeld() {
-
+  backlight_off();
 }
 void pg_mainButtonRightHeld() {
-
+  backlight_on();
 }
 void pg_mainButtonRotaryHeld() {
   guislice_wrapper_mirror_toggle(&m_gui);
@@ -400,6 +374,10 @@ void pg_main_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
+
+  long pg_main_volpercent = 0;
+  volume_dbToPercent(volume_cur, volume_min, volume_max, &pg_main_volpercent);
+  m_nPosVolume = pg_main_volpercent;
   pg_mainUpdateVolume();
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
@@ -409,7 +387,7 @@ void pg_main_open(gslc_tsGui *pGui) {
 int pg_main_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
   guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
-
+  volume_debounceCheck();
   return 0;
 }
 

@@ -5,8 +5,21 @@
 extern "C" {
 #endif // __cplusplus
 
+
+char *audio_card;
+char *audio_selem_name;
 long volume_min;
 long volume_max;
+long volume_cur;
+long volume_new;
+
+int volume_move_debounce;
+int volume_move_delay;
+int volume_no_device;
+int volume_init;
+
+void volume_initVars();
+void volume_debounceCheck();
 
 // Convert volume value from log db to scale percentage
 void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPercent);
@@ -15,8 +28,8 @@ void volume_dbToPercent(long volValue, long volMin, long volMax, long * volPerce
 void volume_setVolume(long volume);
 void volume_setPercent(long volPercent);
 
-int volume_getVolume(char* card, char* device, long * dbGain);
-int volume_getVolumeRange(char* card, char* device, long * dbMin, long *dbMax);
+int volume_getVolume(long * dbGain);
+int volume_getVolumeRange(long * dbMin, long *dbMax);
 
 void volume_incrase();
 void volume_decrease();

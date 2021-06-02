@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "spotify.h"
 
+#include "libs/audio/audio.h"
 #include "libs/buttons/buttons.h"
 #include "gui/pages.h"
 
@@ -37,6 +38,14 @@ bool pg_spotify_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
 }
 
 
+//////////////////
+// Volume Slider
+bool pg_spotify_cbVolumeSlider(void* pvGui, void* pvElemRef, int16_t nPos)
+{
+  pg_spotify_iVolume = nPos;
+  volume_new = nPos;
+  return true;
+}
 
 
 /////////////////////
@@ -73,6 +82,33 @@ void pg_spotifyGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_spotifyEl[E_SPOTIFY_EL_BTN_X], false);
   }
 
+
+
+  // Volume
+  if ((
+    pg_spotifyEl[E_SPOTIFY_EL_VOLUME] = gslc_ElemXSliderCreate(pGui, GSLC_ID_AUTO, ePage, &pg_spotify_sliderVolume,
+          (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 60), 210, 40},
+          0, 104, pg_spotify_iVolume, 5, false)
+  ) != NULL) {
+    gslc_ElemSetCol(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemXSliderSetStyle(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
+    gslc_ElemXSliderSetPosFunc(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], &pg_spotify_cbVolumeSlider);
+  }
+
+  // Volume Display
+  if ((
+    pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
+          (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 25), 210, 25},
+          (char*)"Volume:", 0, E_FONT_MONO18)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY], GSLC_COL_WHITE);
+    gslc_ElemSetCol(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY], GSLC_COL_WHITE, GSLC_COL_WHITE, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY], GSLC_ALIGN_MID_LEFT);
+    gslc_ElemSetFillEn(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY], false);
+    gslc_ElemSetFrameEn(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY], false);
+  }
+
+
   // Clock
   if ((
     pg_spotifyEl[E_SPOTIFY_EL_CLOCK] = gslc_ElemCreateTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -94,25 +130,29 @@ void pg_spotifyGuiInit(gslc_tsGui *pGui) {
 
 
 void pg_spotifyButtonRotaryCW() {
-
+  volume_new = pg_spotify_iVolume + 8;
+  if (volume_new > 104) { volume_new = 104; }
+  pg_spotify_iVolume = volume_new;
 }
 void pg_spotifyButtonRotaryCCW() {
-
+  volume_new = pg_spotify_iVolume - 8;
+  if (volume_new < 0) { volume_new = 0; }
+  pg_spotify_iVolume = volume_new;
 }
 void pg_spotifyButtonLeftPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
 }
 void pg_spotifyButtonRightPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh next");
 }
 void pg_spotifyButtonRotaryPressed() {
-
+  system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
 }
 void pg_spotifyButtonLeftHeld() {
 
 }
 void pg_spotifyButtonRightHeld() {
-
+  printf("Held!\n");
 }
 
 // Setup Button Functions
@@ -149,6 +189,8 @@ void pg_spotify_open(gslc_tsGui *pGui) {
 uint32_t pg_spotify_clockUpdate = 0;
 int pg_spotify_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_spotifyEl[E_SPOTIFY_EL_CLOCK], 0);
+  guislice_wrapper_setVolumeAndDisplay(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], 0, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY]);
+  volume_debounceCheck();
   return 0;
 }
 // GUI Destroy

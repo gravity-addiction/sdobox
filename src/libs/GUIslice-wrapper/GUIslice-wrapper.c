@@ -64,7 +64,8 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   m_cPosVolume = (char*)calloc(32, sizeof(char));
 
   // Fill volume ranges for alsa
-  volume_getVolumeRange("hw:0", "PCM", &volume_min, &volume_max);
+  volume_initVars();
+  volume_getVolumeRange(&volume_min, &volume_max);
   dbgprintf(DBG_INFO, "Volume Min: %d, Max: %d\n", volume_min, volume_max);
 
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
@@ -120,11 +121,11 @@ int guislice_wrapper_mirroring() {
 
 void guislice_wrapper_setClock(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate) {
   if (guislice_wrapper_mirroring() == 0 &&
-    (forceUpdate == 1 || millis() - guislice_wrapper_clockUpdate > 1000)
+    (forceUpdate == 1 || sdobMillis() - guislice_wrapper_clockUpdate > 1000)
   ) {
     // Reset milli tracking var
     if (forceUpdate == 0 || guislice_wrapper_clockUpdate == 0) {
-      guislice_wrapper_clockUpdate = millis();
+      guislice_wrapper_clockUpdate = sdobMillis();
     }
     clock_getTime(&timeStr);
     gslc_ElemSetTxtStr(pGui, pElemRef, timeStr);
@@ -149,16 +150,20 @@ void guislice_wrapper_setVolume(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int 
 
 void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pElemRef, int forceUpdate, gslc_tsElemRef *pElemRefDisplay) {
   if (guislice_wrapper_mirroring() == 0 &&
-    (forceUpdate == 1 || millis() - guislice_wrapper_volumeUpdate > 200)
+    (forceUpdate == 1 || sdobMillis() - guislice_wrapper_volumeUpdate > 200)
   ) {
     // Reset milli tracking var
     if (forceUpdate == 0 || guislice_wrapper_volumeUpdate == 0) {
-      guislice_wrapper_volumeUpdate = millis();
+      guislice_wrapper_volumeUpdate = sdobMillis();
     }
-    if (volume_getVolume("hw:0", "PCM", &guislice_wrapper_db)) {
+    if (volume_getVolume(&guislice_wrapper_db)) {
       
       long volPercent = 0;
-      volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
+      if (volume_min < 0) {
+        volume_dbToPercent(guislice_wrapper_db, volume_min, volume_max, &volPercent);
+      } else {
+        volPercent = (guislice_wrapper_db * 100) / (volume_max - volume_min);
+      }
 
       gslc_tsElem*      pElem = gslc_GetElemFromRef(pGui, pElemRef);
       gslc_tsXSlider*   pSlider = (gslc_tsXSlider*)(pElem->pXData);

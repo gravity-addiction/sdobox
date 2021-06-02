@@ -1,11 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #wget --no-check-certificate -q 'https://docs.google.com/uc?export=download&id=1lJn84VN5BIKwZ6fc7YDnqIdII9JO_hEU' -O - | bash
 #wget --no-check-certificate -q 'https://docs.google.com/uc?export=download&id=11afoA1iYRFF5RCHT8_vETyIeifbn7zE2' -O - | bash
+MAXPROCS=$1
+if (( MAXPROCS < 1 || MAXPROCS > 4)); then
+  MAXPROCS=4
+fi
 
 echo "------------------------------"
 echo "Big thanks to RPI_Mike on https://www.raspberrypi.org/forums/viewtopic.php?f=38&t=199775 for putting most of this script together"
 echo "If you're out there Mike look forward to your further input on this script"
 echo; echo
+
+# Get full path to this folder
+PWDSRC=`dirname "$(readlink -f "$0")"`
+cd "${PWDSRC}"
+
+
 echo "Determine which Raspberry Pi Version we're working with." | fold -s
 RPI3A="Raspberry Pi 3 Model A Plus"
 RPI3B="Raspberry Pi 3 Model B Plus"
@@ -20,7 +30,6 @@ else
   echo "Unknown - $RPIVERSION" | fold -s
   exit
 fi
-
 
 echo; echo
 
@@ -251,7 +260,7 @@ elif [[ $RPIVERSION =~ $RPI4B.* ]]; then
 fi
 
 
-make -j4
+make -j${MAXPROCS}
 sudo checkinstall -y --pkgname x264 --pkgversion 0.155 make install
 sudo ldconfig
 
@@ -267,7 +276,7 @@ echo
 cd aac
 ./autogen.sh
 ./configure --prefix=/usr --enable-shared
-make -j4
+make -j${MAXPROCS}
 sudo checkinstall -y --pkgname fdk-aac --pkgversion 0.1.6 make install
 sudo ldconfig
 
@@ -281,7 +290,7 @@ echo
 
 cd mp3
 ./configure --prefix=/usr --enable-shared
-make -j4
+make -j${MAXPROCS}
 sudo checkinstall -y --pkgname mp3lame --pkgversion 3.100 make install
 sudo ldconfig
 
@@ -295,7 +304,7 @@ echo
 
 cd libass
 ./configure --prefix=/usr --enable-shared
-make -j4
+make -j${MAXPROCS}
 sudo checkinstall -y --pkgname libass --pkgversion 0.14.0 make install
 sudo ldconfig
 
@@ -376,7 +385,7 @@ echo "Now building FFmpeg. This will take about 24 minutes on the Raspberry 3B+ 
 echo "------------------------------"
 echo
 
-make -j4
+make -j${MAXPROCS}
 
 echo; echo; echo
 echo "------------------------------"
@@ -416,7 +425,7 @@ echo "Now building mpv. This will take about 2 minutes." | fold -s
 echo "------------------------------"
 echo
 
-./waf build -j4
+./waf build -j${MAXPROCS}
 
 echo; echo; echo
 echo "------------------------------"

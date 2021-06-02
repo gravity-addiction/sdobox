@@ -1,12 +1,10 @@
 #!/bin/bash
 init=
 
-cd ..
+PWDSRC=`dirname "$(readlink -f "$0")"`
+cd "${PWDSRC}/../tslib"
 
-git submodule init
-git submodule update
-
-cd tslib
+git submodule update --init
 
 ./autogen.sh
 ./configure
@@ -33,5 +31,3 @@ else
     sudo cp -P /usr/local/lib/libts* /usr/lib/arm-linux-gnueabihf/
   fi
 fi
-
-cd ..

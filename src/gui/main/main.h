@@ -39,7 +39,6 @@ gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
 
 gslc_tsXSlider m_sXSlider_Volume;
 uint16_t m_nPosVolume;
-char* m_cPosVolume;
 
 void pg_mainButtonRotaryCW();
 void pg_mainButtonRotaryCCW();

@@ -14,3 +14,6 @@
 [submodule "jsmn"]
 	path = jsmn
 	url = https://github.com/gravity-addiction/jsmn
+[submodule "WiringPi"]
+	path = WiringPi
+	url = https://github.com/gravity-addiction/WiringPi

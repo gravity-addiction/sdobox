@@ -131,7 +131,7 @@ void pg_configure_open(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "Press Left Button");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], "");
-  /***gslc_Update(pGui);*/
+  gslc_Update(pGui);
 
   dbgprintf(DBG_DEBUG, "Press Left Button\n");
   leftBtn = lib_buttons_findGPIO(10000, 100);
@@ -140,7 +140,8 @@ void pg_configure_open(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "Press Right Button");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], "");
-  /***gslc_Update(pGui);*/
+  gslc_Update(pGui);
+
   dbgprintf(DBG_DEBUG, "Press Right Button\n");
   lib_buttons_waitRelease(leftBtn);
   rightBtn = lib_buttons_findGPIO(10000, 100);
@@ -149,7 +150,8 @@ void pg_configure_open(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "Press Directly Down");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "On Rotary Button");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], " ");
-  /***gslc_Update(pGui);*/
+  gslc_Update(pGui);
+  
   dbgprintf(DBG_DEBUG, "Press Directly Down On Rotary Button\n");
   lib_buttons_waitRelease(rightBtn);
   rotaryBtn = lib_buttons_findGPIO(10000, 100);
@@ -159,7 +161,8 @@ void pg_configure_open(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "Spin Rotary Knob");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "Clockwise Until Detected");
   gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], "");
-  /***gslc_Update(pGui);*/
+  gslc_Update(pGui);
+
   dbgprintf(DBG_DEBUG, "Spin Rotary Knob Clockwise Until Detected\n");
   lib_buttons_waitRelease(rotaryBtn);
   rotaryA = lib_buttons_findGPIO(10000, 50);
@@ -181,13 +184,13 @@ void pg_configure_open(gslc_tsGui *pGui) {
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "");
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "Rotary Knob NOT Found");
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], "20second Timeout!");
-    /***gslc_Update(pGui);*/
+    gslc_Update(pGui);
     dbgprintf(DBG_DEBUG, "Rotary Knob NOT Found, 20second Timeout!\n");
   } else {
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGA], "");
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSG], "All Buttons Found!");
     gslc_ElemSetTxtStr(pGui, pg_configureEl[E_CONFIGURE_EL_MSGB], "");
-    /***gslc_Update(pGui);*/
+    gslc_Update(pGui);
     dbgprintf(DBG_DEBUG, "Rotary Knob Found! %d %d\n", rotaryA, rotaryB);
   }
 

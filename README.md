@@ -14,9 +14,9 @@
     - Push Buttons
     - Rotary encoder
     - 5v Fan, requires a transistor circuit to provide power properly
-    - *(in development)* Fast charging circuit / li-po battery
+    - Fast charging circuit / li-po battery
     - *(in development)* Expand storage with nvme
-    - *(in development)* External pinouts for attachable mods
+    - *(in development)* External pinouts for attachable mods (DB15 VGA)
 
 
 ## Installation
@@ -42,96 +42,23 @@
         ```
 
     - SSH
-
         on the new boot partition of the sd card, touch or create an empty file named, `ssh`
 
 
-- sdobox installation
-
-    From a shell prompt running the following commands to add the sdobox repository to your `/etc/apt/sources.list` and download sdobox through `sudo apt install sdobox`
-
-    For the same information goto; http://sdobox.skydiveorbust.com/ or https://s3-us-west-2.amazonaws.com/sdobox.skydiveorbust.com/index.html
-
-    ```
-    echo "deb http://sdobox.skydiveorbust.com/ sdobox main" | sudo tee -a /etc/apt/sources.list
-    wget -qO - http://sdobox.skydiveorbust.com/pubkey.txt | sudo apt-key add -
-    sudo apt update
-    sudo apt install sdobox
-    ```
+- build-scripts/
 
 
-- mpv installation
+    apt-install.sh - list of apt libraries that are required for development
 
-    `scripts/install-mpv.sh` - compile several video and audio libraries, including ffmpeg and mpv. downloads from original source locations
+    init.sh - Goto installer script. Can we re-ran multiple times
 
-    `scripts/install-mpv-plus-drive.sh` - install ffmpeg, mpv and other video / audio libraries. installs wiringpi for RPI4. downloads from google drive mirror.
+    mpv.sh - downloads and installs third party utilities and compiles ffmpeg / mpv
 
+    tslib.sh - downloads and install tslib library
 
-- touchscreen overlay installation
+    sdobox.sh - download sdobox development libraries and compiles
 
-    - Waveshare 3.5(c) / URTRONICS 3.5 High Speed
-
-        - Copy touchscreen overlay
-
-            `sudo cp scripts/overlays/* /boot/overlays/`
-
-        - Assign overlay in /boot/config.txt<br> :rotate=270 is optional for fixing upside down screens.
-
-            `sudo sh -c 'echo "dtoverlay=waveshare35c:rotate=270" >> /boot/config.txt'`
-
-        - Add Framebuffer mapping and Font to /boot/cmdline.txt
-
-            `sudo sh -c 'echo "$(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8" > /boot/cmdline.txt'`
-
-
-    - Waveshare 3.5(a)
-
-        - Copy touchscreen overlay
-
-            `sudo cp scripts/overlays/* /boot/overlays/`
-
-        - Assign overlay in /boot/config.txt<br> :rotate=270 is optional for fixing upside down screens.
-
-            `sudo sh -c 'echo "dtoverlay=waveshare35a:rotate=270" >> /boot/config.txt'`
-
-        - Add Framebuffer mapping and default terminal font to /boot/cmdline.txt
-
-            `sudo sh -c 'echo "$(cat /boot/cmdline.txt) fbcon=map:10 fbcon=font:VGA8x8" > /boot/cmdline.txt'`
-
-
-- touchscreen driver installation
-
-    - Install libinput link
-        - Screens Using :rotate=270 (Upside Down)
-            ```
-            echo 'SUBSYSTEM=="input", ATTRS{name}=="ADS7846 Touchscreen", ENV{DEVNAME}=="*event*", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1", SYMLINK+="input/touchscreen"' | sudo tee /etc/udev/rules.d/95-ads7846.rules
-            sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
-            ```
-
-        - Screens Not Using :rotate=270 (Standard)
-            ```
-            echo 'SUBSYSTEM=="input", ATTRS{name}=="ADS7846 Touchscreen", ENV{DEVNAME}=="*event*", SYMLINK+="input/touchscreen"' | sudo tee /etc/udev/rules.d/95-ads7846.rules
-            sudo chmod 644 /etc/udev/rules.d/95-ads7846.rules
-            ```
-
-    - Install latest tslib from source
-        ```
-        mkdir ~/Downloads
-        cd ~/Downloads
-        git clone git://github.com/kergoth/tslib.git --depth 1
-        cd tslib
-        ./autogen.sh
-        ./configure
-        make -j4
-        sudo make install
-        sudo cp -P /usr/local/lib/libts* /usr/lib/arm-linux-gnueabihf/
-        cd ~/
-        ```
-
-    - Reboot
-    - Calibrate touchscreen
-
-        `sudo TSLIB_FBDEVICE=/dev/fb1 TSLIB_TSDEVICE=/dev/input/touchscreen ts_calibrate`
+    sdl.sh - Downloads modified SDL12 branch and compiles to libSDL for sdobox libs
 
 
 ## Development

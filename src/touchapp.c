@@ -30,6 +30,7 @@
 
 // Lib Headers
 #include "libs/queue/queue.h"
+#include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/mpv/mpv.h"
@@ -359,7 +360,7 @@ int main( int argc, char* args[] )
   int m_tPageCur = touchscreenPageStackCur();
 
   // avahi_main();
-  
+  gslc_Update(&m_gui);
   while (!m_bQuit) {
     if (cbThread[m_tPageCur] &&
         cbThread[m_tPageCur](&m_gui)

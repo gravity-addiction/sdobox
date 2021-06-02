@@ -12,6 +12,8 @@ enum {
   E_SPOTIFY_EL_BOX,
   E_SPOTIFY_EL_BTN_X,
   E_SPOTIFY_EL_CLOCK,
+  E_SPOTIFY_EL_VOLUME,
+  E_SPOTIFY_EL_VOLUME_DISPLAY,
 
   E_SPOTIFY_EL_HELLO_WORLD,
   E_CSPOTIFY_EL_BTN_HELLO_WORLD,
@@ -26,6 +28,10 @@ gslc_tsElem m_asPgSpotifyElem[MAX_ELEM_PG_SPOTIFY_RAM];
 gslc_tsElemRef m_asPgSpotifyElemRef[MAX_ELEM_PG_SPOTIFY];
 
 gslc_tsElemRef* pg_spotifyEl[E_SPOTIFY_EL_MAX];
+
+gslc_tsXSlider pg_spotify_sliderVolume;
+uint16_t pg_spotify_iVolume;
+char* pg_spotify_cVolume;
 
 struct vlist_config *pg_spotify_listConfig;
 struct fileStruct **pg_spotify_list;

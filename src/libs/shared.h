@@ -62,6 +62,7 @@ void clearsocket(int fd);
 int sgetline(int fd, char ** out);
 void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz, size_t cnt));
 
+int64_t sdobMillis();
 int time_to_secs(char* timestamp);
 void secs_to_time(int millisecs, char *retFormat, int retLen);
 int parseTabbedData(const char *s, char *data[], size_t n);
