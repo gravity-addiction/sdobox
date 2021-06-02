@@ -8,10 +8,13 @@ RPI3B="Raspberry Pi 3 Model B Plus"
 RPI4B="Raspberry Pi 4 Model B"
 RPIVERSION=$(cat /proc/device-tree/model | tr '\0' '\n')
 
+KERNELV=$(uname -r);
+KERNELR=( ${KERNELV//./ })
+
 if [[ $RPIVERSION =~ $RPI3A.* || $RPIVERSION =~ $RPI3B.* ]]; then
-  echo "RPI3 - $RPIVERSION" | fold -s
+  echo "RPI3 - $RPIVERSION - Kernel: $KERNELV" | fold -s
 elif [[ $RPIVERSION =~ $RPI4B* ]]; then
-  echo "RPI4 - $RPIVERSION" | fold -s
+  echo "RPI4 - $RPIVERSION - Kernel: $KERNELV" | fold -s
 fi
 
 read -p "Fan Equip? Y/n" -n 1 -r
@@ -104,8 +107,10 @@ then
     fi
 
     sed -i "/FAN_PIN =/c\FAN_PIN = $fan_equip" ../scripts/fan_ctrl.py
-    mkdir -p /opt/sdobox/bin
-    sudo chown -R pi:pi /opt/sdobox
+    if [[ ! -e /opt/sdobox/bin ]]; then
+      mkdir -p /opt/sdobox/bin
+      sudo chown -R pi:pi /opt/sdobox
+    fi 
     cp ../scripts/fan_ctrl.py /opt/sdobox/bin/
 
     if [ ! -f "/lib/systemd/system/fanctrl.service" ]; then
@@ -128,13 +133,20 @@ git submodule init
 git submodule update
 
 # Copy around files
-sudo mkdir -p /opt/sdobox
-sudo mkdir -p /opt/sdobox/tmp
-sudo chown -r pi:pi /opt/sdobox
+if [[ ! -e /opt/sdobox/tmp ]]; then
+  sudo mkdir -p /opt/sdobox/tmp
+fi
+
 sudo cp -R images /opt/sdobox/
 sudo cp -R scripts /opt/sdobox/
 sudo cp -R bin /opt/sdobox/
-sudo cp scripts/overlays/* /boot/overlays/
+sudo chown -R pi:pi /opt/sdobox
+
+if [[ $KERNELR -eq 5 ]]; then
+  sudo cp scripts/overlays/* /boot/overlays/
+else
+  sudo cp scripts/overlays/kernel4x/* /boot/overlays/
+fi
 
 cd build-scripts
 
@@ -228,8 +240,9 @@ sudo sed -i '/en_US.UTF/s/^# //' /etc/locale.gen
 sudo locale-gen
 
 # Update Apt
-sudo apt-mark hold raspberrypi-bootloader
-sudo apt-mark hold raspberrypi-kernel
+# updated waveshare overlay to work with kernel 5.4
+# sudo apt-mark hold raspberrypi-bootloader
+# sudo apt-mark hold raspberrypi-kernel
 
 sudo apt update
 sudo apt dist-upgrade -y
