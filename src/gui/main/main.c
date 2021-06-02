@@ -95,6 +95,7 @@ bool pg_main_cbBtn_parachute(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
 // Volume Slider
 bool CbSlidePosVolume(void* pvGui, void* pvElemRef, int16_t nPos)
 {
+  m_nPosVolume = nPos;
   volume_new = nPos;
   return true;
 }
@@ -267,8 +268,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
           (gslc_tsRect){(rFullscreen.x + 25), (rFullscreen.h - 60), 210, 40},
           0, 104, m_nPosVolume, 5, false)
   ) != NULL) {
-    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_RED, GSLC_COL_BLACK, GSLC_COL_BLACK);
-    gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
+    gslc_ElemSetCol(pGui, pg_mainEl[E_MAIN_EL_VOLUME], GSLC_COL_YELLOW, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemXSliderSetStyle(pGui, pg_mainEl[E_MAIN_EL_VOLUME], true, GSLC_COL_RED_DK4, 10, 10, GSLC_COL_GRAY_DK2);
+    // gslc_ElemXSliderSetStyleCustom(pGui, pg_mainEl[E_MAIN_EL_VOLUME], pg_mainPosVolumeTicks, true, true); //true, GSLC_COL_RED_DK4, 10, 5, GSLC_COL_GRAY_DK2);
     gslc_ElemXSliderSetPosFunc(pGui, pg_mainEl[E_MAIN_EL_VOLUME], &CbSlidePosVolume);
   }
 
@@ -303,8 +305,8 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 
 void pg_mainUpdateVolume() {
   long volLvl, volMin, volMax;
-  volume_getVolumeRange(audio_card, audio_selem_name, &volMin, &volMax);
-  if (volume_getVolume(audio_card, audio_selem_name, &volLvl)) {
+  volume_getVolumeRange(&volMin, &volMax);
+  if (volume_getVolume(&volLvl)) {
     if (volMin < 0) {
       volume_dbToPercent(volLvl, volMin, volMax, &volume_cur);
     } else {
@@ -314,12 +316,14 @@ void pg_mainUpdateVolume() {
 }
 
 void pg_mainButtonRotaryCW() {
-  volume_new = volume_cur + 8;
+  volume_new = m_nPosVolume + 8;
   if (volume_new > 104) { volume_new = 104; }
+  m_nPosVolume = volume_new;
 }
 void pg_mainButtonRotaryCCW() {
-  volume_new = volume_cur - 8;
+  volume_new = m_nPosVolume - 8;
   if (volume_new < 0) { volume_new = 0; }
+  m_nPosVolume = volume_new;
 }
 void pg_mainButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
@@ -370,6 +374,10 @@ void pg_main_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
+
+  long pg_main_volpercent = 0;
+  volume_dbToPercent(volume_cur, volume_min, volume_max, &pg_main_volpercent);
+  m_nPosVolume = pg_main_volpercent;
   pg_mainUpdateVolume();
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();

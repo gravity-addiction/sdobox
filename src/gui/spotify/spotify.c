@@ -42,6 +42,7 @@ bool pg_spotify_cbDrawBox(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
 // Volume Slider
 bool pg_spotify_cbVolumeSlider(void* pvGui, void* pvElemRef, int16_t nPos)
 {
+  pg_spotify_iVolume = nPos;
   volume_new = nPos;
   return true;
 }
@@ -129,12 +130,14 @@ void pg_spotifyGuiInit(gslc_tsGui *pGui) {
 
 
 void pg_spotifyButtonRotaryCW() {
-  volume_new = volume_cur + 8;
+  volume_new = pg_spotify_iVolume + 8;
   if (volume_new > 104) { volume_new = 104; }
+  pg_spotify_iVolume = volume_new;
 }
 void pg_spotifyButtonRotaryCCW() {
-  volume_new = volume_cur - 8;
+  volume_new = pg_spotify_iVolume - 8;
   if (volume_new < 0) { volume_new = 0; }
+  pg_spotify_iVolume = volume_new;
 }
 void pg_spotifyButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
@@ -149,7 +152,7 @@ void pg_spotifyButtonLeftHeld() {
 
 }
 void pg_spotifyButtonRightHeld() {
-
+  printf("Held!\n");
 }
 
 // Setup Button Functions

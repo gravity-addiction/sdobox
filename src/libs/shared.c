@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/kd.h>
 #include <assert.h>
 #include <time.h>
@@ -276,7 +277,18 @@ void sgetlines_withcb(char *buf, size_t len, void (*function)(char *, size_t sz,
 }
 
 
-// Define debug message function for GUIslice
+
+/**
+* @brief provide same output with the native function in java called
+* currentTimeMillis().
+*/
+int64_t sdobMillis() {
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  int64_t s1 = (int64_t)(time.tv_sec) * 1000;
+  int64_t s2 = (time.tv_usec / 1000);
+  return s1 + s2;
+}
 
 int time_to_secs(char* timestamp) {
   int h, m, s = 0;
