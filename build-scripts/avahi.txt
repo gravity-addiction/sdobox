@@ -1,0 +1,13 @@
+sudo apt-get install avahi-utils libavahi-compat-libdnssd-dev libnss-mdns
+sudo systemctl enable avahi-daemon.service
+sudo systemctl start avahi-daemon.service
+
+##
+# Open /etc/avahi/avahi-daemon.conf
+# domain-name=local
+# publish-hinfo=yes
+# publish-workstation=yes
+
+sudo systemctl restart avahi-daemon.service
+
+npm i -g spotify-zeroconf

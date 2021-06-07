@@ -62,9 +62,10 @@ https://api.spotify.com/v1/me/${URL})
 # echo "${HTTPSTATUS}"
 if [ -f "${SPOTIFYJSON}" ] && [ "${HTTPSTATUS}" -gt 299 ]; then
   echo "Refreshing Spotify Token"
+  node /opt/sdobox/scripts/spotify/spotify.js
   # Try Refreshing Token
-  /opt/sdobox/scripts/spotify/register_device_refresh.sh
-
+  # /opt/sdobox/scripts/spotify/register_device_refresh.sh
+  echo "Checking For Refreshments!"
   curl -X "${METHOD}" \
   --write-out '%{http_code}' \
   --silent \
