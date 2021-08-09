@@ -50,7 +50,7 @@ esac
 if [ ! -z "${METHOD}" ] && [ ! -z "${URL}" ]; then
 
 SPOTIFYJSON=/opt/sdobox/tmp/spotify.json
-TOKEN=$(jq -cer .access_token "${SPOTIFYJSON}")
+TOKEN=$(jq -cer .accessToken "${SPOTIFYJSON}")
 
 HTTPSTATUS=$(curl -X "${METHOD}" \
 --write-out '%{http_code}' \

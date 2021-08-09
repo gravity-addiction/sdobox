@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "spotify-zeroconf": "^0.1.4"
+  }
+}
