@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <jansson.h>
 #include <wiringPi.h>           /* millis() */
+#include <arpa/inet.h>
 
 // #include <mpv/client.h>
 #include "libs/shared.h"
@@ -42,14 +43,44 @@ static pthread_mutex_t mpvSocketAccessLock = PTHREAD_MUTEX_INITIALIZER;
 int mpv_socket_conn() {
   pthread_mutex_lock(&mpvSocketAccessLock);
   int fd;
-  struct sockaddr_un addr;
+  struct sockaddr_in addr;
+  // struct sockaddr_un addr;
+
   // Wait for socket to arrive
-  if (access(mpv_socket_path, R_OK) == -1) {
+  /*if (access(mpv_socket_path, R_OK) == -1) {
     dbgprintf(DBG_ERROR, "No Socket Available for Singlet %s\n", mpv_socket_path);
+    fd = -1;
+    goto cleanup;
+  }*/
+
+  /* Remote Socket using socat on remote end to forward tcp requests
+     socat -d -d -d -lm -v TCP-LISTEN:9100,reuseaddr,fork,setgid=1000,setuid=1000 UNIX-CLIENT:/opt/sdobox/mpv.socket */
+
+  if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
     fd = -1;
     goto cleanup;
   }
 
+  // Set Socket Non-Blocking
+  setnonblock(fd);
+
+  memset(&addr, 0, sizeof(struct sockaddr_in));
+  addr.sin_addr.s_addr = inet_addr("192.168.126.88");
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(9100);
+
+  if (connect(fd, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) == -1) {
+    if (errno != EINPROGRESS) {
+      dbgprintf(DBG_ERROR, "%s\n%s\n", "MPV Singlet Connect Error", strerror(errno));
+      fd = -1;
+      goto cleanup;
+    }
+  }
+
+/* Local /tmp/mpv.socket */
+/*
+  
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
     fd = -1;
@@ -73,6 +104,7 @@ int mpv_socket_conn() {
     fd = -1;
     goto cleanup;
   }
+  */
 
  cleanup:
   pthread_mutex_unlock(&mpvSocketAccessLock);
@@ -236,13 +268,12 @@ int mpv_fd_write(char *data) {
   mpv_socket_timeout.tv_sec = 2;
   mpv_socket_timeout.tv_usec = 0;
 
-
   dbgprintf(DBG_MPV_WRITE,
             (data[strlen(data)-1] == '\n' ? "mpvwrite: %s" : "mpvwrite: %s\n"),
             data);
   int writeSz = write(mpv_socket_fdSelect, data, strlen(data));
   if (writeSz != strlen(data)) {
-    dbgprintf(DBG_ERROR, "Bad MPV Write\n");
+    dbgprintf(DBG_ERROR, "Bad MPV Write\n%s\n", data);
     // mpv_socket_fdSelect = -1;
     // mpv_fd_write(char *data)
     return 0;
@@ -417,6 +448,19 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
 
         } else {
           dbgprintf(DBG_MPV_READ, "mpvignore %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
+
+          char* json_event;// = malloc(128);
+          int rcE = ta_json_parse(mpv_rpc_ret, "event", &json_event);          
+          
+          // Send all others to Event Queue
+          // struct queue_head *item = new_qhead();
+          // item->data = strdup(json_event);
+          // item->action = 1;
+          // queue_put(item, libMpvEvents_Queue, &libMpvEvents_QueueLen);
+          dbgprintf(DBG_MPV_EVENT, "MPV Eventz: -%s-, Parsed: %s Len: %d\n", mpv_rpc_ret, json_event, rcE);
+          // if (rcE >= 0) {
+          //   free(json_event);
+          // }
         }
         json_decref(root);
         free(mpv_rpc_ret);

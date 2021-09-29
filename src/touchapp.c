@@ -33,20 +33,19 @@
 #include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
 #include "libs/fbcp/fbcp.h"
-#include "libs/mpv/mpv.h"
-#include "libs/mpv/mpv_events.h"
-#include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
-#include "libs/ulfius/websocket_api.h"
-#include "libs/ulfius/websocket_server.h"
-#include "libs/ulfius/websocket_client.h"
+#include "libs/mpv2/mpv2.h"
+// #include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
+// #include "libs/ulfius/websocket_api.h"
+// #include "libs/ulfius/websocket_server.h"
+// #include "libs/ulfius/websocket_client.h"
 #include "libs/dbg/dbg.h"
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
 #include "libs/avahi/avahi.h"
-#include "libs/sdob-socket/sdob-socket.h"
-#include "libs/json/json.h" // JSON Parsing
-#include "libs/usb-drives/usb-drives-thread.h"
-
+// #include "libs/sdob-socket/sdob-socket.h"
+// #include "libs/json/json.h" // JSON Parsing
+// #include "libs/usb-drives/usb-drives-thread.h"
+#include "libs/zhelpers.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
 // #include "gui/wifi/wifi.h"
@@ -137,13 +136,13 @@ void get_config_settings()
   } else {
     lib_buttonsBtnHoldDelay = 750;
   }
-
+/*
   // sqlite3 (SQLITE3_PATH)
   const char * retSQL3Path;
   if (config_lookup_string(&cfg, "sqlite3", &retSQL3Path)) {
     SQLITE3_PATH = strdup(retSQL3Path);
   }
-
+*/
   // start page
   if (config_lookup_int(&cfg, "start_page", &retInt)) {
     m_startPage = retInt;
@@ -152,7 +151,7 @@ void get_config_settings()
   if (m_startPage < -1 || m_startPage >= MAX_PAGES) {
     m_startPage = 0;
   }
-
+/*
   // websocket_api_port (WEBSOCKET_API_PORT)
   if (config_lookup_int(&cfg, "websocket_api_port", &retInt)) {
     WEBSOCKET_API_PORT = retInt;
@@ -179,7 +178,7 @@ void get_config_settings()
   if (config_lookup_string(&cfg, "websocket_client_host", &retWebsocketHost)) {
     WEBSOCKET_CLIENT_HOST = strdup(retWebsocketHost);
   }
-
+*/
   const char * retVideosPath;
   if (config_lookup_string(&cfg, "videos_path", &retVideosPath)) {
     VIDEOS_BASEPATH = strdup(retVideosPath);
@@ -263,26 +262,29 @@ int main( int argc, char* args[] )
   // Start Buttons
   // lib_buttonsThreadStart();
 
-  if (SQLITE3_PATH != NULL) {
-    sqlite3_wrapper_init();
-    sqlite3_wrapper_start();
-  }
+  // if (SQLITE3_PATH != NULL) {
+  //   sqlite3_wrapper_init();
+  //   sqlite3_wrapper_start();
+  // }
 
-  if (WEBSOCKET_API_PORT) {
-    websocket_api_start();
-  }
-  if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
-    websocket_server_start();
-  }
+  // if (WEBSOCKET_API_PORT) {
+  //   websocket_api_start();
+  // }
+  // if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
+  //   websocket_server_start();
+  // }
+
+  // Initialize ZeroMQ Context
+  zerocontext = zmq_ctx_new();
 
   // Initialize MPV library
-  mpv_init();
-  libMpvSocketThreadStart();
-  libMpvQueueThreadStart();
+  libmpv2_init();
+  // libMpvSocketThreadStart();
+  // libMpvQueueThreadStart();
 
-  libSdobSocketThreadStart();
+  // libSdobSocketThreadStart();
 
-  libUsbDrivesThreadStart();
+  // libUsbDrivesThreadStart();
   // InitGUI_Keyboard(&m_gui, strPath);
   // InitGUI_Wifi(&m_gui, strPath);
 
@@ -351,7 +353,7 @@ int main( int argc, char* args[] )
   }
 
   // Register The Device
-  system("/opt/sdobox/scripts/register_device.sh &");
+  // system("/opt/sdobox/scripts/register_device.sh &");
 
   // ------------------------------------------------
   // Main event loop
@@ -395,36 +397,42 @@ int main( int argc, char* args[] )
     touchScreenPageDestroyAll(&m_gui);
   }
 
-  if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
-    websocket_server_stop();
-  }
+  // if (WEBSOCKET_SERVER_PORT && WEBSOCKET_SERVER_URL) {
+  //   websocket_server_stop();
+  // }
 
-  if (WEBSOCKET_API_PORT) {
-    websocket_api_stop();
-  }
+  // if (WEBSOCKET_API_PORT) {
+  //   websocket_api_stop();
+  // }
 
-  if (SQLITE3_PATH != NULL) {
-    sqlite3_wrapper_stop();
-  }
+  // if (SQLITE3_PATH != NULL) {
+  //   sqlite3_wrapper_stop();
+  // }
 
   // Kill MPV
-  mpv_stop();
-  libMpvSocketThreadStop();
+  // mpv_stop();
+  // libMpvSocketThreadStop();
 
   // Kill SDOB Socket
-  libSdobSocketThreadStop();
+  // libSdobSocketThreadStop();
 
   // Kill USB Drives Thread
-  libUsbDrivesThreadStop();
-
+  // libUsbDrivesThreadStop();
+printf("Y1\n");
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();
-  mpv_destroy();
+  libmpv2_destroy();
+printf("Y2\n");
   
   // Kill any outstanding fbcp instances
   fbcp_stop();
+printf("Y3\n");
   // Kill any outstanding fbbg instances
   fbbg_stop();
+printf("Y4\n");
+
+  zmq_ctx_destroy(zerocontext);
+printf("Y5\n");
 
   printf("%s\n", "Controls are yours.");
   gslc_Quit(&m_gui);

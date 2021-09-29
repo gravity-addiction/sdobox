@@ -15,7 +15,7 @@
 #include "libs/shared.h"
 #include "libs/queue/queue.h"
 #include "libs/buttons/buttons.h"
-#include "libs/mpv/mpv.h"
+// #include "libs/mpv2/mpv2.h"
 
 #include "gui/pages.h"
 #include "libs/fbcp/fbcp.h"

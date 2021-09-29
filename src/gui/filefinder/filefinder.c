@@ -5,7 +5,7 @@
 #include "libs/shared.h"
 #include "libs/buttons/buttons.h"
 #include "libs/vlisting/vlisting.h"
-#include "libs/mpv/mpv.h"
+#include "libs/mpv2/mpv2.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/queue/queue.h"
 

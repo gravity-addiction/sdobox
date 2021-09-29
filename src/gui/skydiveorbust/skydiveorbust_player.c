@@ -4,8 +4,7 @@
 
 #include "skydiveorbust.h"
 #include "libs/queue/queue.h"
-#include "libs/mpv/mpv.h"
-#include "libs/mpv/mpv_info.h"
+#include "libs/mpv2/mpv2.h"
 #include "libs/dbg/dbg.h"
 
 
@@ -17,6 +16,7 @@ void pg_sdob_player_clear() {
 // Set sdob_chapters->cur
 // Current Video Chapter
 void pg_sdob_player_setChapterCur() {
+  /*
   mpv_any_u* chapterRet;
   if ((mpvSocketSinglet("chapter", &chapterRet)) != -1) {
     sdob_chapters->cur = chapterRet->integer;
@@ -24,6 +24,7 @@ void pg_sdob_player_setChapterCur() {
   } else {
     sdob_chapters->cur = -1;
   }
+  */
 }
 
 
@@ -69,6 +70,7 @@ void pg_sdob_player_video_chapterList(int len) {
       char *cmd = malloc(mallocSz);
       snprintf(cmd, mallocSz, pg_sdob_playerChapterTimeFmt, i_chapter);
 
+      /*
       mpv_any_u* retChapterTime;
       if (mpvSocketSinglet(cmd, &retChapterTime) != -1) {
         sdob_chapters->ptr[i_chapter] = retChapterTime->floating;
@@ -76,6 +78,7 @@ void pg_sdob_player_video_chapterList(int len) {
       } else {
         sdob_chapters->ptr[i_chapter] = -1;
       }
+      */
       free(cmd);
     } else {
       sdob_chapters->ptr[i_chapter] = -1;
@@ -85,11 +88,13 @@ void pg_sdob_player_video_chapterList(int len) {
 
 
 void pg_sdob_player_video_chapters() {
+  /*
   mpv_any_u* retChapters;
   if ((mpvSocketSinglet("chapter-list/count", &retChapters)) != -1) {
     pg_sdob_player_video_chapterList(retChapters->integer);
     MPV_ANY_U_FREE(retChapters);
   }
+  */
 }
 
 
