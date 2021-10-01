@@ -6,7 +6,7 @@
 #include "libs/shared.h"
 
 #include "libs/buttons/buttons.h"
-// #include "libs/mpv2/mpv2.h"
+// #include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/queue/queue.h"
 #include "gui/pages.h"
 #include "libs/vlisting/vlisting.h"

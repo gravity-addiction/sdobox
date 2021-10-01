@@ -5,7 +5,7 @@
 #include "libs/shared.h"
 #include "libs/buttons/buttons.h"
 #include "libs/vlisting/vlisting.h"
-#include "libs/mpv2/mpv2.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/queue/queue.h"
 
@@ -45,11 +45,11 @@ void pg_fileFinder_slideshow_open(gslc_tsGui *pGui, char* path, char* file) {
   // Load .txt as playlists
   if (strcasecmp(fileExt, "txt") == 0) {
     snprintf(cmd, cmdSz, "loadlist \"%s/%s\" replace\n", path, file);
-    mpv_cmd(cmd);
+    libmpv_zmq_cmd(cmd);
     mpv_play();
   } else {
     snprintf(cmd, cmdSz, "loadfile \"%s/%s\" replace\n", path, file);
-    mpv_cmd(cmd);
+    libmpv_zmq_cmd(cmd);
     mpv_play();
   }
 }

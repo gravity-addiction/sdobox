@@ -33,7 +33,7 @@
 #include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
 #include "libs/fbcp/fbcp.h"
-#include "libs/mpv2/mpv2.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
 // #include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
 // #include "libs/ulfius/websocket_api.h"
 // #include "libs/ulfius/websocket_server.h"
@@ -45,7 +45,7 @@
 // #include "libs/sdob-socket/sdob-socket.h"
 // #include "libs/json/json.h" // JSON Parsing
 // #include "libs/usb-drives/usb-drives-thread.h"
-#include "libs/zhelpers.h"
+#include "libs/zhelpers/zhelpers-tx.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
 // #include "gui/wifi/wifi.h"
@@ -278,7 +278,8 @@ int main( int argc, char* args[] )
   zerocontext = zmq_ctx_new();
 
   // Initialize MPV library
-  libmpv2_init();
+  libmpv_zmq_init();
+  
   // libMpvSocketThreadStart();
   // libMpvQueueThreadStart();
 
@@ -418,21 +419,20 @@ int main( int argc, char* args[] )
 
   // Kill USB Drives Thread
   // libUsbDrivesThreadStop();
-printf("Y1\n");
+  printf("%s\n", "Cleanup Threads");
+  
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();
-  libmpv2_destroy();
-printf("Y2\n");
+  libmpv_zmq_destroy();
   
+  printf("%s\n", "Relax Mirroring");
   // Kill any outstanding fbcp instances
   fbcp_stop();
-printf("Y3\n");
   // Kill any outstanding fbbg instances
   fbbg_stop();
-printf("Y4\n");
-
+  
+  printf("%s\n", "Disconnecting ZMQ.");
   zmq_ctx_destroy(zerocontext);
-printf("Y5\n");
 
   printf("%s\n", "Controls are yours.");
   gslc_Quit(&m_gui);

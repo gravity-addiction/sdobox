@@ -4,7 +4,7 @@
 
 #include "skydiveorbust.h"
 #include "libs/queue/queue.h"
-#include "libs/mpv2/mpv2.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/dbg/dbg.h"
 
 
@@ -32,7 +32,7 @@ void pg_sdob_player_setChapterCur() {
 void pg_sdob_player_video_chapterMarks(gslc_tsGui *pGui) {
   if (!sdob_chapters->len
       || sdob_chapters->len < 1
-      || libMpvVideoInfo->duration <= 0
+      || libmpvCache->player->duration <= 0
   ) {
     pg_sdob_player_sliderTicks(pGui, NULL, 0);
     return;
@@ -43,7 +43,7 @@ void pg_sdob_player_video_chapterMarks(gslc_tsGui *pGui) {
 
   for (size_t i_chapter = 0; i_chapter < sdob_chapters->len; i_chapter++) {
     if (sdob_chapters->ptr[i_chapter]) {
-      tickMarks[i_chapter] = (sdob_chapters->ptr[i_chapter] / libMpvVideoInfo->duration) * 1000;
+      tickMarks[i_chapter] = (sdob_chapters->ptr[i_chapter] / libmpvCache->player->duration) * 1000;
     } else {
       tickMarks[i_chapter] = -1;
     }
@@ -135,11 +135,11 @@ void setSliderPos(gslc_tsGui *pGui, int16_t nPercent) {
 
 void setSliderPosByTime(gslc_tsGui *pGui) {
   int16_t nTick = 0;
-  dbgprintf(DBG_DEBUG, "Set Slider Pos By Time: Pos: %f - Dur: %f\n", libMpvVideoInfo->position, libMpvVideoInfo->duration);
+  // dbgprintf(DBG_DEBUG, "Set Slider Pos By Time: Pos: %f - Dur: %f\n", libmpvCache->player->position, libmpvCache->player->duration);
   // Calculate percentage
-  if (libMpvVideoInfo->position && libMpvVideoInfo->duration > 0) {
-    // printf("Set Slider Pos: %f, Dur: %f\n", libMpvVideoInfo->position, libMpvVideoInfo->duration);
-    nTick = (libMpvVideoInfo->position * 1000) / libMpvVideoInfo->duration;
+  if (libmpvCache->player->position && libmpvCache->player->duration > 0) {
+    // printf("Set Slider Pos: %f, Dur: %f\n", libmpvCache->player->position, libmpvCache->player->duration);
+    nTick = (libmpvCache->player->position * 1000) / libmpvCache->player->duration;
 
     if (nTick >= 0) {
       gslc_ElemXSliderSetPos(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], nTick);

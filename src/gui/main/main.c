@@ -10,7 +10,7 @@
 #include "libs/audio/audio.h"
 #include "libs/backlight/backlight.h"
 #include "libs/buttons/buttons.h"
-// #include "libs/mpv2/mpv2.h"
+// #include "libs/mpv-zmq/mpv-zmq.h"
 
 #include "gui/pages.h"
 #include "gui/keyboard/keyboard.h"
