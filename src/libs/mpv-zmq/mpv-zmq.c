@@ -128,6 +128,7 @@ int libmpv_zmq_cmd_w_reply(char* question, char** response) {
   }
 
   rc = s_send (reqrep, question);
+  free(question);
   if (rc < 0) {
     return -1;
   }
@@ -194,22 +195,64 @@ char* libmpv_zmq_fmt_cmd(char* fmt, ...) {
 
 
 
+char* libmpv_zmq_get_prop_string(char* prop) {
+  char *retProp = NULL;
+  libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_string;%s", prop), &retProp);
+  return retProp;
+}
+
+int64_t libmpv_zmq_get_prop_int64(char* prop) {
+  char *retProp = NULL;
+  int64_t retInt = 0;
+  int rc = libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_int;%s", prop), &retProp);
+  if (rc > 0 && retProp != NULL) {
+    retInt = atoi(retProp);
+    free(retProp);
+  }
+  return retInt;
+}
+
+double libmpv_zmq_get_prop_double(char* prop) {
+  char *retProp = NULL;
+  double retDbl = 0.0;
+  int rc = libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_double;%s", prop), &retProp);
+  if (rc > 0 && retProp != NULL) {
+    retDbl = strtod(retProp, NULL);
+    free(retProp);
+  }
+  return retDbl;
+}
+
+int libmpv_zmq_get_prop_flag(char* prop) {
+  char *retProp = NULL;
+  int retFlag = -1;
+  int rc = libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_int;%s", prop), &retProp);
+  if (rc > 0 && retProp != NULL && strcmp(retProp, "true")) {
+    retFlag = 1;
+    free(retProp);
+  } else if (rc > 0 && retProp != NULL) {
+    retFlag = 0;
+    free(retProp);
+  }
+  return retFlag;
+}
+
 int libmpv_zmq_set_prop_char(char* prop, char* prop_val) {
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_string;%s;%s;", prop, prop_val));
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_string;%s;%s", prop, prop_val));
 }
 
 int libmpv_zmq_set_prop_int(char* prop, int prop_val) {
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_int;%s;%d;", prop, prop_val));
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_int;%s;%d", prop, prop_val));
 }
 
 int libmpv_zmq_set_prop_double(char* prop, double prop_val) {
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_double;%s;%f;", prop, prop_val));
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_double;%s;%f", prop, prop_val));
 }
 
 int libmpv_zmq_set_prop_flag(char* prop, char* prop_val) {
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_flag;%s;%s;", prop, prop_val));
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("set_prop_flag;%s;%s", prop, prop_val));
 }
 
 int libmpv_zmq_cmd_prop_val(char* cmd, char* prop, double prop_val) {
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("%s;%s;%f;", cmd, prop, prop_val));
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("%s;%s;%f", cmd, prop, prop_val));
 }

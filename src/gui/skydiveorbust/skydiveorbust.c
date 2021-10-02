@@ -22,6 +22,9 @@
 #include "libs/fbcp/fbcp.h"
 #include "libs/dbg/dbg.h"
 #include "libs/zhelpers/zhelpers-tx.h"
+#include "libs/zhelpers/zhelpers.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
+#include "libs/mpv-zmq/mpv-zmq-helper.h"
 // #include "libs/json/json.h"
 // #include "libs/curl-sdob/curl-sdob.h"
 // #include "libs/ulfius/websocket_api.h"
@@ -1426,7 +1429,7 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
           struct queue_head *item = malloc(sizeof(struct queue_head));
           INIT_QUEUE_HEAD(item);
           item->action = E_Q_ACTION_MPV_COMMAND;
-          item->cmd = "set pause yes\n";
+          item->cmd = strdup("set pause yes\n");
           queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
         }
         if (sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected] >= 0) {
@@ -1915,15 +1918,8 @@ void pg_skydiveorbustButtonLeftPressed() {
 
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
-    double markTime = 0.00;
+    double markTime = libmpv_zmq_get_prop_double("playback-time");
 
-    /*char *playbackTime = NULL;
-    int rc = libmpv_zmq_request("\"get_property\", \"playback-time\"", &playbackTime);
-    if (rc == 0) {
-      markTime = strtod(playbackTime, NULL);
-      free(playbackTime);
-    }
-    */
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_BUST;
@@ -1950,16 +1946,8 @@ void pg_skydiveorbustButtonRightPressed() {
   // Scorecard Clicks
 
   if (sdob_judgement->marks->selected < 0) {
-    double markTime = 0.00;
-    char *playbackTime = NULL;
-    /*
-    int rc = libmpv_zmq_request("\"get_property\", \"playback-time\"", &playbackTime);
-    if (rc == 0) {
-      markTime = strtod(playbackTime, NULL);
-      free(playbackTime);
-    }
-    */
- 
+    double markTime = libmpv_zmq_get_prop_double("playback-time");
+    
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_POINT;
@@ -2687,6 +2675,8 @@ void pg_sdob_player_sliderForceUpdate() {
 
 // GUI Thread
 int pg_skydiveorbust_action_execute(struct queue_head *item) {
+  int64_t sClock;
+
   // Fetch Items to deal with in queue
   if (item) {
     switch (item->action) {
@@ -2838,7 +2828,11 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         mpv_seek(2);
       break;
       case E_Q_PLAYER_VIDEO_FORWARD_STEP:
-        libmpv_zmq_cmd((char*)strdup("frame-step"));
+        sClock = s_clock();
+        if ((sClock - pg_sdob_framestep_debounce_delay) > 750) {
+          libmpv_zmq_cmd(strdup("frame-step"));
+          pg_sdob_framestep_debounce_delay = sClock;
+        }
       break;
 
       case E_Q_PLAYER_SLIDER_UPDATE:
@@ -3000,7 +2994,9 @@ PI_THREAD (pg_sdobThread)
   zmq_connect(sdobsub, "inproc://sdobworker");
   const char *filter = "";
   int rc = zmq_setsockopt (sdobsub, ZMQ_SUBSCRIBE, filter, strlen(filter));
-
+  if (rc != 0) {
+    dbgprintf(DBG_ERROR, "%s\n", "SDOB Scoring Queue Thread Cannot Set Socket Options");
+  }
   zmq_pollitem_t items [] = {
     { sdobsub, 0, ZMQ_POLLIN, 0 }
   };
@@ -3111,7 +3107,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   ///////////////////
   // MPV Initializer
   // mpv_init(pGui);
-
+  pg_sdob_framestep_debounce_delay = 0;
 
   /////////////////////////////
   // Scorecard Box Initializer
@@ -3218,18 +3214,11 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   // Fetch Info
   int rc;
-  char *durationRet = NULL;
-  rc = libmpv_zmq_cmd_w_reply("get_prop_double;duration", &durationRet);
-  if (rc > 0 && durationRet != NULL) {
-    libmpvCache->player->duration = strtod(durationRet, NULL);
-    free(durationRet);
-  }
+  libmpvCache->player->duration = libmpv_zmq_get_prop_double("duration");
 
-  char *filename = NULL;
-  rc = libmpv_zmq_cmd_w_reply("get_prop_string;filename", &filename);
-  if (rc > 0 && filename != NULL) {
+  libmpvCache->player->file = libmpv_zmq_get_prop_string("filename");
+  if (libmpvCache->player->file != NULL) {
     libmpvCache->player->is_loaded = 1;
-    free(filename);
   } else {
     libmpvCache->player->is_loaded = 0;
   }

@@ -27,7 +27,7 @@ int mpv_seek_arg(double distance, char* flags) {
 
 void mpv_check_pause() {
   char *paused = NULL;
-  int rc = libmpv_zmq_cmd_w_reply("get_prop_flag;pause", &paused);
+  int rc = libmpv_zmq_cmd_w_reply(strdup("get_prop_flag;pause"), &paused);
   if (paused != NULL) {
     if (strncmp(paused, "false", 5) == 0) {
       libmpvCache->player->is_playing = 1;
@@ -39,21 +39,21 @@ void mpv_check_pause() {
 }
 int mpv_pause() {
   libmpvCache->player->is_playing = 0;
-  return libmpv_zmq_cmd("set_prop_flag;pause;true");
+  return libmpv_zmq_cmd(strdup("set_prop_flag;pause;true"));
 }
 
 int mpv_play() {
   libmpvCache->player->is_playing = 1;
   // Start Background layer behind mpv images
   // fbbg_start();
-  return libmpv_zmq_cmd("set_prop_flag;pause;false");
+  return libmpv_zmq_cmd(strdup("set_prop_flag;pause;false"));
 }
 
 int mpv_fullscreen(int fs) {
   if (fs) {
-    return libmpv_zmq_cmd("set_prop_flag;fullscreen;true");
+    return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;true"));
   } else {
-    return libmpv_zmq_cmd("set_prop_flag;fullscreen;false");
+    return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;false"));
   }
 }
 
@@ -85,35 +85,33 @@ double mpv_speed(double spd) {
 }
 
 double mpv_speed_adjust(double spd) {
-  char *retSpeed = NULL;
   double new_spd;
-  int rc = libmpv_zmq_cmd_w_reply("get_prop_double;speed", &retSpeed);
-  if (rc > 0 && retSpeed != NULL) {
-    double number = strtod(retSpeed, NULL);
-    free(retSpeed);
+  double cur_spd = libmpv_zmq_get_prop_double("speed");
+  if (cur_spd == 0) { return -1; }
 
-    if (number == 0) { return -1; }
-
-    if (number <= 0.1) {
-      new_spd = number + (spd / 10);
-    } else {
-      new_spd = number + spd;
-    }
-
-    if (new_spd > 1) {
-      new_spd = 1;
-    } else if (new_spd < .01) {
-      new_spd = .01;
-    } else if (new_spd == .11) {
-      new_spd = .2;
-    }
-    if (number != new_spd) {
-      return mpv_speed(new_spd);
-      // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
-    }
-    return libmpvCache->player->pbrate;
+  if (cur_spd <= 0.1) {
+    new_spd = cur_spd + (spd / 10);
+  } else {
+    new_spd = cur_spd + spd;
   }
-  return -1;
+
+  if (new_spd > 1) {
+    new_spd = 1;
+  } else if (new_spd < .01) {
+    new_spd = .01;
+  } else if (new_spd == .11) {
+    new_spd = .2;
+  }
+  if (cur_spd != new_spd) {
+    return mpv_speed(new_spd);
+    // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
+  }
+  return libmpvCache->player->pbrate;
+}
+
+
+double mpv_time_pos() {
+  return libmpv_zmq_get_prop_double("time-pos");
 }
 
 

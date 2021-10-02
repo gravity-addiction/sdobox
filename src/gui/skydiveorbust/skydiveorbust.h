@@ -162,8 +162,9 @@ int pg_sdob_scroll_max; // Initial number of positions on scrollcard scrollbar;
 int pg_sdob_slot_scroll; // position of vertical scrollbar
 int pg_sdob_score_count; // Number of points to display
 int pg_sdob_scorecard_max; // Initial array resize for storeing marks, currently no realloc functionality
-int pg_sdob_slider_debounce_delay;
+int64_t pg_sdob_slider_debounce_delay;
 int pg_sdob_new_video_cnt;
+int pg_sdob_framestep_debounce_delay;
 
 int pg_sdob_scorecard_slotid[30];
 gslc_tsElemRef *pg_sdob_scorecard_elemsNum[30];
