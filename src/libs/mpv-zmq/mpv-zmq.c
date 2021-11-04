@@ -46,6 +46,8 @@ void libmpv_zmq_destroy() {
   }
 }
 
+
+
 // Incoming thread for mpv video time-pos
 int libmpv_zmq_connect_socket(void **sock, char* url) {
   if (!url) {
@@ -75,26 +77,6 @@ int libmpv_zmq_async_init() {
   dbgprintf(DBG_DEBUG, "Async 5557: %d\n", rc);
   return rc;
 }
-
-// Simple Request / Response for properties
-int libmpv_zmq_request_init() {
-  dbgprintf(DBG_DEBUG, "%s\n", "RETURNING Simple 5558");
-  return -1;
-  reqrep = zmq_socket (zerocontext, ZMQ_REQ);
-  uint64_t timeoutreqrep = 1500;
-  int rc = zmq_setsockopt(reqrep, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
-  if (rc == 0) {
-    rc = zmq_connect (reqrep, "tcp://flittermouse.local:5558");
-    dbgprintf(DBG_DEBUG, "Simple 5558: %d\n", rc);
-  }
-  if (rc < 0) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to simple Server");
-    zmq_close(reqrep);
-  }
-  return rc;
-}
-
-
 
 uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
   printf("NO ASYNC YET, change libmpv_zmq_cmd_async to libmpv_zmq_cmd_w_reply: %s\n", question);
@@ -132,6 +114,10 @@ uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
 }
 
 
+
+
+
+// Questions with Responses
 int libmpv_zmq_cmd_w_reply(char* question, char** response) {
   dbgprintf(DBG_DEBUG, "Need Reply %s\n", question);
   int rc = 0;
@@ -184,6 +170,9 @@ int libmpv_zmq_cmd_w_reply(char* question, char** response) {
   return rc;
 }
 
+
+
+
 // One way Commands
 int libmpv_zmq_cmd(char* userCmd) {
   if (userCmd == NULL) {
@@ -205,6 +194,10 @@ int libmpv_zmq_cmd(char* userCmd) {
   free(userCmd);
   return rc;
 }
+
+
+
+
 
 
 /*
