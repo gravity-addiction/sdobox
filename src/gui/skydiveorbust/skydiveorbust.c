@@ -2006,6 +2006,9 @@ void pg_skydiveorbustButtonLeftHeld() {
     item->selected = sdob_judgement->marks->selected;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // Skip Release Action
+    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 2;    
   } else {
 
   }
@@ -2018,6 +2021,9 @@ void pg_skydiveorbustButtonRightHeld() {
     item->selected = sdob_judgement->marks->selected;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    
+    // Skip Release Action
+    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 2;
   } else {
 
   }
@@ -2031,12 +2037,17 @@ void pg_skydiveorbustButtonRotaryHeld() {
     item->selected = sdob_judgement->marks->selected;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    // Skip Release Action
+    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] = 2;
   } else {
     guislice_wrapper_mirror_toggle(&m_gui);
   }
 }
 
 void pg_skydiveorbustButtonDoubleHeld() {
+  lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 2;
+  lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 2;
   if (m_page_stackLen == 0) {
     touchscreenPageOpen(&m_gui, E_PG_MAIN);
   } else {

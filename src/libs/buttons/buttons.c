@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pthread.h>
 #include <wiringPi.h> // Gordons Wiring Pi
 
 #include "GUIslice.h"
@@ -14,8 +15,8 @@
 #include "libs/dbg/dbg.h"
 
 
+static pthread_mutex_t buttonLock = PTHREAD_MUTEX_INITIALIZER;
 
-  
 void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]) {
   for (int p = 0; p < whitelistPinsSize; p++) {
     printf("Check Pin: %d\n", whitelistedPins[p]);
@@ -335,14 +336,78 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
                 int actionPressed, int actionReleased, int actionHeld
 ) {
   if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
+  pthread_mutex_lock(&buttonLock);
 
+  int rc = 1;
   int p = digitalRead(pin);
   unsigned int i_now = millis();
 
-  // printf("Pin: %d - %d - Delay: %d\n", pin, p, lib_buttonsBtnDebounceDelay);
+  // printf("Pin: %d - %d - Delay: %d, Relased: %d, Pressed: %d\n", pin, p, lib_buttonsBtnDebounceDelay, lib_buttonsLastInterruptAction[actionReleased], lib_buttonsLastInterruptAction[actionPressed]);
+
+  if (p == 0 && !lib_buttonsLastInterruptAction[actionPressed]) {
+    // Pressed
+    // printf("Pressed Button\n");
+
+    // Set Action flags for released / pressed
+    lib_buttonsLastInterruptAction[actionReleased] = 0;
+    lib_buttonsLastInterruptAction[actionPressed] = 1;
+
+    // Check Debounce
+    if (
+      ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay)
+      // || ((i_now - lib_buttonsLastInterruptTime[timeHigh]) < lib_buttonsBtnDebounceDelay)
+    ) {
+      // printf("Debounced\n");
+      rc = 0;
+      goto cleanup;
+    }
+    // Set LowTime
+    lib_buttonsLastInterruptTime[timeLow] = i_now;
+
+    // Execute CB Pressed Function
+    if (cbBtns[actionPressed]) cbBtns[actionPressed]();
+
+    rc = 0;
+    goto cleanup;
+  } else if (p == 1 && lib_buttonsLastInterruptAction[actionPressed] && !lib_buttonsLastInterruptAction[actionReleased]) {
+    // Released
+    // printf("Released Button\n");
+
+    // Set Action flags for released / pressed
+    lib_buttonsLastInterruptAction[actionReleased] = 1;
+    lib_buttonsLastInterruptAction[actionPressed] = 0;
+    
+    // Check Debounce
+    if (
+      // ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay) ||
+      ((i_now - lib_buttonsLastInterruptTime[timeHigh]) < lib_buttonsBtnDebounceDelay)
+    ) {
+      // printf("Debounced\n");
+      rc = 0;
+      goto cleanup;
+    }
+    // Set HighTime
+    lib_buttonsLastInterruptTime[timeHigh] = i_now;
+
+    // Held > 1 to skip typical release
+    if (lib_buttonsLastInterruptAction[actionHeld] < 2) {
+      // Execute CB Released Function
+      if (cbBtns[actionReleased]) cbBtns[actionReleased]();
+    }
+
+    lib_buttonsLastInterruptAction[actionHeld] = 0;
+    rc = 0;
+    goto cleanup;    
+  }
+
+ cleanup:
+  pthread_mutex_unlock(&buttonLock);
+  return rc;
+/*
+
   // Press down just set's flags
   if (p == LOW) {
-    // printf("Low %d : %d\n", i_now, lib_buttonsLastInterruptTime[timeLow]);
+    printf("Low %d : %d\n", i_now, lib_buttonsLastInterruptTime[timeLow]);
 
     if ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay) {
       return 0;
@@ -357,9 +422,10 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
     if (cbBtns[actionPressed]) cbBtns[actionPressed]();
 
     return 0; // No nothing for now
+
   } else if (!lib_buttonsLastInterruptAction[actionPressed]) {
     // Button is not known to be pressed right now
-    // printf("Not Pressed\n");
+    printf("Not Pressed\n");
 
     // Reset High Pin Time
     if (i_now - lib_buttonsLastInterruptTime[timeHigh] > lib_buttonsBtnDebounceDelay) {
@@ -368,7 +434,9 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
     return 0;
   } // Else Button Released
 
-  // printf("High %d\n", lib_buttonsLastInterruptTime[timeHigh]);
+
+
+  printf("High %d\n", lib_buttonsLastInterruptTime[timeHigh]);
   // Reset High Pin Time
   if (i_now - lib_buttonsLastInterruptTime[timeHigh] > lib_buttonsBtnDebounceDelay) {
     lib_buttonsLastInterruptTime[timeHigh] = i_now;
@@ -387,11 +455,14 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
     return 0;
   }
 
+
+
   // Exceute CB Released Function
-  // printf("%s\n", "Execute Released");
+  printf("%s\n", "Execute Released");
   if (cbBtns[actionReleased]) cbBtns[actionReleased]();
   lib_buttonsLastInterruptAction[actionReleased] = 1;
   return 1;
+  */
 }
 
 

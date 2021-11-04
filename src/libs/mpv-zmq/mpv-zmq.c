@@ -51,20 +51,20 @@ int libmpv_zmq_timeserver_init(void **qfive, char* url) {
     return -1;
   }
 
-  printf("Attempting TimeServer: %s\n", url);
+  dbgprintf(DBG_DEBUG, "Attempting TimeServer: %s\n", url);
   *qfive = zmq_socket (zerocontext, ZMQ_SUB);
   uint64_t timeoutreqrep = 1500;
   int rc = zmq_setsockopt(*qfive, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
   if (rc > -1) {
     rc = zmq_connect (*qfive, url); // "tcp://flittermouse.local:5555");
-    printf("TimeServer Connected, %s - %d\n", url, rc);
+    dbgprintf(DBG_DEBUG, "TimeServer Connected, %s - %d\n", url, rc);
   }
   if (rc > -1) {
     const char *filterqfive = "";
     rc = zmq_setsockopt (*qfive, ZMQ_SUBSCRIBE, filterqfive, strlen(filterqfive));
   }
   if (rc < 0) {
-    printf("Cannot Connect to time Server\n");
+    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to time Server");
     zmq_close(*qfive);
   }
   return rc;
@@ -73,26 +73,26 @@ int libmpv_zmq_timeserver_init(void **qfive, char* url) {
 
 // Soon to be Async requests with responses returned in event thread
 int libmpv_zmq_async_init() {
-  printf("Attempting Asyncv 5557\n");
+  dbgprintf(DBG_DEBUG, "%s\n", "Attempting Asyncv 5557");
   reqasync = zmq_socket (zerocontext, ZMQ_REQ);
   int rc = zmq_connect (reqasync, "tcp://flittermouse.local:5557");
-  printf("Async 5557: %d\n", rc);
+  dbgprintf(DBG_DEBUG, "Async 5557: %d\n", rc);
   return rc;
 }
 
 // Simple Request / Response for properties
 int libmpv_zmq_request_init() {
-  printf("RETURNING Simple 5558\n");
+  dbgprintf(DBG_DEBUG, "%s\n", "RETURNING Simple 5558");
   return -1;
   reqrep = zmq_socket (zerocontext, ZMQ_REQ);
   uint64_t timeoutreqrep = 1500;
   int rc = zmq_setsockopt(reqrep, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
   if (rc == 0) {
     rc = zmq_connect (reqrep, "tcp://flittermouse.local:5558");
-    printf("Simple 5558: %d\n", rc);
+    dbgprintf(DBG_DEBUG, "Simple 5558: %d\n", rc);
   }
   if (rc < 0) {
-    printf("Cannot Connect to simple Server\n");
+    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to simple Server");
     zmq_close(reqrep);
   }
   return rc;
@@ -100,16 +100,16 @@ int libmpv_zmq_request_init() {
 
 // One way commands, validate it hits the server queue, no guarantee its successful
 int libmpv_zmq_raw_init() {
-  printf("Attempting Oneway Commands 5559\n");
+  dbgprintf(DBG_DEBUG, "%s\n", "Attempting Oneway Commands 5559");
   reqraw = zmq_socket (zerocontext, ZMQ_PUSH);
   uint64_t timeoutreqrep = 1500;
   int rc = zmq_setsockopt(reqraw, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
   if (rc == 0) {
     rc = zmq_connect (reqraw, "tcp://flittermouse.local:5559");
-    printf("Oneway 5559: %d\n", rc);
+    dbgprintf(DBG_DEBUG, "Oneway 5559: %d\n", rc);
   }
   if (rc < 0) {
-    printf("Cannot Connect to cmd Server\n");
+    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to cmd Server");
     zmq_close(reqraw);
   }
   return rc;
@@ -152,7 +152,7 @@ uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
 
 
 int libmpv_zmq_cmd_w_reply(char* question, char** response) {
-  printf("Need Reply %s\n", question);
+  dbgprintf(DBG_DEBUG, "Need Reply %s\n", question);
   if (question != NULL) {
     free(question);
   }
@@ -163,12 +163,9 @@ int libmpv_zmq_cmd_w_reply(char* question, char** response) {
     rc = libmpv_zmq_request_init();
   }
   while (rc == -1) {
-    printf("RC %d\n", rc);
     sleep(2);
     rc = libmpv_zmq_request_init();
   }
-
-  printf("RC: %d\n", rc);
 
   rc = s_send (reqrep, question);
   free(question);
