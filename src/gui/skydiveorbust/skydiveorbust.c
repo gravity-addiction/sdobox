@@ -12,8 +12,11 @@
 #include <regex.h>
 #include <assert.h>
 #include <jansson.h>
+#include <libconfig.h>
 
-#include "skydiveorbust.h"
+#include "./skydiveorbust.h"
+#include "./skydiveorbust_zmq.h"
+
 #include "gui/pages.h"
 
 #include "libs/buttons/buttons.h"
@@ -30,6 +33,7 @@
 // #include "libs/ulfius/websocket_api.h"
 
 #include "gui/keyboard/keyboard.h"
+
 
 
 void PG_SDOB_SCORECARD_CLEAR_MARKS(struct pg_sdob_scorecard_marks *sc)
@@ -179,12 +183,8 @@ void PG_SDOB_CLEAR_JUDGEMENT_META(struct pg_sdob_judgement_data *judgement)
   // PG_SDOB_CLEAR_VIDEO_DATA(judgement->video);
 }
 
-void *pg_sdobWorker;
 
-// Add Queue Item to SDOB Worker Inproc 0MQ
-void pg_sdob_add_action(struct queue_head **head) {
-  zmq_send(pg_sdobWorker, head, sizeof(head), 0);
-}
+
 
 
 
@@ -1429,7 +1429,7 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
           struct queue_head *item = malloc(sizeof(struct queue_head));
           INIT_QUEUE_HEAD(item);
           item->action = E_Q_ACTION_MPV_COMMAND;
-          item->cmd = strdup("set pause yes\n");
+          item->cmd = strdup("set;pause;yes");
           queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
         }
         if (sdob_judgement->marks->arrScorecardTimes[sdob_judgement->marks->selected] >= 0) {
@@ -1848,8 +1848,13 @@ void pg_skydiveorbustButtonRotaryCW() {
       // "frame-step\n";
     // libmpv_zmq_cmd(strdup(cmdFSTxt));
     item = new_qhead();
-    item->action = E_Q_PLAYER_VIDEO_FORWARD_STEP;
+    item->action = E_Q_ACTION_MPV_COMMAND;
+    item->cmd = strdup("frame-step");
     pg_sdob_add_action(&item);
+
+    // item = new_qhead();
+    // item->action = E_Q_PLAYER_VIDEO_FORWARD_STEP;
+    // pg_sdob_add_action(&item);
 
     // Reset the Speed back to current
     // struct queue_head *itemSpeed = new_qhead();
@@ -1918,12 +1923,12 @@ void pg_skydiveorbustButtonLeftPressed() {
 
   if (sdob_judgement->marks->selected < 0) {
     // Add to queue E_Q_SCORECARD_INSERT_MARK
-    double markTime = libmpv_zmq_get_prop_double("playback-time");
+    // double markTime = libmpv_zmq_get_prop_double("playback-time");
 
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_BUST;
-    item->time = markTime;
+    item->time = mpv_calc_marktime(libmpvCache->player);
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -1946,12 +1951,12 @@ void pg_skydiveorbustButtonRightPressed() {
   // Scorecard Clicks
 
   if (sdob_judgement->marks->selected < 0) {
-    double markTime = libmpv_zmq_get_prop_double("playback-time");
-    
+    // double markTime = libmpv_zmq_get_prop_double("playback-time");
+
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_POINT;
-    item->time = markTime;
+    item->time = mpv_calc_marktime(libmpvCache->player);;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -2116,6 +2121,7 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Already Started");
     return NULL;
   }
+
   pg_sdobMpvTimeposThreadRunning = 1;
 
   if (pg_sdobMpvTimeposThreadKill) {
@@ -2124,70 +2130,90 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     return NULL;
   }
 
+  dbgprintf(DBG_DEBUG, "%s\n", "Finding Timepos Server");
+
+  config_t cfg;
+  config_init(&cfg);
+  // Read the file. If there is an error, report it and exit.
+  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+    config_destroy(&cfg);
+    pg_sdobMpvTimeposThreadRunning = 0;
+    return NULL;
+  }
+
+  const char * retTimeServer;
+  if (config_lookup_string(&cfg, "timeserver", &retTimeServer)) {
+    libmpvCache->server->timeserver = strdup(retTimeServer);
+  } else {
+    printf("No timeserver configuration in ~/.config/sdobox/sdobox.conf\n");
+    config_destroy(&cfg);
+    pg_sdobMpvTimeposThreadRunning = 0;
+    return NULL;
+  }
+  config_destroy(&cfg);
+
   dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos and Events Thread");
-  int rc;
+  int rc = 0;
 
-  void *timestamps = libmpv_zmq_timepos_init();
-  void *mpvEvents = libmpv_zmq_events_init();
-  
-  // 0MQs sockets to poll
-  zmq_pollitem_t items [] = {
-    { timestamps, 0, ZMQ_POLLIN, 0 },
-    { mpvEvents, 0, ZMQ_POLLIN, 0 }
-  };
-  
-  while (!pg_sdobMpvTimeposThreadKill) {
+  // pg_sdobMpvTimeposThreadRunning = 0;
+  // return NULL;
 
-    rc = zmq_poll (items, 2, -1);
-    if (!m_bQuit && rc > -1) {  
-      if (items[0].revents & ZMQ_POLLIN) {
-        char *str = s_recv(timestamps);
-        printf("Timestamp: %s\n", str);
-        libmpvCache->player->position = strtod(str, NULL);
-        secs_to_time((int)(libmpvCache->player->position * 1000000), libmpvCache->player->positionStr, 32);
-        setSliderPosByTime(&m_gui);
-        gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
-        pg_sdob_mpv_timepos_thread();
-        free(str);        
-      }  
-      if (items[1].revents & ZMQ_POLLIN) {
-        char *str = s_recv(mpvEvents);
-        printf("Got Event: %s\n", str);
+  void *timeserver;
+  rc = libmpv_zmq_timeserver_init(&timeserver, libmpvCache->server->timeserver);
+  while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
+    sleep(2);
+    rc = libmpv_zmq_timeserver_init(&timeserver, libmpvCache->server->timeserver);
+  } 
 
-        if (strncmp(str, "duration", 8) == 0) {
-          const char* myDuration = str + 9;
-          dbgprintf(DBG_MPV_READ, "Duration: %s\n", myDuration);
-          libmpvCache->player->duration = strtod(myDuration, NULL);
-          pg_sdob_pl_sliderForceUpdate = 1;
-          pg_sdob_mpv_timepos_thread();
+  if (rc > -1 && !pg_sdobMpvTimeposThreadKill) {
+    // 0MQs sockets to poll
+    zmq_pollitem_t items [] = {
+      { timeserver, 0, ZMQ_POLLIN, 0 }
+    };
+    
+    while (!pg_sdobMpvTimeposThreadKill) {
+      rc = zmq_poll (items, 1, -1);
+      if (!m_bQuit && rc > -1) {  
+        if (items[0].revents & ZMQ_POLLIN) {
+          char *str = s_recv(timeserver);
+          dbgprintf(DBG_DEBUG, "timeserver: %s\n", str);
+
+          if (strcmp(str, "timer") == 0) {
+            libmpvCache->player->position_update = s_clock();
+            libmpvCache->player->position = strtod(s_recv(timeserver), NULL);
+            // printf("Timestamp: %f @ %lld\n", libmpvCache->player->position, libmpvCache->player->position_update);
+            secs_to_time((int)(libmpvCache->player->position * 1000000), libmpvCache->player->positionStr, 32);
+            setSliderPosByTime(&m_gui);
+            gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
+            pg_sdob_mpv_timepos_thread();
+          } else if (strcmp(str, "duration") == 0) {
+            const char* myDuration = s_recv(timeserver) + 9;
+            // printf("Duration: %s\n", myDuration);
+            libmpvCache->player->duration = strtod(myDuration, NULL);
+            pg_sdob_pl_sliderForceUpdate = 1;
+            pg_sdob_mpv_timepos_thread();
+          } else if (strcmp(str, "file-loaded") == 0) {
+            struct queue_head *item = malloc(sizeof(struct queue_head));
+            INIT_QUEUE_HEAD(item);
+            item->action = E_Q_SCORECARD_CLEAR;
+            pg_sdob_add_action(&item);
+            // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+            libmpvCache->player->is_loaded = 1;
+            pg_sdob_pl_sliderForceUpdate = 1;
+          } else if (strcmp(str, "pause") == 0) {
+            libmpvCache->player->is_playing = 0;
+          } else if (strcmp(str, "unpause") == 0) {
+            libmpvCache->player->is_playing = 1;
+          }
+          free(str);
         }
-
-        if (strncmp(str, "file-loaded", 11) == 0) {
-          struct queue_head *item = malloc(sizeof(struct queue_head));
-          INIT_QUEUE_HEAD(item);
-          item->action = E_Q_SCORECARD_CLEAR;
-          pg_sdob_add_action(&item);
-          // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-          libmpvCache->player->is_loaded = 1;
-          pg_sdob_pl_sliderForceUpdate = 1;
-        }
-
-        if (strncmp(str, "pause", 5) == 0) {
-          libmpvCache->player->is_playing = 0;
-        }
-
-        if (strncmp(str, "unpause", 11) == 0) {
-          libmpvCache->player->is_playing = 1;
-        }                
-
-        free(str);        
       }
     }
   }
-
-  zmq_close(timestamps);
-  zmq_close(mpvEvents);
-  dbgprintf(DBG_DEBUG, "%s\n", "Closing TimePos and Events Thread");
+  zmq_close(timeserver);
+  timeserver = NULL;
+  printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
   return NULL;
 }
@@ -2206,15 +2232,15 @@ int pg_sdobMpvTimeposThreadStart() {
 void pg_sdobMpvTimeposThreadStop() {
   dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvTimeposThreadStop()");
   // Shutdown MPV FIFO Thread
+  int shutdown_cnt = 0;
   if (pg_sdobMpvTimeposThreadRunning) {
     pg_sdobMpvTimeposThreadKill = 1;
-    int shutdown_cnt = 0;
     while (pg_sdobMpvTimeposThreadRunning && shutdown_cnt < 20) {
       usleep(100000);
       shutdown_cnt++;
     }
-    dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos and Events Thread Shutdown %d\n", shutdown_cnt);
   }
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos and Events Thread Shutdown %d\n", shutdown_cnt);
 }
 
 
@@ -2796,6 +2822,20 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         gslc_ElemSetRedraw((gslc_tsGui*)item->u1.ptr, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
       break;
 
+      case E_Q_ACTION_LOADURL:
+        printf("Action: %s\n", ((struct pg_sdob_video_data*)item->data)->url);
+        if (((struct pg_sdob_video_data*)item->data)->url != NULL) {
+          printf("HERE!\n");
+          strlcpy(sdob_judgement->video->url, ((struct pg_sdob_video_data*)item->data)->url, 512);
+          printf("XX: %s\n", sdob_judgement->video->url);
+          mpv_loadurl(sdob_judgement->video->url, "replace", "");
+        }
+
+        PG_SDOB_FREE_VIDEO_DATA((struct pg_sdob_video_data*)item->data);
+        free((struct pg_sdob_video_data*)item->data);
+        gslc_ElemSetRedraw((gslc_tsGui*)item->u1.ptr, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+      break;
+
       case E_Q_ACTION_PARSE_VIDEO_FILENAME:
         pg_skydiveorbust_parsefilename_internal((gslc_tsGui*)item->u1.ptr);
         gslc_ElemSetRedraw((gslc_tsGui*)item->u1.ptr, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
@@ -2828,11 +2868,11 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         mpv_seek(2);
       break;
       case E_Q_PLAYER_VIDEO_FORWARD_STEP:
-        sClock = s_clock();
-        if ((sClock - pg_sdob_framestep_debounce_delay) > 750) {
+        // sClock = s_clock();
+        // if ((sClock - pg_sdob_framestep_debounce_delay) > 750) {
           libmpv_zmq_cmd(strdup("frame-step"));
-          pg_sdob_framestep_debounce_delay = sClock;
-        }
+        //   pg_sdob_framestep_debounce_delay = sClock;
+        // }
       break;
 
       case E_Q_PLAYER_SLIDER_UPDATE:
@@ -2862,6 +2902,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
     free(item);
     return 1;
   }
+  return 0;
 }
 
 // from main thread loop, return 1 if any work is done
@@ -2869,7 +2910,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
   ////////////////////////
   // Player Slider Moved
   if (pg_sdob_player_move > -1
-    && (s_clock() - pg_sdob_player_move_debounce) > 750
+    // && (s_clock() - pg_sdob_player_move_debounce) > 750
   ) {
     // Execute Slider Move
     if (sdob_judgement->sowt == -1.0 || !pg_sdob_timeline_zoom_workingtime) {
@@ -2877,7 +2918,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     } else {
       mpv_seek_arg((sdob_judgement->sowt + (sdob_judgement->workingTime * (pg_sdob_player_move * .01))), "percent");
     }
-    pg_sdob_player_move_debounce = s_clock();
+    // pg_sdob_player_move_debounce = s_clock();
     pg_sdob_player_move = -1;
     return 1;
   }
@@ -2988,7 +3029,7 @@ PI_THREAD (pg_sdobThread)
     return NULL;
   }
 
-  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting SDOB Scoring Queue Thread");
 
   void *sdobsub = zmq_socket(zerocontext, ZMQ_SUB);
   zmq_connect(sdobsub, "inproc://sdobworker");
@@ -3015,7 +3056,7 @@ PI_THREAD (pg_sdobThread)
   }
 
   zmq_close(sdobsub);
-  dbgprintf(DBG_DEBUG, "%s\n", "SDOB Scoring Queue Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Closing SDOB Scoring Queue Thread");
   pg_sdobThreadRunning = 0;
   return NULL;
 }
@@ -3035,15 +3076,16 @@ int pg_sdobThreadStart() {
 void pg_sdobThreadStop() {
   dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobThreadStop()");
   // Shutdown MPV FIFO Thread
+
+  int shutdown_cnt = 0;
   if (pg_sdobThreadRunning) {
     pg_sdobThreadKill = 1;
-    int shutdown_cnt = 0;
     while (pg_sdobThreadRunning && shutdown_cnt < 20) {
       usleep(100000);
       shutdown_cnt++;
     }
-    // printf("SkydiveOrBust MPV TimePos Thread Shutdown %d\n", shutdown_cnt);
   }
+  dbgprintf(DBG_DEBUG, "pg_sdobThread Shutdown %d\n", shutdown_cnt);
 }
 
 
@@ -3216,7 +3258,11 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   int rc;
   libmpvCache->player->duration = libmpv_zmq_get_prop_double("duration");
 
-  libmpvCache->player->file = libmpv_zmq_get_prop_string("filename");
+  char *propFilename = libmpv_zmq_get_prop_string("filename");
+  if (propFilename != NULL) {
+    strlcpy(libmpvCache->player->file, propFilename, 512);
+    free(propFilename);
+  }
   if (libmpvCache->player->file != NULL) {
     libmpvCache->player->is_loaded = 1;
   } else {

@@ -51,7 +51,6 @@ int pg_sdobElTotal;
 
 int pg_sdob_timeline_zoom_workingtime; // 1 - Zooms timeline for working time, 0 - keeps timeline for full video
 
-
 /////////////////
 // Host Or Slave Device
 struct pg_sdob_device_host {
@@ -294,6 +293,7 @@ enum {
   E_Q_ACTION_VIDEO_RATE_USER,
   E_Q_ACTION_MPV_COMMAND,
   E_Q_ACTION_LOADVIDEO,
+  E_Q_ACTION_LOADURL,
   E_Q_ACTION_PARSE_VIDEO_FILENAME,
   E_Q_ACTION_NOTIFY_SLAVES,
 

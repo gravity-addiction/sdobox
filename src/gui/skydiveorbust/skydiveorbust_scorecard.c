@@ -5,12 +5,16 @@
 #include <curl/curl.h>
 
 #include "libs/shared.h"
-#include "skydiveorbust.h"
+#include "./skydiveorbust.h"
+#include "./skydiveorbust_scorecard.h"
+#include "./skydiveorbust_zmq.h"
+
 #include "libs/md5/md5.h"
 #include "libs/queue/queue.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/curl-sdob/curl-sdob.h"
 #include "libs/dbg/dbg.h"
+#include "libs/sdob-zmq/sdob-zmq.h"
 
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
@@ -60,7 +64,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     itemSOPST->amt = sdob_judgement->prestartTime;
     itemSOPST->time = markTime;
     itemSOPST->mark = mark;
-    queue_put(itemSOPST, pg_sdobQueue, &pg_sdobQueueLen);
+    pg_sdob_add_action(&itemSOPST);
+    // queue_put(itemSOPST, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else if (
     (sdob_judgement->prestartTime == 0 && markSelected == 0) || 
@@ -74,7 +79,8 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     itemSOWT->amt = sdob_judgement->workingTime;
     itemSOWT->time = markTime;
     itemSOWT->mark = mark;
-    queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
+    pg_sdob_add_action(&itemSOWT);
+    // queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
   // Add Marker Time
@@ -176,21 +182,23 @@ int pg_sdobSOWTSet(double markTime, double workingTime) {
   struct queue_head *itemStart = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemStart);
   itemStart->action = E_Q_ACTION_MPV_COMMAND;
-  size_t startSz = snprintf(NULL, 0, "set start %f\n", sdob_judgement->sowt) + 1;
+  size_t startSz = snprintf(NULL, 0, "set;start;%f", sdob_judgement->sowt) + 1;
   if (startSz > 0) {
     itemStart->cmd = (char*)calloc(startSz, sizeof(char));
-    snprintf(itemStart->cmd, startSz, "set start %f\n", sdob_judgement->sowt);
-    queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+    snprintf(itemStart->cmd, startSz, "set;start;%f", sdob_judgement->sowt);
+    pg_sdob_add_action(&itemStart);
+    // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
   struct queue_head *itemLength = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemLength);
   itemLength->action = E_Q_ACTION_MPV_COMMAND;
-  size_t lengthSz = snprintf(NULL, 0, "set length %f\n", sdob_judgement->workingTime) + 1;
+  size_t lengthSz = snprintf(NULL, 0, "set;length;%f", sdob_judgement->workingTime) + 1;
   if (lengthSz > 0) {
     itemLength->cmd = (char*)calloc(lengthSz, sizeof(char));
-    snprintf(itemLength->cmd, lengthSz, "set length %f\n", sdob_judgement->workingTime);
-    queue_put(itemLength, pg_sdobQueue, &pg_sdobQueueLen);
+    snprintf(itemLength->cmd, lengthSz, "set;length;%f", sdob_judgement->workingTime);
+    pg_sdob_add_action(&itemLength);
+    // queue_put(itemLength, pg_sdobQueue, &pg_sdobQueueLen);
   }
   // gslc_ElemSetRedraw(&m_gui, m_pElemScorecardBox, GSLC_REDRAW_FULL);
   return 1;
@@ -204,27 +212,30 @@ int pg_sdobSOWTReset() {
   struct queue_head *itemStart = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemStart);
   itemStart->action = E_Q_ACTION_MPV_COMMAND;
-  size_t cmdStartSz = strlen("set start 0\n") + 1;
+  size_t cmdStartSz = strlen("set;start;0") + 1;
   if (cmdStartSz > 0) {
     itemStart->cmd = (char*)calloc(cmdStartSz, sizeof(char));
-    strlcpy(itemStart->cmd, "set start 0\n", cmdStartSz);
-    queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+    strlcpy(itemStart->cmd, "set;start;0", cmdStartSz);
+    pg_sdob_add_action(&itemStart);
+    // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
   struct queue_head *itemEnd = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(itemEnd);
   itemEnd->action = E_Q_ACTION_MPV_COMMAND;
-  size_t cmdEndSz = strlen("set length 100%\n") + 1;
+  size_t cmdEndSz = strlen("set;length;100%") + 1;
   if (cmdEndSz > 0) {
     itemEnd->cmd = (char*)calloc(cmdEndSz, sizeof(char));
-    strlcpy(itemEnd->cmd, "set length 100%\n", cmdEndSz);
-    queue_put(itemEnd, pg_sdobQueue, &pg_sdobQueueLen);
+    strlcpy(itemEnd->cmd, "set;length;100%", cmdEndSz);
+    pg_sdob_add_action(&itemEnd);
+    // queue_put(itemEnd, pg_sdobQueue, &pg_sdobQueueLen);
   }
 
 //  struct queue_head *itemChapters = malloc(sizeof(struct queue_head));
 //  INIT_QUEUE_HEAD(itemChapters);
 //  itemChapters->action = E_Q_PLAYER_VIDEO_INFO;
-//  queue_put(itemChapters, pg_sdobQueue, &pg_sdobQueueLen);
+//  pg_sdob_add_action(&itemChapters);
+//  // queue_put(itemChapters, pg_sdobQueue, &pg_sdobQueueLen);
 
 
   // struct queue_head *itemLength = malloc(sizeof(struct queue_head));
@@ -235,10 +246,10 @@ int pg_sdobSOWTReset() {
   // secs_to_time((int)(sdob_video->duration * 1000), retFormat, 20);
 
   // FIX SIZE_T AND retFormat (if needed)
-  // size_t cmdSz = snprintf(nCmd, strlen("set end %d\n") + 20;
+  // size_t cmdSz = snprintf(nCmd, strlen("set;end;%d") + 20;
   // if (cmdSz > 0) {
   //   itemLength->cmd = (char*)calloc(cmdSz, sizeof(char));
-  //   snprintf(itemLength->cmd, cmdSz, "set end %s\n", retFormat);
+  //   snprintf(itemLength->cmd, cmdSz, "set;end;%s", retFormat);
   //   queue_put(itemLength, pg_sdobQueue, &pg_sdobQueueLen);
   // }
 
@@ -399,12 +410,15 @@ int pg_sdobSubmitScorecard() {
   json_decref(root);
 
   // CURL Submit Scorecard to Server
-  if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
-    dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
-  };
-
-  // Cleanup Resources
-  free(s);
+  // if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
+  //   dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
+  // };
+  char* scoreReply;
+  if (libsdob_zmq_scoring_send(s, &scoreReply) < 0) {
+    dbgprintf(DBG_DEBUG, "Failed to send scoring data");
+  } else {
+    free(scoreReply);
+  }
 
   return 1;
 }

@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <jansson.h>
+#include <libconfig.h>
 
 #include "./mpv-cache.h"
 
@@ -45,10 +46,20 @@ void LIBMPV_PLAYER_DESTROY(struct lib_mpv_player *player) {
 }
 
 
+struct lib_mpv_server * LIBMPV_SERVER_INIT() {
+  struct lib_mpv_server *server = (struct lib_mpv_server*)malloc(sizeof(struct lib_mpv_server));
+
+  return server;
+}
+void LIBMPV_SERVER_DESTROY(struct lib_mpv_server *server) {
+  free(server);
+}
+
 
 struct lib_mpv_cache * LIBMPV_CACHE_INIT() {
   struct lib_mpv_cache *cache = (struct lib_mpv_cache*)malloc(sizeof(struct lib_mpv_cache));
   cache->player = LIBMPV_PLAYER_INIT();
+  cache->server = LIBMPV_SERVER_INIT();
 
   return cache;
 }
@@ -56,5 +67,46 @@ void LIBMPV_CACHE_DESTROY(struct lib_mpv_cache *cache) {
   if (cache->player != NULL) {
     LIBMPV_PLAYER_DESTROY(cache->player);
   }
+  if (cache->server != NULL) {
+    LIBMPV_SERVER_DESTROY(cache->server);
+  }  
   free(cache);
 }
+/*
+int libmpz_cache_create_videoJson(char *json_data) {
+  json_t *root = json_object();
+  json_t *json_arr = json_array();
+  
+  json_object_set_new( root, "destID", json_integer( 1 ) );
+  json_object_set_new( root, "command", json_string("enable") );
+  json_object_set_new( root, "respond", json_integer( 0 ));
+  json_object_set_new( root, "data", json_arr );
+  
+  json_array_append( json_arr, json_integer(11) );
+  json_array_append( json_arr, json_integer(12) );
+  json_array_append( json_arr, json_integer(14) );
+  json_array_append( json_arr, json_integer(9) );
+  
+  char *s = json_dumps(root, 0);
+  
+  puts(s);
+  json_decref(root);
+  return 1;
+}
+
+
+int libmpz_cache_parse_videoJson(char *json_data) {
+  json_error_t error;
+  // parse text into JSON structure
+  json_t *root = load_json(json_data);
+
+  if (root) {
+    // print and release the JSON structure
+    print_json(root);
+    json_decref(root);
+    return 0;
+  }
+
+  return 1;
+}
+*/

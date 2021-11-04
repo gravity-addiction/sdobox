@@ -15,20 +15,29 @@
 #include "./mpv-zmq-helper.h"
 #include "./mpv-zmq.h"
 
+double mpv_calc_marktime(struct lib_mpv_player *player) {
+  double markTime = player->position;
+  if (player->is_playing) {
+    double nDiff = (((double)(s_clock() - player->position_update)) * player->pbrate) / 1000;
+    markTime = markTime + nDiff;
+  }
+  return markTime;
+}
+
 int mpv_seek(double distance) {
-  if (!libmpvCache->player->is_loaded) { return 0; }
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;", distance));
+  // if (!libmpvCache->player->is_loaded) { return 0; }
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f", distance));
 }
 
 int mpv_seek_arg(double distance, char* flags) {
-  if (!libmpvCache->player->is_loaded) { return 0; }
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;%s;", distance, flags));
+  // if (!libmpvCache->player->is_loaded) { return 0; }
+  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;%s", distance, flags));
 }
 
 void mpv_check_pause() {
   char *paused = NULL;
   int rc = libmpv_zmq_cmd_w_reply(strdup("get_prop_flag;pause"), &paused);
-  if (paused != NULL) {
+  if (rc > 0 && paused != NULL) {
     if (strncmp(paused, "false", 5) == 0) {
       libmpvCache->player->is_playing = 1;
     } else {
@@ -163,6 +172,23 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
   free(qfilename);
+
+  return result;
+}
+
+int mpv_loadurl(char* url, char* flag, char* opts) {
+
+  char * qurl = NULL;
+  url = quotify(url, &qurl);
+
+  libmpvCache->player->has_file = 1;
+  strlcpy(libmpvCache->player->url, url, 512);
+  printf("Sending: %s\n", url);
+  int result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s;%s;%s", url, flag, opts));
+  mpv_pause();
+
+  // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
+  free(qurl);
 
   return result;
 }

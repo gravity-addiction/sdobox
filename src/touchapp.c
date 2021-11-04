@@ -34,6 +34,7 @@
 #include "libs/buttons/buttons.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
+#include "libs/sdob-zmq/sdob-zmq.h"
 // #include "libs/sqlite3-wrapper/sqlite3-wrapper.h"
 // #include "libs/ulfius/websocket_api.h"
 // #include "libs/ulfius/websocket_server.h"
@@ -51,9 +52,6 @@
 // #include "gui/wifi/wifi.h"
 // #include "gui/wifi/wifi_wpa.h"
 
-
-
-char*    config_path = "/home/pi/.config/sdobox/sdobox.conf";
 int      m_bSigInt = 0; // placeholder for returning from app same sigint value that the app received
 int      m_startPage = 0; // Page Int to start, -1 for no page just buttons
 int      m_touchscreenInit = 0; // guislice init successful
@@ -219,6 +217,7 @@ int main( int argc, char* args[] )
     abort();
   }
 
+  config_path = "/home/pi/.config/sdobox/sdobox.conf";
 
   // ------------------------------------------------
   // Check For Touchscreen Calibration
@@ -278,6 +277,7 @@ int main( int argc, char* args[] )
   zerocontext = zmq_ctx_new();
 
   // Initialize MPV library
+  libsdob_zmq_init();
   libmpv_zmq_init();
   
   // libMpvSocketThreadStart();
@@ -424,6 +424,7 @@ int main( int argc, char* args[] )
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();
   libmpv_zmq_destroy();
+  libsdob_zmq_destroy();
   
   printf("%s\n", "Relax Mirroring");
   // Kill any outstanding fbcp instances

@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <curl/curl.h>
 
-#include "skydiveorbust_submit.h"
+#include "./skydiveorbust_submit.h"
+#include "./skydiveorbust_zmq.h"
 
 #include "libs/buttons/buttons.h"
 #include "libs/queue/queue.h"
@@ -38,7 +39,8 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
     // Clear Scorecard
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_CLEAN;
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    pg_sdob_add_action(&item);
+    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // Close Submit Menu
     pg_sdobSubmitClose(pGui);
   } else {
@@ -57,11 +59,12 @@ bool pg_sdobSubmitCbBtnSubmitScore(void* pvGui,void *pvElemRef,gslc_teTouch eTou
   gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], "Please Wait, Submitting scores to server.");
 
   // Submit Scorecard
-   struct queue_head *item = new_qhead();
+  struct queue_head *item = new_qhead();
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
   item->cb = (void*)pg_sdobSubmitDone;
   item->cbarg = (void*)pGui;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   // Close Submit Menu
   // pg_sdobSubmitClose(pGui);

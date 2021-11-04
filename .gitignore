@@ -7,3 +7,5 @@ TAGS
 dist/sdobox_*
 bin/sdobox
 Vidware_*
+
+upload.sh

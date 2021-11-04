@@ -1,7 +1,8 @@
 #include <sys/stat.h>
 #include <assert.h>
 
-#include "skydiveorbust_videolist.h"
+#include "./skydiveorbust_videolist.h"
+#include "./skydiveorbust_zmq.h"
 
 #include "libs/shared.h"
 
@@ -127,16 +128,23 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
 
   if (pg_sdobVideo_listConfig->cur >= 0) {
     struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
-    strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
-    strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
+    printf("Path: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16);
+    size_t serverUrlSz = snprintf(NULL, 0, "https://server.thegarybox.com/hls/USPA/%s/%s.m3u8", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
+    snprintf(serverUrl, serverUrlSz, "https://server.thegarybox.com/hls/USPA/%s/%s.m3u8", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    
+    printf("ServerURL: %s\n", serverUrl);
+    strlcpy(newVid->url, serverUrl, 512);
+//     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
 
     // Load Video Into Player
     struct queue_head *item = new_qhead();
-    item->action = E_Q_ACTION_LOADVIDEO;
+    item->action = E_Q_ACTION_LOADURL;
     item->data = newVid;
     item->u1.ptr = pGui;
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
+    pg_sdob_add_action(&item);
+    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+/*
     // Parse Filename for Comp Info
     struct queue_head *itemParse = new_qhead();
     itemParse->action = E_Q_ACTION_PARSE_VIDEO_FILENAME;
@@ -150,7 +158,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     itemNotify->data = newVid;
     itemNotify->u1.ptr = pGui;
     queue_put(itemNotify, pg_sdobQueue, &pg_sdobQueueLen);
-    
+*/
     // Close Menu
     pg_sdobVideoListClose(pGui);
   }

@@ -46,42 +46,73 @@ void libmpv_zmq_destroy() {
 }
 
 // Incoming thread for mpv video time-pos
-void * libmpv_zmq_timepos_init() {
-  void *timestamps = zmq_socket (zerocontext, ZMQ_SUB);
-  int rc = zmq_connect (timestamps, "tcp://192.168.126.85:5555");
-  if (rc == 0) {
-    const char *filtertimestamps = "";
-    rc = zmq_setsockopt (timestamps, ZMQ_SUBSCRIBE, filtertimestamps, strlen (filtertimestamps));
+int libmpv_zmq_timeserver_init(void **qfive, char* url) {
+  if (!url) {
+    return -1;
   }
-  return timestamps;
-}
-// Incoming thread for mpv events
-void * libmpv_zmq_events_init() {
-  void *mpvEvents = zmq_socket (zerocontext, ZMQ_SUB);
-  int rc = zmq_connect (mpvEvents, "tcp://192.168.126.85:5556");
-  if (rc == 0) {
-    const char *filterevents = "";
-    rc = zmq_setsockopt (mpvEvents, ZMQ_SUBSCRIBE, filterevents, strlen (filterevents));
+
+  printf("Attempting TimeServer: %s\n", url);
+  *qfive = zmq_socket (zerocontext, ZMQ_SUB);
+  uint64_t timeoutreqrep = 1500;
+  int rc = zmq_setsockopt(*qfive, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
+  if (rc > -1) {
+    rc = zmq_connect (*qfive, url); // "tcp://flittermouse.local:5555");
+    printf("TimeServer Connected, %s - %d\n", url, rc);
   }
-  return mpvEvents;
+  if (rc > -1) {
+    const char *filterqfive = "";
+    rc = zmq_setsockopt (*qfive, ZMQ_SUBSCRIBE, filterqfive, strlen(filterqfive));
+  }
+  if (rc < 0) {
+    printf("Cannot Connect to time Server\n");
+    zmq_close(*qfive);
+  }
+  return rc;
 }
+
 
 // Soon to be Async requests with responses returned in event thread
 int libmpv_zmq_async_init() {
+  printf("Attempting Asyncv 5557\n");
   reqasync = zmq_socket (zerocontext, ZMQ_REQ);
-  return zmq_connect (reqasync, "tcp://192.168.126.85:5557");
+  int rc = zmq_connect (reqasync, "tcp://flittermouse.local:5557");
+  printf("Async 5557: %d\n", rc);
+  return rc;
 }
 
 // Simple Request / Response for properties
 int libmpv_zmq_request_init() {
+  printf("RETURNING Simple 5558\n");
+  return -1;
   reqrep = zmq_socket (zerocontext, ZMQ_REQ);
-  return zmq_connect (reqrep, "tcp://192.168.126.85:5558");
+  uint64_t timeoutreqrep = 1500;
+  int rc = zmq_setsockopt(reqrep, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
+  if (rc == 0) {
+    rc = zmq_connect (reqrep, "tcp://flittermouse.local:5558");
+    printf("Simple 5558: %d\n", rc);
+  }
+  if (rc < 0) {
+    printf("Cannot Connect to simple Server\n");
+    zmq_close(reqrep);
+  }
+  return rc;
 }
 
 // One way commands, validate it hits the server queue, no guarantee its successful
 int libmpv_zmq_raw_init() {
+  printf("Attempting Oneway Commands 5559\n");
   reqraw = zmq_socket (zerocontext, ZMQ_PUSH);
-  return zmq_connect (reqraw, "tcp://192.168.126.85:5559");
+  uint64_t timeoutreqrep = 1500;
+  int rc = zmq_setsockopt(reqraw, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
+  if (rc == 0) {
+    rc = zmq_connect (reqraw, "tcp://flittermouse.local:5559");
+    printf("Oneway 5559: %d\n", rc);
+  }
+  if (rc < 0) {
+    printf("Cannot Connect to cmd Server\n");
+    zmq_close(reqraw);
+  }
+  return rc;
 }
 
 uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
@@ -121,11 +152,23 @@ uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
 
 
 int libmpv_zmq_cmd_w_reply(char* question, char** response) {
-  int rc;
+  printf("Need Reply %s\n", question);
+  if (question != NULL) {
+    free(question);
+  }
+  return -1;
+  int rc = 0;
   if (reqrep == NULL) {
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Replys");
     rc = libmpv_zmq_request_init();
   }
+  while (rc == -1) {
+    printf("RC %d\n", rc);
+    sleep(2);
+    rc = libmpv_zmq_request_init();
+  }
+
+  printf("RC: %d\n", rc);
 
   rc = s_send (reqrep, question);
   free(question);
@@ -148,13 +191,14 @@ int libmpv_zmq_cmd(char* question) {
     return -1;
   }
 
-  int rc;
+  int rc = 0;
   if (reqraw == NULL) {
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting Raw Pub");
     rc = libmpv_zmq_raw_init();
   }
-
-  rc = s_send (reqraw, question);
+  if (rc >= 0) {
+    rc = s_send (reqraw, question);
+  }
   free(question);
   return rc;
 }
@@ -197,15 +241,17 @@ char* libmpv_zmq_fmt_cmd(char* fmt, ...) {
 
 char* libmpv_zmq_get_prop_string(char* prop) {
   char *retProp = NULL;
-  libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_string;%s", prop), &retProp);
-  return retProp;
+  if (libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_string;%s", prop), &retProp) >= 0) { 
+    return retProp;
+  }
+  return NULL;
 }
 
 int64_t libmpv_zmq_get_prop_int64(char* prop) {
   char *retProp = NULL;
   int64_t retInt = 0;
   int rc = libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_int;%s", prop), &retProp);
-  if (rc > 0 && retProp != NULL) {
+  if (rc >= 0 && retProp != NULL) {
     retInt = atoi(retProp);
     free(retProp);
   }

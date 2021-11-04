@@ -15,6 +15,10 @@ extern "C" {
 #define DEBUG 0
 #define CLEAR(x, y) memset(x,'\0',y)
 
+
+// Configuration Filepath
+char* config_path;
+
 // Videos Folder, config videos_path
 char* VIDEOS_BASEPATH;
 

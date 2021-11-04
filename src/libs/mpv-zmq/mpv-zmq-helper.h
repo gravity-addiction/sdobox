@@ -20,10 +20,12 @@ extern "C" {
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
 #include "libs/fbbg/fbbg.h"
+#include "libs/zhelpers/zhelpers.h"
 
 #include "./mpv-zmq-helper.h"
 #include "./mpv-zmq.h"
 
+double mpv_calc_marktime(struct lib_mpv_player *player);
 int mpv_seek(double distance);
 int mpv_seek_arg(double distance, char* flags);
 void mpv_check_pause();
@@ -40,6 +42,7 @@ void mpv_stop();
 void mpv_playlist_clear();
 static char* quotify(char* original, char** saved_replacement);
 int mpv_loadfile(char* folder, char* filename, char* flag, char* opts);
+int mpv_loadurl(char* url, char* flag, char* opts);
 void mpv_quit();
 void stop_video();
 

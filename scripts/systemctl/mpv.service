@@ -8,7 +8,7 @@ Restart=on-failure
 PIDFile=/run/mpv.pid
 User=pi
 
-ExecStart=/usr/bin/mpv --fullscreen --loop-file=no --loop-playlist --image-display-duration=inf --video-osd=no --video-sync=display-resample --hr-seek-framedrop=yes --input-ipc-server=/tmp/mpv.socket --no-osc --no-osd-bar --osd-on-seek=no --reset-on-next-file=all --keep-open=always --idle
+ExecStart=/usr/bin/mpv --fullscreen --loop-file=no --loop-playlist --image-display-duration=inf --video-osd=no --video-sync=display-resample --hr-seek-framedrop=yes --input-ipc-server=/opt/sdobox/mpv.socket --no-osc --no-osd-bar --osd-on-seek=no --reset-on-next-file=all --keep-open=always --idle
 StandardOutput=null
 StandardError=null
 

@@ -1,9 +1,10 @@
 #include <sys/stat.h>
 #include <assert.h>
 
-#include "skydiveorbust_disciplinelist.h"
-
 #include "libs/shared.h"
+
+#include "./skydiveorbust_disciplinelist.h"
+#include "./skydiveorbust_zmq.h"
 
 #include "libs/buttons/buttons.h"
 // #include "libs/mpv-zmq/mpv-zmq.h"
@@ -48,7 +49,8 @@ bool pg_sdobDisciplineListCbBtnChangeDiscipline(void* pvGui,void *pvElemRef,gslc
 
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_CLEAN;
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    pg_sdob_add_action(&item);
+    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
     // Close Menu
     pg_sdobDisciplineListClose(pGui);

@@ -5,6 +5,7 @@
 extern "C" {
 #endif // __cplusplus
 
+#include "gui/pages.h"
 
 int pg_sdobInsertMark(int markSelected, double markTime, int mark);
 void pg_sdobDeleteMark(int markSelected);
