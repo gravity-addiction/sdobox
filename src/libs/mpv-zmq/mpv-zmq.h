@@ -11,8 +11,7 @@ struct lib_mpv_cache *libmpvCache;
 
 int libmpv_zmq_init();
 void libmpv_zmq_destroy();
-
-int libmpv_zmq_timeserver_init(void **qfive, char *url);
+int libmpv_zmq_connect_socket(void **sock, char* url);
 
 int libmpv_zmq_async_init();
 int libmpv_zmq_request_init();
@@ -20,7 +19,7 @@ int libmpv_zmq_raw_init();
 
 // uint64_t libmpv_zmq_cmd_async(char* question, void *cb);
 int libmpv_zmq_cmd_w_reply(char* question, char** response);
-int libmpv_zmq_cmd(char* question);
+int libmpv_zmq_cmd(char* userCmd);
 char* libmpv_zmq_fmt_cmd(char* fmt, ...);
 
 char* libmpv_zmq_get_prop_string(char* prop);

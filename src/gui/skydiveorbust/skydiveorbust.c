@@ -2132,13 +2132,13 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Already Started");
     return NULL;
   }
+  void *timeserver;
 
   pg_sdobMpvTimeposThreadRunning = 1;
-
+  
   if (pg_sdobMpvTimeposThreadKill) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Stop Flag Set");
-    pg_sdobMpvTimeposThreadRunning = 0;
-    return NULL;
+    goto cleanup;
   }
 
   dbgprintf(DBG_DEBUG, "%s\n", "Finding Timepos Server");
@@ -2149,8 +2149,7 @@ PI_THREAD (pg_sdobMpvTimeposThread)
   if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
     dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
     config_destroy(&cfg);
-    pg_sdobMpvTimeposThreadRunning = 0;
-    return NULL;
+    goto cleanup;
   }
 
   const char * retTimeServer;
@@ -2159,25 +2158,34 @@ PI_THREAD (pg_sdobMpvTimeposThread)
   } else {
     printf("No timeserver configuration in ~/.config/sdobox/sdobox.conf\n");
     config_destroy(&cfg);
-    pg_sdobMpvTimeposThreadRunning = 0;
-    return NULL;
+    goto cleanup;
   }
   config_destroy(&cfg);
 
   dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos and Events Thread");
   int rc = 0;
 
-  // pg_sdobMpvTimeposThreadRunning = 0;
-  // return NULL;
-
-  void *timeserver;
-  rc = libmpv_zmq_timeserver_init(&timeserver, libmpvCache->server->timeserver);
+  // Try starting time server
+  rc = libmpv_zmq_connect_socket(&timeserver, libmpvCache->server->timeserver);
   while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
+    zmq_close(timeserver);
     sleep(2);
-    rc = libmpv_zmq_timeserver_init(&timeserver, libmpvCache->server->timeserver);
-  } 
+    rc = libmpv_zmq_connect_socket(&timeserver, libmpvCache->server->timeserver);
+  }
 
+  // Did connect, try initialize subscriptions
   if (rc > -1 && !pg_sdobMpvTimeposThreadKill) {
+    dbgprintf(DBG_DEBUG, "TimeServer Connected, %s - %d\n", libmpvCache->server->timeserver, rc);
+    const char *filtertimeserver = "";
+    rc = zmq_setsockopt (timeserver, ZMQ_SUBSCRIBE, filtertimeserver, strlen(filtertimeserver));
+
+    // Failed to initialize subscriptions;
+    if (rc < 0) {
+      dbgprintf(DBG_DEBUG, "%s\n", "Cannot Subscribe to TimeServer");   
+      printf("%s\n", "Shutdown TimePos and Events Thread");
+      goto cleanup;
+    }
+ 
     // 0MQs sockets to poll
     zmq_pollitem_t items [] = {
       { timeserver, 0, ZMQ_POLLIN, 0 }
@@ -2221,9 +2229,13 @@ PI_THREAD (pg_sdobMpvTimeposThread)
         }
       }
     }
+  } else {
+    goto cleanup;
   }
+  
+ cleanup:
   zmq_close(timeserver);
-  timeserver = NULL;
+  timeserver = NULL; 
   printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
   return NULL;

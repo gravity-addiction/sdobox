@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <jansson.h>
+#include <libconfig.h>
 
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
@@ -46,29 +47,24 @@ void libmpv_zmq_destroy() {
 }
 
 // Incoming thread for mpv video time-pos
-int libmpv_zmq_timeserver_init(void **qfive, char* url) {
+int libmpv_zmq_connect_socket(void **sock, char* url) {
   if (!url) {
     return -1;
   }
-
-  dbgprintf(DBG_DEBUG, "Attempting TimeServer: %s\n", url);
-  *qfive = zmq_socket (zerocontext, ZMQ_SUB);
+  *sock = zmq_socket (zerocontext, ZMQ_SUB);
   uint64_t timeoutreqrep = 1500;
-  int rc = zmq_setsockopt(*qfive, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
+  int rc = zmq_setsockopt(*sock, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
   if (rc > -1) {
-    rc = zmq_connect (*qfive, url); // "tcp://flittermouse.local:5555");
-    dbgprintf(DBG_DEBUG, "TimeServer Connected, %s - %d\n", url, rc);
-  }
-  if (rc > -1) {
-    const char *filterqfive = "";
-    rc = zmq_setsockopt (*qfive, ZMQ_SUBSCRIBE, filterqfive, strlen(filterqfive));
-  }
-  if (rc < 0) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to time Server");
-    zmq_close(*qfive);
+    rc = zmq_connect (*sock, url); // "tcp://flittermouse.local:5555");
   }
   return rc;
 }
+
+
+
+
+
+
 
 
 // Soon to be Async requests with responses returned in event thread
@@ -98,22 +94,7 @@ int libmpv_zmq_request_init() {
   return rc;
 }
 
-// One way commands, validate it hits the server queue, no guarantee its successful
-int libmpv_zmq_raw_init() {
-  dbgprintf(DBG_DEBUG, "%s\n", "Attempting Oneway Commands 5559");
-  reqraw = zmq_socket (zerocontext, ZMQ_PUSH);
-  uint64_t timeoutreqrep = 1500;
-  int rc = zmq_setsockopt(reqraw, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
-  if (rc == 0) {
-    rc = zmq_connect (reqraw, "tcp://flittermouse.local:5559");
-    dbgprintf(DBG_DEBUG, "Oneway 5559: %d\n", rc);
-  }
-  if (rc < 0) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Cannot Connect to cmd Server");
-    zmq_close(reqraw);
-  }
-  return rc;
-}
+
 
 uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
   printf("NO ASYNC YET, change libmpv_zmq_cmd_async to libmpv_zmq_cmd_w_reply: %s\n", question);
@@ -153,50 +134,75 @@ uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
 
 int libmpv_zmq_cmd_w_reply(char* question, char** response) {
   dbgprintf(DBG_DEBUG, "Need Reply %s\n", question);
-  if (question != NULL) {
-    free(question);
-  }
-  return -1;
   int rc = 0;
   if (reqrep == NULL) {
-    dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Replys");
-    rc = libmpv_zmq_request_init();
-  }
-  while (rc == -1) {
-    sleep(2);
-    rc = libmpv_zmq_request_init();
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding Question Server");
+
+    config_t cfg;
+    config_init(&cfg);
+    // Read the file. If there is an error, report it and exit.
+    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+      config_destroy(&cfg);
+      goto cleanup;
+    }
+
+    const char * retReqServer;
+    if (config_lookup_string(&cfg, "reqserver", &retReqServer)) {
+      libmpvCache->server->reqserver = strdup(retReqServer);
+    } else {
+      printf("No reqserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      config_destroy(&cfg);
+      goto cleanup;
+    }
+    config_destroy(&cfg);
+        
+    dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Questions");
+    rc = libmpv_zmq_connect_socket(&reqrep, libmpvCache->server->reqserver);
   }
 
-  rc = s_send (reqrep, question);
-  free(question);
+  if (rc >= 0) {
+    rc = s_send (reqrep, question);
+  }
+  
   if (rc < 0) {
-    return -1;
+    printf("Unable to ask question: %s\n", question);
+    zmq_close(reqrep);
+    reqrep = NULL;
+    goto cleanup;
   }
 
-  char *string = s_recv (reqrep);
+  char *string = s_recv(reqrep);
   if (response != NULL) {
     *response = string;
   } else {
-    free (string);
+    free(string);
   }
+
+ cleanup:
+  free(question);
   return rc;
 }
 
 // One way Commands
-int libmpv_zmq_cmd(char* question) {
-  if (question == NULL) {
+int libmpv_zmq_cmd(char* userCmd) {
+  if (userCmd == NULL) {
     return -1;
   }
 
   int rc = 0;
   if (reqraw == NULL) {
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting Raw Pub");
-    rc = libmpv_zmq_raw_init();
+    rc = libmpv_zmq_connect_socket(&reqraw, libmpvCache->server->cmdserver);
   }
   if (rc >= 0) {
-    rc = s_send (reqraw, question);
+    rc = s_send (reqraw, userCmd);
+  } else {
+    printf("Unable to send cmd: %s\n", userCmd);
+    zmq_close(reqraw);
+    reqraw = NULL;
   }
-  free(question);
+  free(userCmd);
   return rc;
 }
 
