@@ -44,11 +44,18 @@ int zmq_connect_socket(void **sock, char* url, int sockType) {
   int rc = 0;
   *sock = zmq_socket(libzhelpers_context(), sockType);
   int timeoutsock = 2500;
+  int timeoutsendrecv = 500;
   if (rc > -1) {
     rc = zmq_setsockopt(*sock, ZMQ_CONNECT_TIMEOUT, &timeoutsock, sizeof(timeoutsock));
   }
   if (rc > -1) {
     rc = zmq_setsockopt(*sock, ZMQ_LINGER, &timeoutsock, sizeof(timeoutsock));
+  }
+  if (rc > -1) {
+    rc = zmq_setsockopt(*sock, ZMQ_RCVTIMEO, &timeoutsendrecv, sizeof(timeoutsendrecv));
+  }
+  if (rc > -1) {
+    rc = zmq_setsockopt(*sock, ZMQ_SNDTIMEO, &timeoutsendrecv, sizeof(timeoutsendrecv));
   }
   if (rc > -1) {
     rc = zmq_connect (*sock, url); // "tcp://flittermouse.local:5555");
