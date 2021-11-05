@@ -46,6 +46,7 @@
 // #include "libs/sdob-socket/sdob-socket.h"
 // #include "libs/json/json.h" // JSON Parsing
 // #include "libs/usb-drives/usb-drives-thread.h"
+#include "libs/zhelpers/zhelpers-conn.h"
 #include "libs/zhelpers/zhelpers-tx.h"
 
 #include "gui/skydiveorbust/skydiveorbust.h"
@@ -274,7 +275,7 @@ int main( int argc, char* args[] )
   // }
 
   // Initialize ZeroMQ Context
-  zerocontext = zmq_ctx_new();
+  libzhelpers_conn_init();
 
   // Initialize MPV library
   libsdob_zmq_init();
@@ -433,7 +434,7 @@ int main( int argc, char* args[] )
   fbbg_stop();
   
   printf("%s\n", "Disconnecting ZMQ.");
-  zmq_ctx_destroy(zerocontext);
+  libzhelpers_conn_destroy();
 
   printf("%s\n", "Controls are yours.");
   gslc_Quit(&m_gui);

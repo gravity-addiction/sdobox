@@ -11,7 +11,6 @@ struct lib_mpv_cache *libmpvCache;
 
 int libmpv_zmq_init();
 void libmpv_zmq_destroy();
-int libmpv_zmq_connect_socket(void **sock, char* url);
 
 int libmpv_zmq_async_init();
 

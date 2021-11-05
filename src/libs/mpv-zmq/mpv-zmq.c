@@ -12,6 +12,7 @@
 
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
+#include "libs/zhelpers/zhelpers-conn.h"
 #include "libs/zhelpers/zhelpers-tx.h"
 #include "libs/zhelpers/zhelpers.h"
 
@@ -48,31 +49,13 @@ void libmpv_zmq_destroy() {
 
 
 
-// Incoming thread for mpv video time-pos
-int libmpv_zmq_connect_socket(void **sock, char* url) {
-  if (!url) {
-    return -1;
-  }
-  *sock = zmq_socket (zerocontext, ZMQ_SUB);
-  uint64_t timeoutreqrep = 1500;
-  int rc = zmq_setsockopt(*sock, ZMQ_CONNECT_TIMEOUT, &timeoutreqrep, sizeof(timeoutreqrep));
-  if (rc > -1) {
-    rc = zmq_connect (*sock, url); // "tcp://flittermouse.local:5555");
-  }
-  return rc;
-}
-
-
-
-
-
 
 
 
 // Soon to be Async requests with responses returned in event thread
 int libmpv_zmq_async_init() {
   dbgprintf(DBG_DEBUG, "%s\n", "Attempting Asyncv 5557");
-  reqasync = zmq_socket (zerocontext, ZMQ_REQ);
+  reqasync = zmq_socket (libzhelpers_context(), ZMQ_REQ);
   int rc = zmq_connect (reqasync, "tcp://flittermouse.local:5557");
   dbgprintf(DBG_DEBUG, "Async 5557: %d\n", rc);
   return rc;
@@ -144,7 +127,7 @@ int libmpv_zmq_cmd_w_reply(char* question, char** response) {
     config_destroy(&cfg);
         
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Questions");
-    rc = libmpv_zmq_connect_socket(&reqrep, libmpvCache->server->reqserver);
+    rc = zmq_connect_socket(&reqrep, libmpvCache->server->reqserver, ZMQ_REQ);
   }
 
   if (rc >= 0) {
@@ -182,7 +165,7 @@ int libmpv_zmq_cmd(char* userCmd) {
   int rc = 0;
   if (reqraw == NULL) {
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting Raw Pub");
-    rc = libmpv_zmq_connect_socket(&reqraw, libmpvCache->server->cmdserver);
+    rc = zmq_connect_socket(&reqraw, libmpvCache->server->cmdserver, ZMQ_PUSH);
   }
   if (rc >= 0) {
     rc = s_send (reqraw, userCmd);

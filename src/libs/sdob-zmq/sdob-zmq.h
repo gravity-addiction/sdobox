@@ -5,12 +5,16 @@
 extern "C" {
 #endif // __cplusplus
 
+int libsdob_eventThreadKill;
+int libsdob_eventThreadRunning;
 
 int libsdob_zmq_init();
 void libsdob_zmq_destroy();
-int libsdob_zmq_scoring_init();
-void * libsdob_zmq_events_init();
+
 int libsdob_zmq_scoring_send(char* question, char** response);
+
+int libsdob_eventThreadStart();
+void libsdob_eventThreadStop();
 
 #ifdef __cplusplus
 }

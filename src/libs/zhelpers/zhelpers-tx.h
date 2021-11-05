@@ -41,8 +41,6 @@ extern "C" {
 //  Provide random number from 0..(num-1)
 #define randof(num)  (int) ((float) (num) * random () / (RAND_MAX + 1.0))
 
-void *zerocontext;
-
 //  Receive 0MQ string from socket and convert into C string
 //  Caller must free returned string. Returns NULL if the context
 //  is being terminated.

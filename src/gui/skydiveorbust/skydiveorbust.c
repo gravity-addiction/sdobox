@@ -24,6 +24,7 @@
 #include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/fbcp/fbcp.h"
 #include "libs/dbg/dbg.h"
+#include "libs/zhelpers/zhelpers-conn.h"
 #include "libs/zhelpers/zhelpers-tx.h"
 #include "libs/zhelpers/zhelpers.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
@@ -2132,7 +2133,7 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Already Started");
     return NULL;
   }
-  void *timeserver;
+  void *timeserver = NULL;
 
   pg_sdobMpvTimeposThreadRunning = 1;
   
@@ -2166,11 +2167,12 @@ PI_THREAD (pg_sdobMpvTimeposThread)
   int rc = 0;
 
   // Try starting time server
-  rc = libmpv_zmq_connect_socket(&timeserver, libmpvCache->server->timeserver);
+  rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
+  printf("Time Server: %d\n", rc);
   while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
     zmq_close(timeserver);
     sleep(2);
-    rc = libmpv_zmq_connect_socket(&timeserver, libmpvCache->server->timeserver);
+    rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
   }
 
   // Did connect, try initialize subscriptions
@@ -2265,18 +2267,6 @@ void pg_sdobMpvTimeposThreadStop() {
   }
   dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos and Events Thread Shutdown %d\n", shutdown_cnt);
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -3054,7 +3044,7 @@ PI_THREAD (pg_sdobThread)
 
   dbgprintf(DBG_DEBUG, "%s\n", "Starting SDOB Scoring Queue Thread");
 
-  void *sdobsub = zmq_socket(zerocontext, ZMQ_SUB);
+  void *sdobsub = zmq_socket(libzhelpers_context(), ZMQ_SUB);
   zmq_connect(sdobsub, "inproc://sdobworker");
   const char *filter = "";
   int rc = zmq_setsockopt (sdobsub, ZMQ_SUBSCRIBE, filter, strlen(filter));
@@ -3155,7 +3145,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   //////////////////////////////
   // Queue Initializer
   // Connect to SDOB Worker Queue
-  pg_sdobWorker = zmq_socket(zerocontext, ZMQ_PUB);
+  pg_sdobWorker = zmq_socket(libzhelpers_context(), ZMQ_PUB);
   int rc = zmq_bind(pg_sdobWorker, "inproc://sdobworker");
   assert(rc == 0);
 
