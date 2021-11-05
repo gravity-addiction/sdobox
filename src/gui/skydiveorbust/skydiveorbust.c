@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <jansson.h>
 #include <libconfig.h>
+#include <errno.h>
 
 #include "./skydiveorbust.h"
 #include "./skydiveorbust_zmq.h"
@@ -2168,7 +2169,7 @@ PI_THREAD (pg_sdobMpvTimeposThread)
 
   // Try starting time server
   rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
-  printf("Time Server: %d\n", rc);
+  printf("Time Server: %d - %d\n", rc, ZMQ_SUB);
   while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
     zmq_close(timeserver);
     sleep(2);
@@ -2181,6 +2182,7 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     const char *filtertimeserver = "";
     rc = zmq_setsockopt (timeserver, ZMQ_SUBSCRIBE, filtertimeserver, strlen(filtertimeserver));
 
+    printf("Timeserver RC: %d, Error: %d\n", rc, errno);
     // Failed to initialize subscriptions;
     if (rc < 0) {
       dbgprintf(DBG_DEBUG, "%s\n", "Cannot Subscribe to TimeServer");   
@@ -2805,6 +2807,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
 
       // Writes commands to open FD Socket
       case E_Q_ACTION_MPV_COMMAND:
+        printf("Sending Cmd: %s\n", item->cmd);
         libmpv_zmq_cmd(item->cmd);
       break;
 
@@ -3028,7 +3031,7 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
 // ------------------------
 // MPV Output SDOB Thread Thread
 // ------------------------
-PI_THREAD (pg_sdobThread)
+void * pg_sdobThread(void *input)
 {
   if (pg_sdobThreadRunning) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SDOB Scoring Queue Thread, Already Started");
@@ -3071,7 +3074,7 @@ PI_THREAD (pg_sdobThread)
   zmq_close(sdobsub);
   dbgprintf(DBG_DEBUG, "%s\n", "Closing SDOB Scoring Queue Thread");
   pg_sdobThreadRunning = 0;
-  return NULL;
+  pthread_exit(NULL);
 }
 
 
@@ -3083,7 +3086,8 @@ int pg_sdobThreadStart() {
 
   // printf("SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobThreadRunning);
   pg_sdobThreadKill = 0;
-  return piThreadCreate(pg_sdobThread);
+  pthread_t tid;
+  return pthread_create(&tid, NULL, &pg_sdobThread, NULL);
 }
 
 void pg_sdobThreadStop() {
@@ -3251,6 +3255,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdob_clear(pGui);
 
   // Remove MPV Player Volume
+  printf("Send Mute\n");
   mpv_volume_mute();
 
   //////////////////////////////

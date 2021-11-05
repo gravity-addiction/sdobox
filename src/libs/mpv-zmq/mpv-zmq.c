@@ -164,9 +164,31 @@ int libmpv_zmq_cmd(char* userCmd) {
 
   int rc = 0;
   if (reqraw == NULL) {
-    dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting Raw Pub");
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding Command Server");
+
+    config_t cfg;
+    config_init(&cfg);
+    // Read the file. If there is an error, report it and exit.
+    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+      config_destroy(&cfg);
+      goto cleanup;
+    }
+
+    const char * retCmdServer;
+    if (config_lookup_string(&cfg, "cmdserver", &retCmdServer)) {
+      libmpvCache->server->cmdserver = strdup(retCmdServer);
+    } else {
+      printf("No cmdserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      config_destroy(&cfg);
+      goto cleanup;
+    }
+    config_destroy(&cfg);
+        
+    dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Commands");
     rc = zmq_connect_socket(&reqraw, libmpvCache->server->cmdserver, ZMQ_PUSH);
   }
+
   if (rc >= 0) {
     rc = s_send (reqraw, userCmd);
   } else {
@@ -174,6 +196,8 @@ int libmpv_zmq_cmd(char* userCmd) {
     zmq_close(reqraw);
     reqraw = NULL;
   }
+
+ cleanup:
   free(userCmd);
   return rc;
 }

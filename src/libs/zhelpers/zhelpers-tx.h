@@ -12,8 +12,6 @@
 extern "C" {
 #endif // __cplusplus
 
-#include <zmq.h>
-
 #include <assert.h>
 #include <signal.h>
 #include <stdarg.h>
