@@ -152,7 +152,7 @@ void pg_spotifyButtonLeftHeld() {
 
 }
 void pg_spotifyButtonRightHeld() {
-  printf("Held!\n");
+  // printf("Held!\n");
 }
 
 // Setup Button Functions

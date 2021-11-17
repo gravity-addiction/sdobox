@@ -327,7 +327,7 @@ void pg_sdobScoringSelectionLastHidden(gslc_tsGui *pGui) {
 // --------------------------
 int pg_sdobSubmitScorecard() {
 //   Jan 26 12:49:01 Eddie MyAVPlayer[82462]: SUBMISSION/MEET2019 4143,1,JR,0,01/26/2019 12:49:01,Group14-12_2.mp4,403.600000,148.866667,/,/,/,/,O,/,/,/,/,/,O,/,/,/,/,O,/,/,/,/,/,/,/,/
-  if (!sdob_judgement || !sdob_judgement->marks->size) {
+  if (!sdob_judgement || !sdob_judgement->marks) {
     return 0;
   }
 
@@ -376,6 +376,7 @@ int pg_sdobSubmitScorecard() {
       break;
     }
     json_object_set_new(json_mark, "time", json_real(sdob_judgement->marks->arrScorecardTimes[s]));
+    // json_object_set_new(json_mark, "tick", json_real(s));
     json_decref(json_mark);
   }
   
@@ -383,6 +384,7 @@ int pg_sdobSubmitScorecard() {
   char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
   combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
   
+  /* //**
   if (sdob_devicehost->isHost == 1) {
     char* md5H;
     int md5x = md5HashFile(dest, &md5H);
@@ -392,6 +394,7 @@ int pg_sdobSubmitScorecard() {
       free(md5H);
     }
   }
+  */
 
   // Grab Device token
   FILE *tokenFile;
@@ -413,11 +416,9 @@ int pg_sdobSubmitScorecard() {
   // if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
   //   dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   // };
-  char* scoreReply;
-  if (libsdob_zmq_scoring_send(s, &scoreReply) < 0) {
+  // char* scoreReply;
+  if (libsdob_zmq_scoring_send(s) < 0) {
     dbgprintf(DBG_DEBUG, "Failed to send scoring data");
-  } else {
-    free(scoreReply);
   }
 
   return 1;

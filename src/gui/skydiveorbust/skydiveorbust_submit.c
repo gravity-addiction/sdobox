@@ -21,6 +21,13 @@ void pg_sdobSubmitDone(gslc_tsGui *pGui) {
   gslc_ElemSetTxtStr(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_TXT_SUBMITTING], " ");
   pg_sdobSubmitClose(pGui) ;
 }
+
+void pg_sdobSubmitAction() {
+  struct queue_head *item = new_qhead();
+  item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+  pg_sdob_add_action(&item);
+}
+
 ////////////////
 // Button Callback
 bool pg_sdobSubmitCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {

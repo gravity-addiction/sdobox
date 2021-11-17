@@ -48,10 +48,21 @@ void LIBMPV_PLAYER_DESTROY(struct lib_mpv_player *player) {
 
 struct lib_mpv_server * LIBMPV_SERVER_INIT() {
   struct lib_mpv_server *server = (struct lib_mpv_server*)malloc(sizeof(struct lib_mpv_server));
-
+  server->timeserver = NULL;
+  server->cmdserver = NULL;
+  server->reqserver = NULL;
   return server;
 }
 void LIBMPV_SERVER_DESTROY(struct lib_mpv_server *server) {
+  if (server->timeserver != NULL) {
+    free(server->timeserver);
+  }
+  if (server->cmdserver != NULL) {
+    free(server->cmdserver);
+  }
+  if (server->reqserver != NULL) {
+    free(server->reqserver);
+  }
   free(server);
 }
 

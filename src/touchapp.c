@@ -372,9 +372,9 @@ int main( int argc, char* args[] )
       m_bSleep = 0;
     }
 
-    if (lib_buttons_thread()) {
-       m_bSleep = 0;
-    }
+    // if (lib_buttons_thread()) {
+    //    m_bSleep = 0;
+    // }
 
     if (m_bSleep) {
       usleep(50000);

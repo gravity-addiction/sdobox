@@ -105,26 +105,28 @@ int libmpv_zmq_cmd_w_reply(char* question, char** response) {
   dbgprintf(DBG_DEBUG, "Need Reply %s\n", question);
   int rc = 0;
   if (reqrep == NULL) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Finding Question Server");
+    if (libmpvCache->server->reqserver == NULL) {
+      dbgprintf(DBG_DEBUG, "%s\n", "Finding Question Server");
 
-    config_t cfg;
-    config_init(&cfg);
-    // Read the file. If there is an error, report it and exit.
-    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
-      config_destroy(&cfg);
-      goto cleanup;
-    }
+      config_t cfg;
+      config_init(&cfg);
+      // Read the file. If there is an error, report it and exit.
+      if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+        dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+        config_destroy(&cfg);
+        goto cleanup;
+      }
 
-    const char * retReqServer;
-    if (config_lookup_string(&cfg, "reqserver", &retReqServer)) {
-      libmpvCache->server->reqserver = strdup(retReqServer);
-    } else {
-      printf("No reqserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      const char * retReqServer;
+      if (config_lookup_string(&cfg, "reqserver", &retReqServer)) {
+        libmpvCache->server->reqserver = strdup(retReqServer);
+      } else {
+        printf("No reqserver configuration in ~/.config/sdobox/sdobox.conf\n");
+        config_destroy(&cfg);
+        goto cleanup;
+      }
       config_destroy(&cfg);
-      goto cleanup;
     }
-    config_destroy(&cfg);
         
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Questions");
     rc = zmq_connect_socket(&reqrep, libmpvCache->server->reqserver, ZMQ_REQ);
@@ -164,26 +166,28 @@ int libmpv_zmq_cmd(char* userCmd) {
 
   int rc = 0;
   if (reqraw == NULL) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Finding Command Server");
+    if (libmpvCache->server->cmdserver == NULL) {
+      dbgprintf(DBG_DEBUG, "%s\n", "Finding Command Server");
 
-    config_t cfg;
-    config_init(&cfg);
-    // Read the file. If there is an error, report it and exit.
-    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
-      config_destroy(&cfg);
-      goto cleanup;
-    }
+      config_t cfg;
+      config_init(&cfg);
+      // Read the file. If there is an error, report it and exit.
+      if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+        dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+        config_destroy(&cfg);
+        goto cleanup;
+      }
 
-    const char * retCmdServer;
-    if (config_lookup_string(&cfg, "cmdserver", &retCmdServer)) {
-      libmpvCache->server->cmdserver = strdup(retCmdServer);
-    } else {
-      printf("No cmdserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      const char * retCmdServer;
+      if (config_lookup_string(&cfg, "cmdserver", &retCmdServer)) {
+        libmpvCache->server->cmdserver = strdup(retCmdServer);
+      } else {
+        printf("No cmdserver configuration in ~/.config/sdobox/sdobox.conf\n");
+        config_destroy(&cfg);
+        goto cleanup;
+      }
       config_destroy(&cfg);
-      goto cleanup;
     }
-    config_destroy(&cfg);
         
     dbgprintf(DBG_MPV_WRITE, "%s\n", "Connecting For Commands");
     rc = zmq_connect_socket(&reqraw, libmpvCache->server->cmdserver, ZMQ_PUSH);
@@ -191,8 +195,9 @@ int libmpv_zmq_cmd(char* userCmd) {
 
   if (rc >= 0) {
     rc = s_send (reqraw, userCmd);
-  } else {
-    printf("Unable to send cmd: %s\n", userCmd);
+  }
+  if (rc < 0) {
+    printf("Unable to send cmd: %s - %d\n", userCmd, errno);
     zmq_close(reqraw);
     reqraw = NULL;
   }

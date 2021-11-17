@@ -148,7 +148,8 @@ int callback_skydiveorbust_prestart (const struct _u_request * request, struct _
     item->mark = E_SCORES_SOPST;
     item->time = jSopst;
     item->amt = jPst;
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    
+    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     json_decref(json_prestart);
   }
   
@@ -177,7 +178,7 @@ int callback_skydiveorbust_workingtime (const struct _u_request * request, struc
     item->mark = E_SCORES_SOWT;
     item->time = jSowt;
     item->amt = jWt;
-    queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     json_decref(json_nb_sheep);
   }
 

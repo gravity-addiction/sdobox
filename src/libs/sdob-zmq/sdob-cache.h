@@ -6,7 +6,6 @@ extern "C" {
 #endif // __cplusplus
 
 struct libsdob_server {
-  void* zmqcontext;
   char* scoringserver;
   char* eventserver;
 };

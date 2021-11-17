@@ -38,11 +38,12 @@ void pg_sdobSql_createTables() {
     "CREATE TABLE IF NOT EXISTS rule_info (id INTEGER PRIMARY KEY AUTOINCREMENT, rule_tags TEXT NOT NULL DEFAULT '', rule_json TEXT, rule_version INTEGER);" \
     "CREATE TABLE IF NOT EXISTS scorecards (id INTEGER PRIMARY KEY AUTOINCREMENT, id_video INTEGER, id_rule INTEGER, id_judge INTEGER, notes TEXT, created_at TEXT)";
     */
-
+/*
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
   item->data = data;
   queue_put(item, sqlite3WrapperQueue, &sqlite3WrapperQueueLen);
+  */
 }
 
 void pg_sdobSql_deleteTables() {
@@ -51,11 +52,12 @@ void pg_sdobSql_deleteTables() {
   /* "DELETE FROM video_info;" \
     "DELETE FROM rule_info;" \
     "DELETE FROM scorecards;"; */
-
+/*
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
   item->data = data;
   queue_put(item, sqlite3WrapperQueue, &sqlite3WrapperQueueLen);
+  */
 }
 
 void pg_sdobSql_dropTables() {
@@ -64,11 +66,12 @@ void pg_sdobSql_dropTables() {
     /*"DROP TABLE video_info;" \
     "DROP TABLE rule_info;" \
     "DROP TABLE scorecards;";*/
-
+/*
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
   item->data = data;
   queue_put(item, sqlite3WrapperQueue, &sqlite3WrapperQueueLen);
+  */
 }
 
 
@@ -109,11 +112,12 @@ void pg_sdobSql_markInsert(int id_video, int mark_type, char* video_time, char* 
   // Mark Notes
   data->binding[5].datatype = E_SQLITE3_TYPE_TEXT;
   data->binding[5].str = note;
-
+/*
   struct queue_head *item = new_qhead();
   item->action = E_SQLITE3_EXECUTE;
   item->data = data;
   queue_put(item, sqlite3WrapperQueue, &sqlite3WrapperQueueLen);
+  */
 }
 
 /*

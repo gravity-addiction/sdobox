@@ -10,8 +10,13 @@
 #include <jansson.h>
 #include <libconfig.h>
 
+#include "gui/skydiveorbust/skydiveorbust.h"
+#include "gui/skydiveorbust/skydiveorbust_zmq.h"
+
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
+#include "libs/queue/queue.h"
+#include "libs/thpool/thpool.h"
 #include "libs/zhelpers/zhelpers-conn.h"
 #include "libs/zhelpers/zhelpers-tx.h"
 #include "libs/zhelpers/zhelpers.h"
@@ -21,11 +26,56 @@
 
 void *libsdob_zmq_scoring = NULL;
 void *libsdob_zmq_events = NULL;
+threadpool thpool = NULL;
+
+struct libsdob_question * LIBSDOB_QUESTION_INIT(char* question) {
+  if (libsdob_zmq_scoring == NULL) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding Scoring Server");
+
+    if (libSdobCache->server->scoringserver == NULL) {
+      config_t cfg;
+      config_init(&cfg);
+      // Read the file. If there is an error, report it and exit.
+      if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+        dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+        config_destroy(&cfg);
+        return NULL;
+      }
+
+      const char * retScoringServer;
+      if (config_lookup_string(&cfg, "scoringserver", &retScoringServer)) {
+        libSdobCache->server->scoringserver = strdup(retScoringServer);
+      } else {
+        printf("No scoringserver configuration in ~/.config/sdobox/sdobox.conf\n");
+        config_destroy(&cfg);
+        return NULL;
+      }
+      config_destroy(&cfg);
+    }
+        
+    dbgprintf(DBG_DEBUG, "%s\n", "Connecting For Scoring");
+    int rc = zmq_connect_socket(&libsdob_zmq_scoring, libSdobCache->server->scoringserver, ZMQ_REQ);
+    if (rc < 0) {
+      printf("Connection Failed: %d\n", rc);
+    }
+  }
+
+  struct libsdob_question *sdobQuestion = (struct libsdob_question*)malloc(sizeof(struct libsdob_question));
+  sdobQuestion->server = libsdob_zmq_scoring;
+  sdobQuestion->question = question;
+  return sdobQuestion;
+}
+void LIBSDOB_QUESTION_DESTROY(struct libsdob_question *sdobQuestion) {
+  if (sdobQuestion->question != NULL) {
+    free(sdobQuestion->question);
+  }
+}
 
 int libsdob_zmq_init() {
   dbgprintf(DBG_DEBUG, "SDOB ZMQ Init\n");
   libSdobCache = LIBSDOB_CACHE_INIT();
   libsdob_eventThreadStart();
+  thpool = thpool_init(5);
   return 1;
 }
 
@@ -39,63 +89,43 @@ void libsdob_zmq_destroy() {
     zmq_close(libsdob_zmq_events);
     libsdob_zmq_events = NULL;
   }
+
+	thpool_wait(thpool);
+	puts("Killing SDOB-ZMQ Threadpool");
+	thpool_destroy(thpool);  
 }
 
 
 
-// Questions with Responses
-int libsdob_zmq_scoring_send(char* question, char** response) {
-  dbgprintf(DBG_DEBUG, "Scoring Send: %s\n", question);
-  int rc = 0;
-  if (libsdob_zmq_scoring == NULL) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Finding Scoring Server");
+// Submit Scorecard
+static pthread_mutex_t scoringSend = PTHREAD_MUTEX_INITIALIZER;
 
-    config_t cfg;
-    config_init(&cfg);
-    // Read the file. If there is an error, report it and exit.
-    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
-      config_destroy(&cfg);
-      goto cleanup;
-    }
-
-    const char * retScoringServer;
-    if (config_lookup_string(&cfg, "scoringserver", &retScoringServer)) {
-      libSdobCache->server->scoringserver = strdup(retScoringServer);
-    } else {
-      printf("No scoringserver configuration in ~/.config/sdobox/sdobox.conf\n");
-      config_destroy(&cfg);
-      goto cleanup;
-    }
-    config_destroy(&cfg);
-        
-    dbgprintf(DBG_DEBUG, "%s\n", "Connecting For Questions");
-    rc = zmq_connect_socket(&libsdob_zmq_scoring, libSdobCache->server->scoringserver, ZMQ_REQ);
-  }
-
-  if (rc >= 0) {
-    rc = s_send (libsdob_zmq_scoring, question);
-  }
+void libsdob_zmq_scoring_send_th(void* input) {
+  pthread_mutex_lock(&scoringSend);
+  dbgprintf(DBG_DEBUG, "Scoring Send: %s\n", ((struct libsdob_question *)input)->question);
+  int rc = s_send (((struct libsdob_question *)input)->server, ((struct libsdob_question *)input)->question);
   
   if (rc < 0) {
-    printf("Unable to send scoring: %s\n", question);
-    zmq_close(libsdob_zmq_scoring);
-    libsdob_zmq_scoring = NULL;
+    printf("Unable to send scoring: %d\n", rc);
+    zmq_close(((struct libsdob_question *)input)->server);
+    ((struct libsdob_question *)input)->server = NULL;
     goto cleanup;
   }
 
-  char *string = s_recv(libsdob_zmq_scoring);
-  if (response != NULL) {
-    *response = string;
-  } else {
-    free(string);
-  }
+  char *string = s_recv(((struct libsdob_question *)input)->server);
+  printf("Here: %s\n", string);
+  free(string);
 
  cleanup:
-  free(question);
-  return rc;
+  free(((struct libsdob_question *)input)->question);
+  ((struct libsdob_question *)input)->question = NULL;
+  pthread_mutex_unlock(&scoringSend);
+  return;
 }
 
+int libsdob_zmq_scoring_send(char* scorecard) {
+  return thpool_add_work(thpool, &libsdob_zmq_scoring_send_th, (void*)(struct libsdob_question*)LIBSDOB_QUESTION_INIT(scorecard));
+}
 
 
 // ------------------------
@@ -108,33 +138,46 @@ void * libsdob_eventThread(void *input) {
   }
 
   void *eventserver = NULL;
+  char tokenStr[8];
   libsdob_eventThreadRunning = 1;
   
+  // Grab Device token
+  FILE *tokenFile;
+  tokenFile = fopen("/opt/sdobox/device.token", "r");
+  if (tokenFile == NULL) {
+    strlcpy(tokenStr, "NOTOKENS", 8);
+  } else {
+    fgets(tokenStr, 8, tokenFile);
+    fclose(tokenFile);
+  }
+
   if (libsdob_eventThreadKill) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SkydiveOrBust Events Thread, Stop Flag Set");
     goto cleanup;
   }
 
-  dbgprintf(DBG_DEBUG, "%s\n", "Finding SkydiveOrBust Events Server");
+  if (((struct libsdob_cache *)input)->server->eventserver == NULL) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding SkydiveOrBust Events Server");
 
-  config_t cfg;
-  config_init(&cfg);
-  // Read the file. If there is an error, report it and exit.
-  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
-    config_destroy(&cfg);
-    goto cleanup;
-  }
+    config_t cfg;
+    config_init(&cfg);
+    // Read the file. If there is an error, report it and exit.
+    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+      config_destroy(&cfg);
+      goto cleanup;
+    }
 
-  const char * retEventServer;
-  if (config_lookup_string(&cfg, "eventserver", &retEventServer)) {
-    ((struct libsdob_cache *)input)->server->eventserver = strdup(retEventServer);
-  } else {
-    printf("No eventserver configuration in ~/.config/sdobox/sdobox.conf\n");
+    const char * retEventServer;
+    if (config_lookup_string(&cfg, "eventserver", &retEventServer)) {
+      ((struct libsdob_cache *)input)->server->eventserver = strdup(retEventServer);
+    } else {
+      printf("No eventserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      config_destroy(&cfg);
+      goto cleanup;
+    }
     config_destroy(&cfg);
-    goto cleanup;
   }
-  config_destroy(&cfg);
 
   dbgprintf(DBG_DEBUG, "Starting SkydiveOrBust Events Thread: %s\n", ((struct libsdob_cache *)input)->server->eventserver);
   int rc = 0;
@@ -174,8 +217,38 @@ void * libsdob_eventThread(void *input) {
         if (items[0].revents & ZMQ_POLLIN) {
           char *str = s_recv(eventserver);
           dbgprintf(DBG_DEBUG, "eventserver: %s\n", str);
+          dbgprintf(DBG_DEBUG, "Token String: %s\n", tokenStr);
+        
+          char *pt;
+          // List Array
+          // int ptI = 0;
+          // while (pt != NULL) {
+          //   printf("%d %s\n", ptI, pt);
+          //   pt = strtok (NULL, ";");
+          //   ptI++;
+          // }
+          pt = strtok (str,";");
+          if (pt != NULL && strcmp(pt, "clear") == 0) {
+            pt = strtok(NULL, ";");
+            printf("Check: %s - %s\n", pt, tokenStr);
+            if (strcmp(pt, tokenStr) == 0) {
+              // Clear Scorecard
+              struct queue_head *item = malloc(sizeof(struct queue_head));
+              INIT_QUEUE_HEAD(item);
+              item->action = E_Q_SCORECARD_CLEAR;
+              pg_sdob_add_action(&item);
 
-          
+              printf("Also Send Submit\n");
+              // Submit Scorecard
+              struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+              INIT_QUEUE_HEAD(itemSc);
+              itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+              pg_sdob_add_action(&itemSc);              
+            }
+          }
+
+
+
           free(str);
         }
       }

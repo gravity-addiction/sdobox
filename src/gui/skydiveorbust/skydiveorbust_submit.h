@@ -44,6 +44,8 @@ int pg_sdob_submit_is_submitting;
 // Double press clear button
 int pg_sdob_submit_clearCheck;
 
+void pg_sdobSubmitAction();
+
 void pg_sdobSubmitButtonRotaryCW();
 void pg_sdobSubmitButtonRotaryCCW();
 void pg_sdobSubmitButtonLeftPressed();

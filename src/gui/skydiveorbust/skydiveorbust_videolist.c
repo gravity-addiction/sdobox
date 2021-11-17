@@ -133,7 +133,6 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
     snprintf(serverUrl, serverUrlSz, "https://server.thegarybox.com/hls/USPA/%s/%s.m3u8", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
     
-    printf("ServerURL: %s\n", serverUrl);
     strlcpy(newVid->url, serverUrl, 512);
 //     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
 

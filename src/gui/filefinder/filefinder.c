@@ -78,7 +78,6 @@ int pg_fileFinder_addList(struct fileStruct *ptr) {
 }
 
 void pg_fileFinder_resetList() {
-  printf("RESET LIST\n");
   if (pg_fileFinder_list == NULL || pg_fileFinder_listConfig->len == 0) { return; }
   for (int i = 0; i < pg_fileFinder_listConfig->len; ++i) {
     free(pg_fileFinder_list[i]->name);
@@ -148,7 +147,8 @@ bool pg_fileFinder_cbBtn_sdob(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,in
   item->action = E_Q_ACTION_LOADVIDEO;
   item->data = newVideo;
   item->u1.ptr = pGui;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
 
   return true;
@@ -242,7 +242,8 @@ bool pg_fileFinder_cbBtn_e(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16
   item->action = E_Q_ACTION_LOADVIDEO;
   item->data = newVid;
   item->u1.ptr = pGui;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
   return true;
 }

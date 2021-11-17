@@ -44,7 +44,7 @@ int zmq_connect_socket(void **sock, char* url, int sockType) {
   int rc = 0;
   *sock = zmq_socket(libzhelpers_context(), sockType);
   int timeoutsock = 2500;
-  int timeoutsendrecv = 500;
+  int timeoutsendrecv = 1500;
   if (rc > -1) {
     rc = zmq_setsockopt(*sock, ZMQ_CONNECT_TIMEOUT, &timeoutsock, sizeof(timeoutsock));
   }

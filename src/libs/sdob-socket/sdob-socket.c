@@ -130,7 +130,8 @@ PI_THREAD (libSdobSocketThread)
           struct queue_head *itemUsbDrives = new_qhead();
           itemUsbDrives->action = 0;
           itemUsbDrives->data = sdob_data;
-          queue_put(itemUsbDrives, libUsbDrives_Queue, &libUsbDrives_QueueLen);
+          // pg_sdob_add_action(&itemUsbDrives);
+          // queue_put(itemUsbDrives, libUsbDrives_Queue, &libUsbDrives_QueueLen);
           
         }
       }

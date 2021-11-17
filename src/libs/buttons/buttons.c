@@ -11,11 +11,11 @@
 
 #include "GUIslice.h"
 #include "libs/buttons/buttons.h"
-#include "libs/queue/queue.h"
 #include "libs/dbg/dbg.h"
+#include "libs/queue/queue.h"
+#include "libs/thpool/thpool.h"
 
-
-static pthread_mutex_t buttonLock = PTHREAD_MUTEX_INITIALIZER;
+threadpool buttons_thpool = NULL;
 
 void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]) {
   for (int p = 0; p < whitelistPinsSize; p++) {
@@ -142,6 +142,7 @@ int lib_buttons_configure(char* config_path) {
 }
 
 
+
 int lib_buttons_thread() {
   if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
 
@@ -152,7 +153,7 @@ int lib_buttons_thread() {
       !lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] &&
       ((i_now - lib_buttonsLastInterruptTime[E_BUTTON_LEFT_LOW]) > lib_buttonsBtnHoldDelay)
   ) {
-    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 1;
+    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 2;
 
     // debug_print("Set Left Held: %d\n", btn_l_h);
     // Execute Left Held when Right isn't also pressed (dbl btn)
@@ -162,13 +163,10 @@ int lib_buttons_thread() {
     ) {
       // debug_print("Execute Left Held: %d\n", btn_l_h);
       // Execute CB Left Held Function
-      cbBtns[E_BUTTON_LEFT_HELD]();
+      return thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_LEFT_HELD], NULL);
     }
     return 1;
   }
-
-
-
 
 
   // Right Press and Held
@@ -176,7 +174,7 @@ int lib_buttons_thread() {
       !lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] &&
       ((i_now - lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_LOW]) > lib_buttonsBtnHoldDelay)
   ) {
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 1;
+    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 2;
 
     // Execute Right Held when Left isn't also pressed (dbl btn)
     if (
@@ -184,13 +182,10 @@ int lib_buttons_thread() {
       cbBtns[E_BUTTON_RIGHT_HELD]
     ) {
       // Execute CB Right Held Function
-      cbBtns[E_BUTTON_RIGHT_HELD]();
+      return thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_RIGHT_HELD], NULL);
     }
     return 1;
   }
-
-
-
 
 
   // Rotary Press and Held
@@ -198,10 +193,12 @@ int lib_buttons_thread() {
       !lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] &&
       ((i_now - lib_buttonsLastInterruptTime[E_BUTTON_ROTARY_LOW]) > lib_buttonsBtnHoldDelay)
   ) {
-    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] = 1;
+    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] = 2;
 
     // Execute CB Rotary Held Function
-    if (cbBtns[E_BUTTON_ROTARY_HELD]) cbBtns[E_BUTTON_ROTARY_HELD]();
+    if (cbBtns[E_BUTTON_ROTARY_HELD]) {
+      return thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_ROTARY_HELD], NULL);
+    }
     return 1;
   }
 
@@ -214,7 +211,9 @@ int lib_buttons_thread() {
     lib_buttonsLastInterruptAction[E_BUTTON_LEFT_PRESSED] &&
     ((i_now - lib_buttonsLastInterruptTime[E_BUTTON_LEFT_LOW]) > lib_buttonsBtnHoldDelay)
   ) {
-    if (cbBtns[E_BUTTON_DOUBLE_HELD]) { cbBtns[E_BUTTON_DOUBLE_HELD](); }
+    if (cbBtns[E_BUTTON_DOUBLE_HELD]) {
+      return thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_DOUBLE_HELD], NULL);
+    }
     lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_PRESSED] = 0;
     lib_buttonsLastInterruptAction[E_BUTTON_LEFT_PRESSED] = 0;
     return 1;
@@ -224,33 +223,12 @@ int lib_buttons_thread() {
 
 
 
-
-PI_THREAD (buttonsEventThread) {
-  if (lib_buttonsThreadRunning) {
-    // debug_print("%s\n", "Not Starting Buttons Event Thread, Already Started");
-    return NULL;
-  }
-  lib_buttonsThreadRunning = 1;
-
-  if (lib_buttonsThreadKill) {
-    // debug_print("%s\n", "Not Starting Buttons Event Thread, Stop Flag Set");
-    lib_buttonsThreadRunning = 0;
-    return NULL;
-  }
-
-  // debug_print("%s\n", "Starting Buttons Event Thread");
-
-//  int i_now = millis();
-//  int btn_r_h, btn_l_h, btn_c_h;
-
+void lib_buttons_check(void* input) {
   while(!lib_buttonsThreadKill) {
     if (!lib_buttons_thread()) {
       usleep(100000);
     }
   }
-
-  lib_buttonsThreadRunning = 0;
-  return NULL;
 }
 
 
@@ -294,8 +272,11 @@ void lib_buttons_init() {
     // debug_print("Unable to setup Left Btn ISR: %s\n", strerror(errno));
   }
 
+  buttons_thpool = thpool_init(8);
+  
+  thpool_add_work(buttons_thpool, &lib_buttons_check, NULL);
 }
-
+/*
 int lib_buttonsThreadStart() {
   return piThreadCreate(buttonsEventThread);
 }
@@ -311,7 +292,7 @@ void lib_buttonsThreadStop() {
     // debug_print("Buttons Thread Shutdown %d\n", shutdown_cnt);
   }
 }
-
+*/
 
 
 
@@ -325,69 +306,46 @@ void lib_buttonsSetCallbackFunc(int btn, void (*function)()) {
 }
 
 
-
-
-
-
-
-
 // Overall Button Management Routine
 int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
                 int actionPressed, int actionReleased, int actionHeld
 ) {
   if (lib_buttonsDisabled) { return 0; } // Check Buttons Disabled
-  pthread_mutex_lock(&buttonLock);
+  // pthread_mutex_lock(&buttonLock);
 
+  unsigned int i_now = millis();
+  if (
+    (i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay
+    || (i_now - lib_buttonsLastInterruptTime[timeHigh]) < lib_buttonsBtnDebounceDelay
+  ) {
+    return 0;
+  }
+  
   int rc = 1;
   int p = digitalRead(pin);
-  unsigned int i_now = millis();
-
-  // printf("Pin: %d - %d - Delay: %d, Relased: %d, Pressed: %d\n", pin, p, lib_buttonsBtnDebounceDelay, lib_buttonsLastInterruptAction[actionReleased], lib_buttonsLastInterruptAction[actionPressed]);
+  
+  // printf("%d, Pin: %d - %d - Delay: %d, Relased: %d, Pressed: %d\n", i_now, pin, p, lib_buttonsBtnDebounceDelay, lib_buttonsLastInterruptAction[actionReleased], lib_buttonsLastInterruptAction[actionPressed]);
 
   if (p == 0 && !lib_buttonsLastInterruptAction[actionPressed]) {
     // Pressed
     // printf("Pressed Button\n");
 
+    // Execute CB Pressed Function
+    if (cbBtns[actionPressed]) {
+      return thpool_add_work(buttons_thpool, cbBtns[actionPressed], NULL);
+    }
+
     // Set Action flags for released / pressed
     lib_buttonsLastInterruptAction[actionReleased] = 0;
     lib_buttonsLastInterruptAction[actionPressed] = 1;
 
-    // Check Debounce
-    if (
-      ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay)
-      // || ((i_now - lib_buttonsLastInterruptTime[timeHigh]) < lib_buttonsBtnDebounceDelay)
-    ) {
-      // printf("Debounced\n");
-      rc = 0;
-      goto cleanup;
-    }
     // Set LowTime
-    lib_buttonsLastInterruptTime[timeLow] = i_now;
-
-    // Execute CB Pressed Function
-    if (cbBtns[actionPressed]) cbBtns[actionPressed]();
+    lib_buttonsLastInterruptTime[timeLow] = millis();
 
     rc = 0;
     goto cleanup;
-  } else if (p == 1 && lib_buttonsLastInterruptAction[actionPressed] && !lib_buttonsLastInterruptAction[actionReleased]) {
-    // Released
+  } else if (p == 1 && !lib_buttonsLastInterruptAction[actionReleased]) {
     // printf("Released Button\n");
-
-    // Set Action flags for released / pressed
-    lib_buttonsLastInterruptAction[actionReleased] = 1;
-    lib_buttonsLastInterruptAction[actionPressed] = 0;
-    
-    // Check Debounce
-    if (
-      // ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay) ||
-      ((i_now - lib_buttonsLastInterruptTime[timeHigh]) < lib_buttonsBtnDebounceDelay)
-    ) {
-      // printf("Debounced\n");
-      rc = 0;
-      goto cleanup;
-    }
-    // Set HighTime
-    lib_buttonsLastInterruptTime[timeHigh] = i_now;
 
     // Held > 1 to skip typical release
     if (lib_buttonsLastInterruptAction[actionHeld] < 2) {
@@ -395,74 +353,18 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, \
       if (cbBtns[actionReleased]) cbBtns[actionReleased]();
     }
 
+    // Set High Time
+    lib_buttonsLastInterruptTime[timeHigh] = millis();
+    lib_buttonsLastInterruptAction[actionReleased] = 1;
+    lib_buttonsLastInterruptAction[actionPressed] = 0;
     lib_buttonsLastInterruptAction[actionHeld] = 0;
     rc = 0;
     goto cleanup;    
   }
 
  cleanup:
-  pthread_mutex_unlock(&buttonLock);
+  // pthread_mutex_unlock(&buttonLock);
   return rc;
-/*
-
-  // Press down just set's flags
-  if (p == LOW) {
-    printf("Low %d : %d\n", i_now, lib_buttonsLastInterruptTime[timeLow]);
-
-    if ((i_now - lib_buttonsLastInterruptTime[timeLow]) < lib_buttonsBtnDebounceDelay) {
-      return 0;
-    }
-    lib_buttonsLastInterruptTime[timeLow] = i_now;
-
-    // Set Action flags for released / pressed
-    lib_buttonsLastInterruptAction[actionReleased] = 0;
-    lib_buttonsLastInterruptAction[actionPressed] = 1;
-
-    // Execute CB Pressed Function
-    if (cbBtns[actionPressed]) cbBtns[actionPressed]();
-
-    return 0; // No nothing for now
-
-  } else if (!lib_buttonsLastInterruptAction[actionPressed]) {
-    // Button is not known to be pressed right now
-    printf("Not Pressed\n");
-
-    // Reset High Pin Time
-    if (i_now - lib_buttonsLastInterruptTime[timeHigh] > lib_buttonsBtnDebounceDelay) {
-      lib_buttonsLastInterruptTime[timeHigh] = i_now;
-    }
-    return 0;
-  } // Else Button Released
-
-
-
-  printf("High %d\n", lib_buttonsLastInterruptTime[timeHigh]);
-  // Reset High Pin Time
-  if (i_now - lib_buttonsLastInterruptTime[timeHigh] > lib_buttonsBtnDebounceDelay) {
-    lib_buttonsLastInterruptTime[timeHigh] = i_now;
-  }
-
-  // Set Action flags for released / pressed
-  lib_buttonsLastInterruptAction[actionReleased] = 1;
-  lib_buttonsLastInterruptAction[actionPressed] = 0;
-
-
-  // Was Btn Hold Activated? Don't Run Press / Release Actions
-  if (lib_buttonsLastInterruptAction[actionHeld] == 1) {
-    // debug_print("%s\n", "Held Was Activated");
-    lib_buttonsLastInterruptAction[actionHeld] = 0;
-    lib_buttonsLastInterruptAction[actionReleased] = 1;
-    return 0;
-  }
-
-
-
-  // Exceute CB Released Function
-  printf("%s\n", "Execute Released");
-  if (cbBtns[actionReleased]) cbBtns[actionReleased]();
-  lib_buttonsLastInterruptAction[actionReleased] = 1;
-  return 1;
-  */
 }
 
 

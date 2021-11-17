@@ -900,39 +900,39 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
       // Show full rounded number
       if (i_this_mark == 0 && sdob_judgement->prestartTime > 0.0 && sdob_judgement->sopst == -1.0) {
         sprintf(score, "%s", "");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark == 0 && sdob_judgement->prestartTime > 0.0 && sdob_judgement->sopst > -1.0) {
         sprintf(score, "%s", "X");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
 
       } else if (i_this_mark == 1 && sdob_judgement->prestartTime > 0.0 && sdob_judgement->sowt == -1.0) {
         sprintf(score, "%s", "");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark == 1 && sdob_judgement->prestartTime > 0.0 && sdob_judgement->sowt > -1.0) {
         sprintf(score, "%s", "S");
         if ((sdob_judgement->prestartTime + sdob_judgement->sopst) > sdob_judgement->sowt) {
           gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_GREEN);
         } else {
-          gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+          gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
         }
       } else if (i_this_mark == 0 && sdob_judgement->prestartTime == 0.0 && sdob_judgement->sowt == -1.0) {
         sprintf(score, "%s", "");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark == 0 && sdob_judgement->prestartTime == 0.0 && sdob_judgement->sowt > -1.0) {
         sprintf(score, "%s", "S");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark == pg_sdob_score_count) {
         sprintf(score, "%s", "E");
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark < pg_sdob_score_count && (i_this_mark + i_start_disp) % 10 == 0) {
         sprintf(score, "%d", (i_this_mark + i_start_disp));
-        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_BROWN);
+        gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsNum[iXCnt], GSLC_COL_WHITE);
 
       } else if (i_this_mark < pg_sdob_score_count) {
         sprintf(score, "%d", (i_this_mark + i_start_disp) % 10);
@@ -1152,7 +1152,8 @@ bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   struct queue_head *item = malloc(sizeof(struct queue_head));
   INIT_QUEUE_HEAD(item);
   item->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
-  queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 */
   touchscreenPageOpen(pGui, E_PG_SDOB_SUBMIT);
 
@@ -1914,7 +1915,6 @@ void pg_skydiveorbustButtonRotaryCCW() {
 
 void pg_skydiveorbust_update_duration(double duration) {
   libmpvCache->player->duration = duration;
-  printf("Duration CB: %f\n", duration);
 }
 
 
@@ -2128,8 +2128,7 @@ void pg_sdob_mpv_timepos_thread() {
 // ------------------------
 // MPV Output TimePos and Events Thread
 // ------------------------
-PI_THREAD (pg_sdobMpvTimeposThread)
-{
+void * pg_sdobMpvTimeposThread(void *input) {
   if (pg_sdobMpvTimeposThreadRunning) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Already Started");
     return NULL;
@@ -2142,34 +2141,35 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Stop Flag Set");
     goto cleanup;
   }
+  if (libmpvCache->server->timeserver == NULL) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding Timepos Server");
 
-  dbgprintf(DBG_DEBUG, "%s\n", "Finding Timepos Server");
+    config_t cfg;
+    config_init(&cfg);
+    // Read the file. If there is an error, report it and exit.
+    if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+      dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+      config_destroy(&cfg);
+      goto cleanup;
+    }
 
-  config_t cfg;
-  config_init(&cfg);
-  // Read the file. If there is an error, report it and exit.
-  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+    const char * retTimeServer;
+    if (config_lookup_string(&cfg, "timeserver", &retTimeServer)) {
+      libmpvCache->server->timeserver = strdup(retTimeServer);
+    } else {
+      printf("No timeserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      config_destroy(&cfg);
+      goto cleanup;
+    }
     config_destroy(&cfg);
-    goto cleanup;
   }
-
-  const char * retTimeServer;
-  if (config_lookup_string(&cfg, "timeserver", &retTimeServer)) {
-    libmpvCache->server->timeserver = strdup(retTimeServer);
-  } else {
-    printf("No timeserver configuration in ~/.config/sdobox/sdobox.conf\n");
-    config_destroy(&cfg);
-    goto cleanup;
-  }
-  config_destroy(&cfg);
 
   dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos and Events Thread");
   int rc = 0;
 
   // Try starting time server
   rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
-  printf("Time Server: %d - %d\n", rc, ZMQ_SUB);
+  // printf("Time Server: %d - %d\n", rc, ZMQ_SUB);
   while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
     zmq_close(timeserver);
     sleep(2);
@@ -2182,11 +2182,11 @@ PI_THREAD (pg_sdobMpvTimeposThread)
     const char *filtertimeserver = "";
     rc = zmq_setsockopt (timeserver, ZMQ_SUBSCRIBE, filtertimeserver, strlen(filtertimeserver));
 
-    printf("Timeserver RC: %d, Error: %d\n", rc, errno);
+    // printf("Timeserver RC: %d, Error: %d\n", rc, errno);
     // Failed to initialize subscriptions;
     if (rc < 0) {
       dbgprintf(DBG_DEBUG, "%s\n", "Cannot Subscribe to TimeServer");   
-      printf("%s\n", "Shutdown TimePos and Events Thread");
+      // printf("%s\n", "Shutdown TimePos and Events Thread");
       goto cleanup;
     }
  
@@ -2240,9 +2240,9 @@ PI_THREAD (pg_sdobMpvTimeposThread)
  cleanup:
   zmq_close(timeserver);
   timeserver = NULL; 
-  printf("%s\n", "Closing TimePos and Events Thread");
+  // printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
-  return NULL;
+  pthread_exit(NULL);
 }
 
 
@@ -2253,7 +2253,8 @@ int pg_sdobMpvTimeposThreadStart() {
   // pg_sdob_pl_sliderForceUpdate = 1;
   dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos and Events Thread Spinup: %d\n", pg_sdobMpvTimeposThreadRunning);
   pg_sdobMpvTimeposThreadKill = 0;
-  return piThreadCreate(pg_sdobMpvTimeposThread);
+  pthread_t tid;
+  return pthread_create(&tid, NULL, &pg_sdobMpvTimeposThread, NULL);
 }
 
 void pg_sdobMpvTimeposThreadStop() {
@@ -2731,6 +2732,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         pg_sdob_scorecard_insert_mark(&m_gui, item->selected, item->time, item->mark);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
       break;
 
 
@@ -2738,6 +2740,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       case E_Q_SCORECARD_UPDATE_MARK:
         pg_sdob_scorecard_update_mark(&m_gui, item->selected, item->mark);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
       break;
 
       // Delete Mark
@@ -2745,6 +2748,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         pg_sdob_scorecard_delete_mark(&m_gui, item->selected);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
       break;
 
       case E_Q_SCORECARD_MOVE_SCORE_SELECTED:
@@ -2757,6 +2761,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         pg_sdob_scorecard_score_sopst(&m_gui, item->time, sdob_judgement->prestartTime);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
       break;
 
       case E_Q_SCORECARD_SCORING_SOWT:
@@ -2770,7 +2775,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         }
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-
+        pg_sdobSubmitAction();
       break;
 
       case E_Q_SCORECARD_SUBMIT_SCORECARD:
@@ -2778,19 +2783,22 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         // touchscreenPopupMsgBox(&m_gui, "Submitting Score!", "Saving your score.");
         pg_sdobSubmitScorecard();
         // touchscreenPopupMsgBoxClose(&m_gui);
-      // No break, clear scorecard after submit
+      break;
       case E_Q_SDOB_CLEAR:
         pg_sdob_clear(&m_gui);
       case E_Q_SCORECARD_CLEAR:
         pg_sdob_scorecard_clear(&m_gui);
+        pg_sdobSliderSetCurPos(&m_gui, 0);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
       break;
 
       case E_Q_SCORECARD_CLEAN:
         pg_sdob_scorecard_clean(&m_gui);
+        pg_sdobSliderSetCurPos(&m_gui, 0);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
       break;
 
       case E_Q_PLAYER_SLIDER_CHAPTERS:
@@ -2807,7 +2815,6 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
 
       // Writes commands to open FD Socket
       case E_Q_ACTION_MPV_COMMAND:
-        printf("Sending Cmd: %s\n", item->cmd);
         libmpv_zmq_cmd(item->cmd);
       break;
 
@@ -2839,11 +2846,9 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       break;
 
       case E_Q_ACTION_LOADURL:
-        printf("Action: %s\n", ((struct pg_sdob_video_data*)item->data)->url);
+        // printf("Action: %s\n", ((struct pg_sdob_video_data*)item->data)->url);
         if (((struct pg_sdob_video_data*)item->data)->url != NULL) {
-          printf("HERE!\n");
           strlcpy(sdob_judgement->video->url, ((struct pg_sdob_video_data*)item->data)->url, 512);
-          printf("XX: %s\n", sdob_judgement->video->url);
           mpv_loadurl(sdob_judgement->video->url, "replace", "");
         }
 
@@ -3111,7 +3116,7 @@ void pg_sdobThreadStop() {
 
 int pg_sdob_MpgEventCbId = -1;
 void pg_sdobMpvEventCb(char* event) {
-  printf("Yay Event: %s\n", event);
+  // printf("Yay Event: %s\n", event);
   /*
   if (strcmp(event, "file-loaded") == 0) {
     mpv_any_u* retPath;
@@ -3151,7 +3156,9 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   // Connect to SDOB Worker Queue
   pg_sdobWorker = zmq_socket(libzhelpers_context(), ZMQ_PUB);
   int rc = zmq_bind(pg_sdobWorker, "inproc://sdobworker");
-  assert(rc == 0);
+  if (rc != 0) {
+    printf("Cannot Start Inhome Proc: %d\n", rc);
+  }
 
   pg_sdobQueue = ALLOC_QUEUE_ROOT();
   pg_sdobQueueLen = 0;
@@ -3255,7 +3262,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdob_clear(pGui);
 
   // Remove MPV Player Volume
-  printf("Send Mute\n");
+  // printf("Send Mute\n");
   mpv_volume_mute();
 
   //////////////////////////////
