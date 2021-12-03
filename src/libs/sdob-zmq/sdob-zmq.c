@@ -29,7 +29,7 @@ void *libsdob_zmq_events = NULL;
 threadpool thpool = NULL;
 
 struct libsdob_question * LIBSDOB_QUESTION_INIT(char* question) {
-  if (libsdob_zmq_scoring == NULL) {
+  // if (libsdob_zmq_scoring == NULL) {
     dbgprintf(DBG_DEBUG, "%s\n", "Finding Scoring Server");
 
     if (libSdobCache->server->scoringserver == NULL) {
@@ -58,7 +58,7 @@ struct libsdob_question * LIBSDOB_QUESTION_INIT(char* question) {
     if (rc < 0) {
       printf("Connection Failed: %d\n", rc);
     }
-  }
+  // }
 
   struct libsdob_question *sdobQuestion = (struct libsdob_question*)malloc(sizeof(struct libsdob_question));
   sdobQuestion->server = libsdob_zmq_scoring;
@@ -69,6 +69,7 @@ void LIBSDOB_QUESTION_DESTROY(struct libsdob_question *sdobQuestion) {
   if (sdobQuestion->question != NULL) {
     free(sdobQuestion->question);
   }
+  free(sdobQuestion);
 }
 
 int libsdob_zmq_init() {
@@ -117,8 +118,9 @@ void libsdob_zmq_scoring_send_th(void* input) {
   free(string);
 
  cleanup:
-  free(((struct libsdob_question *)input)->question);
-  ((struct libsdob_question *)input)->question = NULL;
+//  free(((struct libsdob_question *)input)->question);
+//  ((struct libsdob_question *)input)->question = NULL;
+  LIBSDOB_QUESTION_DESTROY((struct libsdob_question *)input);
   pthread_mutex_unlock(&scoringSend);
   return;
 }
