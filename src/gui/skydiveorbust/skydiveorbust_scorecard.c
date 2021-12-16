@@ -179,27 +179,30 @@ int pg_sdobSOWTSet(double markTime, double workingTime) {
   sdob_judgement->workingTime = workingTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  struct queue_head *itemStart = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(itemStart);
-  itemStart->action = E_Q_ACTION_MPV_COMMAND;
-  size_t startSz = snprintf(NULL, 0, "set;start;%f", sdob_judgement->sowt) + 1;
-  if (startSz > 0) {
-    itemStart->cmd = (char*)calloc(startSz, sizeof(char));
-    snprintf(itemStart->cmd, startSz, "set;start;%f", sdob_judgement->sowt);
-    pg_sdob_add_action(&itemStart);
-    // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+  if (sdob_devicehost->isHost == 1) {
+    struct queue_head *itemStart = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(itemStart);
+    itemStart->action = E_Q_ACTION_MPV_COMMAND;
+    size_t startSz = snprintf(NULL, 0, "set;start;%f", sdob_judgement->sowt) + 1;
+    if (startSz > 0) {
+      itemStart->cmd = (char*)calloc(startSz, sizeof(char));
+      snprintf(itemStart->cmd, startSz, "set;start;%f", sdob_judgement->sowt);
+      pg_sdob_add_action(&itemStart);
+      // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+    }
+
+    struct queue_head *itemLength = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(itemLength);
+    itemLength->action = E_Q_ACTION_MPV_COMMAND;
+    size_t lengthSz = snprintf(NULL, 0, "set;length;%f", sdob_judgement->workingTime) + 1;
+    if (lengthSz > 0) {
+      itemLength->cmd = (char*)calloc(lengthSz, sizeof(char));
+      snprintf(itemLength->cmd, lengthSz, "set;length;%f", sdob_judgement->workingTime);
+      pg_sdob_add_action(&itemLength);
+      // queue_put(itemLength, pg_sdobQueue, &pg_sdobQueueLen);
+    }
   }
 
-  struct queue_head *itemLength = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(itemLength);
-  itemLength->action = E_Q_ACTION_MPV_COMMAND;
-  size_t lengthSz = snprintf(NULL, 0, "set;length;%f", sdob_judgement->workingTime) + 1;
-  if (lengthSz > 0) {
-    itemLength->cmd = (char*)calloc(lengthSz, sizeof(char));
-    snprintf(itemLength->cmd, lengthSz, "set;length;%f", sdob_judgement->workingTime);
-    pg_sdob_add_action(&itemLength);
-    // queue_put(itemLength, pg_sdobQueue, &pg_sdobQueueLen);
-  }
   // gslc_ElemSetRedraw(&m_gui, m_pElemScorecardBox, GSLC_REDRAW_FULL);
   return 1;
 }
@@ -209,28 +212,31 @@ int pg_sdobSOWTReset() {
   sdob_judgement->sowt = -1.0;
   // debug_print("Reset SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  struct queue_head *itemStart = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(itemStart);
-  itemStart->action = E_Q_ACTION_MPV_COMMAND;
-  size_t cmdStartSz = strlen("set;start;0") + 1;
-  if (cmdStartSz > 0) {
-    itemStart->cmd = (char*)calloc(cmdStartSz, sizeof(char));
-    strlcpy(itemStart->cmd, "set;start;0", cmdStartSz);
-    pg_sdob_add_action(&itemStart);
-    // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+  if (sdob_devicehost->isHost == 1) {
+    struct queue_head *itemStart = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(itemStart);
+    itemStart->action = E_Q_ACTION_MPV_COMMAND;
+    size_t cmdStartSz = strlen("set;start;0") + 1;
+    if (cmdStartSz > 0) {
+      itemStart->cmd = (char*)calloc(cmdStartSz, sizeof(char));
+      strlcpy(itemStart->cmd, "set;start;0", cmdStartSz);
+      pg_sdob_add_action(&itemStart);
+      // queue_put(itemStart, pg_sdobQueue, &pg_sdobQueueLen);
+    }
+
+    struct queue_head *itemEnd = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(itemEnd);
+    itemEnd->action = E_Q_ACTION_MPV_COMMAND;
+    size_t cmdEndSz = strlen("set;length;100%") + 1;
+    if (cmdEndSz > 0) {
+      itemEnd->cmd = (char*)calloc(cmdEndSz, sizeof(char));
+      strlcpy(itemEnd->cmd, "set;length;100%", cmdEndSz);
+      pg_sdob_add_action(&itemEnd);
+      // queue_put(itemEnd, pg_sdobQueue, &pg_sdobQueueLen);
+    }
   }
 
-  struct queue_head *itemEnd = malloc(sizeof(struct queue_head));
-  INIT_QUEUE_HEAD(itemEnd);
-  itemEnd->action = E_Q_ACTION_MPV_COMMAND;
-  size_t cmdEndSz = strlen("set;length;100%") + 1;
-  if (cmdEndSz > 0) {
-    itemEnd->cmd = (char*)calloc(cmdEndSz, sizeof(char));
-    strlcpy(itemEnd->cmd, "set;length;100%", cmdEndSz);
-    pg_sdob_add_action(&itemEnd);
-    // queue_put(itemEnd, pg_sdobQueue, &pg_sdobQueueLen);
-  }
-
+  
 //  struct queue_head *itemChapters = malloc(sizeof(struct queue_head));
 //  INIT_QUEUE_HEAD(itemChapters);
 //  itemChapters->action = E_Q_PLAYER_VIDEO_INFO;

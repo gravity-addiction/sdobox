@@ -56,7 +56,7 @@ struct pg_sdob_device_host * PG_SDOB_DEVICE_HOST()
   struct pg_sdob_device_host *sdh = (struct pg_sdob_device_host*)malloc(sizeof(struct pg_sdob_device_host));
   sdh->cnt = 1; // 1 for initalization in thread
   sdh->seenCnt = 0;
-  sdh->isHost = 1; // 1 is host device, 0 is not
+  sdh->isHost = 0; // 1 is host device, 0 is not
   return sdh;
 }
 
@@ -514,9 +514,9 @@ void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui) {
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_FORWARD], false);
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_BACK], false);
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_USER_RATE], false);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], false);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_POS], false);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_RATE], false);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], false);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_POS], false);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_RATE], false);
   } else {
     // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_BTN_MIRROR], false);
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_PLAY], true);
@@ -524,9 +524,9 @@ void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui) {
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_FORWARD], true);
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_BACK], true);
     gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_USER_RATE], true);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], true);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_POS], true);
-    gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_RATE], true);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], true);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_POS], true);
+    // gslc_ElemSetVisible(pGui, pg_sdobEl[E_SDOB_EL_PL_RATE], true);
   }
 }
 
@@ -766,6 +766,8 @@ void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
 
 bool pg_sdobPlayerCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
 {
+  if (sdob_devicehost->isHost == 0) { return true; }
+
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
   gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
   gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui,pElemRef);
@@ -2060,6 +2062,9 @@ void pg_skydiveorbustButtonDoubleHeld() {
 void pg_skydiveorbustButtonSetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, &pg_skydiveorbustButtonRotaryCW);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CCW, &pg_skydiveorbustButtonRotaryCCW);
+  lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_PRESSED, NULL);
+  lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_PRESSED, NULL);
+  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_PRESSED, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_RELEASED, &pg_skydiveorbustButtonLeftPressed);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_RELEASED, &pg_skydiveorbustButtonRightPressed);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_RELEASED, &pg_skydiveorbustButtonRotaryPressed);
@@ -2072,6 +2077,9 @@ void pg_skydiveorbustButtonSetFuncs() {
 void pg_skydiveorbustButtonUnsetFuncs() {
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CW, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_CCW, NULL);
+  lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_PRESSED, NULL);
+  lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_PRESSED, NULL);
+  lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_PRESSED, NULL);  
   lib_buttonsSetCallbackFunc(E_BUTTON_LEFT_RELEASED, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_RIGHT_RELEASED, NULL);
   lib_buttonsSetCallbackFunc(E_BUTTON_ROTARY_RELEASED, NULL);
@@ -3343,7 +3351,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
   
-  sdob_devicehost->isHost = 1;
+  sdob_devicehost->isHost = 0;
 
   // Fetch Info
   int rc;
