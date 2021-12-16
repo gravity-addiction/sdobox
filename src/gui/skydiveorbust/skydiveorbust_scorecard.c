@@ -384,7 +384,7 @@ int pg_sdobSubmitScorecard() {
   char dest[strlen(sdob_judgement->video->local_folder) + strlen(sdob_judgement->video->video_file) + 2];
   combineFilePath(dest, sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
   
-  /* //**
+  /*
   if (sdob_devicehost->isHost == 1) {
     char* md5H;
     int md5x = md5HashFile(dest, &md5H);

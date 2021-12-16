@@ -1949,7 +1949,7 @@ void pg_skydiveorbustButtonLeftPressed() {
 void pg_skydiveorbustButtonRightPressed() {
   struct queue_head *item;
 
-  // dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
+  dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
   // Scorecard Clicks
 
   if (sdob_judgement->marks->selected < 0) {
@@ -2126,23 +2126,23 @@ void pg_sdob_mpv_timepos_thread() {
 
 
 // ------------------------
-// MPV Output TimePos and Events Thread
+// MPV Output Events Thread
 // ------------------------
-void * pg_sdobMpvTimeposThread(void *input) {
-  if (pg_sdobMpvTimeposThreadRunning) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Already Started");
+void * pg_sdobMpvEventsThread(void *input) {
+  if (pg_sdobMpvEventsThreadRunning) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV Events Thread, Already Started");
     return NULL;
   }
-  void *timeserver = NULL;
+  void *videoserver = NULL;
 
-  pg_sdobMpvTimeposThreadRunning = 1;
+  pg_sdobMpvEventsThreadRunning = 1;
   
-  if (pg_sdobMpvTimeposThreadKill) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos and Events Thread, Stop Flag Set");
+  if (pg_sdobMpvEventsThreadKill) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV Events Thread, Stop Flag Set");
     goto cleanup;
   }
-  if (libmpvCache->server->timeserver == NULL) {
-    dbgprintf(DBG_DEBUG, "%s\n", "Finding Timepos Server");
+  if (libmpvCache->server->videoserver == NULL) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Finding Video Server");
 
     config_t cfg;
     config_init(&cfg);
@@ -2153,65 +2153,61 @@ void * pg_sdobMpvTimeposThread(void *input) {
       goto cleanup;
     }
 
-    const char * retTimeServer;
-    if (config_lookup_string(&cfg, "timeserver", &retTimeServer)) {
-      libmpvCache->server->timeserver = strdup(retTimeServer);
+    const char * retVideoServer;
+    if (config_lookup_string(&cfg, "videoserver", &retVideoServer)) {
+      libmpvCache->server->videoserver = strdup(retVideoServer);
     } else {
-      printf("No timeserver configuration in ~/.config/sdobox/sdobox.conf\n");
+      printf("No videoserver configuration in ~/.config/sdobox/sdobox.conf\n");
       config_destroy(&cfg);
       goto cleanup;
     }
     config_destroy(&cfg);
   }
 
-  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos and Events Thread");
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV Events Thread");
   int rc = 0;
 
   // Try starting time server
-  rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
+  rc = zmq_connect_socket(&videoserver, libmpvCache->server->videoserver, ZMQ_SUB);
   // printf("Time Server: %d - %d\n", rc, ZMQ_SUB);
-  while (rc < 0 && !pg_sdobMpvTimeposThreadKill) {
-    zmq_close(timeserver);
+  while (rc < 0 && !pg_sdobMpvEventsThreadKill) {
+    zmq_close(videoserver);
     sleep(2);
-    rc = zmq_connect_socket(&timeserver, libmpvCache->server->timeserver, ZMQ_SUB);
+    rc = zmq_connect_socket(&videoserver, libmpvCache->server->videoserver, ZMQ_SUB);
   }
 
   // Did connect, try initialize subscriptions
-  if (rc > -1 && !pg_sdobMpvTimeposThreadKill) {
-    dbgprintf(DBG_DEBUG, "TimeServer Connected, %s - %d\n", libmpvCache->server->timeserver, rc);
-    const char *filtertimeserver = "";
-    rc = zmq_setsockopt (timeserver, ZMQ_SUBSCRIBE, filtertimeserver, strlen(filtertimeserver));
+  if (rc > -1 && !pg_sdobMpvEventsThreadKill) {
+    dbgprintf(DBG_DEBUG, "Video Server Connected, %s - %d\n", libmpvCache->server->videoserver, rc);
+    const char *filtervideoserver = "";
+    rc = zmq_setsockopt (videoserver, ZMQ_SUBSCRIBE, filtervideoserver, strlen(filtervideoserver));
 
     // printf("Timeserver RC: %d, Error: %d\n", rc, errno);
     // Failed to initialize subscriptions;
     if (rc < 0) {
-      dbgprintf(DBG_DEBUG, "%s\n", "Cannot Subscribe to TimeServer");   
-      // printf("%s\n", "Shutdown TimePos and Events Thread");
+      dbgprintf(DBG_DEBUG, "%s\n", "Cannot Subscribe to Video Server");   
+      // printf("%s\n", "Shutdown Events Thread");
       goto cleanup;
     }
  
     // 0MQs sockets to poll
     zmq_pollitem_t items [] = {
-      { timeserver, 0, ZMQ_POLLIN, 0 }
+      { videoserver, 0, ZMQ_POLLIN, 0 }
     };
     
-    while (!pg_sdobMpvTimeposThreadKill) {
+    while (!pg_sdobMpvEventsThreadKill) {
       rc = zmq_poll (items, 1, -1);
       if (!m_bQuit && rc > -1) {  
         if (items[0].revents & ZMQ_POLLIN) {
-          char *str = s_recv(timeserver);
-          dbgprintf(DBG_DEBUG, "timeserver: %s\n", str);
+          char *str = s_recv(videoserver);
+          dbgprintf(DBG_DEBUG, "videoserver: %s\n", str);
 
           if (strcmp(str, "timer") == 0) {
             libmpvCache->player->position_update = s_clock();
-            libmpvCache->player->position = strtod(s_recv(timeserver), NULL);
-            // printf("Timestamp: %f @ %lld\n", libmpvCache->player->position, libmpvCache->player->position_update);
-            secs_to_time((int)(libmpvCache->player->position * 1000000), libmpvCache->player->positionStr, 32);
-            setSliderPosByTime(&m_gui);
-            gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
+            libmpvCache->player->position = strtod(s_recv(videoserver), NULL);
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "duration") == 0) {
-            const char* myDuration = s_recv(timeserver) + 9;
+            const char* myDuration = s_recv(videoserver) + 9;
             // printf("Duration: %s\n", myDuration);
             libmpvCache->player->duration = strtod(myDuration, NULL);
             pg_sdob_pl_sliderForceUpdate = 1;
@@ -2238,8 +2234,77 @@ void * pg_sdobMpvTimeposThread(void *input) {
   }
   
  cleanup:
-  zmq_close(timeserver);
-  timeserver = NULL; 
+  zmq_close(videoserver);
+  videoserver = NULL; 
+  // printf("%s\n", "Closing TimePos and Events Thread");
+  pg_sdobMpvEventsThreadRunning = 0;
+  pthread_exit(NULL);
+}
+
+
+int pg_sdobMpvEventsThreadStart() {
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvEventsThreadStart()");
+  if (pg_sdobMpvEventsThreadRunning) { return 0; }
+
+  // pg_sdob_pl_sliderForceUpdate = 1;
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV Events Thread Spinup: %d\n", pg_sdobMpvEventsThreadRunning);
+  pg_sdobMpvEventsThreadKill = 0;
+  pthread_t tid;
+  return pthread_create(&tid, NULL, &pg_sdobMpvEventsThread, NULL);
+}
+
+void pg_sdobMpvEventsThreadStop() {
+  dbgprintf(DBG_DEBUG, "%s\n", "pg_sdobMpvEventsThreadStop()");
+  // Shutdown MPV FIFO Thread
+  int shutdown_cnt = 0;
+  if (pg_sdobMpvEventsThreadRunning) {
+    pg_sdobMpvEventsThreadKill = 1;
+    while (pg_sdobMpvEventsThreadRunning && shutdown_cnt < 20) {
+      usleep(100000);
+      shutdown_cnt++;
+    }
+  }
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV Events Thread Shutdown %d\n", shutdown_cnt);
+}
+
+
+
+// ------------------------
+// MPV Output TimePos Thread
+// ------------------------
+void * pg_sdobMpvTimeposThread(void *input) {
+  if (pg_sdobMpvTimeposThreadRunning) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Already Started");
+    return NULL;
+  }
+  
+  pg_sdobMpvTimeposThreadRunning = 1;
+  
+  if (pg_sdobMpvTimeposThreadKill) {
+    dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Stop Flag Set");
+    goto cleanup;
+  }
+
+  dbgprintf(DBG_DEBUG, "%s\n", "Starting MPV TimePos Thread");
+  int rc = 0;
+    
+  while (!pg_sdobMpvTimeposThreadKill) {
+    // printf("Timestamp: %f @ %lld\n", libmpvCache->player->position, libmpvCache->player->position_update);
+    
+    double realTime = libmpvCache->player->position;
+    if (libmpvCache->player->is_playing) {
+      double nDiff = (((double)(s_clock() - libmpvCache->player->position_update)) * libmpvCache->player->pbrate) / 1000;
+      realTime = realTime + nDiff;
+    }
+      
+    secs_to_time((int)(realTime * 1000000), libmpvCache->player->positionStr, 32);
+    setSliderPosByTime(&m_gui);
+    gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
+
+    usleep(1000000);
+  }
+  
+ cleanup:
   // printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
   pthread_exit(NULL);
@@ -2251,7 +2316,7 @@ int pg_sdobMpvTimeposThreadStart() {
   if (pg_sdobMpvTimeposThreadRunning) { return 0; }
 
   // pg_sdob_pl_sliderForceUpdate = 1;
-  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos and Events Thread Spinup: %d\n", pg_sdobMpvTimeposThreadRunning);
+  dbgprintf(DBG_DEBUG, "SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobMpvTimeposThreadRunning);
   pg_sdobMpvTimeposThreadKill = 0;
   pthread_t tid;
   return pthread_create(&tid, NULL, &pg_sdobMpvTimeposThread, NULL);
@@ -3252,7 +3317,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   ////////////////////////////
   // Start SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  pg_sdobMpvTimeposThreadStart(); // Processes Timestamps from :5555
+  pg_sdobMpvTimeposThreadStart(); // Processes Timestamps in a human way
+  pg_sdobMpvEventsThreadStart(); // Fetch events from video server :5555
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
   pg_sdobThreadStart(); // Processes QUEUE Events
 
@@ -3294,6 +3360,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
     libmpvCache->player->is_loaded = 0;
   }
 
+  pg_sdobSubmitAction();
   // Reset Scorecard Slider to Top
   // pg_sdobSliderResetCurPos(pGui);
 
@@ -3343,6 +3410,7 @@ void pg_skydiveorbust_destroy(gslc_tsGui *pGui) {
   pg_sdobThreadStop();
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
   pg_sdobMpvTimeposThreadStop();
+  pg_sdobMpvEventsThreadStop();
 
   pg_skydiveorbust_judgement_free();
   

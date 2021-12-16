@@ -249,6 +249,15 @@ void * libsdob_eventThread(void *input) {
             }
           }
 
+          if (pt != NULL && strcmp(pt, "ping") == 0) {
+            pt = strtok(NULL, ";");
+            // Submit Scorecard
+            struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+            INIT_QUEUE_HEAD(itemSc);
+            itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+            pg_sdob_add_action(&itemSc);
+          }          
+
 
 
           free(str);

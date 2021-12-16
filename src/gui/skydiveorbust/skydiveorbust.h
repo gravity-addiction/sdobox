@@ -242,6 +242,9 @@ void pg_sdobPlayerVideoRateChanging(gslc_tsGui *pGui, int changable);
 int pg_sdobMpvTimeposThreadKill;
 int pg_sdobMpvTimeposThreadRunning;
 
+int pg_sdobMpvEventsThreadKill;
+int pg_sdobMpvEventsThreadRunning;
+
 int pg_sdobMpvSocketThreadKill;
 int pg_sdobMpvSocketThreadRunning;
 

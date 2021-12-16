@@ -27,7 +27,7 @@ struct lib_mpv_player {
 };
 
 struct lib_mpv_server {
-  char* timeserver;
+  char* videoserver;
   char* cmdserver;
   char* reqserver;
 };
