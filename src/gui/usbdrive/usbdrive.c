@@ -400,33 +400,33 @@ void pg_usbdriveGuiInit(gslc_tsGui *pGui) {
 
 }
 
-void pg_usbdriveButtonRotaryCW() {
-
+int pg_usbdriveButtonRotaryCW() {
+  return 0;
 }
 
-void pg_usbdriveButtonRotaryCCW() {
-
+int pg_usbdriveButtonRotaryCCW() {
+  return 0;
 }
 
 
-void pg_usbdriveButtonLeftPressed() {
-
+int pg_usbdriveButtonLeftPressed() {
+  return 0;
 }
 
-void pg_usbdriveButtonRightPressed() {
-
+int pg_usbdriveButtonRightPressed() {
+  return 0;
 }
 
-void pg_usbdriveButtonRotaryPressed() {
-
+int pg_usbdriveButtonRotaryPressed() {
+  return 0;
 }
 
-void pg_usbdriveButtonLeftHeld() {
-
+int pg_usbdriveButtonLeftHeld() {
+  return 0;
 }
 
-void pg_usbdriveButtonRightHeld() {
-
+int pg_usbdriveButtonRightHeld() {
+  return 0;
 }
 
 

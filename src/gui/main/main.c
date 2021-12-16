@@ -315,36 +315,45 @@ void pg_mainUpdateVolume() {
   }
 }
 
-void pg_mainButtonRotaryCW() {
+int pg_mainButtonRotaryCW() {
   volume_new = m_nPosVolume + 8;
   if (volume_new > 104) { volume_new = 104; }
   m_nPosVolume = volume_new;
+  return 1;
 }
-void pg_mainButtonRotaryCCW() {
+int pg_mainButtonRotaryCCW() {
   volume_new = m_nPosVolume - 8;
   if (volume_new < 0) { volume_new = 0; }
   m_nPosVolume = volume_new;
+  return 1;
 }
-void pg_mainButtonLeftPressed() {
+int pg_mainButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
+  return 1;
 }
-void pg_mainButtonRightPressed() {
+int pg_mainButtonRightPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh next");
+  return 1;
 }
-void pg_mainButtonRotaryPressed() {
+int pg_mainButtonRotaryPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
+  return 1;
 }
-void pg_mainButtonLeftHeld() {
+int pg_mainButtonLeftHeld() {
   backlight_off();
+  return 1;
 }
-void pg_mainButtonRightHeld() {
+int pg_mainButtonRightHeld() {
   backlight_on();
+  return 1;
 }
-void pg_mainButtonRotaryHeld() {
+int pg_mainButtonRotaryHeld() {
   guislice_wrapper_mirror_toggle(&m_gui);
+  return 1;
 }
-void pg_mainButtonDoubleHeld() {
+int pg_mainButtonDoubleHeld() {
   touchscreenPageGoBack(&m_gui);
+  return 1;
 }
 
 // Setup Button Functions

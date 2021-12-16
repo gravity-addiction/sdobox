@@ -831,30 +831,37 @@ void pg_fileFinderGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_fileFinderButtonRotaryCW() {
+int pg_fileFinderButtonRotaryCW() {
   vlist_next(pg_fileFinder_listConfig);
   vlist_sliderSetPosFromCur(&m_gui, pg_fileFinder_listConfig);
   gslc_ElemSetRedraw(&m_gui, pg_fileFinderEl[E_FILEFINDER_EL_BOX], GSLC_REDRAW_FULL);
+  return 1;
 }
-void pg_fileFinderButtonRotaryCCW() {
+int pg_fileFinderButtonRotaryCCW() {
   vlist_prev(pg_fileFinder_listConfig);
   vlist_sliderSetPosFromCur(&m_gui, pg_fileFinder_listConfig);
   gslc_ElemSetRedraw(&m_gui, pg_fileFinderEl[E_FILEFINDER_EL_BOX], GSLC_REDRAW_FULL);
+  return 1;
 }
-void pg_fileFinderButtonLeftPressed() {
+int pg_fileFinderButtonLeftPressed() {
   pg_fileFinder_playListEntry(&m_gui);
+  return 1;
 }
-void pg_fileFinderButtonRightPressed() {
+int pg_fileFinderButtonRightPressed() {
   mpv_stop();
+  return 1;
 }
-void pg_fileFinderButtonRotaryPressed() {
+int pg_fileFinderButtonRotaryPressed() {
   pg_fileFinder_selectListEntry(&m_gui);
+  return 1;
 }
-void pg_fileFinderButtonLeftHeld() {
+int pg_fileFinderButtonLeftHeld() {
   // debug_print("%s\n", "Main Left Held");
+  return 0;
 }
-void pg_fileFinderButtonRightHeld() {
+int pg_fileFinderButtonRightHeld() {
   // debug_print("%s\n", "Main Right Held");
+  return 0;
 }
 
 

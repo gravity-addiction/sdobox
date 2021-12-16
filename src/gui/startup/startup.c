@@ -329,32 +329,34 @@ void pg_startupGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_startupButtonRotaryCW() {
-
+int pg_startupButtonRotaryCW() {
+  return 0;
 }
-void pg_startupButtonRotaryCCW() {
-
+int pg_startupButtonRotaryCCW() {
+  return 0;
 }
-void pg_startupButtonLeftPressed() {
-
+int pg_startupButtonLeftPressed() {
+  return 0;
 }
-void pg_startupButtonRightPressed() {
-
+int pg_startupButtonRightPressed() {
+  return 0;
 }
-void pg_startupButtonRotaryPressed() {
-
+int pg_startupButtonRotaryPressed() {
+  return 0;
 }
-void pg_startupButtonLeftHeld() {
-
+int pg_startupButtonLeftHeld() {
+  return 0;
 }
-void pg_startupButtonRightHeld() {
-
+int pg_startupButtonRightHeld() {
+  return 0;
 }
-void pg_startupButtonRotaryHeld() {
+int pg_startupButtonRotaryHeld() {
   guislice_wrapper_mirror_toggle(&m_gui);
+  return 1;
 }
-void pg_startupButtonDoubleHeld() {
+int pg_startupButtonDoubleHeld() {
   touchscreenPageGoBack(&m_gui);
+  return 1;
 }
 
 // Setup Button Functions

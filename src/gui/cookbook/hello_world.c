@@ -106,26 +106,26 @@ void pg_cookbookHelloWorldGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_cookbookHelloWorldButtonRotaryCW() {
-
+int pg_cookbookHelloWorldButtonRotaryCW() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonRotaryCCW() {
-
+int pg_cookbookHelloWorldButtonRotaryCCW() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonLeftPressed() {
-
+int pg_cookbookHelloWorldButtonLeftPressed() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonRightPressed() {
-
+int pg_cookbookHelloWorldButtonRightPressed() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonRotaryPressed() {
-
+int pg_cookbookHelloWorldButtonRotaryPressed() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonLeftHeld() {
-
+int pg_cookbookHelloWorldButtonLeftHeld() {
+  return 0;
 }
-void pg_cookbookHelloWorldButtonRightHeld() {
-
+int pg_cookbookHelloWorldButtonRightHeld() {
+  return 0;
 }
 
 // Setup Button Functions

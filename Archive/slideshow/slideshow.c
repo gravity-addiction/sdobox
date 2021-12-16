@@ -306,20 +306,17 @@ void pg_slideshowGuiInit(gslc_tsGui *pGui) {
 void pg_slideshowButtonRotaryCW() {
   // Zoom Mode, Right Button Pressed, Rotary CW
   if (pg_slideshowZooming && lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_PRESSED]) {
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 1; // Surpress cbHeld
     pg_slideshow_ctrlUp();
 
 
   // Zoom Mode, Left Button Pressed, Rotary CW
   } else if (pg_slideshowZooming && lib_buttonsLastInterruptAction[E_BUTTON_LEFT_PRESSED]) {
-    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 1; // Surpress cbHeld
     pg_slideshowZooming = 1;
     pg_slideshow_ctrlZoomIn();
 
 
   // Right Button Pressed, Rotary CW
   } else if (lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_PRESSED]) {
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 1; // Surpress cbHeld
     // pg_slideshowReset();
 
 
@@ -345,7 +342,6 @@ void pg_slideshowButtonRotaryCW() {
 void pg_slideshowButtonRotaryCCW() {
   // Zoom Mode, Right Button Pressed, Rotary CCW
   if (pg_slideshowZooming && lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_PRESSED]) {
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 1; // Surpress cbHeld
     pg_slideshow_ctrlDown();
 
   // Zoom Mode, Left Button Pressed, Rotary CCW
@@ -356,7 +352,6 @@ void pg_slideshowButtonRotaryCCW() {
 
   // Right Button Pressed, Rotary CCW
   } else if (lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_PRESSED]) {
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 1; // Surpress cbHeld
     // pg_slideshowReset();
 
 

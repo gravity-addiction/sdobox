@@ -36,15 +36,16 @@ gslc_tsXSlider pg_sdobVideo_listSlider;
 void pg_sdobVideoList_loadFolder(gslc_tsGui *pGui, char* folderPath);
 
 
-void pg_sdobVideoListButtonRotaryCW();
-void pg_sdobVideoListButtonRotaryCCW();
-void pg_sdobVideoListButtonLeftPressed();
-void pg_sdobVideoListButtonRightPressed();
-void pg_sdobVideoListButtonRotaryPressed();
-void pg_sdobVideoListButtonLeftHeld();
-void pg_sdobVideoListButtonRightHeld();
-void pg_sdobVideoListButtonRotaryHeld();
-void pg_sdobVideoListButtonDoubleHeld();
+int pg_sdobVideoListButtonRotaryCW();
+int pg_sdobVideoListButtonRotaryCCW();
+int pg_sdobVideoListButtonLeftPressed();
+int pg_sdobVideoListButtonRightPressed();
+int pg_sdobVideoListButtonRotaryPressed();
+int pg_sdobVideoListButtonLeftHeld();
+int pg_sdobVideoListButtonRightHeld();
+int pg_sdobVideoListButtonRotaryHeld();
+int pg_sdobVideoListButtonDoubleHeld();
+
 void pg_sdobVideoListButtonSetFuncs();
 
 void pg_sdobVideoList_init(gslc_tsGui *pGui);

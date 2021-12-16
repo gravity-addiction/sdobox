@@ -19,7 +19,7 @@ threadpool buttons_thpool = NULL;
 
 void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]) {
   for (int p = 0; p < whitelistPinsSize; p++) {
-    printf("Check Pin: %d\n", whitelistedPins[p]);
+    dbgprintf(DBG_INFO, "Check Pin: %d\n", whitelistedPins[p]);
     pinCache[p] = digitalRead(whitelistedPins[p]);
   }
 }
@@ -153,59 +153,69 @@ int lib_buttons_thread() {
   // int rPin = digitalRead(RIGHT_PIN_BTN);
   // int kPin = digitalRead(ROTARY_PIN_BTN);
 
-  if (lib_buttonsLastInterruptAction[E_BUTTON_LEFT_UP] > 0) {
+  if (lib_buttonsLastInterruptTime[E_BUTTON_LEFT_UP] > 0) {
     lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 0;
     lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD] = 0;
   }
-  if (lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_UP] > 0) {
+  if (lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_UP] > 0) {
     lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 0;
     lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD] = 0;
   }
 
   // Check Left Held
   if (
-    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_DOWN] > 0
+    lib_buttonsLastInterruptTime[E_BUTTON_LEFT_DOWN] > 0
     && lib_buttonsLastInterruptTime[E_BUTTON_LEFT_DOWN] < (i_now - lib_buttonsBtnHoldDelay)
     && lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] == 0
+    && cbBtns[E_BUTTON_LEFT_HELD]
   ) {
     ++lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD];
-    printf("Execute Left Held\n");
+    dbgprintf(DBG_INFO, "%s\n", "Execute Left Held");
     // Execute CB Left Held Function
-    if (cbBtns[E_BUTTON_LEFT_HELD]) thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_LEFT_HELD], NULL);
+    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] += cbBtns[E_BUTTON_LEFT_HELD]();
+    // thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_LEFT_HELD], NULL);
   }
 
+  // Check Right Held
   if (
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_DOWN] > 0
+    lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_DOWN] > 0
     && lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_DOWN] < (i_now - lib_buttonsBtnHoldDelay)
     && lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] == 0
+    && cbBtns[E_BUTTON_RIGHT_HELD]
   ) {
     ++lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD];
-    printf("Execute Right Held\n");
+    dbgprintf(DBG_INFO, "%s\n", "Execute Right Held");
     // Execute CB
-    if (cbBtns[E_BUTTON_RIGHT_HELD]) thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_RIGHT_HELD], NULL);
+    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] += cbBtns[E_BUTTON_RIGHT_HELD]();
+    // thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_RIGHT_HELD], NULL);
   }
 
+  // Check Rotary Held
   if (
-    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_DOWN] > 0
+    lib_buttonsLastInterruptTime[E_BUTTON_ROTARY_DOWN] > 0
     && lib_buttonsLastInterruptTime[E_BUTTON_ROTARY_DOWN] < (i_now - lib_buttonsBtnHoldDelay)
     && lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] == 0
+    && cbBtns[E_BUTTON_ROTARY_HELD]
   ) {
     ++lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD];
-    printf("Execute Rotary Held\n");
+    dbgprintf(DBG_INFO, "%s\n", "Execute Rotary Held");
     // Execute CB
-    if (cbBtns[E_BUTTON_ROTARY_HELD]) thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_ROTARY_HELD], NULL);
+    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] += cbBtns[E_BUTTON_ROTARY_HELD]();
+    
+    // thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_ROTARY_HELD], NULL);
   }
-
 
   // Dbl Button Press Held Found
   if (
     lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] > 0
     && lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] > 0
     && lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD] == 0
+    && cbBtns[E_BUTTON_DOUBLE_HELD]
   ) {
-    ++lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD];
-    printf("Execute Double Held\n");
-    if (cbBtns[E_BUTTON_DOUBLE_HELD]) thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_DOUBLE_HELD], NULL);
+    // ++lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD];
+    dbgprintf(DBG_INFO, "%s\n", "Execute Double Held");
+    lib_buttonsLastInterruptAction[E_BUTTON_DOUBLE_HELD] = cbBtns[E_BUTTON_DOUBLE_HELD]();
+    // thpool_add_work(buttons_thpool, cbBtns[E_BUTTON_DOUBLE_HELD], NULL);
   }
 
   return 1;
@@ -213,12 +223,12 @@ int lib_buttons_thread() {
 
 
 
-void lib_buttons_check(void* input) {
+int lib_buttons_check(void* input) {
   while(!lib_buttonsThreadKill) {
-    if (!lib_buttons_thread()) {
-      usleep(100000);
-    }
+    lib_buttons_thread();
+    usleep(1000000);
   }
+  return 1;
 }
 
 
@@ -252,20 +262,30 @@ void lib_buttons_init() {
   if ( ROTARY_PIN_A > -1 && ROTARY_PIN_B > -1 && wiringPiISR (ROTARY_PIN_B, INT_EDGE_BOTH, &lib_buttonsRotaryInterrupt) < 0 ) {
     // debug_print("Unable to setup Rotary Pin B ISR: %s\n", strerror(errno));
   }
-  if ( ROTARY_PIN_BTN > -1 && wiringPiISR (ROTARY_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRotaryBtnInterrupt) < 0 ) {
-    // debug_print("Unable to setup Rotary Pin Btn ISR: %s\n", strerror(errno));
+
+  if (ROTARY_PIN_BTN > -1) {
+    if (wiringPiISR (ROTARY_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRotaryBtnInterrupt) < 0 ) {
+      // debug_print("Unable to setup Left Btn ISR: %s\n", strerror(errno));
+    } else {
+      if (digitalRead(ROTARY_PIN_BTN) == 1) {
+        dbgprintf(DBG_INFO, "%s\n", "Set Rotary Up");
+        lib_buttonsLastInterruptTime[E_BUTTON_ROTARY_UP] = millis();
+      } else {
+        dbgprintf(DBG_INFO, "%s\n", "Set Rotary Down");
+        lib_buttonsLastInterruptTime[E_BUTTON_ROTARY_DOWN] = millis();
+      }
+    }
   }
 
-  
   if (RIGHT_PIN_BTN > -1) {
     if (wiringPiISR (RIGHT_PIN_BTN, INT_EDGE_BOTH, &lib_buttonsRightBtnInterrupt) < 0 ) {
       // debug_print("Unable to setup Left Btn ISR: %s\n", strerror(errno));
     } else {
       if (digitalRead(RIGHT_PIN_BTN) == 1) {
-        printf("Set Right Up\n");
+        dbgprintf(DBG_INFO, "%s\n", "Set Right Up");
         lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_UP] = millis();
       } else {
-        printf("Set Right Down\n");
+        dbgprintf(DBG_INFO, "%s\n", "Set Right Down");
         lib_buttonsLastInterruptTime[E_BUTTON_RIGHT_DOWN] = millis();
       }
     }
@@ -275,8 +295,10 @@ void lib_buttons_init() {
       // debug_print("Unable to setup Left Btn ISR: %s\n", strerror(errno));
     } else {
       if (digitalRead(LEFT_PIN_BTN) == 1) {
+        dbgprintf(DBG_INFO, "%s\n", "Set Left Up");
         lib_buttonsLastInterruptTime[E_BUTTON_LEFT_UP] = millis();
       } else {
+        dbgprintf(DBG_INFO, "%s\n", "Set Left Down");
         lib_buttonsLastInterruptTime[E_BUTTON_LEFT_DOWN] = millis();
       }
     }
@@ -309,7 +331,7 @@ void lib_buttonsThreadStop() {
 
 
 // Set callback for button actions
-void lib_buttonsSetCallbackFunc(int btn, void (*function)()) {
+void lib_buttonsSetCallbackFunc(int btn, int (*function)()) {
   cbBtns[btn] = function;
   lib_buttonsLastInterruptAction[btn] = 0;
   return;
@@ -329,23 +351,30 @@ int lib_buttonsManageBtnInterrupt(int pin, int timeUp, int timeDown, \
 
   // printf("%d - %d - %d\n", i_now, lib_buttonsLastInterruptTime[timeUp], lib_buttonsLastInterruptTime[timeDown]);
   // printf("%d, Pin: %d - %d - Delay: %d, Relased: %d, Pressed: %d\n", i_now, pin, p, lib_buttonsBtnDebounceDelay, lib_buttonsLastInterruptAction[actionReleased], lib_buttonsLastInterruptAction[actionPressed]);
-  // printf("Got p: %d\n", p);
+  // printf("Got p: %d ", p);
+
+
 
   if (
     p == 1
-    && lib_buttonsLastInterruptTime[timeDown] < (i_now - lib_buttonsBtnDebounceDelay)
-    && lib_buttonsLastInterruptTime[timeUp] < (i_now - 50)
-  ) {
-    lib_buttonsLastInterruptTime[timeDown] = i_now;
-    if (cbBtns[actionPressed]) thpool_add_work(buttons_thpool, cbBtns[actionPressed], NULL);
-  }
-
-  if (p == 0
-    && lib_buttonsLastInterruptTime[timeDown] < (i_now - 50)
+    && lib_buttonsLastInterruptTime[timeDown] > 0 // Ensure it was Down at some point
+    && (lib_buttonsLastInterruptTime[timeDown] + 50) < i_now // Jitter
     && lib_buttonsLastInterruptTime[timeUp] < (i_now - lib_buttonsBtnDebounceDelay)
   ) {
     lib_buttonsLastInterruptTime[timeUp] = i_now;
-    if (cbBtns[actionReleased]) thpool_add_work(buttons_thpool, cbBtns[actionReleased], NULL);
+    lib_buttonsLastInterruptTime[timeDown] = 0;
+    dbgprintf(DBG_INFO, "%s\n", "Execute Release");
+    if (cbBtns[actionReleased] && lib_buttonsLastInterruptAction[actionHeld] == 0) thpool_add_work(buttons_thpool, cbBtns[actionReleased], NULL);
+  } else if (
+    p == 0
+    && lib_buttonsLastInterruptTime[timeUp] > 0 // Ensure it was Up at some point
+    && (lib_buttonsLastInterruptTime[timeUp] + 50) < i_now // Jitter
+    && lib_buttonsLastInterruptTime[timeDown] < (i_now - lib_buttonsBtnDebounceDelay)
+  ) {
+    lib_buttonsLastInterruptTime[timeDown] = i_now;
+    lib_buttonsLastInterruptTime[timeUp] = 0;
+    dbgprintf(DBG_INFO, "%s\n", "Execute Press");
+    if (cbBtns[actionPressed]) thpool_add_work(buttons_thpool, cbBtns[actionPressed], NULL);
   }
 
  // cleanup:

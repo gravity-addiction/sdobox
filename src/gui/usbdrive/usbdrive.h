@@ -30,13 +30,14 @@ gslc_tsElemRef pg_usbdriveElemRef[MAX_ELEM_PG_USBDRIVE_RAM];
 
 gslc_tsElemRef* pg_usbdriveEl[E_USBDRIVE_EL_MAX];
 
-void pg_usbdriveButtonRotaryCW();
-void pg_usbdriveButtonRotaryCCW();
-void pg_usbdriveButtonLeftPressed();
-void pg_usbdriveButtonRightPressed();
-void pg_usbdriveButtonRotaryPressed();
-void pg_usbdriveButtonLeftHeld();
-void pg_usbdriveButtonRightHeld();
+int pg_usbdriveButtonRotaryCW();
+int pg_usbdriveButtonRotaryCCW();
+int pg_usbdriveButtonLeftPressed();
+int pg_usbdriveButtonRightPressed();
+int pg_usbdriveButtonRotaryPressed();
+int pg_usbdriveButtonLeftHeld();
+int pg_usbdriveButtonRightHeld();
+
 void pg_usbdriveButtonSetFuncs();
 void pg_usbdriveButtonUnsetFuncs();
 

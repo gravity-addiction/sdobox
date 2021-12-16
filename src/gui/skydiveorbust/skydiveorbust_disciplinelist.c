@@ -363,26 +363,33 @@ void pg_sdobDisciplineListGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_sdobDisciplineListButtonRotaryCW() {
+int pg_sdobDisciplineListButtonRotaryCW() {
   // debug_print("%s\n", "SDOB Videolist CW");
+  return 0;
 }
-void pg_sdobDisciplineListButtonRotaryCCW() {
+int pg_sdobDisciplineListButtonRotaryCCW() {
   // debug_print("%s\n", "SDOB Videolist CCW");
+  return 0;
 }
-void pg_sdobDisciplineListButtonLeftPressed() {
+int pg_sdobDisciplineListButtonLeftPressed() {
   // debug_print("%s\n", "SDOB Videolist Left Pressed");
+  return 0;
 }
-void pg_sdobDisciplineListButtonRightPressed() {
+int pg_sdobDisciplineListButtonRightPressed() {
   // debug_print("%s\n", "SDOB Videolist Right Pressed");
+  return 0;
 }
-void pg_sdobDisciplineListButtonRotaryPressed() {
+int pg_sdobDisciplineListButtonRotaryPressed() {
   // debug_print("%s\n", "SDOB Videolist Rotary Pressed");
+  return 0;
 }
-void pg_sdobDisciplineListButtonLeftHeld() {
+int pg_sdobDisciplineListButtonLeftHeld() {
   // debug_print("%s\n", "SDOB Videolist Left Held");
+  return 0;
 }
-void pg_sdobDisciplineListButtonRightHeld() {
+int pg_sdobDisciplineListButtonRightHeld() {
   // debug_print("%s\n", "SDOB Videolist Right Held");
+  return 0;
 }
 
 // Setup Button Functions

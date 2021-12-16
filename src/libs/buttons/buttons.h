@@ -63,7 +63,7 @@ int      lib_buttonsThreadRunning; // Running flag for Mpv RPC
 
 int lib_buttonsDisabled; // Complete Disable Buttons While in Mirroring
 
-void (*cbBtns[MAX_BUTTONS])();
+int (*cbBtns[MAX_BUTTONS])();
 
 void lib_buttons_searchGPIO(const int whitelistPinsSize, const int *whitelistedPins, int pinCache[]);
 int lib_buttons_findGPIO(int i_timeout, int isleep);
@@ -78,7 +78,7 @@ void lib_buttons_init();
 int lib_buttonsThreadStart();
 void lib_buttonsThreadStop();
 
-void lib_buttonsSetCallbackFunc(int btn, void (*function)());
+void lib_buttonsSetCallbackFunc(int btn, int (*function)());
 
 int lib_buttonsManageBtnInterrupt(int pin, int timeLow, int timeHigh, int actionPressed, \
                        int actionReleased, int actionHeld);

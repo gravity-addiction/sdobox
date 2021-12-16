@@ -17,6 +17,7 @@
 
 #include "./skydiveorbust.h"
 #include "./skydiveorbust_zmq.h"
+#include "./skydiveorbust_submit.h"
 
 #include "gui/pages.h"
 
@@ -1820,7 +1821,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
 /////////////////////////////////////////////
 // Buttons
 //
-void pg_skydiveorbustButtonRotaryCW() {
+int pg_skydiveorbustButtonRotaryCW() {
   struct queue_head *item;
 
   if (pg_sdob_change_video_rate) {
@@ -1834,7 +1835,7 @@ void pg_skydiveorbustButtonRotaryCW() {
     // itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     // queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
-
+    return 1;
   } else if (sdob_judgement->marks->selected <= 0) {
     // Framestep
     //
@@ -1868,16 +1869,20 @@ void pg_skydiveorbustButtonRotaryCW() {
 
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // queue_put(itemSpeed, pg_sdobQueue, &pg_sdobQueueLen);
+
+    return 1;
   } else {
     item = new_qhead();
     item->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     item->amt = 1;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    
+    return 1;
   }
 }
 
-void pg_skydiveorbustButtonRotaryCCW() {
+int pg_skydiveorbustButtonRotaryCCW() {
   struct queue_head *item;
 
 
@@ -1892,6 +1897,7 @@ void pg_skydiveorbustButtonRotaryCCW() {
     // itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     // queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
+    return 1;
 
   // Not on a selection mark
   } else if (sdob_judgement->marks->selected <= 0) {
@@ -1904,6 +1910,7 @@ void pg_skydiveorbustButtonRotaryCCW() {
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // mpv_seek(-2);
 
+    return 1;
 
   // Skip to next point
   } else {
@@ -1912,6 +1919,8 @@ void pg_skydiveorbustButtonRotaryCCW() {
     item->amt = -1;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    return 1;
   }
 }
 
@@ -1920,7 +1929,7 @@ void pg_skydiveorbust_update_duration(double duration) {
 }
 
 
-void pg_skydiveorbustButtonLeftPressed() {
+int pg_skydiveorbustButtonLeftPressed() {
   struct queue_head *item;
 
   dbgprintf(DBG_DEBUG, "Left Pressed: %d\n", sdob_judgement->marks->selected);
@@ -1936,6 +1945,7 @@ void pg_skydiveorbustButtonLeftPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
+    return 1;
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
     item = new_qhead();
@@ -1945,10 +1955,12 @@ void pg_skydiveorbustButtonLeftPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     pg_sdobScoringSelectionClear(&m_gui);
+
+    return 1;
   }
 }
 
-void pg_skydiveorbustButtonRightPressed() {
+int pg_skydiveorbustButtonRightPressed() {
   struct queue_head *item;
 
   dbgprintf(DBG_DEBUG, "Right Pressed: %d - %f - %f, %d\n", sdob_judgement->marks->selected, sdob_judgement->prestartTime, sdob_judgement->sopst, sdob_devicehost->isHost);
@@ -1964,6 +1976,7 @@ void pg_skydiveorbustButtonRightPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
+    return 1;
   } else {
     // Add to queue E_Q_SCORECARD_UPDATE_MARK
     item = new_qhead();
@@ -1973,15 +1986,17 @@ void pg_skydiveorbustButtonRightPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     pg_sdobScoringSelectionClear(&m_gui);
+
+    return 1;
   }
 }
 
-void pg_skydiveorbustButtonRotaryPressed() {
+int pg_skydiveorbustButtonRotaryPressed() {
   if (sdob_judgement->marks->selected == 0) {
     // Reset SOWT
-
+    return 0;
   } else if (sdob_judgement->marks->selected < 0) {
-
+    return 0;
   } else {
     struct queue_head *itemSeek = new_qhead();
     itemSeek->action = E_Q_ACTION_MPV_COMMAND;
@@ -2000,10 +2015,11 @@ void pg_skydiveorbustButtonRotaryPressed() {
     // // Clear Selection
     // // itemMove->selected = -1;
     // // queue_put(itemMove, pg_sdobQueue, &pg_sdobQueueLen);
+    return 1;
   }
 }
 
-void pg_skydiveorbustButtonLeftHeld() {
+int pg_skydiveorbustButtonLeftHeld() {
   if (sdob_judgement->marks->selected >= 0) {
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_DELETE_MARK;
@@ -2011,29 +2027,25 @@ void pg_skydiveorbustButtonLeftHeld() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    // Skip Release Action
-    lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 2;    
-  } else {
-
+    return 1;   
   }
+  return 0;
 }
 
-void pg_skydiveorbustButtonRightHeld() {
+int pg_skydiveorbustButtonRightHeld() {
   if (sdob_judgement->marks->selected >= 0) {
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->selected = sdob_judgement->marks->selected;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    
-    // Skip Release Action
-    lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 2;
-  } else {
 
+    return 1;
   }
+  return 0;
 }
 
-void pg_skydiveorbustButtonRotaryHeld() {
+int pg_skydiveorbustButtonRotaryHeld() {
   if (sdob_judgement->marks->selected >= 0) {
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_UPDATE_MARK;
@@ -2042,20 +2054,20 @@ void pg_skydiveorbustButtonRotaryHeld() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    // Skip Release Action
-    lib_buttonsLastInterruptAction[E_BUTTON_ROTARY_HELD] = 2;
+    return 1;
   } else {
     guislice_wrapper_mirror_toggle(&m_gui);
+    return 1;
   }
 }
 
-void pg_skydiveorbustButtonDoubleHeld() {
-  lib_buttonsLastInterruptAction[E_BUTTON_LEFT_HELD] = 2;
-  lib_buttonsLastInterruptAction[E_BUTTON_RIGHT_HELD] = 2;
+int pg_skydiveorbustButtonDoubleHeld() {
   if (m_page_stackLen == 0) {
     touchscreenPageOpen(&m_gui, E_PG_MAIN);
+    return 1;
   } else {
     touchscreenPageGoBack(&m_gui);
+    return 1;
   }
 }
 

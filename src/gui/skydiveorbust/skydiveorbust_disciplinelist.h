@@ -40,15 +40,16 @@ gslc_tsXSlider pg_sdobDiscipline_listSlider;
 
 void pg_sdobDisciplineList_loadDisciplines(gslc_tsGui *pGui);
 
-void pg_sdobDisciplineListButtonRotaryCW();
-void pg_sdobDisciplineListButtonRotaryCCW();
-void pg_sdobDisciplineListButtonLeftPressed();
-void pg_sdobDisciplineListButtonRightPressed();
-void pg_sdobDisciplineListButtonRotaryPressed();
-void pg_sdobDisciplineListButtonLeftHeld();
-void pg_sdobDisciplineListButtonRightHeld();
-void pg_sdobDisciplineListButtonRotaryHeld();
-void pg_sdobDisciplineListButtonDoubleHeld();
+int pg_sdobDisciplineListButtonRotaryCW();
+int pg_sdobDisciplineListButtonRotaryCCW();
+int pg_sdobDisciplineListButtonLeftPressed();
+int pg_sdobDisciplineListButtonRightPressed();
+int pg_sdobDisciplineListButtonRotaryPressed();
+int pg_sdobDisciplineListButtonLeftHeld();
+int pg_sdobDisciplineListButtonRightHeld();
+int pg_sdobDisciplineListButtonRotaryHeld();
+int pg_sdobDisciplineListButtonDoubleHeld();
+
 void pg_sdobDisciplineListButtonSetFuncs();
 
 void pg_sdobDisciplineList_init(gslc_tsGui *pGui);

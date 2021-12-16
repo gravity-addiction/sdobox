@@ -101,7 +101,7 @@ void libsdob_zmq_destroy() {
 // Submit Scorecard
 static pthread_mutex_t scoringSend = PTHREAD_MUTEX_INITIALIZER;
 
-void libsdob_zmq_scoring_send_th(void* input) {
+int libsdob_zmq_scoring_send_th(void* input) {
   pthread_mutex_lock(&scoringSend);
   dbgprintf(DBG_DEBUG, "Scoring Send: %s\n", ((struct libsdob_question *)input)->question);
   int rc = s_send (((struct libsdob_question *)input)->server, ((struct libsdob_question *)input)->question);
@@ -114,7 +114,7 @@ void libsdob_zmq_scoring_send_th(void* input) {
   }
 
   char *string = s_recv(((struct libsdob_question *)input)->server);
-  printf("Here: %s\n", string);
+  dbgprintf(DBG_INFO, "ZMQ Return: %s\n", string);
   free(string);
 
  cleanup:
@@ -122,7 +122,7 @@ void libsdob_zmq_scoring_send_th(void* input) {
 //  ((struct libsdob_question *)input)->question = NULL;
   LIBSDOB_QUESTION_DESTROY((struct libsdob_question *)input);
   pthread_mutex_unlock(&scoringSend);
-  return;
+  return 1;
 }
 
 int libsdob_zmq_scoring_send(char* scorecard) {

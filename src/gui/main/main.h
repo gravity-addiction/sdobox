@@ -40,17 +40,17 @@ gslc_tsElemRef* pg_mainEl[E_MAIN_EL_MAX];
 gslc_tsXSlider m_sXSlider_Volume;
 uint16_t m_nPosVolume;
 
-void pg_mainButtonRotaryCW();
-void pg_mainButtonRotaryCCW();
-void pg_mainButtonLeftPressed();
-void pg_mainButtonRightPressed();
-void pg_mainButtonRotaryPressed();
-void pg_mainButtonLeftHeld();
-void pg_mainButtonRightHeld();
-void pg_mainButtonRotaryHeld();
-void pg_mainButtonDoubleHeld();
-void pg_mainButtonSetFuncs();
+int pg_mainButtonRotaryCW();
+int pg_mainButtonRotaryCCW();
+int pg_mainButtonLeftPressed();
+int pg_mainButtonRightPressed();
+int pg_mainButtonRotaryPressed();
+int pg_mainButtonLeftHeld();
+int pg_mainButtonRightHeld();
+int pg_mainButtonRotaryHeld();
+int pg_mainButtonDoubleHeld();
 
+void pg_mainButtonSetFuncs();
 void pg_main_loadFolder(gslc_tsGui *pGui, char* folderPath);
 
 void pg_main_init(gslc_tsGui *pGui);

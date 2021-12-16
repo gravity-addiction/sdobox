@@ -335,15 +335,16 @@ void pg_skydiveorbustGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect);
 void pg_skydiveorbustGuiRedraw(gslc_tsGui *pGui);
 
 
-void pg_skydiveorbustButtonRotaryCW();
-void pg_skydiveorbustButtonRotaryCCW();
-void pg_skydiveorbustButtonLeftPressed();
-void pg_skydiveorbustButtonRightPressed();
-void pg_skydiveorbustButtonRotaryPressed();
-void pg_skydiveorbustButtonLeftHeld();
-void pg_skydiveorbustButtonRightHeld();
-void pg_skydiveorbustButtonRotaryHeld();
-void pg_skydiveorbustButtonDoubleHeld();
+int pg_skydiveorbustButtonRotaryCW();
+int pg_skydiveorbustButtonRotaryCCW();
+int pg_skydiveorbustButtonLeftPressed();
+int pg_skydiveorbustButtonRightPressed();
+int pg_skydiveorbustButtonRotaryPressed();
+int pg_skydiveorbustButtonLeftHeld();
+int pg_skydiveorbustButtonRightHeld();
+int pg_skydiveorbustButtonRotaryHeld();
+int pg_skydiveorbustButtonDoubleHeld();
+
 void pg_skydiveorbustButtonSetFuncs();
 void pg_skydiveorbustButtonUnsetFuncs();
 

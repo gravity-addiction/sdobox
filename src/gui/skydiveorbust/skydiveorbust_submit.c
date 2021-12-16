@@ -282,26 +282,33 @@ void pg_sdobSubmitGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_sdobSubmitButtonRotaryCW() {
+int pg_sdobSubmitButtonRotaryCW() {
   // debug_print("%s\n", "SDOB Submit CW");
+  return 0;
 }
-void pg_sdobSubmitButtonRotaryCCW() {
+int pg_sdobSubmitButtonRotaryCCW() {
   // debug_print("%s\n", "SDOB Submit CCW");
+  return 0;
 }
-void pg_sdobSubmitButtonLeftPressed() {
+int pg_sdobSubmitButtonLeftPressed() {
   // debug_print("%s\n", "SDOB Submit Left Pressed");
+  return 0;
 }
-void pg_sdobSubmitButtonRightPressed() {
+int pg_sdobSubmitButtonRightPressed() {
   // debug_print("%s\n", "SDOB Submit Right Pressed");
+  return 0;
 }
-void pg_sdobSubmitButtonRotaryPressed() {
+int pg_sdobSubmitButtonRotaryPressed() {
   // debug_print("%s\n", "SDOB Submit Rotary Pressed");
+  return 0;
 }
-void pg_sdobSubmitButtonLeftHeld() {
+int pg_sdobSubmitButtonLeftHeld() {
   // debug_print("%s\n", "SDOB Submit Left Held");
+  return 0;
 }
-void pg_sdobSubmitButtonRightHeld() {
+int pg_sdobSubmitButtonRightHeld() {
   // debug_print("%s\n", "SDOB Submit Right Held");
+  return 0;
 }
 
 // Setup Button Functions

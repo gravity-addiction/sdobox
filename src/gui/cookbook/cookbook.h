@@ -33,15 +33,15 @@ struct fileStruct **pg_cookbook_listFolders;
 char* pg_cookbook_currentFolderPath;
 gslc_tsXSlider pg_cookbook_listSlider;
 
-void pg_cookbookButtonRotaryCW();
-void pg_cookbookButtonRotaryCCW();
-void pg_cookbookButtonLeftPressed();
-void pg_cookbookButtonRightPressed();
-void pg_cookbookButtonRotaryPressed();
-void pg_cookbookButtonLeftHeld();
-void pg_cookbookButtonRightHeld();
-void pg_cookbookButtonRotaryHeld();
-void pg_cookbookButtonDoubleHeld();
+int pg_cookbookButtonRotaryCW();
+int pg_cookbookButtonRotaryCCW();
+int pg_cookbookButtonLeftPressed();
+int pg_cookbookButtonRightPressed();
+int pg_cookbookButtonRotaryPressed();
+int pg_cookbookButtonLeftHeld();
+int pg_cookbookButtonRightHeld();
+int pg_cookbookButtonRotaryHeld();
+int pg_cookbookButtonDoubleHeld();
 
 void pg_cookbook_init(gslc_tsGui *pGui);
 void pg_cookbook_open(gslc_tsGui *pGui);

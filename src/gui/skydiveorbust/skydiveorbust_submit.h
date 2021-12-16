@@ -46,15 +46,16 @@ int pg_sdob_submit_clearCheck;
 
 void pg_sdobSubmitAction();
 
-void pg_sdobSubmitButtonRotaryCW();
-void pg_sdobSubmitButtonRotaryCCW();
-void pg_sdobSubmitButtonLeftPressed();
-void pg_sdobSubmitButtonRightPressed();
-void pg_sdobSubmitButtonRotaryPressed();
-void pg_sdobSubmitButtonLeftHeld();
-void pg_sdobSubmitButtonRightHeld();
-void pg_sdobSubmitButtonRotaryHeld();
-void pg_sdobSubmitButtonDoubleHeld();
+int pg_sdobSubmitButtonRotaryCW();
+int pg_sdobSubmitButtonRotaryCCW();
+int pg_sdobSubmitButtonLeftPressed();
+int pg_sdobSubmitButtonRightPressed();
+int pg_sdobSubmitButtonRotaryPressed();
+int pg_sdobSubmitButtonLeftHeld();
+int pg_sdobSubmitButtonRightHeld();
+int pg_sdobSubmitButtonRotaryHeld();
+int pg_sdobSubmitButtonDoubleHeld();
+
 void pg_sdobSubmitButtonSetFuncs();
 
 void pg_sdobSubmit_init(gslc_tsGui *pGui);

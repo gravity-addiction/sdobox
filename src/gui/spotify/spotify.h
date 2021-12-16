@@ -39,15 +39,15 @@ struct fileStruct **pg_spotify_listFolders;
 char* pg_spotify_currentFolderPath;
 gslc_tsXSlider pg_spotify_listSlider;
 
-void pg_spotifyButtonRotaryCW();
-void pg_spotifyButtonRotaryCCW();
-void pg_spotifyButtonLeftPressed();
-void pg_spotifyButtonRightPressed();
-void pg_spotifyButtonRotaryPressed();
-void pg_spotifyButtonLeftHeld();
-void pg_spotifyButtonRightHeld();
-void pg_spotifyButtonRotaryHeld();
-void pg_spotifyButtonDoubleHeld();
+int pg_spotifyButtonRotaryCW();
+int pg_spotifyButtonRotaryCCW();
+int pg_spotifyButtonLeftPressed();
+int pg_spotifyButtonRightPressed();
+int pg_spotifyButtonRotaryPressed();
+int pg_spotifyButtonLeftHeld();
+int pg_spotifyButtonRightHeld();
+int pg_spotifyButtonRotaryHeld();
+int pg_spotifyButtonDoubleHeld();
 
 void pg_spotify_init(gslc_tsGui *pGui);
 void pg_spotify_open(gslc_tsGui *pGui);

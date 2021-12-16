@@ -39,15 +39,16 @@ int pg_startupIpBoxScroll;
 int pg_startupIpBoxLines;
 char *pg_startupHostname;
 
-void pg_startupButtonRotaryCW();
-void pg_startupButtonRotaryCCW();
-void pg_startupButtonLeftPressed();
-void pg_startupButtonRightPressed();
-void pg_startupButtonRotaryPressed();
-void pg_startupButtonLeftHeld();
-void pg_startupButtonRightHeld();
-void pg_startupButtonRotaryHeld();
-void pg_startupButtonDoubleHeld();
+int pg_startupButtonRotaryCW();
+int pg_startupButtonRotaryCCW();
+int pg_startupButtonLeftPressed();
+int pg_startupButtonRightPressed();
+int pg_startupButtonRotaryPressed();
+int pg_startupButtonLeftHeld();
+int pg_startupButtonRightHeld();
+int pg_startupButtonRotaryHeld();
+int pg_startupButtonDoubleHeld();
+
 void pg_startupButtonSetFuncs();
 
 void pg_startup_init(gslc_tsGui *pGui);

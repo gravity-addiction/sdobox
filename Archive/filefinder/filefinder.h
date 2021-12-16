@@ -49,17 +49,17 @@ struct fileStruct **pg_fileFinder_listFolders;
 char* pg_fileFinder_currentFolderPath;
 gslc_tsXSlider pg_fileFinder_listSlider;
 
-void pg_fileFinderButtonRotaryCW();
-void pg_fileFinderButtonRotaryCCW();
-void pg_fileFinderButtonLeftPressed();
-void pg_fileFinderButtonRightPressed();
-void pg_fileFinderButtonRotaryPressed();
-void pg_fileFinderButtonLeftHeld();
-void pg_fileFinderButtonRightHeld();
-void pg_fileFinderButtonRotaryHeld();
-void pg_fileFinderButtonDoubleHeld();
-void pg_fileFinderButtonSetFuncs();
+int pg_fileFinderButtonRotaryCW();
+int pg_fileFinderButtonRotaryCCW();
+int pg_fileFinderButtonLeftPressed();
+int pg_fileFinderButtonRightPressed();
+int pg_fileFinderButtonRotaryPressed();
+int pg_fileFinderButtonLeftHeld();
+int pg_fileFinderButtonRightHeld();
+int pg_fileFinderButtonRotaryHeld();
+int pg_fileFinderButtonDoubleHeld();
 
+void pg_fileFinderButtonSetFuncs();
 void pg_fileFinder_loadFolder(gslc_tsGui *pGui, char* folderPath);
 
 void pg_fileFinder_init(gslc_tsGui *pGui);

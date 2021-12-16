@@ -129,30 +129,36 @@ void pg_spotifyGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_spotifyButtonRotaryCW() {
+int pg_spotifyButtonRotaryCW() {
   volume_new = pg_spotify_iVolume + 8;
   if (volume_new > 104) { volume_new = 104; }
   pg_spotify_iVolume = volume_new;
+  return 1;
 }
-void pg_spotifyButtonRotaryCCW() {
+int pg_spotifyButtonRotaryCCW() {
   volume_new = pg_spotify_iVolume - 8;
   if (volume_new < 0) { volume_new = 0; }
   pg_spotify_iVolume = volume_new;
+  return 1;
 }
-void pg_spotifyButtonLeftPressed() {
+int pg_spotifyButtonLeftPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh previous");
+  return 1;
 }
-void pg_spotifyButtonRightPressed() {
+int pg_spotifyButtonRightPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh next");
+  return 1;
 }
-void pg_spotifyButtonRotaryPressed() {
+int pg_spotifyButtonRotaryPressed() {
   system("/opt/sdobox/scripts/spotify/spotify_cmd.sh pause");
+  return 1;
 }
-void pg_spotifyButtonLeftHeld() {
-
+int pg_spotifyButtonLeftHeld() {
+  return 0;
 }
-void pg_spotifyButtonRightHeld() {
+int pg_spotifyButtonRightHeld() {
   // printf("Held!\n");
+  return 0;
 }
 
 // Setup Button Functions

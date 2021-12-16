@@ -500,26 +500,33 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_sdobVideoListButtonRotaryCW() {
+int pg_sdobVideoListButtonRotaryCW() {
   // debug_print("%s\n", "SDOB Videolist CW");
+  return 0;
 }
-void pg_sdobVideoListButtonRotaryCCW() {
+int pg_sdobVideoListButtonRotaryCCW() {
   // debug_print("%s\n", "SDOB Videolist CCW");
+  return 0;
 }
-void pg_sdobVideoListButtonLeftPressed() {
+int pg_sdobVideoListButtonLeftPressed() {
   // debug_print("%s\n", "SDOB Videolist Left Pressed");
+  return 0;
 }
-void pg_sdobVideoListButtonRightPressed() {
+int pg_sdobVideoListButtonRightPressed() {
   // debug_print("%s\n", "SDOB Videolist Right Pressed");
+  return 0;
 }
-void pg_sdobVideoListButtonRotaryPressed() {
+int pg_sdobVideoListButtonRotaryPressed() {
   // debug_print("%s\n", "SDOB Videolist Rotary Pressed");
+  return 0;
 }
-void pg_sdobVideoListButtonLeftHeld() {
+int pg_sdobVideoListButtonLeftHeld() {
   // debug_print("%s\n", "SDOB Videolist Left Held");
+  return 0;
 }
-void pg_sdobVideoListButtonRightHeld() {
+int pg_sdobVideoListButtonRightHeld() {
   // debug_print("%s\n", "SDOB Videolist Right Held");
+  return 0;
 }
 
 // Setup Button Functions

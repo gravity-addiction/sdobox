@@ -114,26 +114,26 @@ void pg_cookbookGuiInit(gslc_tsGui *pGui) {
 }
 
 
-void pg_cookbookButtonRotaryCW() {
-
+int pg_cookbookButtonRotaryCW() {
+  return 0;
 }
-void pg_cookbookButtonRotaryCCW() {
-
+int pg_cookbookButtonRotaryCCW() {
+  return 0;
 }
-void pg_cookbookButtonLeftPressed() {
-
+int pg_cookbookButtonLeftPressed() {
+  return 0;
 }
-void pg_cookbookButtonRightPressed() {
-
+int pg_cookbookButtonRightPressed() {
+  return 0;
 }
-void pg_cookbookButtonRotaryPressed() {
-
+int pg_cookbookButtonRotaryPressed() {
+  return 0;
 }
-void pg_cookbookButtonLeftHeld() {
-
+int pg_cookbookButtonLeftHeld() {
+  return 0;
 }
-void pg_cookbookButtonRightHeld() {
-
+int pg_cookbookButtonRightHeld() {
+  return 0;
 }
 
 // Setup Button Functions
