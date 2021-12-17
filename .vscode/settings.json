@@ -1,5 +1,8 @@
 {
     "files.watcherExclude": {
         "**/Vidware_*/**": true
+    },
+    "files.associations": {
+        "mpv-zmq.h": "c"
     }
 }

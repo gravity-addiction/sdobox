@@ -54,6 +54,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
 
   dbgprintf(DBG_DEBUG, "INSERT MARK: %d, Sel: %d, T: %f\n", mark, markSelected, markTime);
   dbgprintf(DBG_DEBUG, "Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
+  
   // Determine which type of mark to insert
   if (markSelected == 0 && sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0) { // Change up Start of Working Time
     mark = E_SCORES_SOPST;
@@ -179,7 +180,7 @@ int pg_sdobSOWTSet(double markTime, double workingTime) {
   sdob_judgement->workingTime = workingTime;
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  if (sdob_devicehost->isHost == 1) {
+  if (sdob_devicehost->teamStart == 0) {
     struct queue_head *itemStart = malloc(sizeof(struct queue_head));
     INIT_QUEUE_HEAD(itemStart);
     itemStart->action = E_Q_ACTION_MPV_COMMAND;
@@ -212,7 +213,7 @@ int pg_sdobSOWTReset() {
   sdob_judgement->sowt = -1.0;
   // debug_print("Reset SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
-  if (sdob_devicehost->isHost == 1) {
+  if (sdob_devicehost->teamStart == 0) {
     struct queue_head *itemStart = malloc(sizeof(struct queue_head));
     INIT_QUEUE_HEAD(itemStart);
     itemStart->action = E_Q_ACTION_MPV_COMMAND;
@@ -236,7 +237,7 @@ int pg_sdobSOWTReset() {
     }
   }
 
-  
+
 //  struct queue_head *itemChapters = malloc(sizeof(struct queue_head));
 //  INIT_QUEUE_HEAD(itemChapters);
 //  itemChapters->action = E_Q_PLAYER_VIDEO_INFO;

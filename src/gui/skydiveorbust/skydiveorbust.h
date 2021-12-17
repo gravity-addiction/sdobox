@@ -57,6 +57,7 @@ struct pg_sdob_device_host {
   int cnt;
   int seenCnt;
   int isHost;
+  int teamStart;
   char *host;
   char *port;
 };

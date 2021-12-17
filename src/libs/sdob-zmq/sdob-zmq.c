@@ -247,7 +247,15 @@ void * libsdob_eventThread(void *input) {
               itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
               pg_sdob_add_action(&itemSc);              
             }
-          }
+          } else
+          
+          if (pt != NULL && strcmp(pt, "driver-add") == 0) {
+            pt = strtok(NULL, ";");
+            printf("Check: %s - %s\n", pt, tokenStr);
+            if (strcmp(pt, tokenStr) == 0) {
+              pg_sdobVideoDriver(1);              
+            }
+          } else
 
           if (pt != NULL && strcmp(pt, "ping") == 0) {
             pt = strtok(NULL, ";");

@@ -420,7 +420,7 @@ void pg_sdobDisciplineList_loadDisciplines(gslc_tsGui *pGui) {
 
   // VLIST_CLEAR_CONFIG(pg_sdobDiscipline_listConfig);
 
-  pg_sdobDiscipline_listConfig->len = 4;
+  pg_sdobDiscipline_listConfig->len = 5;
   pg_sdobDiscipline_list = (struct pg_sdobDisciplineStruct*)malloc(pg_sdobDiscipline_listConfig->len * sizeof(struct pg_sdobDisciplineStruct));
   
   pg_sdobDiscipline_list[0].name = strdup("2-way Sequential");
@@ -434,6 +434,9 @@ void pg_sdobDisciplineList_loadDisciplines(gslc_tsGui *pGui) {
 
   pg_sdobDiscipline_list[3].name = strdup("FS");
   pg_sdobDiscipline_list[3].ident = strdup("FS");
+
+  pg_sdobDiscipline_list[4].name = strdup("FS Speed");
+  pg_sdobDiscipline_list[4].ident = strdup("FSSPEED");  
 
   // INIT_SDOB_DISCIPLINESTRUCT("2-way Sequential", "CF2", pg_sdobDiscipline_list[0]);
   // INIT_SDOB_DISCIPLINESTRUCT("4-way Sequential", "CF4", pg_sdobDiscipline_list[1]);

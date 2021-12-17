@@ -17,9 +17,14 @@
 
 double mpv_calc_marktime(struct lib_mpv_player *player) {
   double markTime = player->position;
+  double nDiff = (((double)(s_clock() - player->position_update)) * player->pbrate) / 1000;
+    
+  printf("Calc %d -- %f .. %f .. %f .. %lld\n", libmpvCache->player->is_playing, nDiff, markTime, player->position, player->position_update);
+  markTime = markTime + nDiff;
+
   if (player->is_playing) {
-    double nDiff = (((double)(s_clock() - player->position_update)) * player->pbrate) / 1000;
-    markTime = markTime + nDiff;
+    printf("Is Playing At: %f\n", player->pbrate);
+    markTime = markTime - (0.25 * player->pbrate);
   }
   return markTime;
 }

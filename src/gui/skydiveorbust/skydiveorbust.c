@@ -58,6 +58,7 @@ struct pg_sdob_device_host * PG_SDOB_DEVICE_HOST()
   sdh->cnt = 1; // 1 for initalization in thread
   sdh->seenCnt = 0;
   sdh->isHost = 0; // 1 is host device, 0 is not
+  sdh->teamStart = 1; // 1 for room api to start working time, 0 send mpv start and length commands
   return sdh;
 }
 
@@ -1972,7 +1973,7 @@ int pg_skydiveorbustButtonRightPressed() {
     item = new_qhead();
     item->action = E_Q_SCORECARD_INSERT_MARK;
     item->mark = E_SCORES_POINT;
-    item->time = mpv_calc_marktime(libmpvCache->player);;
+    item->time = mpv_calc_marktime(libmpvCache->player);
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
@@ -2244,6 +2245,13 @@ void * pg_sdobMpvEventsThread(void *input) {
             libmpvCache->player->is_playing = 0;
           } else if (strcmp(str, "unpause") == 0) {
             libmpvCache->player->is_playing = 1;
+          } else if (strcmp(str, "speed") == 0) {
+            const char* mySpeed = s_recv(videoserver);
+            double dblSpeed = strtod(mySpeed, NULL);
+            libmpvCache->player->pbrate = dblSpeed;
+            pg_sdobUpdateVideoRate(&m_gui, dblSpeed);
+          } else {
+            printf("UnConfigured Event: %s\n", str);
           }
           free(str);
         }
@@ -3215,6 +3223,17 @@ void pg_sdobMpvEventCb(char* event) {
 }
 
 
+int pg_sdobVideoDriver(int isDriver) {
+  sdob_devicehost->isHost = isDriver; 
+  pg_sdobUpdateHostDeviceInfo(&m_gui);
+}
+
+int pg_sdobSetupScoreSettings(char* rules) {
+  pg_sdobUpdateScoringSettings(&m_gui, rules);
+  pg_sdobUpdateVideoDescTwo(&m_gui, rules);
+
+}
+
 /////////////////////////////////////////////
 // Initialization
 //
@@ -3331,7 +3350,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   pg_sdob_new_video_cnt = 0;
 
   pg_sdobUpdateHostDeviceInfo(pGui);
-  pg_sdobUpdateScoringSettings(pGui, "fs");
+  pg_sdobSetupScoreSettings("fs");
 
 
   ////////////////////////////
@@ -3363,7 +3382,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
   
-  sdob_devicehost->isHost = 0;
+  pg_sdobVideoDriver(0);
 
   // Fetch Info
   int rc;
