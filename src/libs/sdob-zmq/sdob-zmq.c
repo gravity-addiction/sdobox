@@ -256,6 +256,11 @@ void * libsdob_eventThread(void *input) {
               pg_sdobVideoDriver(1);              
             }
           } else
+          
+          if (pt != NULL && strcmp(pt, "discipline") == 0) {
+            pt = strtok(NULL, ";");
+            pg_sdobUpdateDiscipline(&m_gui, pt, strtok(NULL, ";"));
+          } else
 
           if (pt != NULL && strcmp(pt, "ping") == 0) {
             pt = strtok(NULL, ";");

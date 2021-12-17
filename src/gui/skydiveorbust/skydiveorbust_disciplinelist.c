@@ -39,19 +39,13 @@ bool pg_sdobDisciplineListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch e
   return true;
 }
 
+
 bool pg_sdobDisciplineListCbBtnChangeDiscipline(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (pg_sdobDiscipline_listConfig->cur >= 0 && sdob_judgement != NULL) {
-    pg_sdobUpdateScoringSettings(pGui, pg_sdobDiscipline_list[pg_sdobDiscipline_listConfig->cur].ident);
-    pg_sdobUpdateVideoDescTwo(pGui, pg_sdobDiscipline_list[pg_sdobDiscipline_listConfig->cur].name);
-
-    struct queue_head *item = new_qhead();
-    item->action = E_Q_SCORECARD_CLEAN;
-    pg_sdob_add_action(&item);
-    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-
+    pg_sdobUpdateDiscipline(pGui, pg_sdobDiscipline_list[pg_sdobDiscipline_listConfig->cur].ident, pg_sdobDiscipline_list[pg_sdobDiscipline_listConfig->cur].name);
     // Close Menu
     pg_sdobDisciplineListClose(pGui);
   }

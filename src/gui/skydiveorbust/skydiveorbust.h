@@ -322,6 +322,7 @@ void pg_sdobUpdateUserDefinedVideoRate(gslc_tsGui *pGui, double playback_rate);
 void pg_sdobUpdateHostDeviceInfo(gslc_tsGui *pGui);
 void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateComp(gslc_tsGui *pGui, char *compStr);
+void pg_sdobUpdateDiscipline(gslc_tsGui *pGui, char *ident, char *name);
 void pg_sdobUpdateEventFromLocalFolder(gslc_tsGui *pGui, char *str);
 void pg_sdobUpdateVideoDescOne(gslc_tsGui *pGui, char* str);
 void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str);
