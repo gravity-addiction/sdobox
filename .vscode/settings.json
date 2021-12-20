@@ -3,6 +3,7 @@
         "**/Vidware_*/**": true
     },
     "files.associations": {
-        "mpv-zmq.h": "c"
+        "mpv-zmq.h": "c",
+        "__node_handle": "c"
     }
 }

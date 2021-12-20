@@ -56,9 +56,9 @@ int volume_openAudio(char* card, char* selem) {
   if (volume_elem == NULL) {
     dbgprintf(DBG_ERROR, "Not able to find audio device: %s\n", selem);
     volume_closeAudio();
-    return 0;
+    return 1;
   }
-  return 1;
+  return 0;
 }
 
 void volume_initVars() {
@@ -240,13 +240,13 @@ int volume_initAudio(int runTest) {
 
     if (volume_openAudio("default", "Master") == 0) {
       if (volume_openAudio("hw:0", "PCM") == 0) {
-        return 0;
+        return 1;
       }
     }
 
     volume_handleOpen = 1;
   }
-  return 1;
+  return 0;
 }
 //
 ///////////////////////

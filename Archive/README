@@ -176,3 +176,128 @@ Change FONTS DPI
 ```
 xfconf-query -c xsettings -p /Xft/DPI -s 96
 ```
+
+
+
+Updating Apt
+```
+sudo apt-get -y update  --allow-releaseinfo-change
+sudo apt-get -y update --allow-releaseinfo-change
+sudo apt-get -y dist-upgrade
+sudo shutdown -r now
+
+```
+
+
+Install ZMQ Headers
+```
+cd ~/Downloads/
+curl https://download.libsodium.org/libsodium/releases/libsodium-1.0.18-stable.tar.gz -o libsodium-1.0.18-stable.tar.gz
+wget https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.tar.gz
+tar -zxvf zeromq-4.3.4.tar.gz
+tar -zxvf libsodium-1.0.18-stable.tar.gz
+cd ~/Downloads/libsodium-stable/
+./configure
+make -j4
+sudo make install
+cd ~/Downloads/zeromq-4.3.4/
+./configure
+make -j4
+sudo make install
+sudo ldconfig
+
+```
+
+
+Extra Libs
+```
+sudo apt-get -y install clang
+
+```
+
+Disable Screensave / Blanking LightDM
+`/etc/lightdm/lightdm.conf`
+```
+xserver-command=X -s 0 dpms
+```
+
+
+Disable Screensaver / Blanking xOrg
+`/etc/X11/xorg.conf`
+```
+Section "Monitor"
+    Identifier "LVDS0"
+    Option "DPMS" "false"
+EndSection
+
+Section "ServerFlags"
+    Option "StandbyTime" "0"
+    Option "SuspendTime" "0"
+    Option "OffTime" "0"
+    Option "BlankTime" "0"
+EndSection
+
+Section "ServerLayout"
+    Identifier "ServerLayout0"
+EndSection
+
+Section "Extensions"
+    Option      "DPMS" "Disable"
+EndSection
+```
+
+SDOB Default Wifis
+/etc/wpa_supplicant/wpa_supplicant.conf
+```
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+country=US
+
+network={
+        ssid="SkydiveOrBust"
+        psk="comp2021"
+        key_mgmt=WPA-PSK
+}
+
+network={
+	ssid="SDOB-401"
+	psk="skydiveorbust"
+	disabled=1
+}
+```
+
+
+SDOB Hosts List
+/etc/hosts
+```
+192.168.124.123 api.thegarybox.com #api
+192.168.124.123 db.thegarybox.com #db
+192.168.124.123 video.thegarybox.com #video
+
+
+192.168.124.112 oogie.thegarybox.com #oogie ethernet
+192.168.124.113 mayor.thegarybox.com #mayor ethernet
+192.168.124.114	pumpkinking.thegarybox.com #pumpkinking ethernet
+
+192.168.124.115 copper.local #copper ethernet
+192.168.124.111 copper.thegarybox.com #copper wifi
+
+192.168.124.117	astro.thegarybox.com #astro ethernet
+192.168.124.118 weaselbear.thegarybox.com #weaselbear ethernet
+192.168.124.119 server.thegarybox.com #server ethernet
+192.168.124.120 transq.thegarybox.com #transq ethernet
+192.168.124.123 flittermouse.thegarybox.com #flittermouse ethernet
+192.168.124.124 leroy.thegarybox.com #leroy ethernet
+192.168.124.125 fresh.thegarybox.com #fresh ethernet
+192.168.124.126 goldstripe.thegarybox.com #goldstripe ethernet
+```
+
+Hosts File Updater by #Tag
+```bash
+#!/bin/bash
+fqdnips=( $(nslookup sub.domain.com|grep Address:|awk -F\  '{ print $2 }'|grep -v '#') )
+
+new=`printf "${fqdnips[@]}"`
+old=`grep "#Tag" /etc/hosts|awk -F\  '{ print $1 }'`
+sed -i "s/$old/$new/g" /etc/hosts
+```

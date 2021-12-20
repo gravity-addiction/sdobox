@@ -1,13 +1,13 @@
 [Unit]
 Description=SDOBOX Service
-After=mpv.service
+# After=mpv.service
 
 [Service]
 Type=idle
 Restart=on-failure
 
 PIDFile=/tmp/sdobox.pid
-ExecStart=/usr/local/bin/sdobox
+ExecStart=/opt/sdobox/bin/sdobox
 
 
 KillSignal=SIGINT
@@ -16,8 +16,8 @@ User=pi
 WorkingDirectory=/home/pi
 
 # Debugging Settings
-StandardError=null
-StandardOutput=null
+# StandardError=NULL
+# StandardOutput=NULL
 # Environment="DBGMASK=1111111111"
 # ExecStart=sudo /home/pi/Downloads/sdobox/touchapp
 

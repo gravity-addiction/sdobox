@@ -84,6 +84,12 @@ Modify `Makefile` chaging **CC** to use one of the clang options and REM out `CC
 Require running `make clean` in order to compile all libraries using clang
 
 
+### Zmq
+
+```
+sudo apt-get install libzmq5 python-zmq python3-zmq
+```
+
 
 ## Contributors
 **Special Thanks to the people contributing to this project**

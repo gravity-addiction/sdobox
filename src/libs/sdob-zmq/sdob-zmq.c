@@ -262,6 +262,18 @@ void * libsdob_eventThread(void *input) {
             pg_sdobUpdateDiscipline(&m_gui, pt, strtok(NULL, ";"));
           } else
 
+          
+          if (pt != NULL && strcmp(pt, "team") == 0) {
+            pt = strtok(NULL, ";");
+            pg_sdobUpdateTeam(&m_gui, pt);
+          } else
+
+          
+          if (pt != NULL && strcmp(pt, "round") == 0) {
+            pt = strtok(NULL, ";");
+            pg_sdobUpdateRound(&m_gui, pt);
+          } else                    
+
           if (pt != NULL && strcmp(pt, "ping") == 0) {
             pt = strtok(NULL, ";");
             // Submit Scorecard

@@ -538,6 +538,11 @@ void pg_sdobUpdateJudgeInitials(gslc_tsGui *pGui, char* str) {
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_INITIALS], sdob_judgement->judge);
 }
 
+void pg_sdobUpdateJudgeName(gslc_tsGui *pGui, char* str) {
+  strlcpy(sdob_judgement->judge, str, 64);
+  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], sdob_judgement->judge);
+}
+
 void sdob_selectEventComp(gslc_tsGui* pGui, char* compId, char* compStr) {
   size_t dispSz = snprintf(NULL, 0, "%s", compStr) + 1;
   if (dispSz > 0 && dispSz <= 128) {
@@ -1070,6 +1075,17 @@ bool pg_sdobCbBtnChangeJudge(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
 
   if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
   pg_keyboard_shiftOn = 1;
+  pg_keyboard_show(pGui, 64, sdob_judgement->judge, &pg_sdobUpdateJudgeName);
+  return true;
+}
+
+// Change Judge
+bool pg_sdobCbBtnChangeJudgeInitials(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
+
+  if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
+  pg_keyboard_shiftOn = 1;
   pg_keyboard_show(pGui, 3, sdob_judgement->judge, &pg_sdobUpdateJudgeInitials);
   return true;
 }
@@ -1551,6 +1567,18 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_INITIALS], GSLC_ALIGN_MID_MID);
   }
 
+  // Judge Name
+  if ((
+    pg_sdobEl[E_SDOB_EL_JUDGE_NAME] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
+        ePage, (gslc_tsRect) {3,71,248,38},
+        (char*)" ", 0, E_FONT_MONO28, &pg_sdobCbBtnChangeJudge)
+  ) != NULL) {
+    gslc_ElemSetTxtCol(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], GSLC_COL_BLUE);
+    gslc_ElemSetCol(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], GSLC_COL_BLACK, GSLC_COL_BLACK, GSLC_COL_BLACK);
+    gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], GSLC_ALIGN_MID_LEFT);
+  }  
+
+/*
   // Team Description
   if ((
     pg_sdobEl[E_SDOB_EL_TEAM_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1574,7 +1602,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], GSLC_ALIGN_MID_LEFT);
     gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], false);
   }
-
+*/
   // Total Scored Points
   if ((
     pg_sdobEl[E_SDOB_EL_SC_COUNT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1959,8 +1987,15 @@ int pg_skydiveorbustButtonRotaryCCW() {
   }
 }
 
+
+void pg_skydiveorbust_update_position(double position) {
+  libmpvCache->player->position_update = s_clock();
+  libmpvCache->player->position = position;
+}
+
 void pg_skydiveorbust_update_duration(double duration) {
   libmpvCache->player->duration = duration;
+  pg_sdob_pl_sliderForceUpdate = 1;  
 }
 
 
@@ -2258,16 +2293,18 @@ void * pg_sdobMpvEventsThread(void *input) {
           dbgprintf(DBG_DEBUG, "videoserver: %s\n", str);
 
           if (strcmp(str, "timer") == 0) {
-            libmpvCache->player->position_update = s_clock();
-            libmpvCache->player->position = strtod(s_recv(videoserver), NULL);
+            // printf("Timer\n");
+            char *tim = s_recv(videoserver);
+            pg_skydiveorbust_update_position(strtod(tim, NULL));
+            printf("%s\n", tim);
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "duration") == 0) {
             const char* myDuration = s_recv(videoserver);
-            printf("Duration: %s\n", myDuration);
-            libmpvCache->player->duration = strtod(myDuration, NULL);
-            pg_sdob_pl_sliderForceUpdate = 1;
+            // printf("Duration: %s\n", myDuration);
+            pg_skydiveorbust_update_duration(strtod(myDuration, NULL));
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "start-file") == 0) {
+            // printf("StartFile\n");
             struct queue_head *item = malloc(sizeof(struct queue_head));
             INIT_QUEUE_HEAD(item);
             item->action = E_Q_SCORECARD_CLEAR;
@@ -2276,10 +2313,18 @@ void * pg_sdobMpvEventsThread(void *input) {
             libmpvCache->player->is_loaded = 1;
             pg_sdob_pl_sliderForceUpdate = 1;
           } else if (strcmp(str, "pause") == 0) {
-            libmpvCache->player->is_playing = 0;
+            const char* myPause = s_recv(videoserver);
+            // printf("Pause\n");
+            if (strcmp(myPause, "true") == 0) {
+              libmpvCache->player->is_playing = 0;
+            } else if (strcmp(myPause, "true") == 0) {
+              libmpvCache->player->is_playing = 1;
+            }
           } else if (strcmp(str, "unpause") == 0) {
+            // printf("UnPause\n");
             libmpvCache->player->is_playing = 1;
           } else if (strcmp(str, "speed") == 0) {
+            // printf("Speed\n");
             const char* mySpeed = s_recv(videoserver);
             double dblSpeed = strtod(mySpeed, NULL);
             libmpvCache->player->pbrate = dblSpeed;
@@ -2334,6 +2379,18 @@ void pg_sdobMpvEventsThreadStop() {
 // ------------------------
 // MPV Output TimePos Thread
 // ------------------------
+
+void pg_skydiveorbust_update_positionStr() {
+  double realTime = libmpvCache->player->position;
+  if (libmpvCache->player->is_playing) {
+    double nDiff = (((double)(s_clock() - libmpvCache->player->position_update)) * libmpvCache->player->pbrate) / 1000;
+    realTime = realTime + nDiff;
+  }
+  secs_to_time((int)(realTime * 1000000), libmpvCache->player->positionStr, 32);
+  setSliderPosByTime(&m_gui);
+  gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
+}
+
 void * pg_sdobMpvTimeposThread(void *input) {
   if (pg_sdobMpvTimeposThreadRunning) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting MPV TimePos Thread, Already Started");
@@ -2352,16 +2409,7 @@ void * pg_sdobMpvTimeposThread(void *input) {
     
   while (!pg_sdobMpvTimeposThreadKill) {
     // printf("Timestamp: %f @ %lld\n", libmpvCache->player->position, libmpvCache->player->position_update);
-    
-    double realTime = libmpvCache->player->position;
-    if (libmpvCache->player->is_playing) {
-      double nDiff = (((double)(s_clock() - libmpvCache->player->position_update)) * libmpvCache->player->pbrate) / 1000;
-      realTime = realTime + nDiff;
-    }
-      
-    secs_to_time((int)(realTime * 1000000), libmpvCache->player->positionStr, 32);
-    setSliderPosByTime(&m_gui);
-    gslc_ElemSetTxtStr(&m_gui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
+    pg_skydiveorbust_update_positionStr();
 
     usleep(1000000);
   }
@@ -3337,6 +3385,7 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   // Judge Initials
   pg_sdobUpdateJudgeInitials(pGui, "");
+  pg_sdobUpdateJudgeName(pGui, "");
 
   // Team
   pg_sdobUpdateTeam(pGui, "");
@@ -3422,7 +3471,13 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   // Fetch Info
   int rc;
-  libmpvCache->player->duration = libmpv_zmq_get_prop_double("duration");
+
+  pg_skydiveorbust_update_duration(libmpv_zmq_get_prop_double("duration"));
+
+  libmpv_zmq_get_prop_double("time-pos");
+  pg_skydiveorbust_update_position(libmpv_zmq_get_prop_double("time-pos"));
+  pg_skydiveorbust_update_positionStr();
+  
 
   char *propFilename = libmpv_zmq_get_prop_string("filename");
   if (propFilename != NULL) {
@@ -3435,10 +3490,23 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
     libmpvCache->player->is_loaded = 0;
   }
 
+  // Check if playing
+  char *propPaused = libmpv_zmq_get_prop_string("paused");
+  if (propPaused != NULL) {
+    if (strcmp(propPaused, "true") == 0 || strcmp(propPaused, "paused") == 0) {
+      libmpvCache->player->is_playing = 0;
+    } else {
+      libmpvCache->player->is_playing = 1;
+    }
+    free(propPaused);
+  } else {
+    libmpvCache->player->is_playing = 0;
+  }
+  
   pg_sdobSubmitAction(); // Notify captains of presence
 
   // Reset Scorecard Slider to Top
-  // pg_sdobSliderResetCurPos(pGui);
+  pg_sdobSliderResetCurPos(pGui);
 
   // pg_sdobSqlSetup();
   // pg_sdobSql_markInsert(1, 1, "34.4", "35.0");

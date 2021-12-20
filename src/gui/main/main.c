@@ -304,6 +304,9 @@ void pg_mainGuiInit(gslc_tsGui *pGui) {
 }
 
 void pg_mainUpdateVolume() {
+  if (volume_no_device == 0) {
+    return;
+  }
   long volLvl, volMin, volMax;
   volume_getVolumeRange(&volMin, &volMax);
   if (volume_getVolume(&volLvl)) {

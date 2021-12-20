@@ -180,7 +180,11 @@ void PG_KEYBOARD_DESTROY_DATA(struct pg_keyboard_dataStruct *data) {
 
 
 
-
+void pg_keyboard_update_input(gslc_tsGui *pGui, char* str) {
+  char underscore[] = "_";
+  gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], strcat(str, underscore));
+  
+}
 
 // Reset Majority of keyboard information
 void pg_keyboard_reset(gslc_tsGui *pGui) {
@@ -189,8 +193,7 @@ void pg_keyboard_reset(gslc_tsGui *pGui) {
 
   // Clean Input
   CLEAR(pg_keyboard_data->ptr, pg_keyboard_data->max);
-  gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
-  pg_keyboard_limitCheck(pGui);
+  pg_keyboard_update_input(pGui, pg_keyboard_data->ptr);
 }
 
 
@@ -219,7 +222,7 @@ void pg_keyboard_show(gslc_tsGui *pGui, int maxLen, char* str, void (*function)(
   }
   strlcpy(pg_keyboard_data->ptr, str, strSz);
   pg_keyboard_data->len = strSz - 2;
-  gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
+  pg_keyboard_update_input(pGui, pg_keyboard_data->ptr);
   pg_keyboard_limitCheck(pGui);
 }
 
@@ -346,6 +349,7 @@ bool pg_keyboard_cbBtn_enter(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // pg_keyboardInput[strlen(pg_keyboardInput)] = '\0';
+  pg_keyboard_data->ptr[pg_keyboard_data->len + 1] = '\0';
   pg_keyboard_runCb(pGui, pg_keyboard_data);
   touchscreenPageGoBack(pGui);
   return true;
@@ -361,7 +365,7 @@ bool pg_keyboard_cbBtn_delete(void* pvGui, void *pvElemRef, gslc_teTouch eTouch,
   if (pg_keyboard_data->len > -1) {
     pg_keyboard_data->ptr[pg_keyboard_data->len] = '\0';
     pg_keyboard_data->len -= 1;
-    gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
+    pg_keyboard_update_input(pGui, pg_keyboard_data->ptr);
     pg_keyboard_limitCheck(pGui);
   }
 
@@ -459,15 +463,15 @@ bool pg_keyboard_cbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_
             pg_keyboard_data->ptr = newBuf;
           }
 
-
-          strlcat(pg_keyboard_data->ptr, x, pg_keyboard_data->len);
+          pg_keyboard_data->ptr[pg_keyboard_data->len] = *x;
+          // strlcat(pg_keyboard_data->ptr, x, pg_keyboard_data->len);
 
           free(x);
         break;
       }
 
       // update viewport with new pointer value
-      gslc_ElemSetTxtStr(pGui, pg_keyboardEl[E_KEYBOARD_EL_INPUT], pg_keyboard_data->ptr);
+      pg_keyboard_update_input(pGui, pg_keyboard_data->ptr);
       pg_keyboard_limitCheck(pGui);
     }
 
@@ -500,7 +504,7 @@ gslc_tsElemRef* pg_keyboard_guiKeyboard_CreateElem(gslc_tsGui* pGui) {
           (gslc_tsRect) {0, 0, 1, 1},
           (char*)"", 0, E_FONT_MONO24, &pg_keyboard_cbBtn);
   gslc_ElemSetTxtCol(pGui, layoutEl, GSLC_COL_WHITE);
-  gslc_ElemSetCol(pGui, layoutEl, GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLACK);
+  gslc_ElemSetCol(pGui, layoutEl, GSLC_COL_WHITE, GSLC_COL_BLACK, GSLC_COL_BLUE);
   gslc_ElemSetTxtAlign(pGui, layoutEl, GSLC_ALIGN_MID_MID);
   gslc_ElemSetFillEn(pGui, layoutEl, true);
   gslc_ElemSetFrameEn(pGui, layoutEl, true);

@@ -268,10 +268,15 @@ int64_t libmpv_zmq_get_prop_int64(char* prop) {
 
 double libmpv_zmq_get_prop_double(char* prop) {
   char *retProp = NULL;
+  char *retPtr;
   double retDbl = 0.0;
   int rc = libmpv_zmq_cmd_w_reply(libmpv_zmq_fmt_cmd("get_prop_double;%s", prop), &retProp);
+  printf("propdbl %s - %d\n", prop, rc);
   if (rc > 0 && retProp != NULL) {
-    retDbl = strtod(retProp, NULL);
+    printf("propdbl ret: %s\n", retProp);
+    retDbl = strtod(retProp, &retPtr);
+    printf("propdbl dbl: %lf\n", retDbl);
+    printf("propdbl str: %d\n", retPtr);
     free(retProp);
   }
   return retDbl;
