@@ -274,6 +274,11 @@ SDOB Hosts List
 192.168.124.123 db.thegarybox.com #db
 192.168.124.123 video.thegarybox.com #video
 
+192.168.124.104 blueamerica.thegarybox.com #whitespy wifi
+192.168.124.105 blueamerica.local #whitespy ethernet
+
+192.168.124.106 whitespy.thegarybox.com #whitespy ethernet
+192.168.124.107 whitespy.local #whitespy wifi
 
 192.168.124.112 oogie.thegarybox.com #oogie ethernet
 192.168.124.113 mayor.thegarybox.com #mayor ethernet
