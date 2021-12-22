@@ -2293,13 +2293,13 @@ void * pg_sdobMpvEventsThread(void *input) {
       if (!m_bQuit && rc > -1) {  
         if (items[0].revents & ZMQ_POLLIN) {
           char *str = s_recv(videoserver);
-          dbgprintf(DBG_DEBUG, "videoserver: %s\n", str);
+          dbgprintf(DBG_MPV_EVENT, "videoserver: %s\n", str);
 
           if (strcmp(str, "timer") == 0) {
             // printf("Timer\n");
             char *tim = s_recv(videoserver);
             pg_skydiveorbust_update_position(strtod(tim, NULL));
-            printf("%s\n", tim);
+            dbgprintf(DBG_MPV_EVENT, "%s\n", tim);
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "duration") == 0) {
             const char* myDuration = s_recv(videoserver);
@@ -2318,9 +2318,9 @@ void * pg_sdobMpvEventsThread(void *input) {
           } else if (strcmp(str, "pause") == 0) {
             const char* myPause = s_recv(videoserver);
             // printf("Pause\n");
-            if (strcmp(myPause, "true") == 0) {
+            if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 0;
-            } else if (strcmp(myPause, "true") == 0) {
+            } else if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 1;
             }
           } else if (strcmp(str, "unpause") == 0) {
@@ -2333,7 +2333,7 @@ void * pg_sdobMpvEventsThread(void *input) {
             libmpvCache->player->pbrate = dblSpeed;
             pg_sdobUpdateVideoRate(&m_gui, dblSpeed);
           } else {
-            printf("UnConfigured Event: %s\n", str);
+            dbgprintf(DBG_MPV_EVENT, "UnConfigured Event: %s\n", str);
           }
           free(str);
         }

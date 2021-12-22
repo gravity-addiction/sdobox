@@ -19,6 +19,8 @@ int libsdob_zmq_init();
 void libsdob_zmq_destroy();
 
 int libsdob_zmq_scoring_send(char* scorecard);
+void libsdob_zmq_getserver_scoring();
+void libsdob_zmq_getroomid();
 
 int libsdob_eventThreadStart();
 void libsdob_eventThreadStop();

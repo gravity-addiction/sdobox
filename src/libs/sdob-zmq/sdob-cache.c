@@ -15,6 +15,7 @@ struct libsdob_server * LIBSDOB_SERVER_INIT() {
   struct libsdob_server *server = (struct libsdob_server*)malloc(sizeof(struct libsdob_server));
   server->scoringserver = NULL;
   server->eventserver = NULL;
+  server->roomid = NULL;
   return server;
 }
 void LIBSDOB_SERVER_DESTROY(struct libsdob_server *server) {
@@ -23,6 +24,9 @@ void LIBSDOB_SERVER_DESTROY(struct libsdob_server *server) {
   }
   if (server->eventserver != NULL) {
     free(server->eventserver);
+  }
+  if (server->roomid != NULL) {
+    free(server->roomid);
   }
   free(server);
 }

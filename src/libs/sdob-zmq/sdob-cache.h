@@ -8,6 +8,7 @@ extern "C" {
 struct libsdob_server {
   char* scoringserver;
   char* eventserver;
+  char* roomid;
 };
 
 struct libsdob_cache {

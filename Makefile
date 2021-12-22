@@ -1,8 +1,8 @@
 HOME = /home/pi
 DEBUG = -O1 -g
-# CC = clang -fsanitize=address
+CC = clang -fsanitize=address
 # CC = clang -fsanitize=leak
-CC = gcc
+# CC = gcc
 GSLC_INCLUDES = -I./GUIslice/src
 INCLUDE = -I./src -I./jsmn $(GSLC_INCLUDES) $(TOUCHAPP_INCLUDES)
 CFLAGS = $(DEBUG) -Wall $(INCLUDE) -Winline -pipe -g -pthread -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -DUSER_CONFIG_LOADED -DUSER_CONFIG_INC_FILE -DUSER_CONFIG_INC_FNAME=\"../../src/libs/GUIslice-wrapper/rpi-sdl1-default-tslib.h\"

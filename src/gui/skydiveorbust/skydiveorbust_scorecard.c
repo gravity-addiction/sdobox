@@ -14,6 +14,7 @@
 #include "libs/mpv-zmq/mpv-zmq.h"
 #include "libs/curl-sdob/curl-sdob.h"
 #include "libs/dbg/dbg.h"
+#include "libs/sdob-zmq/sdob-cache.h"
 #include "libs/sdob-zmq/sdob-zmq.h"
 
 
@@ -402,6 +403,12 @@ int pg_sdobSubmitScorecard() {
     }
   }
   */
+
+  // Update roomid from SdobCache
+  if (libSdobCache->server->roomid == NULL) {
+    libsdob_zmq_getroomid();
+  }
+  json_object_set_new(root, "roomid", json_string(libSdobCache->server->roomid));
 
   // Grab Device token
   FILE *tokenFile;

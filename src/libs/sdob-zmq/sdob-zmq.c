@@ -33,24 +33,14 @@ struct libsdob_question * LIBSDOB_QUESTION_INIT(char* question) {
     dbgprintf(DBG_DEBUG, "%s\n", "Finding Scoring Server");
 
     if (libSdobCache->server->scoringserver == NULL) {
-      config_t cfg;
-      config_init(&cfg);
-      // Read the file. If there is an error, report it and exit.
-      if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
-        dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
-        config_destroy(&cfg);
-        return NULL;
-      }
-
-      const char * retScoringServer;
-      if (config_lookup_string(&cfg, "scoringserver", &retScoringServer)) {
-        libSdobCache->server->scoringserver = strdup(retScoringServer);
-      } else {
-        printf("No scoringserver configuration in ~/.config/sdobox/sdobox.conf\n");
-        config_destroy(&cfg);
-        return NULL;
-      }
-      config_destroy(&cfg);
+      libsdob_zmq_getserver_scoring();
+    }
+    if (libSdobCache->server->roomid == NULL) {
+      libsdob_zmq_getroomid();
+    } 
+    if (libSdobCache->server->scoringserver == NULL || libSdobCache->server->roomid == NULL) {
+      printf("Wont send incomplete scoring packets, get your config updated.\n");
+      return NULL;
     }
         
     dbgprintf(DBG_DEBUG, "%s\n", "Connecting For Scoring");
@@ -94,6 +84,43 @@ void libsdob_zmq_destroy() {
 	thpool_wait(thpool);
 	puts("Killing SDOB-ZMQ Threadpool");
 	thpool_destroy(thpool);  
+}
+
+
+void libsdob_zmq_getserver_scoring() {
+  config_t cfg;
+  config_init(&cfg);
+  // Read the file. If there is an error, report it and exit.
+  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+    config_destroy(&cfg);
+    return;
+  }
+  const char * retScoringServer;
+  if (config_lookup_string(&cfg, "scoringserver", &retScoringServer)) {
+    libSdobCache->server->scoringserver = strdup(retScoringServer);
+  } else {
+    printf("No scoringserver configuration in ~/.config/sdobox/sdobox.conf\n");
+  }
+  config_destroy(&cfg);
+}
+
+void libsdob_zmq_getroomid() {
+  config_t cfg;
+  config_init(&cfg);
+  // Read the file. If there is an error, report it and exit.
+  if (access(config_path, F_OK) == -1 || !config_read_file(&cfg, config_path)) {
+    dbgprintf(DBG_DEBUG, "Cannot Find config_path: %s\n", config_path);
+    config_destroy(&cfg);
+    return;
+  }
+  const char * retScoringRoom;
+  if (config_lookup_string(&cfg, "roomid", &retScoringRoom)) {
+    libSdobCache->server->roomid = strdup(retScoringRoom);
+  } else {
+    printf("No roomid configuration in ~/.config/sdobox/sdobox.conf\n");
+  }
+  config_destroy(&cfg);
 }
 
 

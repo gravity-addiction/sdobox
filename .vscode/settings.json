@@ -4,6 +4,7 @@
     },
     "files.associations": {
         "mpv-zmq.h": "c",
-        "__node_handle": "c"
+        "__node_handle": "c",
+        "sdob-zmq.h": "c"
     }
 }
