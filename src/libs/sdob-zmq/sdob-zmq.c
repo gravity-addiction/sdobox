@@ -167,7 +167,7 @@ void * libsdob_eventThread(void *input) {
   }
 
   void *eventserver = NULL;
-  char tokenStr[8];
+  char tokenStr[32];
   libsdob_eventThreadRunning = 1;
   
   // Grab Device token
@@ -176,7 +176,7 @@ void * libsdob_eventThread(void *input) {
   if (tokenFile == NULL) {
     strlcpy(tokenStr, "NOTOKENS", 8);
   } else {
-    fgets(tokenStr, 8, tokenFile);
+    fgets(tokenStr, 32, tokenFile);
     fclose(tokenFile);
   }
 

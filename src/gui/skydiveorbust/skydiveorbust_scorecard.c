@@ -412,12 +412,12 @@ int pg_sdobSubmitScorecard() {
 
   // Grab Device token
   FILE *tokenFile;
-  char tokenStr[8];
+  char tokenStr[32];
   tokenFile = fopen("/opt/sdobox/device.token", "r");
   if (tokenFile == NULL) {
     strlcpy(tokenStr, "NOTOKENS", 8);
   } else {
-    fgets(tokenStr, 8, tokenFile);
+    fgets(tokenStr, 32, tokenFile);
     fclose(tokenFile);
   }
   json_object_set_new(root, "device", json_string(tokenStr));
