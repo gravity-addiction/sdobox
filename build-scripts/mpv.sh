@@ -433,7 +433,7 @@ echo "Now installing mpv. This will take about 1 minute." | fold -s
 echo "------------------------------"
 echo
 
-sudo checkinstall -y --pkgname mpv --pkgversion 0.29.0 ./waf install
+sudo checkinstall -y --pkgname mpv --pkgversion 0.29.0 ./waf --enable-libmpv-shared install
 sudo ldconfig
 
 cd ../..

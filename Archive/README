@@ -274,18 +274,37 @@ SDOB Hosts List
 192.168.124.123 db.thegarybox.com #db
 192.168.124.123 video.thegarybox.com #video
 
-192.168.124.104 blueamerica.thegarybox.com #whitespy wifi
-192.168.124.105 blueamerica.local #whitespy ethernet
+192.168.124.104 blueamerica.thegarybox.com #blueamerica wifi
+192.168.124.105 blueamerica.local #blueamerica ethernet
 
-192.168.124.106 whitespy.thegarybox.com #whitespy ethernet
-192.168.124.107 whitespy.local #whitespy wifi
+192.168.124.111 copper.thegarybox.com #copper wifi
+192.168.124.115 copper.local #copper ethernet
 
-192.168.124.112 oogie.thegarybox.com #oogie ethernet
-192.168.124.113 mayor.thegarybox.com #mayor ethernet
+192.168.124.102 mayor.thegarybox.com #mayor wifi
+192.168.124.113 mayor.local #mayor ethernet
+
+192.168.124.103 oogie.thegarybox.com #oogie wifi
+192.168.124.112 oogie.local #oogie ethernet
+
+192.168.124.101 redamerica.thegarybox.com #redamerica wifi
+192.168.124.109 redamerica.local #redamerica ethernet
+
+192.168.124.98 sdob401.thegarybox.com #sdob401 wifi
+192.168.124.99 sdob401.local #sdob401 ethernet
+
+192.168.124.107 whitespy.thegarybox.com #whitespy wifi
+192.168.124.106 whitespy.local #whitespy ethernet
+
+192.168.124.100 zeronose.thegarybox.com #zeronose wifi
+192.168.124.108 zeronose.local #zeronose ethernet
+
+
+
+
+
 192.168.124.114	pumpkinking.thegarybox.com #pumpkinking ethernet
 
-192.168.124.115 copper.local #copper ethernet
-192.168.124.111 copper.thegarybox.com #copper wifi
+
 
 192.168.124.117	astro.thegarybox.com #astro ethernet
 192.168.124.118 weaselbear.thegarybox.com #weaselbear ethernet
