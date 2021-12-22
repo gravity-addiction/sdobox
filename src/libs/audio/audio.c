@@ -41,9 +41,12 @@ snd_mixer_elem_t* audio_findSelem(snd_mixer_t **audio_handle, snd_mixer_selem_id
 // Volume persistant handle creation
 int volume_handleOpen = 0;
 void volume_closeAudio() {
-  audio_closeHandle(&volume_audio_handle);
-  free(audio_card);
-  free(audio_selem_name);
+  // free(audio_card);
+  // free(audio_selem_name);
+
+  if (volume_handleOpen == 1) {
+    audio_closeHandle(&volume_audio_handle);
+  }
   volume_handleOpen = 0;
 }
 
