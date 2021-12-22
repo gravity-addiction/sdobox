@@ -276,7 +276,7 @@ double libmpv_zmq_get_prop_double(char* prop) {
     printf("propdbl ret: %s\n", retProp);
     retDbl = strtod(retProp, &retPtr);
     printf("propdbl dbl: %lf\n", retDbl);
-    printf("propdbl str: %d\n", retPtr);
+    printf("propdbl str: %s\n", retPtr);
     free(retProp);
   }
   return retDbl;

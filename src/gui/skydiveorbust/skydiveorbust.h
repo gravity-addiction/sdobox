@@ -355,6 +355,9 @@ void pg_sdob_mpv_timepos_thread();
 int pg_sdobThreadStart();
 void pg_sdobThreadStop();
 
+int pg_sdobVideoDriver(int isDriver);
+int pg_sdobSetupScoreSettings(char* rules);
+
 void pg_skydiveorbust_init(gslc_tsGui *pGui);
 void pg_skydiveorbust_open(gslc_tsGui *pGui);
 
