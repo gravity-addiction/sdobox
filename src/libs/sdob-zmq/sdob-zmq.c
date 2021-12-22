@@ -177,6 +177,7 @@ void * libsdob_eventThread(void *input) {
     strlcpy(tokenStr, "NOTOKENS", 8);
   } else {
     fgets(tokenStr, 32, tokenFile);
+    tokenStr[strcspn(tokenStr, "\n")] = 0;
     fclose(tokenFile);
   }
 

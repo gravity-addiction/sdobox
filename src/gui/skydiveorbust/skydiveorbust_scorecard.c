@@ -418,6 +418,7 @@ int pg_sdobSubmitScorecard() {
     strlcpy(tokenStr, "NOTOKENS", 8);
   } else {
     fgets(tokenStr, 32, tokenFile);
+    tokenStr[strcspn(tokenStr, "\n")] = 0;
     fclose(tokenFile);
   }
   json_object_set_new(root, "device", json_string(tokenStr));
