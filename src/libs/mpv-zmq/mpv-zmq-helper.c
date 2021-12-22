@@ -19,8 +19,8 @@ double mpv_calc_marktime(struct lib_mpv_player *player) {
   double markTime = player->position;
   double nDiff = (((double)(s_clock() - player->position_update)) * player->pbrate) / 1000;
   
-  if (player->is_playing) {
-    // printf("Calc %d -- %f .. %f .. %f .. %lld\n", libmpvCache->player->is_playing, nDiff, markTime, player->position, player->position_update);
+  if (player->is_playing == 1) {
+    printf("Calc %d -- %f .. %f .. %f .. %lld\n", libmpvCache->player->is_playing, nDiff, markTime, player->position, player->position_update);
     if (nDiff < libmpvCache->player->duration) {
       markTime = markTime + nDiff;
     }
@@ -61,12 +61,12 @@ void mpv_check_pause() {
   }
 }
 int mpv_pause() {
-  libmpvCache->player->is_playing = 0;
+  // libmpvCache->player->is_playing = 0;
   return libmpv_zmq_cmd(strdup("set_prop_flag;pause;true"));
 }
 
 int mpv_play() {
-  libmpvCache->player->is_playing = 1;
+  // libmpvCache->player->is_playing = 1;
   // Start Background layer behind mpv images
   // fbbg_start();
   return libmpv_zmq_cmd(strdup("set_prop_flag;pause;false"));

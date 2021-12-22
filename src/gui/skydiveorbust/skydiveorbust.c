@@ -605,21 +605,24 @@ void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str) {
 
 
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char* str) {
+  /*
   size_t dispSz = snprintf(NULL, 0, "T:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 128) {
     strlcpy(sdob_judgement->team, str, 128);
     snprintf(sdob_judgement->teamStr, dispSz, "T:%s", str);
     gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_TEAM_DESC], sdob_judgement->teamStr);
   }
+  */
 }
 
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char* str) {
-  size_t dispSz = snprintf(NULL, 0, "RND:%s", str) + 1;
+  /*size_t dispSz = snprintf(NULL, 0, "RND:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 64) {
     strlcpy(sdob_judgement->round, str, 64);
     snprintf(sdob_judgement->roundStr, dispSz, "RND:%s", sdob_judgement->round);
     gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], sdob_judgement->roundStr);
   }
+  */
 }
 
 void pg_sdobUpdateEvent(gslc_tsGui *pGui, char* eventStr) {
@@ -1578,7 +1581,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], GSLC_ALIGN_MID_LEFT);
   }  
 
-/*
+/* Unrem pg_sdobUpdateTeam and pg_sdobUpdateRound
   // Team Description
   if ((
     pg_sdobEl[E_SDOB_EL_TEAM_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -3491,12 +3494,12 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   }
 
   // Check if playing
-  char *propPaused = libmpv_zmq_get_prop_string("paused");
+  char *propPaused = libmpv_zmq_get_prop_string("pause");
   if (propPaused != NULL) {
-    if (strcmp(propPaused, "true") == 0 || strcmp(propPaused, "paused") == 0) {
-      libmpvCache->player->is_playing = 0;
-    } else {
+    if (strcmp(propPaused, "no") == 0) {
       libmpvCache->player->is_playing = 1;
+    } else {
+      libmpvCache->player->is_playing = 0;
     }
     free(propPaused);
   } else {
