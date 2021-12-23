@@ -2954,7 +2954,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         }
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
-        pg_sdobSubmitAction();
+        // pg_sdobSubmitAction();
       break;
 
       case E_Q_SCORECARD_SUBMIT_SCORECARD:
