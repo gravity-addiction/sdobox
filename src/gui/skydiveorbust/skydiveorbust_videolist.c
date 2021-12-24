@@ -471,6 +471,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], true);
   }
 
+/*
   // Change Button
   if ((
     pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -483,7 +484,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
   }
-
+*/
   // Re-fresh Button
   gslc_tsElemRef** eRef = &pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_REFRESH];
   if ((*eRef = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,

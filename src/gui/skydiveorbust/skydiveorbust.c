@@ -792,7 +792,7 @@ void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
 
 bool pg_sdobPlayerCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
 {
-  if (sdob_devicehost->isHost == 0) { return true; }
+  if (sdob_devicehost->isHost == 0) { return 1; }
 
   gslc_tsGui*     pGui      = (gslc_tsGui*)(pvGui);
   gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
@@ -830,7 +830,7 @@ bool pg_sdobPlayerCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
 //  gslc_tsElemRef* pElemColor = gslc_PageFindElemById(pGui,E_PG_MAIN,E_ELEM_COLOR);
 //  gslc_ElemSetCol(pGui,pElemColor,GSLC_COL_WHITE,colRGB,GSLC_COL_WHITE);
 
-  return 1;
+  return 0;
 }
 
 
@@ -866,7 +866,7 @@ bool pg_sdobScorecardCbSlidePos(void* pvGui, void* pvElemRef, int16_t nPos)
     default:
       break;
   }
-  return 1;
+  return 0;
 }
 
 
@@ -900,8 +900,6 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
   gslc_tsElemRef* pElemRef  = (gslc_tsElemRef*)(pvElemRef);
   gslc_tsElem*    pElem     = gslc_GetElemFromRef(pGui,pElemRef);
   gslc_tsRect     pRect     = pElem->rElem;
-
-
 
 
   gslc_DrawFillRect(pGui, pRect, pElem->colElemFill);
@@ -1021,7 +1019,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
     gslc_ElemSetRedraw(pGui, pElemRef, GSLC_REDRAW_NONE);
   }
 
-  return true;
+  return 0;
 }
 
 
@@ -1031,7 +1029,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
 //
 // Slider Up
 bool pg_sdobCbBtnSliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   pg_sdobScoringSelectionLastHidden(pGui);
@@ -1039,30 +1037,30 @@ bool pg_sdobCbBtnSliderUp(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
   pg_sdobSliderChangeCurPos(pGui, -1);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
-  return true;
+  return 0;
 }
 
 // Slider Down
 bool pg_sdobCbBtnSliderDown(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // Clear selection so people don't get lost
   pg_sdobScoringSelectionLastHidden(pGui);
   pg_sdobSliderChangeCurPos(pGui, 1);
   gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
-  return true;
+  return 0;
 }
 
 // Change Video Rate
 bool pg_sdobCbBtnVideoRate(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // toggle video rate
   pg_sdobPlayerVideoRateChanging(pGui, 0);
 
-  return true;
+  return 0;
 }
 
 
@@ -1073,29 +1071,29 @@ bool pg_sdobCbBtnVideoRate(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 
 // Change Judge
 bool pg_sdobCbBtnChangeJudge(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
   pg_keyboard_shiftOn = 1;
   pg_keyboard_show(pGui, 64, sdob_judgement->judge, &pg_sdobUpdateJudgeName);
-  return true;
+  return 0;
 }
 
 // Change Judge
 bool pg_sdobCbBtnChangeJudgeInitials(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (cbInit[E_PG_KEYBOARD] != NULL) { cbInit[E_PG_KEYBOARD](pGui); }
   pg_keyboard_shiftOn = 1;
   pg_keyboard_show(pGui, 3, sdob_judgement->judge, &pg_sdobUpdateJudgeInitials);
-  return true;
+  return 0;
 }
 
 // Team Desc
-bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+int pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (sdob_current_rounds) {
@@ -1116,12 +1114,12 @@ bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 //  m_show_keyboard = 6;
 //  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_TEAM_DESC], sdob_judgement->team);
 
-  return true;
+  return 0;
 }
 
 // Round Desc
-bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+int pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (sdob_current_rounds) {
@@ -1142,42 +1140,42 @@ bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 //  m_show_keyboard = 3;
 //  gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], sdob_judgement->round);
 
-  return true;
+  return 0;
 }
 
 // Meet Desc
 bool pg_sdobCbBtnMeetDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST); // E_PG_SDOB_VIDEOLIST);
 
-  return true;
+  return 0;
 }
 
 // Video Desc
 bool pg_sdobCbBtnVideoDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST); // E_PG_SDOB_VIDEOLIST);
-  return true;
+  return 0;
 }
 
 
 // Scorecard Count
 bool pg_sdobCbBtnScCount(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
   touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST);
-  return true;
+  return 0;
 }
 
 // Submit Button
 bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN) { return 1; }
 
   if (!strlen(sdob_judgement->team) || !strlen(sdob_judgement->round)) {
     // Prohibit submission if we do not have a valid team/round
-    return true;
+    return 1;
   }
 
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
@@ -1191,25 +1189,25 @@ bool pg_sdobCbBtnSubmitBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
 */
   touchscreenPageOpen(pGui, E_PG_SDOB_SUBMIT);
 
-  return true;
+  return 0;
 }
 
 
 
 // Mirror Button
-bool pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+int pg_sdobCbBtnMirrorBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   guislice_wrapper_mirror_toggle(pGui);
-  return true;
+  return 0;
 }
 
 
 
 // Pause Callback
 bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (libmpvCache->player->is_loaded) {
@@ -1227,13 +1225,13 @@ bool pg_sdobPlCbBtnPlayPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, 
     //pg_skydiveorbust_loadvideo(pGui, newVid);
   }
 
-  return true;
+  return 0;
 }
 
 
 // Play Callback
 bool pg_sdobPlCbBtnPlay(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   
@@ -1249,12 +1247,12 @@ bool pg_sdobPlCbBtnPlay(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   pg_sdob_add_action(&item);
   // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-  return true;
+  return 0;
 }
 
 // Pause Callback
 bool pg_sdobPlCbBtnPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   
@@ -1270,13 +1268,13 @@ bool pg_sdobPlCbBtnPause(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
   pg_sdob_add_action(&item);
   // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-  return true;
+  return 0;
 }
 
 
 // Stop Callback
-bool pg_sdobPlCbBtnStop(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+int pg_sdobPlCbBtnStop(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   struct queue_head *itemClean = malloc(sizeof(struct queue_head));
@@ -1297,13 +1295,13 @@ bool pg_sdobPlCbBtnStop(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   pg_sdob_add_action(&itemClear);
   // queue_put(itemClear, pg_sdobQueue, &pg_sdobQueueLen);
 
-  return true;
+  return 0;
 }
 
 
 // Forward Callback
 bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   struct queue_head *itemClean = malloc(sizeof(struct queue_head));
@@ -1319,13 +1317,13 @@ bool pg_sdobPlCbBtnForward(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
   // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   // mpv_seek(2);
 
-  return true;
+  return 0;
 }
 
 
 // Back Callback
 bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   // gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   struct queue_head *itemClean = malloc(sizeof(struct queue_head));
@@ -1341,7 +1339,7 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
   // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
   // mpv_seek(-2);
 
-  return true;
+  return 0;
 }
 
 
@@ -1349,7 +1347,7 @@ bool pg_sdobPlCbBtnBack(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16
 
 // Defined Slow Callback
 bool pg_sdobPlCbBtnUserDefinedSlow(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
-  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return true; }
+  if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   // Stop Changing Video Rate
@@ -1366,7 +1364,7 @@ bool pg_sdobPlCbBtnUserDefinedSlow(void* pvGui, void *pvElemRef, gslc_teTouch eT
     pg_sdobUpdateVideoRate(pGui, mpv_speed(libmpvCache->player->pbrateUser));
   }
 
-  return true;
+  return 0;
 }
 
 
@@ -1394,6 +1392,11 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
         dbgprintf(DBG_DEBUG, "Sel: %d, T: %f\n", i, sdob_judgement->marks->arrScorecardTimes[i]);
         gslc_ElemSetRedraw(pGui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
 
+
+        if (sdob_devicehost->isHost == 0) {
+          break;
+        }
+        // Control Video from selection
         // if (sdob_judgement->marks->selected == 0) {
         //   mpv_pause();
         // }
@@ -1498,7 +1501,7 @@ bool pg_skydiveorbustCbBtn(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, in
     }
 */
   }
-  return true;
+  return 0;
 }
 
 
@@ -1890,7 +1893,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
 int pg_skydiveorbustButtonRotaryCW() {
   struct queue_head *item;
 
-  if (pg_sdob_change_video_rate) {
+  if (sdob_devicehost->isHost == 1 && pg_sdob_change_video_rate) {
     item = new_qhead();
     item->action = E_Q_ACTION_VIDEO_RATE_ADJUST;
     item->amt = .05;
@@ -1901,8 +1904,8 @@ int pg_skydiveorbustButtonRotaryCW() {
     // itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     // queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-  } else if (sdob_judgement->marks->selected <= 0) {
+    return 0;
+  } else if (sdob_devicehost->isHost == 1 && sdob_judgement->marks->selected <= 0) {
     // Framestep
     //
     // It has been observed that the "frame-step" function in mpv
@@ -1936,23 +1939,24 @@ int pg_skydiveorbustButtonRotaryCW() {
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // queue_put(itemSpeed, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-  } else {
+    return 0; 
+  } else if (sdob_judgement->marks->selected > -1) {
     item = new_qhead();
     item->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     item->amt = 1;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     
-    return 1;
+    return 0;
   }
+  return 1;
 }
 
 int pg_skydiveorbustButtonRotaryCCW() {
   struct queue_head *item;
 
 
-  if (pg_sdob_change_video_rate) {
+  if (sdob_devicehost->isHost == 1 && pg_sdob_change_video_rate) {
     item = new_qhead();
     item->action = E_Q_ACTION_VIDEO_RATE_ADJUST;
     item->amt = -.05;
@@ -1963,10 +1967,10 @@ int pg_skydiveorbustButtonRotaryCCW() {
     // itemUser->action = E_Q_ACTION_VIDEO_RATE_USER;
     // queue_put(itemUser, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-
+    return 0;
   // Not on a selection mark
-  } else if (sdob_judgement->marks->selected <= 0) {
+  } else if (sdob_devicehost->isHost == 1 && sdob_judgement->marks->selected <= 0) {
+
     // Adjust SOWT Framestep
     // Frameback step really horrible, rather move back to last keyframe
     item = new_qhead();
@@ -1976,18 +1980,18 @@ int pg_skydiveorbustButtonRotaryCCW() {
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // mpv_seek(-2);
 
-    return 1;
-
+    return 0;
   // Skip to next point
-  } else {
+  } else if (sdob_judgement->marks->selected > -1) {
     item = new_qhead();
     item->action = E_Q_SCORECARD_MOVE_SCORE_SELECTED;
     item->amt = -1;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
+    return 0;
   }
+  return 1;
 }
 
 
@@ -2018,19 +2022,19 @@ int pg_skydiveorbustButtonLeftPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-  } else {
-    // Add to queue E_Q_SCORECARD_UPDATE_MARK
-    item = new_qhead();
-    item->action = E_Q_SCORECARD_UPDATE_MARK;
-    item->selected = sdob_judgement->marks->selected;
-    item->mark = E_SCORES_BUST;
-    pg_sdob_add_action(&item);
-    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    pg_sdobScoringSelectionClear(&m_gui);
-
-    return 1;
+    return 0;
   }
+
+  // Add to queue E_Q_SCORECARD_UPDATE_MARK
+  item = new_qhead();
+  item->action = E_Q_SCORECARD_UPDATE_MARK;
+  item->selected = sdob_judgement->marks->selected;
+  item->mark = E_SCORES_BUST;
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdobScoringSelectionClear(&m_gui);
+
+  return 0;
 }
 
 int pg_skydiveorbustButtonRightPressed() {
@@ -2049,28 +2053,28 @@ int pg_skydiveorbustButtonRightPressed() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-  } else {
-    // Add to queue E_Q_SCORECARD_UPDATE_MARK
-    item = new_qhead();
-    item->action = E_Q_SCORECARD_UPDATE_MARK;
-    item->selected = sdob_judgement->marks->selected;
-    item->mark = E_SCORES_POINT;
-    pg_sdob_add_action(&item);
-    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    pg_sdobScoringSelectionClear(&m_gui);
-
-    return 1;
+    return 0;
   }
+
+  // Add to queue E_Q_SCORECARD_UPDATE_MARK
+  item = new_qhead();
+  item->action = E_Q_SCORECARD_UPDATE_MARK;
+  item->selected = sdob_judgement->marks->selected;
+  item->mark = E_SCORES_POINT;
+  pg_sdob_add_action(&item);
+  // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+  pg_sdobScoringSelectionClear(&m_gui);
+
+  return 0;
 }
 
 int pg_skydiveorbustButtonRotaryPressed() {
   if (sdob_judgement->marks->selected == 0) {
     // Reset SOWT
-    return 0;
+    return 1;
   } else if (sdob_judgement->marks->selected < 0) {
-    return 0;
-  } else {
+    return 1;
+  } else if (sdob_devicehost->isHost == 1) {
     struct queue_head *itemSeek = new_qhead();
     itemSeek->action = E_Q_ACTION_MPV_COMMAND;
 
@@ -2088,8 +2092,9 @@ int pg_skydiveorbustButtonRotaryPressed() {
     // // Clear Selection
     // // itemMove->selected = -1;
     // // queue_put(itemMove, pg_sdobQueue, &pg_sdobQueueLen);
-    return 1;
+    return 0;
   }
+  return 1;
 }
 
 int pg_skydiveorbustButtonLeftHeld() {
@@ -2100,9 +2105,9 @@ int pg_skydiveorbustButtonLeftHeld() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;   
+    return 0;   
   }
-  return 0;
+  return 1;
 }
 
 int pg_skydiveorbustButtonRightHeld() {
@@ -2113,9 +2118,9 @@ int pg_skydiveorbustButtonRightHeld() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
+    return 0;
   }
-  return 0;
+  return 1;
 }
 
 int pg_skydiveorbustButtonRotaryHeld() {
@@ -2127,21 +2132,22 @@ int pg_skydiveorbustButtonRotaryHeld() {
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
 
-    return 1;
-  } else {
+    return 0;
+  } else if (sdob_devicehost->isHost == 1) {
     guislice_wrapper_mirror_toggle(&m_gui);
-    return 1;
+    return 0;
   }
+  return 1;
 }
 
 int pg_skydiveorbustButtonDoubleHeld() {
   if (m_page_stackLen == 0) {
     touchscreenPageOpen(&m_gui, E_PG_MAIN);
-    return 1;
-  } else {
-    touchscreenPageGoBack(&m_gui);
-    return 1;
+    return 0;
   }
+
+  touchscreenPageGoBack(&m_gui);
+  return 0;
 }
 
 void pg_skydiveorbustButtonSetFuncs() {
@@ -2300,11 +2306,13 @@ void * pg_sdobMpvEventsThread(void *input) {
             char *tim = s_recv(videoserver);
             pg_skydiveorbust_update_position(strtod(tim, NULL));
             dbgprintf(DBG_MPV_EVENT, "%s\n", tim);
+            free(tim);
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "duration") == 0) {
-            const char* myDuration = s_recv(videoserver);
+            char *myDuration = s_recv(videoserver);
             // printf("Duration: %s\n", myDuration);
             pg_skydiveorbust_update_duration(strtod(myDuration, NULL));
+            free(myDuration);
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "start-file") == 0) {
             // printf("StartFile\n");
@@ -2316,20 +2324,22 @@ void * pg_sdobMpvEventsThread(void *input) {
             libmpvCache->player->is_loaded = 1;
             pg_sdob_pl_sliderForceUpdate = 1;
           } else if (strcmp(str, "pause") == 0) {
-            const char* myPause = s_recv(videoserver);
+            char *myPause = s_recv(videoserver);
             // printf("Pause\n");
             if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 0;
             } else if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 1;
             }
+            free(myPause);
           } else if (strcmp(str, "unpause") == 0) {
             // printf("UnPause\n");
             libmpvCache->player->is_playing = 1;
           } else if (strcmp(str, "speed") == 0) {
             // printf("Speed\n");
-            const char* mySpeed = s_recv(videoserver);
+            char *mySpeed = s_recv(videoserver);
             double dblSpeed = strtod(mySpeed, NULL);
+            free(mySpeed);
             libmpvCache->player->pbrate = dblSpeed;
             pg_sdobUpdateVideoRate(&m_gui, dblSpeed);
           } else {
@@ -2717,7 +2727,7 @@ static void pg_skydiveorbust_notify_slaves(gslc_tsGui *pGui) {
 static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob_video_data *newVideo) {
   // Clear scorecard and reset interface to defaults
 //  pg_sdob_clear(pGui);
-
+  if (sdob_devicehost->isHost == 0) { return; }
   if (sdob_judgement->video->local_folder != NULL) { strlcpy(sdob_judgement->video->local_folder, newVideo->local_folder, 256); }
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
@@ -2946,12 +2956,13 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       case E_Q_SCORECARD_SCORING_SOWT:
         pg_sdob_scorecard_score_sowt(&m_gui, item->time, sdob_judgement->workingTime);
 
-        if (sdob_current_rounds && sdob_num_current_rounds > 1
+        /*if (sdob_devicehost->isHost == 1 && 
+            sdob_current_rounds && sdob_num_current_rounds > 1
             && (!strcmp(sdob_judgement->team, "") || !strcmp(sdob_judgement->round, ""))
         ) {
           mpv_pause();
           touchscreenPageOpen(&m_gui, E_PG_SDOB_ROUNDLIST);
-        }
+        }*/
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
         gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
         // pg_sdobSubmitAction();
@@ -3100,13 +3111,14 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
     }
 
     free(item);
-    return 1;
+    return 0;
   }
-  return 0;
+  return 1;
 }
 
 // from main thread loop, return 1 if any work is done
 int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
+  if (sdob_devicehost->isHost == 0) { return 1; }
   ////////////////////////
   // Player Slider Moved
   if (pg_sdob_player_move > -1
@@ -3120,9 +3132,9 @@ int pg_skydiveorbust_thread(gslc_tsGui *pGui) {
     }
     // pg_sdob_player_move_debounce = s_clock();
     pg_sdob_player_move = -1;
-    return 1;
+    return 0;
   }
-  return 0;
+  return 1;
 }
 
 /*
@@ -3456,8 +3468,9 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 
   // Remove MPV Player Volume
   // printf("Send Mute\n");
-  mpv_volume_mute();
-
+  if (sdob_devicehost->isHost == 1) {
+    mpv_volume_mute();
+  }
   //////////////////////////////
   // Finish up
 
