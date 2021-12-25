@@ -386,20 +386,23 @@ void pg_main_init(gslc_tsGui *pGui) {
 
 // GUI Open
 void pg_main_open(gslc_tsGui *pGui) {
-
+  /* Volume Update
   long pg_main_volpercent = 0;
   volume_dbToPercent(volume_cur, volume_min, volume_max, &pg_main_volpercent);
   m_nPosVolume = pg_main_volpercent;
+
   pg_mainUpdateVolume();
+  */
   // Setup button function callbacks every time page is opened / reopened
   pg_mainButtonSetFuncs();
 }
 
 // GUI Thread
 int pg_main_thread(gslc_tsGui *pGui) {
+  printf("Main Thread\n");
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
-  guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
-  volume_debounceCheck();
+  // guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
+  // volume_debounceCheck();
   return 0;
 }
 

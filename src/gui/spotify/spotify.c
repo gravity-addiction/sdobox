@@ -195,8 +195,8 @@ void pg_spotify_open(gslc_tsGui *pGui) {
 uint32_t pg_spotify_clockUpdate = 0;
 int pg_spotify_thread(gslc_tsGui *pGui) {
   guislice_wrapper_setClock(pGui, pg_spotifyEl[E_SPOTIFY_EL_CLOCK], 0);
-  guislice_wrapper_setVolumeAndDisplay(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], 0, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY]);
-  volume_debounceCheck();
+  // guislice_wrapper_setVolumeAndDisplay(pGui, pg_spotifyEl[E_SPOTIFY_EL_VOLUME], 0, pg_spotifyEl[E_SPOTIFY_EL_VOLUME_DISPLAY]);
+  // volume_debounceCheck();
   return 0;
 }
 // GUI Destroy

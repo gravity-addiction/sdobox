@@ -367,7 +367,7 @@ int main( int argc, char* args[] )
   gslc_Update(&m_gui);
   while (!m_bQuit) {
     if (cbThread[m_tPageCur] &&
-        cbThread[m_tPageCur](&m_gui)
+        cbThread[m_tPageCur](&m_gui) == 0
     ) {
       m_bSleep = 0;
     }

@@ -61,6 +61,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
   guislice_wrapper_clockUpdate = 0;
   timeStr = (char *)malloc(73 * sizeof(char));
 
+/*
   m_cPosVolume = (char*)calloc(32, sizeof(char));
 
   // Fill volume ranges for alsa
@@ -69,6 +70,7 @@ int guislice_wrapper_init(gslc_tsGui *pGui) {
     volume_getVolumeRange(&volume_min, &volume_max);
     dbgprintf(DBG_INFO, "Volume Min: %d, Max: %d\n", volume_min, volume_max);
   }
+*/
 
   if (!gslc_Init(pGui, &m_drv, m_asPage, MAX_PAGES, m_asFont, MAX_FONT)) { return 0; }
 
@@ -181,7 +183,7 @@ void guislice_wrapper_setVolumeAndDisplay(gslc_tsGui *pGui, gslc_tsElemRef *pEle
       // Update
       pSlider->nPos = volPercent;
       gslc_ElemSetRedraw(pGui,pElemRef,GSLC_REDRAW_INC);
-      guislice_wrapper_setVolumeDisplay(pGui, pElemRefDisplay);
+      // guislice_wrapper_setVolumeDisplay(pGui, pElemRefDisplay);
     }
   }
 }
