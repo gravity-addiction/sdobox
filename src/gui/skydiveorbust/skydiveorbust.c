@@ -2327,9 +2327,9 @@ void * pg_sdobMpvEventsThread(void *input) {
             char *myPause = s_recv(videoserver);
             // printf("Pause: %s\n", myPause);
             if (myPause && strcmp(myPause, "false") == 0) {
-              libmpvCache->player->is_playing = 0;
-            } else if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 1;
+            } else if (myPause && strcmp(myPause, "true") == 0) {
+              libmpvCache->player->is_playing = 0;
             } else {
               libmpvCache->player->is_playing = 0;
             }
