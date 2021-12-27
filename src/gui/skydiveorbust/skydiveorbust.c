@@ -2325,11 +2325,13 @@ void * pg_sdobMpvEventsThread(void *input) {
             pg_sdob_pl_sliderForceUpdate = 1;
           } else if (strcmp(str, "pause") == 0) {
             char *myPause = s_recv(videoserver);
-            // printf("Pause\n");
-            if (myPause && strcmp(myPause, "true") == 0) {
+            // printf("Pause: %s\n", myPause);
+            if (myPause && strcmp(myPause, "false") == 0) {
               libmpvCache->player->is_playing = 0;
             } else if (myPause && strcmp(myPause, "true") == 0) {
               libmpvCache->player->is_playing = 1;
+            } else {
+              libmpvCache->player->is_playing = 0;
             }
             free(myPause);
           } else if (strcmp(str, "unpause") == 0) {
