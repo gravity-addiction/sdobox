@@ -650,9 +650,9 @@ void pg_sdobUpdateEvent(gslc_tsGui *pGui, char* eventStr) {
 void pg_sdobUpdateComp(gslc_tsGui *pGui, char* compStr) {
 
   // printf("Comp: %s\n", compStr);
-  if (strcmp(compStr, "FS2C") == 0) == 0
+  if (strcmp(compStr, "FSC") == 0)
   ) {
-    pg_sdobUpdateScoringSettings(pGui, "FS2wayCollegiate");
+    pg_sdobUpdateScoringSettings(pGui, "fsCollegiate");
     strlcpy(sdob_judgement->compStr, "FS 2Way Collegiates", 128);
   
   } else if (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
