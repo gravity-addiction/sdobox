@@ -650,7 +650,12 @@ void pg_sdobUpdateEvent(gslc_tsGui *pGui, char* eventStr) {
 void pg_sdobUpdateComp(gslc_tsGui *pGui, char* compStr) {
 
   // printf("Comp: %s\n", compStr);
-  if (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
+  if (strcmp(compStr, "FS2C") == 0) == 0
+  ) {
+    pg_sdobUpdateScoringSettings(pGui, "FS2wayCollegiate");
+    strlcpy(sdob_judgement->compStr, "FS 2Way Collegiates", 128);
+  
+  } else if (strcmp(compStr, "CF2S") == 0 || strcmp(compStr, "CF2SO") == 0 ||
        strcmp(compStr, "2S") == 0 || strcmp(compStr, "2SO") == 0
   ) {
     pg_sdobUpdateScoringSettings(pGui, "cf2WaySequentials");
@@ -777,6 +782,13 @@ void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
     sdob_judgement->workingTime = 0.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
+    strlcpy(sdob_judgement->ruleSet, str, 64);
+
+  } else if (strcmp(str, "fsCollegiate") == 0) {
+    sdob_judgement->prestartTime = 0.0;
+    sdob_judgement->workingTime = 40.0;
+    sdob_judgement->postFreezeFrameTime = 0.0;
+    sdob_judgement->tossStartCount = 1;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else {
