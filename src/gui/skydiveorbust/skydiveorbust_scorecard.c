@@ -57,7 +57,11 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   dbgprintf(DBG_DEBUG, "Prestart: %f, Total: %f\n", sdob_judgement->prestartTime, sdob_judgement->sopst);
   
   // Determine which type of mark to insert
-  if (markSelected == 0 && sdob_judgement->prestartTime > 0 && sdob_judgement->sopst == -1.0) { // Change up Start of Working Time
+  if (
+    markSelected == 0
+    && sdob_judgement->prestartTime > 0
+    // && sdob_judgement->sopst == -1.0
+  ) { // Change up Start of Working Time
     mark = E_SCORES_SOPST;
 
     struct queue_head *itemSOPST = malloc(sizeof(struct queue_head));
@@ -70,10 +74,9 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     // queue_put(itemSOPST, pg_sdobQueue, &pg_sdobQueueLen);
 
   } else if (
-    (sdob_judgement->prestartTime == 0 && markSelected == 0) || 
-    (sdob_judgement->prestartTime > 0 && markSelected == 1 && sdob_judgement->sowt == -1.0)
-  ) { // Change up Start of Working Time
-    // mark = E_SCORES_SOWT;
+    (sdob_judgement->prestartTime == 0 && markSelected == 0)
+  ) {
+    mark = E_SCORES_SOWT;
 
     struct queue_head *itemSOWT = malloc(sizeof(struct queue_head));
     INIT_QUEUE_HEAD(itemSOWT);
@@ -83,6 +86,23 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
     itemSOWT->mark = mark;
     pg_sdob_add_action(&itemSOWT);
     // queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
+
+  } else if (
+    sdob_judgement->prestartTime > 0
+    && markSelected == 1
+    // && sdob_judgement->sowt == -1.0)
+  ) { // Change up Start of Working Time
+    mark = E_SCORES_POINT;
+
+    struct queue_head *itemSOWT = malloc(sizeof(struct queue_head));
+    INIT_QUEUE_HEAD(itemSOWT);
+    itemSOWT->action = E_Q_SCORECARD_SCORING_SOWT;
+    itemSOWT->amt = sdob_judgement->workingTime;
+    itemSOWT->time = markTime;
+    itemSOWT->mark = mark;
+    pg_sdob_add_action(&itemSOWT);
+    // queue_put(itemSOWT, pg_sdobQueue, &pg_sdobQueueLen);
+
   }
 
   // Add Marker Time
@@ -379,6 +399,9 @@ int pg_sdobSubmitScorecard() {
       case E_SCORES_SOWT:
         json_object_set_new(json_mark, "class", json_string("blank"));
       break;
+      case E_SCORES_SOPST:
+        json_object_set_new(json_mark, "class", json_string("exit"));
+      break;      
       default:
         json_object_set_new(json_mark, "class", json_string(""));
       break;

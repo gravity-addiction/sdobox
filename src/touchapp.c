@@ -433,8 +433,9 @@ int main( int argc, char* args[] )
   // Kill any outstanding fbbg instances
   fbbg_stop();
   
-  printf("%s\n", "Disconnecting ZMQ.");
-  libzhelpers_conn_destroy();
+  // printf("%s\n", "Disconnecting ZMQ.");
+  // pthread_exit(0);
+  // libzhelpers_conn_destroy();
 
   printf("%s\n", "Controls are yours.");
   gslc_Quit(&m_gui);

@@ -163,7 +163,6 @@ int libsdob_zmq_scoring_send(char* scorecard) {
 void * libsdob_eventThread(void *input) {
   if (libsdob_eventThreadRunning) {
     dbgprintf(DBG_DEBUG, "%s\n", "Not Starting SkydiveOrBust Events Thread, Already Started");
-    pthread_exit(NULL);
   }
 
   void *eventserver = NULL;
@@ -242,7 +241,7 @@ void * libsdob_eventThread(void *input) {
     };
     
     while (!libsdob_eventThreadKill) {
-      rc = zmq_poll (items, 1, -1);
+      rc = zmq_poll (items, 1, 3000);
       if (!m_bQuit && rc > -1) {  
         if (items[0].revents & ZMQ_POLLIN) {
           char *str = s_recv(eventserver);
@@ -309,9 +308,23 @@ void * libsdob_eventThread(void *input) {
             INIT_QUEUE_HEAD(itemSc);
             itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
             pg_sdob_add_action(&itemSc);
+          } else                    
+
+          if (pt != NULL && strcmp(pt, "retry-psowt") == 0) {
+            // Remove PSOWT
+            struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+            INIT_QUEUE_HEAD(itemSc);
+            itemSc->action = E_Q_SCORECARD_REMOVE_PSOWT;
+            pg_sdob_add_action(&itemSc);             
+          } else                    
+
+          if (pt != NULL && strcmp(pt, "retry-sowt") == 0) {
+            // Remove SOWT
+            struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+            INIT_QUEUE_HEAD(itemSc);
+            itemSc->action = E_Q_SCORECARD_REMOVE_SOWT;
+            pg_sdob_add_action(&itemSc);             
           }          
-
-
 
           free(str);
         }
@@ -326,7 +339,7 @@ void * libsdob_eventThread(void *input) {
   eventserver = NULL; 
   printf("%s\n", "Closing SkydiveOrBust Events Thread");
   libsdob_eventThreadRunning = 0;
-  pthread_exit(NULL);
+  return 0;
 }
 
 
@@ -348,7 +361,7 @@ void libsdob_eventThreadStop() {
   int shutdown_cnt = 0;
   if (libsdob_eventThreadRunning) {
     libsdob_eventThreadKill = 1;
-    while (libsdob_eventThreadRunning && shutdown_cnt < 20) {
+    while (libsdob_eventThreadRunning && shutdown_cnt < 100) {
       usleep(100000);
       shutdown_cnt++;
     }

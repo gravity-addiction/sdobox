@@ -778,16 +778,16 @@ void pg_sdobUpdateScoringSettings(gslc_tsGui *pGui, char* str) {
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else if (strcmp(str, "fsSpeed") == 0 || strcmp(str, "FSSPEED") == 0) {
-    sdob_judgement->prestartTime = 45.0;
-    sdob_judgement->workingTime = 0.0;
+    sdob_judgement->prestartTime = 35.0;
+    sdob_judgement->workingTime = 5.0;
     sdob_judgement->postFreezeFrameTime = 0.0;
     sdob_judgement->tossStartCount = 0;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
   } else if (strcmp(str, "fsCollegiate") == 0) {
-    sdob_judgement->prestartTime = 0.0;
-    sdob_judgement->workingTime = 40.0;
-    sdob_judgement->postFreezeFrameTime = 0.0;
+    sdob_judgement->prestartTime = 5.0;
+    sdob_judgement->workingTime = 35.0;
+    sdob_judgement->postFreezeFrameTime = 5.0;
     sdob_judgement->tossStartCount = 1;
     strlcpy(sdob_judgement->ruleSet, str, 64);
 
@@ -1005,6 +1005,7 @@ bool pg_sdobScorecardDraw(void* pvGui, void* pvElemRef, gslc_teRedrawType eRedra
             gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsMark[iXCnt], GSLC_COL_YELLOW);
           break;
           case E_SCORES_SOWT:
+          case E_SCORES_SOPST:
             sprintf(result, "%s", "-");
             gslc_ElemSetTxtCol(pGui, pg_sdob_scorecard_elemsMark[iXCnt], GSLC_COL_RED_DK1);
           break;
@@ -2307,7 +2308,7 @@ void * pg_sdobMpvEventsThread(void *input) {
     };
     
     while (!pg_sdobMpvEventsThreadKill) {
-      rc = zmq_poll (items, 1, -1);
+      rc = zmq_poll (items, 1, 3000);
       if (!m_bQuit && rc > -1) {  
         if (items[0].revents & ZMQ_POLLIN) {
           char *str = s_recv(videoserver);
@@ -2328,10 +2329,12 @@ void * pg_sdobMpvEventsThread(void *input) {
             pg_sdob_mpv_timepos_thread();
           } else if (strcmp(str, "start-file") == 0) {
             // printf("StartFile\n");
+            char *startFile = s_recv(videoserver);
             struct queue_head *item = malloc(sizeof(struct queue_head));
             INIT_QUEUE_HEAD(item);
             item->action = E_Q_SCORECARD_CLEAR;
             pg_sdob_add_action(&item);
+            free(startFile);
             // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
             libmpvCache->player->is_loaded = 1;
             pg_sdob_pl_sliderForceUpdate = 1;
@@ -2347,8 +2350,10 @@ void * pg_sdobMpvEventsThread(void *input) {
             }
             free(myPause);
           } else if (strcmp(str, "unpause") == 0) {
+            char *myPause = s_recv(videoserver);
             // printf("UnPause\n");
             libmpvCache->player->is_playing = 1;
+            free(myPause);
           } else if (strcmp(str, "speed") == 0) {
             // printf("Speed\n");
             char *mySpeed = s_recv(videoserver);
@@ -2358,6 +2363,8 @@ void * pg_sdobMpvEventsThread(void *input) {
             pg_sdobUpdateVideoRate(&m_gui, dblSpeed);
           } else {
             dbgprintf(DBG_MPV_EVENT, "UnConfigured Event: %s\n", str);
+            char *randomEventInfo = s_recv(videoserver);
+            free(randomEventInfo);
           }
           free(str);
         }
@@ -2372,7 +2379,7 @@ void * pg_sdobMpvEventsThread(void *input) {
   videoserver = NULL; 
   // printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvEventsThreadRunning = 0;
-  pthread_exit(NULL);
+  return 0;
 }
 
 
@@ -2444,7 +2451,7 @@ void * pg_sdobMpvTimeposThread(void *input) {
  cleanup:
   // printf("%s\n", "Closing TimePos and Events Thread");
   pg_sdobMpvTimeposThreadRunning = 0;
-  pthread_exit(NULL);
+  return 0;
 }
 
 
@@ -2644,7 +2651,6 @@ void * syncSlave(void *input) {
   free(((struct pg_sdob_device_slave_args *)input)->hostName);
   free(((struct pg_sdob_device_slave_args *)input)->body);
   free((struct pg_sdob_device_slave_args *)input);
-  pthread_exit(NULL);
 }
 */
 static void pg_skydiveorbust_clear_internal(gslc_tsGui *pGui) {
@@ -3005,6 +3011,30 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         pg_sdobSubmitAction();
       break;
 
+      case E_Q_SCORECARD_REMOVE_SOWT:
+        sdob_judgement->sowt = -1.0;
+        if (sdob_judgement->marks->size > 0) {
+          pg_sdob_scorecard_delete_mark(&m_gui, sdob_judgement->marks->size - 1);
+        }
+        // pg_sdob_scorecard_clean(&m_gui);
+        // pg_sdobSliderSetCurPos(&m_gui, 0);
+        // gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+        // gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
+      break;
+
+      case E_Q_SCORECARD_REMOVE_PSOWT:
+        sdob_judgement->sopst = -1.0;
+        if (sdob_judgement->marks->size > 0) {
+          pg_sdob_scorecard_delete_mark(&m_gui, sdob_judgement->marks->size - 1);
+        }
+        // pg_sdob_scorecard_clean(&m_gui);
+        // pg_sdobSliderSetCurPos(&m_gui, 0);
+        // gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_PL_SLIDER], GSLC_REDRAW_FULL);
+        // gslc_ElemSetRedraw(&m_gui, pg_sdobEl[E_SDOB_EL_BOX], GSLC_REDRAW_FULL);
+        pg_sdobSubmitAction();
+      break;
+
       case E_Q_PLAYER_SLIDER_CHAPTERS:
         pg_sdob_player_chaptersRefresh(&m_gui);
       break;
@@ -3269,7 +3299,7 @@ void * pg_sdobThread(void *input)
   };
   
   while (!pg_sdobThreadKill) {
-    zmq_poll (items, 1, -1);
+    zmq_poll (items, 1, 3000);
     if (!m_bQuit) {  
       if (items[0].revents & ZMQ_POLLIN) {
         struct queue_head *head;
@@ -3281,10 +3311,10 @@ void * pg_sdobThread(void *input)
     }
   }
 
+  pg_sdobThreadRunning = 0;
   zmq_close(sdobsub);
   dbgprintf(DBG_DEBUG, "%s\n", "Closing SDOB Scoring Queue Thread");
-  pg_sdobThreadRunning = 0;
-  pthread_exit(NULL);
+  return 0;
 }
 
 
