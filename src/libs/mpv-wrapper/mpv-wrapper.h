@@ -1,11 +1,9 @@
-#ifndef _MPV_ZMQ_HELPER_H_
-#define _MPV_ZMQ_HELPER_H_
+#ifndef _MPV_WRAPPER_H_
+#define _MPV_WRAPPER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-#include "mpv-zmq.h"
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -22,9 +20,12 @@ extern "C" {
 #include "libs/fbbg/fbbg.h"
 #include "libs/zhelpers/zhelpers.h"
 
-#include "./mpv-zmq-helper.h"
-#include "./mpv-zmq.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
+#include "libs/mpv-socket/mpv-socket.h"
+#include "./mpv-wrapper.h"
+#include "./mpv-cache.h"
 
+int libmpv_wrapper_init();
 double mpv_calc_marktime(struct lib_mpv_player *player);
 int mpv_seek(double distance);
 int mpv_seek_arg(double distance, char* flags);
@@ -49,4 +50,4 @@ void stop_video();
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // _MPV_ZMQ_HELPER_H_
+#endif // _MPV_WRAPPER_H_

@@ -15,6 +15,7 @@
 #include <sys/kd.h>
 #include <assert.h>
 #include <time.h>
+#include <pthread.h>
 #include <ctype.h> /* isalpha */
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
@@ -23,7 +24,7 @@
 
 void free(void *ptr);
 
-static const char *sizes[7] = { "EiB", "PiB", "TiB", "GiB", "MiB", "KiB", "B" };
+static const char sizes[7][3] = { "EiB", "PiB", "TiB", "GiB", "MiB", "KiB", "B" };
 static const uint64_t exbibytes = 1024ULL * 1024ULL * 1024ULL *
                                   1024ULL * 1024ULL * 1024ULL;
 
@@ -139,7 +140,7 @@ int fd_is_connected(int fd)
 {
     unsigned char buf;
     int err = recv(fd, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
-    dbgprintf(DBG_DEBUG, "Connected: %d, Err: %d\n", err, errno);
+    // printf("Connected: %d, Err: %d\n", err, errno);
     return 1;
 }
 
@@ -561,7 +562,63 @@ void sendBeep() {
   system("/opt/sdobox/scripts/beep.sh &");
 }
 
+//
+// Transform folder & filenames that might have double-quotes or
+// back-quotes in them so that we can safely wrap the whole path in
+// double-quotes.
+//
+static char* quotify(char* original, char** saved_replacement) {
+  if (strchr(original, '"') == NULL && strchr(original, '\\') == NULL) {
+    return original;
+  }
+  else {
+    char* dst = *saved_replacement = malloc(strlen(original) * 2 + 1);
+    char* src = original;
+    while(*src) {
+      if (*src == '"' || *src == '\\')
+        *dst++ = '\\';
 
+      *dst++ = *src++;
+    }
+    *dst++ = 0;
+    return *saved_replacement;
+  }
+}
+
+
+uint64_t nextRequestId(void) {
+  // printf("Handing Out ID %d\n", reqId);
+  uint64_t nextId = ++mpv_request_id;
+  if (mpv_request_id == MPV_REQUEST_ID_TOP) { mpv_request_id = 1; } // reset request ids
+  return nextId;
+}
+
+const char** splitCSV(char* line, char* sep)
+{
+  int index=0;
+  const char** result = NULL;
+  char *lineA = malloc(strlen(line)+1);
+  strcpy(lineA, line);
+  char *tok = strtok(lineA, sep);
+  if (tok == NULL) {
+    *result = strdup(lineA);
+    index++;
+  } else {
+    while(tok != NULL) {
+      result = realloc(result, sizeof(char*)*(index+1));
+      char *dup = malloc(strlen(tok) + 1);
+      strcpy(dup, tok);
+      result[index++] = dup;
+      tok = strtok(NULL, sep);
+    }
+  }
+  // Need space to store the "terminating" NULL
+  // Thanks, BLUEPIXY, for pointing this out.
+  result = realloc(result, sizeof(char*)*(index+1));
+  result[index]=NULL;
+  free(lineA);
+  return result;
+}
 
 /*
 //---------------------

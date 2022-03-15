@@ -12,8 +12,14 @@
 #include "libs/dbg/dbg.h"
 #include "libs/fbbg/fbbg.h"
 
-#include "./mpv-zmq-helper.h"
-#include "./mpv-zmq.h"
+#include "./mpv-wrapper.h"
+#include "libs/mpv-zmq/mpv-zmq.h"
+
+int libmpv_wrapper_init() {
+  dbgprintf(DBG_MPV_WRITE, "MPV Wrapper Init\n");
+  // libmpvCache = LIBMPV_CACHE_INIT();
+  return 1;
+}
 
 double mpv_calc_marktime(struct lib_mpv_player *player) {
   double markTime = player->position;
@@ -40,51 +46,117 @@ double mpv_calc_marktime(struct lib_mpv_player *player) {
 
 int mpv_seek(double distance) {
   // if (!libmpvCache->player->is_loaded) { return 0; }
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f", distance));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_seek(distance);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f", distance));
+  break;
+  }
+  return 1;
 }
 
 int mpv_seek_arg(double distance, char* flags) {
   // if (!libmpvCache->player->is_loaded) { return 0; }
-  return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;%s", distance, flags));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_seek_arg(distance, flags);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;%s", distance, flags));
+  break;
+  }  
+  return 1;
 }
 
 void mpv_check_pause() {
+  printf("Check Pausing\n");
   char *paused = NULL;
-  int rc = libmpv_zmq_cmd_w_reply(strdup("get_prop_flag;pause"), &paused);
-  if (rc > 0 && paused != NULL) {
-    if (strncmp(paused, "false", 5) == 0) {
-      libmpvCache->player->is_playing = 1;
-    } else {
-      libmpvCache->player->is_playing = 0;
+  int rc;
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_check_pause(strdup("get_prop_flag;pause"), &paused);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    rc = libmpv_zmq_cmd_w_reply(strdup("get_prop_flag;pause"), &paused);
+    if (rc > 0 && paused != NULL) {
+      if (strncmp(paused, "false", 5) == 0) {
+        libmpvCache->player->is_playing = 1;
+      } else {
+        libmpvCache->player->is_playing = 0;
+      }
+      free(paused);
     }
-    free(paused);
+  break;
   }
 }
+
 int mpv_pause() {
   // libmpvCache->player->is_playing = 0;
-  return libmpv_zmq_cmd(strdup("set_prop_flag;pause;true"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_pause();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_cmd(strdup("set_prop_flag;pause;true"));
+  break;
+  }  
+  return 1;
 }
 
 int mpv_play() {
   // libmpvCache->player->is_playing = 1;
   // Start Background layer behind mpv images
   // fbbg_start();
-  return libmpv_zmq_cmd(strdup("set_prop_flag;pause;false"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_play();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_cmd(strdup("set_prop_flag;pause;false"));
+  break;
+  }    
+  return 1;
 }
 
 int mpv_fullscreen(int fs) {
-  if (fs) {
-    return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;true"));
-  } else {
-    return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;false"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_fullscreen(fs);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    if (fs) {
+      return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;true"));
+    } else {
+      return libmpv_zmq_cmd(strdup("set_prop_flag;fullscreen;false"));
+    }
+  break;
   }
+  return 1;
 }
 
 int mpv_volume_mute() {
-  return libmpv_zmq_set_prop_double("volume", 0.0);
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_volume_mute();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_set_prop_double("volume", 0.0);
+  break;
+  }
+  return 1;
 }
 int mpv_volume_on() {
-  return libmpv_zmq_set_prop_double("volume", 100);
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    return mpv_socket_volume_on();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_set_prop_double("volume", 100);
+  break;
+  }
+  return 1;
 }
 
 int mpv_playpause_toggle() {
@@ -102,14 +174,31 @@ int mpv_playpause_toggle() {
 
 // MPV Player Speed
 double mpv_speed(double spd) {
-  libmpv_zmq_set_prop_double("speed", spd);
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    mpv_socket_speed(spd);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    libmpv_zmq_set_prop_double("speed", spd);
+  break;
+  }
   libmpvCache->player->pbrate = spd;
   return libmpvCache->player->pbrate;
 }
 
 double mpv_speed_adjust(double spd) {
   double new_spd;
-  double cur_spd = libmpv_zmq_get_prop_double("speed");
+  double cur_spd;
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    cur_spd = libmpv_zmq_get_prop_double("speed");
+  break;
+  }
+
+  
   if (cur_spd == 0) { return -1; }
 
   if (cur_spd <= 0.1) {
@@ -134,17 +223,40 @@ double mpv_speed_adjust(double spd) {
 
 
 double mpv_time_pos() {
-  return libmpv_zmq_get_prop_double("time-pos");
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+
+  break;    
+  case E_MPV_PLAYER_ZMQ:
+    return libmpv_zmq_get_prop_double("time-pos");
+  break;
+  }
+  return 0.0;
 }
 
 
 void mpv_stop() {
   fbbg_stop();
-  libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("stop"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    mpv_socket_stop();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("stop"));
+  break;
+  }  
+  
 }
 
 void mpv_playlist_clear() {
-  libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("playlist-clear"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    mpv_socket_playlist_clear();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("playlist-clear"));
+  break;
+  }    
 }
 
 //
@@ -174,14 +286,23 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
 
   char * qfolder = NULL;
   char * qfilename = NULL;
+  int result;
   folder = quotify(folder,&qfolder);
   filename = quotify(filename,&qfilename);
 
   libmpvCache->player->has_file = 1;
   strlcpy(libmpvCache->player->folder, folder, 1024);
   strlcpy(libmpvCache->player->file, filename, 512);
-  int result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s/%s;%s;%s;", folder, filename, flag, opts));
-  mpv_pause();
+
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    result = mpv_socket_loadfile(folder, filename, flag, opts);
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s/%s;%s;%s;", folder, filename, flag, opts));
+    mpv_pause();
+  break;
+  }  
 
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
@@ -209,7 +330,15 @@ int mpv_loadurl(char* url, char* flag, char* opts) {
 
 void mpv_quit() {
   fbbg_stop();
-  libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("quit"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    mpv_socket_quit();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("quit"));
+  break;
+  } 
+  
 }
 
 void stop_video() {

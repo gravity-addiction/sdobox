@@ -399,7 +399,7 @@ void pg_main_open(gslc_tsGui *pGui) {
 
 // GUI Thread
 int pg_main_thread(gslc_tsGui *pGui) {
-  printf("Main Thread\n");
+  // printf("Main Thread\n");
   guislice_wrapper_setClock(pGui, pg_mainEl[E_MAIN_EL_CLOCK], 0);
   // guislice_wrapper_setVolumeAndDisplay(pGui, pg_mainEl[E_MAIN_EL_VOLUME], 0, pg_mainEl[E_MAIN_EL_VOLUME_DISPLAY]);
   // volume_debounceCheck();

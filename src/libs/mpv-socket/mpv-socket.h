@@ -1,5 +1,5 @@
-#ifndef _MPV_H_
-#define _MPV_H_
+#ifndef _MPV_SOCKET_H_
+#define _MPV_SOCKET_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,8 +39,8 @@ void MPV_ANY_U_FREE(mpv_any_u *mpvu);
 
 int mpv_socket_conn();
 void mpv_socket_close(int fd);
-int mpv_init();
-void mpv_destroy();
+int mpv_socket_init();
+void mpv_socket_destroy();
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);
@@ -53,27 +53,27 @@ int mpv_cmd(char *cmd_string);  /* sends and frees argument */
 
 int mpv_fmt_cmd(char* fmt, ...); /* formats and sends, nothing passed in is freed */
 
-int mpv_set_prop_char(char* prop, char* prop_val);
-int mpv_set_prop_int(char* prop, int prop_val);
-int mpv_set_prop_double(char* prop, double prop_val);
-int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val);
+int mpv_socket_set_prop_char(char* prop, char* prop_val);
+int mpv_socket_set_prop_int(char* prop, int prop_val);
+int mpv_socket_set_prop_double(char* prop, double prop_val);
+int mpv_socket_cmd_prop_val(char* cmd, char* prop, double prop_val);
 
-int mpv_seek(double distance);
-int mpv_seek_arg(double distance, char* flags);
+int mpv_socket_seek(double distance);
+int mpv_socket_seek_arg(double distance, char* flags);
 
-void mpv_check_pause();
-int mpv_pause();
-int mpv_play();
-int mpv_playpause_toggle();
-int mpv_fullscreen(int fs);
+void mpv_socket_check_pause();
+int mpv_socket_pause();
+int mpv_socket_play();
+int mpv_socket_playpause_toggle();
+int mpv_socket_fullscreen(int fs);
 
-double mpv_speed(double spd);
-double mpv_speed_adjust(double spd);
+double mpv_socket_speed(double spd);
+double mpv_socket_speed_adjust(double spd);
 
-void mpv_stop();
-void mpv_playlist_clear();
-int mpv_loadfile(char* folder, char* filename, char* flag, char* opts);
-void mpv_quit();
+void mpv_socket_stop();
+void mpv_socket_playlist_clear();
+int mpv_socket_loadfile(char* folder, char* filename, char* flag, char* opts);
+void mpv_socket_quit();
 void stop_video();
 
 // https://mpv.io/manual/stable/#terminal-status-line
@@ -93,4 +93,4 @@ int mpv_volume_on();
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // _MPV_H_
+#endif // _MPV_SOCKET_H_

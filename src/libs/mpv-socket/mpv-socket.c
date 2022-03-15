@@ -17,14 +17,14 @@
 // #include <mpv/client.h>
 #include "libs/shared.h"
 #include "mpv_events.h"
-#include "mpv_info.h"
-#include "mpv.h"
+#include "mpv-socket.h"
 
 #include "libs/dbg/dbg.h"
 
 #include "libs/queue/queue.h"
 #include "libs/fbbg/fbbg.h"
 #include "libs/json/json.h"
+#include "libs/mpv-wrapper/mpv-cache.h"
 
 
 mpv_any_u * MPV_ANY_U_NEW() {
@@ -43,8 +43,8 @@ static pthread_mutex_t mpvSocketAccessLock = PTHREAD_MUTEX_INITIALIZER;
 int mpv_socket_conn() {
   pthread_mutex_lock(&mpvSocketAccessLock);
   int fd;
-  struct sockaddr_in addr;
-  // struct sockaddr_un addr;
+  // struct sockaddr_in addr;
+  struct sockaddr_un addr;
 
   // Wait for socket to arrive
   /*if (access(mpv_socket_path, R_OK) == -1) {
@@ -55,7 +55,7 @@ int mpv_socket_conn() {
 
   /* Remote Socket using socat on remote end to forward tcp requests
      socat -d -d -d -lm -v TCP-LISTEN:9100,reuseaddr,fork,setgid=1000,setuid=1000 UNIX-CLIENT:/opt/sdobox/mpv.socket */
-
+/*
   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
     fd = -1;
@@ -77,10 +77,9 @@ int mpv_socket_conn() {
       goto cleanup;
     }
   }
-
+*/
 /* Local /tmp/mpv.socket */
-/*
-  
+
   if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
     dbgprintf(DBG_ERROR, "%s\n", "MPV Socket Error");
     fd = -1;
@@ -104,7 +103,6 @@ int mpv_socket_conn() {
     fd = -1;
     goto cleanup;
   }
-  */
 
  cleanup:
   pthread_mutex_unlock(&mpvSocketAccessLock);
@@ -117,10 +115,13 @@ void mpv_socket_close(int fd) {
 
 
 
-int mpv_init() {
-  dbgprintf(DBG_MPV_WRITE, "MPV Init\n");
+int mpv_socket_init() {
+  dbgprintf(DBG_MPV_WRITE, "MPV Socket Init\n");
   mpv_socket_path = "/tmp/mpv.socket";
   mpv_fifo_path = "/tmp/mpv.fifo";
+
+  libmpvCache = LIBMPV_CACHE_INIT();
+  libmpvCache->player_out = E_MPV_PLAYER_SOCKET;
 
   // if (!mpv_socket_fd) {
   //  mpv_socket_fd = mpv_socket_conn();
@@ -129,93 +130,17 @@ int mpv_init() {
   mpv_socket_fdSelect = -1;
   mpv_socket_timeout = (struct timeval){0};
 
-  // Init Video Player Info
-  libMpvVideoInfo = LIBMPV_EVENTS_INIT_INFO();
-
-  // mpv_stop();
-  mpv_playlist_clear();
+  // mpv_socket_stop();
+  mpv_socket_playlist_clear();
 
   return 1;
 }
 
-void mpv_destroy() {
-  LIBMPV_EVENTS_DESTROY_INFO(libMpvVideoInfo);
-  free(libMpvVideoInfo);
+void mpv_socket_destroy() {
+  LIBMPV_CACHE_DESTROY(libmpvCache);
+  free(libmpvCache);
 }
 
-
-
-/*
-static inline void check_error(int status) {
-  if (status < 0) {
-    // printf("mpv API error: %s\n", mpv_error_string(status));
-    exit(1);
-  }
-}
-*/
-int mpv_create_player(char* filePath) {
-  /*
-  mpv_handle *ctx = mpv_create();
-  if (!ctx) {
-    // printf("failed creating context\n");
-    return 0;
-  }
-
-  // Enable default key bindings, so the user can actually interact with
-  // the player (and e.g. close the window).
-  // /usr/bin/mpv
-  // --video-sync=display-resample
-  // --hr-seek-framedrop=yes
-  // --input-ipc-server=/tmp/mpv.socket
-
-  // --no-osc
-  // --no-osd-bar
-  // --osd-on-seek=no
-  // --rpi-display=0
-  // --rpi-layer=1
-  // --rpi-background=yes
-  // --rpi-osd=no
-  // --reset-on-next-file=all
-  // --keep-open=always
-  // --idle
-
-  // debug_print("%s\n", "video-sync");
-  check_error(mpv_set_option_string(ctx, "video-sync", "display-resample"));
-  // debug_print("%s\n", "hr-seek-framedrop");
-  check_error(mpv_set_option_string(ctx, "hr-seek-framedrop", "yes"));
-  // debug_print("%s\n", "osd-on-seek");
-  check_error(mpv_set_option_string(ctx, "osd-on-seek", "no"));
-
-  // debug_print("%s\n", "reset-on-next-file");
-  check_error(mpv_set_option_string(ctx, "reset-on-next-file", "all"));
-  // debug_print("%s\n", "keep-open");
-  check_error(mpv_set_option_string(ctx, "keep-open", "always"));
-
-  // debug_print("%s\n", "vo");
-  check_error(mpv_set_option_string(ctx, "vo", "rpi"));
-  // debug_print("%s\n", "hwdec");
-  check_error(mpv_set_option_string(ctx, "hwdec", "mmal"));
-  // Done setting up options.
-  check_error(mpv_initialize(ctx));
-
-  usleep(1000000);
-  // Play this file.
-  const char *cmd[] = {"loadfile", filePath, NULL};
-  check_error(mpv_command(ctx, cmd));
-
-  // Let it play, and wait until the user quits.
-  while (1) {
-    mpv_event *event = mpv_wait_event(ctx, 10000);
-    // printf("event: %s\n", mpv_event_name(event->event_id));
-    if (event->event_id == MPV_EVENT_SHUTDOWN)
-      break;
-  }
-
-  // printf("mpv terminating\n");
-  mpv_terminate_destroy(ctx);
-  */
-  return 1;
-}
 
 int mpv_fd_check(int fd) {
 
@@ -529,41 +454,42 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
   return mpv_fmt_cmd("%s %s %f\n", cmd, prop, prop_val);
 }
 
-int mpv_seek(double distance) {
-  if (!libMpvVideoInfo->is_loaded) { return 0; }
+
+int mpv_socket_seek(double distance) {
+  if (!libmpvCache->player->is_loaded) { return 0; }
   return mpv_fmt_cmd("seek %f\n", distance);
 }
 
-int mpv_seek_arg(double distance, char* flags) {
-  if (!libMpvVideoInfo->is_loaded) { return 0; }
+int mpv_socket_seek_arg(double distance, char* flags) {
+  if (!libmpvCache->player->is_loaded) { return 0; }
   return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
 
-void mpv_check_pause() {
+void mpv_socket_check_pause() {
   mpv_any_u* retPlay;
   if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
     if (strncmp(retPlay->ptr, "false", 5) == 0) {
-      libMpvVideoInfo->is_playing = 1;
+      libmpvCache->player->is_playing = 1;
     } else {
-      libMpvVideoInfo->is_playing = 0;
+      libmpvCache->player->is_playing = 0;
     }
     free(retPlay->ptr);
     MPV_ANY_U_FREE(retPlay);
   }
 }
-int mpv_pause() {
-  libMpvVideoInfo->is_playing = 0;
+int mpv_socket_pause() {
+  libmpvCache->player->is_playing = 0;
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "true");
 }
 
-int mpv_play() {
-  libMpvVideoInfo->is_playing = 1;
+int mpv_socket_play() {
+  libmpvCache->player->is_playing = 1;
   // Start Background layer behind mpv images
   // fbbg_start();
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "pause", "false");
 }
 
-int mpv_fullscreen(int fs) {
+int mpv_socket_fullscreen(int fs) {
   if (fs) {
     return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %s]}\n", "fullscreen", "true");
   } else {
@@ -571,31 +497,31 @@ int mpv_fullscreen(int fs) {
   }
 }
 
-int mpv_volume_mute() {
+int mpv_socket_volume_mute() {
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %d]}\n", "volume", 0);
 }
-int mpv_volume_on() {
+int mpv_socket_volume_on() {
   return mpv_fmt_cmd("{\"command\": [\"set_property\", \"%s\", %d]}\n", "volume", 100);
 }
 
-int mpv_playpause_toggle() {
-  if (!libMpvVideoInfo->is_loaded) { return 0; }
-  if (libMpvVideoInfo->is_playing) {
-    return mpv_pause();
+int mpv_socket_playpause_toggle() {
+  if (!libmpvCache->player->is_loaded) { return 0; }
+  if (libmpvCache->player->is_playing) {
+    return mpv_socket_pause();
   } else {
-    return mpv_play();
+    return mpv_socket_play();
   }
 }
 
 
 // MPV Player Speed
-double mpv_speed(double spd) {
+double mpv_socket_speed(double spd) {
   mpv_set_prop_double("speed", spd);
-  libMpvVideoInfo->pbrate = spd;
-  return libMpvVideoInfo->pbrate;
+  libmpvCache->player->pbrate = spd;
+  return libmpvCache->player->pbrate;
 }
 
-double mpv_speed_adjust(double spd) {
+double mpv_socket_speed_adjust(double spd) {
   mpv_any_u* retSpeed;
   double new_spd;
   if (mpvSocketSinglet("speed", &retSpeed)) {
@@ -617,21 +543,21 @@ double mpv_speed_adjust(double spd) {
       new_spd = .2;
     }
     if (number != new_spd) {
-      return mpv_speed(new_spd);
+      return mpv_socket_speed(new_spd);
       // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
     }
-    return libMpvVideoInfo->pbrate;
+    return libmpvCache->player->pbrate;
   }
   return -1;
 }
 
 
-void mpv_stop() {
+void mpv_socket_stop() {
   fbbg_stop();
   mpv_fmt_cmd("stop\n");
 }
 
-void mpv_playlist_clear() {
+void mpv_socket_playlist_clear() {
   mpv_fmt_cmd("playlist-clear\n");
 }
 
@@ -658,18 +584,18 @@ static char* quotify(char* original, char** saved_replacement) {
   }
 }
 
-int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
+int mpv_socket_loadfile(char* folder, char* filename, char* flag, char* opts) {
 
   char * qfolder = NULL;
   char * qfilename = NULL;
   folder = quotify(folder,&qfolder);
   filename = quotify(filename,&qfilename);
 
-  libMpvVideoInfo->has_file = 1;
-  strlcpy(libMpvVideoInfo->folder, folder, 1024);
-  strlcpy(libMpvVideoInfo->file, filename, 512);
+  libmpvCache->player->has_file = 1;
+  strlcpy(libmpvCache->player->folder, folder, 1024);
+  strlcpy(libmpvCache->player->file, filename, 512);
   int result = mpv_fmt_cmd("loadfile \"%s/%s\" %s %s\n", folder, filename, flag, opts);
-  mpv_pause();
+  mpv_socket_pause();
 
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
@@ -678,13 +604,13 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
   return result;
 }
 
-void mpv_quit() {
+void mpv_socket_quit() {
   fbbg_stop();
   mpv_fmt_cmd("quit\n");
   mpv_socket_close(mpv_socket_fd);
 }
 
-void stop_video() {
+void mpv_socket_stop_video() {
   // mpv_quit();
   // m_bPosThreadStop = 1;
 }
@@ -713,7 +639,7 @@ int video_display_fps() {
   ret = mpvSocketSinglet("display-fps", &retFps);
   // debug_print("Video Display FPS: %s\n", retFps);
   char* pEnd;
-  libMpvVideoInfo->fps = strtod(retFps, &pEnd);
+  libmpvCache->fps = strtod(retFps, &pEnd);
   return ret;
 }
 

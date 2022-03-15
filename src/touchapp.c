@@ -43,6 +43,10 @@
 #include "libs/GUIslice-wrapper/GUIslice-wrapper.h"
 #include "libs/fbbg/fbbg.h"
 #include "libs/avahi/avahi.h"
+#include <mpv/client.h>
+
+#include "libs/mpv-zmq/mpv_zeromq.h"
+#include "libs/mpv-wrapper/mpv-wrapper.h"
 // #include "libs/sdob-socket/sdob-socket.h"
 // #include "libs/json/json.h" // JSON Parsing
 // #include "libs/usb-drives/usb-drives-thread.h"
@@ -279,7 +283,10 @@ int main( int argc, char* args[] )
 
   // Initialize MPV library
   libsdob_zmq_init();
-  libmpv_zmq_init();
+
+  libmpv_wrapper_init();
+  // libmpv_zmq_init();
+  mpv_socket_init();
   
   // libMpvSocketThreadStart();
   // libMpvQueueThreadStart();
@@ -363,6 +370,42 @@ int main( int argc, char* args[] )
   int m_bSleep = 1; // true to usleep when main loop has nothing left to do
   int m_tPageCur = touchscreenPageStackCur();
 
+
+
+
+/*
+  // ZeroMQ Context for entire process, including threads
+  void *context = zmq_ctx_new ();
+  pthread_t mpv_tid, timer_tid, writer_tid;
+  int rc;
+
+  // Open :5555 for publishing
+  quadfive = zmq_socket(context, ZMQ_PUB);
+  rc = zmq_bind(quadfive, "inproc://videoserver"); // "tcp://*:5555");
+  assert (rc == 0);
+
+  // Open :5559 for one-way requests
+  void *command_raw = zmq_socket (context, ZMQ_PULL);
+  rc = zmq_bind (command_raw, "inproc://cmdserver"); // "tcp://*:5559");
+  assert (rc == 0);
+
+
+  // Create MPV Player Handle
+  mpv_handle *mpvHandle = mpv_handle_init();
+
+  // Assign pointers for multi-threads
+  struct threadArgs threadpassArgs;
+  threadpassArgs.mpvHandle = mpvHandle;
+  threadpassArgs.quadfive = quadfive;
+  threadpassArgs.quadfiveLock = quadfiveLock;
+  threadpassArgs.context = context;
+  threadpassArgs.bCancel = &m_bQuit;
+
+  // Start Multithreads
+  pthread_create(&mpv_tid, NULL, mpvZeroMQThread, (void *)&threadpassArgs);
+  pthread_create(&timer_tid, NULL, mpvTimerThread, (void *)&threadpassArgs);
+  pthread_create(&writer_tid, NULL, mpvWriterThread, (void *)&threadpassArgs);
+*/
   // avahi_main();
   gslc_Update(&m_gui);
   while (!m_bQuit) {
@@ -371,7 +414,16 @@ int main( int argc, char* args[] )
     ) {
       m_bSleep = 0;
     }
-
+/*
+    char msg[4096];
+    int size = zmq_recv(command_raw, msg, 4096 - 1, ZMQ_DONTWAIT);
+    if (size > 0) {
+      msg[size < 4096 ? size : 4096 - 1] = '\0';
+      char* retData = NULL;
+      int rcCmd = libmpv2_parse_msg(mpvHandle, msg, 1, &retData);
+      printf("Raw Send: %d - %s\n%s\n", rcCmd, msg, retData);
+    }
+*/
     // if (lib_buttons_thread()) {
     //    m_bSleep = 0;
     // }
@@ -390,7 +442,17 @@ int main( int argc, char* args[] )
   } // bQuit
 
   dbgprintf(DBG_DEBUG, "%s\n", "Shutting Down!");
+/*
+  zmq_close (command_raw);
+  zmq_close (quadfive);
+  mpv_handle_destroy(mpvHandle);
 
+  pthread_join(mpv_tid, NULL); 
+  pthread_join(timer_tid, NULL);
+  pthread_join(writer_tid, NULL);
+
+  zmq_ctx_destroy (context);
+*/
   if (m_touchscreenInit) {
     // Quit GUIslice
     guislice_wrapper_quit(&m_gui);

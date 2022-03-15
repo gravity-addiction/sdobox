@@ -30,7 +30,7 @@
 #include "libs/zhelpers/zhelpers-tx.h"
 #include "libs/zhelpers/zhelpers.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
-#include "libs/mpv-zmq/mpv-zmq-helper.h"
+#include "libs/mpv-wrapper/mpv-wrapper.h"
 // #include "libs/json/json.h"
 // #include "libs/curl-sdob/curl-sdob.h"
 // #include "libs/ulfius/websocket_api.h"
@@ -57,7 +57,7 @@ struct pg_sdob_device_host * PG_SDOB_DEVICE_HOST()
   struct pg_sdob_device_host *sdh = (struct pg_sdob_device_host*)malloc(sizeof(struct pg_sdob_device_host));
   sdh->cnt = 1; // 1 for initalization in thread
   sdh->seenCnt = 0;
-  sdh->isHost = 0; // 1 is host device, 0 is not
+  sdh->isHost = 1; // 1 is host device, 0 is not
   sdh->teamStart = 1; // 1 for room api to start working time, 0 send mpv start and length commands
   return sdh;
 }
@@ -605,24 +605,21 @@ void pg_sdobUpdateVideoDescTwo(gslc_tsGui *pGui, char* str) {
 
 
 void pg_sdobUpdateTeam(gslc_tsGui *pGui, char* str) {
-  /*
   size_t dispSz = snprintf(NULL, 0, "T:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 128) {
     strlcpy(sdob_judgement->team, str, 128);
     snprintf(sdob_judgement->teamStr, dispSz, "T:%s", str);
     gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_TEAM_DESC], sdob_judgement->teamStr);
   }
-  */
 }
 
 void pg_sdobUpdateRound(gslc_tsGui *pGui, char* str) {
-  /*size_t dispSz = snprintf(NULL, 0, "RND:%s", str) + 1;
+  size_t dispSz = snprintf(NULL, 0, "RND:%s", str) + 1;
   if (dispSz > 0 && dispSz <= 64) {
     strlcpy(sdob_judgement->round, str, 64);
     snprintf(sdob_judgement->roundStr, dispSz, "RND:%s", sdob_judgement->round);
     gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], sdob_judgement->roundStr);
   }
-  */
 }
 
 void pg_sdobUpdateEvent(gslc_tsGui *pGui, char* eventStr) {
@@ -1105,7 +1102,7 @@ bool pg_sdobCbBtnChangeJudgeInitials(void* pvGui, void *pvElemRef, gslc_teTouch 
 }
 
 // Team Desc
-int pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+bool pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
@@ -1131,7 +1128,7 @@ int pg_sdobCbBtnTeamDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int1
 }
 
 // Round Desc
-int pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
+bool pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
@@ -1160,7 +1157,8 @@ int pg_sdobCbBtnRoundDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_sdobCbBtnMeetDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST); // E_PG_SDOB_VIDEOLIST);
+  // touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST);
+  touchscreenPageOpen(pGui, E_PG_SDOB_VIDEOLIST);
 
   return 0;
 }
@@ -1169,7 +1167,8 @@ bool pg_sdobCbBtnMeetDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int
 bool pg_sdobCbBtnVideoDesc(void* pvGui, void *pvElemRef, gslc_teTouch eTouch, int16_t nX, int16_t nY) {
   if (eTouch != GSLC_TOUCH_UP_IN || sdob_devicehost->isHost == 0) { return 1; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
-  touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST); // E_PG_SDOB_VIDEOLIST);
+  // touchscreenPageOpen(pGui, E_PG_SDOB_DISCIPLINELIST);
+  touchscreenPageOpen(pGui, E_PG_SDOB_VIDEOLIST);
   return 0;
 }
 
@@ -1597,7 +1596,6 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_JUDGE_NAME], GSLC_ALIGN_MID_LEFT);
   }  
 
-/* Unrem pg_sdobUpdateTeam and pg_sdobUpdateRound
   // Team Description
   if ((
     pg_sdobEl[E_SDOB_EL_TEAM_DESC] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -1621,7 +1619,7 @@ void pg_sdobGuiInit(gslc_tsGui *pGui, gslc_tsRect pRect) {
     gslc_ElemSetTxtAlign(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], GSLC_ALIGN_MID_LEFT);
     gslc_ElemSetFrameEn(pGui, pg_sdobEl[E_SDOB_EL_ROUND_DESC], false);
   }
-*/
+
   // Total Scored Points
   if ((
     pg_sdobEl[E_SDOB_EL_SC_COUNT] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO,
@@ -2991,7 +2989,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       case E_Q_SCORECARD_SUBMIT_SCORECARD:
         // Submit scorecard to syslog
         // touchscreenPopupMsgBox(&m_gui, "Submitting Score!", "Saving your score.");
-        pg_sdobSubmitScorecard();
+        //-//pg_sdobSubmitScorecard();
         // touchscreenPopupMsgBoxClose(&m_gui);
       break;
       case E_Q_SDOB_CLEAR:
@@ -3500,8 +3498,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   ////////////////////////////
   // Start SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  pg_sdobMpvTimeposThreadStart(); // Processes Timestamps in a human way
-  pg_sdobMpvEventsThreadStart(); // Fetch events from video server :5555
+  //-/pg_sdobMpvTimeposThreadStart(); // Processes Timestamps in a human way
+  //-/pg_sdobMpvEventsThreadStart(); // Fetch events from video server :5555
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
   pg_sdobThreadStart(); // Processes QUEUE Events
 
@@ -3527,42 +3525,75 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
   pg_skydiveorbustButtonSetFuncs();
   
-  pg_sdobVideoDriver(0);
+  pg_sdobVideoDriver(1);
 
   // Fetch Info
   int rc;
 
-  pg_skydiveorbust_update_duration(libmpv_zmq_get_prop_double("duration"));
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
 
-  libmpv_zmq_get_prop_double("time-pos");
-  pg_skydiveorbust_update_position(libmpv_zmq_get_prop_double("time-pos"));
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    pg_skydiveorbust_update_duration(libmpv_zmq_get_prop_double("duration"));
+
+    // libmpv_zmq_get_prop_double("time-pos");
+    pg_skydiveorbust_update_position(libmpv_zmq_get_prop_double("time-pos"));
+  break;
+  }
   pg_skydiveorbust_update_positionStr();
   
+  if (libmpvCache->player_out == E_MPV_PLAYER_SOCKET) {
+    // mpv_any_u* retPlay;
+    // if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+    //   if (strncmp(retPlay->ptr, "false", 5) == 0) {
+    //     libmpvCache->player->is_playing = 1;
+    //   } else {
+    //     libmpvCache->player->is_playing = 0;
+    //   }
+    //   free(retPlay->ptr);
+    //   MPV_ANY_U_FREE(retPlay);
+    // } else {
+    //   libmpvCache->player->is_playing = 0;
+    // }
 
-  char *propFilename = libmpv_zmq_get_prop_string("filename");
-  if (propFilename != NULL) {
-    strlcpy(libmpvCache->player->file, propFilename, 512);
-    free(propFilename);
-  }
-  if (libmpvCache->player->file != NULL) {
-    libmpvCache->player->is_loaded = 1;
-  } else {
-    libmpvCache->player->is_loaded = 0;
-  }
+    // mpv_any_u* retFilename;
+    // if ((mpvSocketSinglet("filename", &retFilename)) != -1) {
+    //   strlcpy(libmpvCache->player->file, retFilename->ptr, 512);
+    //   free(retFilename->ptr);
+    //   MPV_ANY_U_FREE(retFilename);
+    // }
+    // if (libmpvCache->player->file != NULL) {
+    //   libmpvCache->player->is_loaded = 1;
+    // } else {
+    //   libmpvCache->player->is_loaded = 0;
+    // }
+  } else if (libmpvCache->player_out == E_MPV_PLAYER_ZMQ) {
+    char *propFilename = libmpv_zmq_get_prop_string("filename");
+    if (propFilename != NULL) {
+      strlcpy(libmpvCache->player->file, propFilename, 512);
+      free(propFilename);
+    }
+    if (libmpvCache->player->file != NULL) {
+      libmpvCache->player->is_loaded = 1;
+    } else {
+      libmpvCache->player->is_loaded = 0;
+    }
 
-  // Check if playing
-  char *propPaused = libmpv_zmq_get_prop_string("pause");
-  if (propPaused != NULL) {
-    if (strcmp(propPaused, "no") == 0) {
-      libmpvCache->player->is_playing = 1;
+    char *propPaused = libmpv_zmq_get_prop_string("pause");
+    if (propPaused != NULL) {
+      if (strcmp(propPaused, "no") == 0) {
+        libmpvCache->player->is_playing = 1;
+      } else {
+        libmpvCache->player->is_playing = 0;
+      }
+      free(propPaused);
     } else {
       libmpvCache->player->is_playing = 0;
-    }
-    free(propPaused);
-  } else {
-    libmpvCache->player->is_playing = 0;
-  }
-  
+    }    
+  } 
+
+
   pg_sdobSubmitAction(); // Notify captains of presence
 
   // Reset Scorecard Slider to Top

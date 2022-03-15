@@ -9,12 +9,13 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <inttypes.h>
+#include "dbg/dbg.h"
 
 #define	COUNT_KEY	0
 
 #define DEBUG 0
 #define CLEAR(x, y) memset(x,'\0',y)
-
+#define MPV_REQUEST_ID_TOP UINT64_MAX
 
 // Configuration Filepath
 char* config_path;
@@ -24,6 +25,8 @@ char* VIDEOS_BASEPATH;
 
 int m_bQuit;
 int fbcp_running;
+uint64_t mpv_request_id;
+
 // Debugging Printout helper
 // #ifdef DEBUG
 // #define debug_print printf
@@ -45,6 +48,14 @@ struct fileStruct {
   size_t atime;
   size_t mtime;
   size_t ctime;
+};
+
+struct threadArgs {
+  void* mpvHandle;
+  void* quadfive;
+  pthread_mutex_t quadfiveLock;
+  void* context;
+  int* bCancel;
 };
 
 #ifndef HAVE_STRLCAT
@@ -91,6 +102,9 @@ void sendBeep();
 // int run_system_cmd_with_return(char *fullpath, char *ret, int retsize);
 //-/ void fbcp_start();
 //-/ void fbcp_stop();
+static char* quotify(char* original, char** saved_replacement);
+uint64_t nextRequestId(void);
+const char** splitCSV(char* line, char* sep);
 
 #define MIN(a,b) \
  ({ __typeof__ (a) _a = (a); \

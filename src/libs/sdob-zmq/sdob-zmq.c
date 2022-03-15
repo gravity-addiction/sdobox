@@ -267,12 +267,12 @@ void * libsdob_eventThread(void *input) {
               item->action = E_Q_SCORECARD_CLEAR;
               pg_sdob_add_action(&item);
 
-              printf("Also Send Submit\n");
-              // Submit Scorecard
-              struct queue_head *itemSc = malloc(sizeof(struct queue_head));
-              INIT_QUEUE_HEAD(itemSc);
-              itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
-              pg_sdob_add_action(&itemSc);              
+              // printf("Also Send Submit\n");
+              // // Submit Scorecard
+              // struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+              // INIT_QUEUE_HEAD(itemSc);
+              // itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+              // pg_sdob_add_action(&itemSc);              
             }
           } else
           
@@ -303,11 +303,12 @@ void * libsdob_eventThread(void *input) {
 
           if (pt != NULL && strcmp(pt, "ping") == 0) {
             pt = strtok(NULL, ";");
-            // Submit Scorecard
-            struct queue_head *itemSc = malloc(sizeof(struct queue_head));
-            INIT_QUEUE_HEAD(itemSc);
-            itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
-            pg_sdob_add_action(&itemSc);
+
+            // // Submit Scorecard
+            // struct queue_head *itemSc = malloc(sizeof(struct queue_head));
+            // INIT_QUEUE_HEAD(itemSc);
+            // itemSc->action = E_Q_SCORECARD_SUBMIT_SCORECARD;
+            // pg_sdob_add_action(&itemSc);
           } else                    
 
           if (pt != NULL && strcmp(pt, "retry-psowt") == 0) {

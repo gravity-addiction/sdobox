@@ -5,9 +5,7 @@
 extern "C" {
 #endif // __cplusplus
 
-#include "./mpv-cache.h"
-
-struct lib_mpv_cache *libmpvCache;
+#include "libs/mpv-wrapper/mpv-cache.h"
 
 int libmpv_zmq_init();
 void libmpv_zmq_destroy();

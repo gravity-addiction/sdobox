@@ -5,6 +5,11 @@
 extern "C" {
 #endif // __cplusplus
 
+enum lib_mpv_player_out {
+  E_MPV_PLAYER_SOCKET,
+  E_MPV_PLAYER_ZMQ
+};
+
 struct lib_mpv_player {
   unsigned long int cnt;
   int has_file;
@@ -33,10 +38,11 @@ struct lib_mpv_server {
 };
 
 struct lib_mpv_cache {
+  enum lib_mpv_player_out player_out;
   struct lib_mpv_player *player;
   struct lib_mpv_server *server;
 };
-struct lib_mpv_cache *libMpvCache;
+struct lib_mpv_cache *libmpvCache;
 
 struct lib_mpv_player * LIBMPV_PLAYER_INIT();
 void LIBMPV_PLAYER_DESTROY(struct lib_mpv_player *player);

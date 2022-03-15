@@ -27,8 +27,9 @@ int eventsI[100] = { -1 };
 void (*cbEvents[100])(void *);
 
 int libmpv_zmq_init() {
-  dbgprintf(DBG_MPV_WRITE, "MPV Init\n");
+  dbgprintf(DBG_MPV_WRITE, "MPV Zmq Init\n");
   libmpvCache = LIBMPV_CACHE_INIT();
+  libmpvCache->player_out = E_MPV_PLAYER_ZMQ;
   return 1;
 }
 

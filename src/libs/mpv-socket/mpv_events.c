@@ -12,10 +12,10 @@
 
 #include "libs/queue/queue.h"
 #include "libs/json/json.h"
+#include "libs/mpv-wrapper/mpv-cache.h"
 
 #include "mpv_events.h"
-#include "mpv_info.h"
-#include "mpv.h"
+#include "mpv-socket.h"
 
 
 
@@ -97,48 +97,48 @@ void* libMpvCallbackFunc(void* targ) {
 void libMpvProcessEvent(char *event) {
 
   // Updates an allocated space in memory with a counter
-  // off-threads can rely on the libMpvVideoInfo->cnt as a counter
+  // off-threads can rely on the libmpvCache->player->cnt as a counter
   // would like to figure out a way to deal with going over 4,294,967,265 and crashing.
 
   // Is Playing
   if (strcmp(event, "start-file") == 0 ||
       strcmp(event, "play") == 0
   ) {
-    libMpvVideoInfo->is_playing = 1;
+    libmpvCache->player->is_playing = 1;
 
   // No Longer Playing
   } else if (
     strcmp(event, "end-file") == 0 || 
     strcmp(event, "pause") == 0
   ) {
-    libMpvVideoInfo->is_playing = 0;
+    libmpvCache->player->is_playing = 0;
 
   // Is Loaded
   } else if (strcmp(event, "file-loaded") == 0) {
-    libMpvVideoInfo->is_loaded = 1;
-    libMpvVideoInfo->has_seeked = 1;
+    libmpvCache->player->is_loaded = 1;
+    libmpvCache->player->has_seeked = 1;
 
   // Nothing Loaded
   } else if (strcmp(event, "idle") == 0) {
-    libMpvVideoInfo->is_loaded = 0;
-    libMpvVideoInfo->has_seeked = 1;
+    libmpvCache->player->is_loaded = 0;
+    libmpvCache->player->has_seeked = 1;
     
   // Seeking Thru File, Not Playing, and not Paused
   } else if (strcmp(event, "seek") == 0) {
-    libMpvVideoInfo->is_seeking = 1;
-    libMpvVideoInfo->has_seeked = 1;
+    libmpvCache->player->is_seeking = 1;
+    libmpvCache->player->has_seeked = 1;
 
   // No longer Seeking, Playable
   } else if (strcmp(event, "playback-restart") == 0) {
-    libMpvVideoInfo->is_seeking = 0;
+    libmpvCache->player->is_seeking = 0;
 
   } else if (strcmp(event, "metadata-update") == 0) {
     libmpv_setduration();
-    libMpvVideoInfo->has_seeked = 1;
+    libmpvCache->player->has_seeked = 1;
   } else {
     return;
   }
-  libMpvVideoInfo->cnt++;
+  libmpvCache->player->cnt++;
 
 
 
@@ -171,12 +171,12 @@ void libmpv_setduration() {
   mpv_any_u * retDur;
   if ((mpvSocketSinglet("duration", &retDur)) != -1) {
     dbgprintf(DBG_DEBUG, "Video Duration: Status: %f\n", retDur->floating);
-    libMpvVideoInfo->duration = retDur->floating;
+    libmpvCache->player->duration = retDur->floating;
     MPV_ANY_U_FREE(retDur);
     // printf("Video Duration Dbl: %f\n", sdob_player->duration);
   } else {
     // printf("%s\n", "No Video Duration!!");
-    libMpvVideoInfo->duration = 0;
+    libmpvCache->player->duration = 0;
   }
 }
 
