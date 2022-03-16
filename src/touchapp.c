@@ -288,8 +288,8 @@ int main( int argc, char* args[] )
   // libmpv_zmq_init();
   mpv_socket_init();
   
-  // libMpvSocketThreadStart();
-  // libMpvQueueThreadStart();
+  libMpvSocketThreadStart();
+  libMpvQueueThreadStart();
 
   // libSdobSocketThreadStart();
 

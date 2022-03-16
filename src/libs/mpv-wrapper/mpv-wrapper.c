@@ -11,7 +11,7 @@
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
 #include "libs/fbbg/fbbg.h"
-
+#include "./mpv-cache.h"
 #include "./mpv-wrapper.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
 
@@ -191,33 +191,33 @@ double mpv_speed_adjust(double spd) {
   double cur_spd;
   switch (libmpvCache->player_out) {
   case E_MPV_PLAYER_SOCKET:
-
+    cur_spd = mpv_socket_speed_adjust(spd);
   break;
   case E_MPV_PLAYER_ZMQ:
     cur_spd = libmpv_zmq_get_prop_double("speed");
+  
+    if (cur_spd == 0) { return -1; }
+
+    if (cur_spd <= 0.1) {
+      new_spd = cur_spd + (spd / 10);
+    } else {
+      new_spd = cur_spd + spd;
+    }
+
+    if (new_spd > 1) {
+      new_spd = 1;
+    } else if (new_spd < .01) {
+      new_spd = .01;
+    } else if (new_spd == .11) {
+      new_spd = .2;
+    }
+    if (cur_spd != new_spd) {
+      return mpv_speed(new_spd);
+      // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
+    }    
   break;
   }
 
-  
-  if (cur_spd == 0) { return -1; }
-
-  if (cur_spd <= 0.1) {
-    new_spd = cur_spd + (spd / 10);
-  } else {
-    new_spd = cur_spd + spd;
-  }
-
-  if (new_spd > 1) {
-    new_spd = 1;
-  } else if (new_spd < .01) {
-    new_spd = .01;
-  } else if (new_spd == .11) {
-    new_spd = .2;
-  }
-  if (cur_spd != new_spd) {
-    return mpv_speed(new_spd);
-    // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
-  }
   return libmpvCache->player->pbrate;
 }
 
@@ -312,19 +312,23 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
 }
 
 int mpv_loadurl(char* url, char* flag, char* opts) {
+  int result;
 
-  char * qurl = NULL;
-  url = quotify(url, &qurl);
-
-  libmpvCache->player->has_file = 1;
-  strlcpy(libmpvCache->player->url, url, 512);
-  printf("Sending: %s\n", url);
-  int result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s;%s;%s", url, flag, opts));
-  mpv_pause();
-
-  // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
-  free(qurl);
-
+  // libmpvCache->player->has_file = 1;
+  libmpvCache->player->url = strdup(url);
+  // strlcpy(libmpvCache->player->url, url, 512);
+  printf("Incoming: %s\n", url);
+  switch (libmpvCache->player_out) {
+  case E_MPV_PLAYER_SOCKET:
+    result = mpv_socket_loadurl(libmpvCache->player->url, flag, opts);
+    // mpv_pause();
+  break;
+  case E_MPV_PLAYER_ZMQ:
+    result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s;%s;%s", url, flag, opts));
+    mpv_pause();
+  break;
+  }
+  printf("Returing\n");
   return result;
 }
 

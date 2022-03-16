@@ -704,7 +704,7 @@ void pg_sdobUpdateDiscipline(gslc_tsGui *pGui, char* ident, char* name) {
 void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
   if (pg_sdob_player_move_timepos_lock == 1) { return; }
   pg_sdob_player_move_timepos_lock = 1;
-/*
+
   mpv_any_u* retTime;
   if ((mpvSocketSinglet("time-pos", &retTime)) != -1) {
     if (retTime == NULL) {
@@ -746,7 +746,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
     }
   }
   gslc_ElemSetTxtStr(pGui, pg_sdobEl[E_SDOB_EL_PL_POS], libmpvCache->player->positionStr);
-  */
+
   pg_sdob_player_move_timepos_lock = 0;
 }
 
@@ -2750,7 +2750,10 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
-  mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
+  // mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
+  printf("Going To: %s\n", sdob_judgement->video->url);
+  mpv_loadurl(sdob_judgement->video->url, "replace", "");
+  
   mpv_fullscreen(1);
   pg_sdob_pl_sliderForceUpdate = 1;
 
@@ -3047,7 +3050,15 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
 
       // Writes commands to open FD Socket
       case E_Q_ACTION_MPV_COMMAND:
-        libmpv_zmq_cmd(item->cmd);
+        switch (libmpvCache->player_out) {
+        case E_MPV_PLAYER_SOCKET:
+          mpv_cmd(item->cmd);
+        break;
+        case E_MPV_PLAYER_ZMQ:
+          libmpv_zmq_cmd(item->cmd);
+        break;
+        }
+        
       break;
 
 
@@ -3121,11 +3132,14 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         mpv_seek(2);
       break;
       case E_Q_PLAYER_VIDEO_FORWARD_STEP:
-        // sClock = s_clock();
-        // if ((sClock - pg_sdob_framestep_debounce_delay) > 750) {
+        switch (libmpvCache->player_out) {
+        case E_MPV_PLAYER_SOCKET:
+          mpv_cmd(strdup("frame-step"));
+        break;
+        case E_MPV_PLAYER_ZMQ:
           libmpv_zmq_cmd(strdup("frame-step"));
-        //   pg_sdob_framestep_debounce_delay = sClock;
-        // }
+        break;
+        }
       break;
 
       case E_Q_PLAYER_SLIDER_UPDATE:
@@ -3532,7 +3546,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   switch (libmpvCache->player_out) {
   case E_MPV_PLAYER_SOCKET:
-
+    
   break;
   case E_MPV_PLAYER_ZMQ:
     pg_skydiveorbust_update_duration(libmpv_zmq_get_prop_double("duration"));
@@ -3544,31 +3558,37 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
   pg_skydiveorbust_update_positionStr();
   
   if (libmpvCache->player_out == E_MPV_PLAYER_SOCKET) {
-    // mpv_any_u* retPlay;
-    // if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
-    //   if (strncmp(retPlay->ptr, "false", 5) == 0) {
-    //     libmpvCache->player->is_playing = 1;
-    //   } else {
-    //     libmpvCache->player->is_playing = 0;
-    //   }
-    //   free(retPlay->ptr);
-    //   MPV_ANY_U_FREE(retPlay);
-    // } else {
-    //   libmpvCache->player->is_playing = 0;
-    // }
-
-    // mpv_any_u* retFilename;
-    // if ((mpvSocketSinglet("filename", &retFilename)) != -1) {
-    //   strlcpy(libmpvCache->player->file, retFilename->ptr, 512);
-    //   free(retFilename->ptr);
-    //   MPV_ANY_U_FREE(retFilename);
-    // }
-    // if (libmpvCache->player->file != NULL) {
-    //   libmpvCache->player->is_loaded = 1;
-    // } else {
-    //   libmpvCache->player->is_loaded = 0;
-    // }
+    
+    /*
+    mpv_any_u* retPlay;
+    if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+      if (retPlay->hasPtr == 1 && strncmp(retPlay->ptr, "false", 5) == 0) {
+        libmpvCache->player->is_playing = 1;
+        free(retPlay->ptr);
+      } else {
+        libmpvCache->player->is_playing = 0;
+      }
+      MPV_ANY_U_FREE(retPlay);
+    } else {
+      libmpvCache->player->is_playing = 0;
+    }
+    */
+    mpv_any_u* retFilename;
+    if ((mpvSocketSinglet("filename", &retFilename)) != -1) {
+      if (retFilename->hasPtr == 1) {
+        strlcpy(libmpvCache->player->file, retFilename->ptr, 512);
+        free(retFilename->ptr);
+      }
+      MPV_ANY_U_FREE(retFilename);
+    }
+    if (libmpvCache->player->file != NULL) {
+      libmpvCache->player->is_loaded = 1;
+    } else {
+      libmpvCache->player->is_loaded = 0;
+    }
+    
   } else if (libmpvCache->player_out == E_MPV_PLAYER_ZMQ) {
+
     char *propFilename = libmpv_zmq_get_prop_string("filename");
     if (propFilename != NULL) {
       strlcpy(libmpvCache->player->file, propFilename, 512);

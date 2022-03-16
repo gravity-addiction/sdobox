@@ -136,6 +136,7 @@ void libMpvProcessEvent(char *event) {
     libmpv_setduration();
     libmpvCache->player->has_seeked = 1;
   } else {
+    printf("Event: %s\n", event);
     return;
   }
   libmpvCache->player->cnt++;
@@ -170,10 +171,11 @@ void libmpv_setduration() {
   // Update Duration
   mpv_any_u * retDur;
   if ((mpvSocketSinglet("duration", &retDur)) != -1) {
-    dbgprintf(DBG_DEBUG, "Video Duration: Status: %f\n", retDur->floating);
-    libmpvCache->player->duration = retDur->floating;
+    if (retDur->hasPtr == 1) { libmpvCache->player->duration = atof(retDur->ptr);
+    } else { libmpvCache->player->duration = retDur->floating;
+    }
     MPV_ANY_U_FREE(retDur);
-    // printf("Video Duration Dbl: %f\n", sdob_player->duration);
+    // printf("Video Duration Dbl: %f\n", libmpvCache->player->duration);
   } else {
     // printf("%s\n", "No Video Duration!!");
     libmpvCache->player->duration = 0;

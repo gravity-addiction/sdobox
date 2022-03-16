@@ -382,7 +382,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
           // item->data = strdup(json_event);
           // item->action = 1;
           // queue_put(item, libMpvEvents_Queue, &libMpvEvents_QueueLen);
-          dbgprintf(DBG_MPV_EVENT, "MPV Eventz: -%s-, Parsed: %s Len: %d\n", mpv_rpc_ret, json_event, rcE);
+          // dbgprintf(DBG_MPV_EVENT, "MPV Eventz: -%s-, Parsed: %s Len: %d\n", mpv_rpc_ret, json_event, rcE);
           // if (rcE >= 0) {
           //   free(json_event);
           // }
@@ -456,12 +456,17 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
 
 
 int mpv_socket_seek(double distance) {
-  if (!libmpvCache->player->is_loaded) { return 0; }
+  if (!libmpvCache->player->is_loaded) { 
+    printf("Video Not Loaded mpv_socket_seek\n");
+    return 0;
+  }
   return mpv_fmt_cmd("seek %f\n", distance);
 }
 
 int mpv_socket_seek_arg(double distance, char* flags) {
-  if (!libmpvCache->player->is_loaded) { return 0; }
+  if (!libmpvCache->player->is_loaded) { 
+    printf("Video Not Loaded mpv_socket_seek\n"); 
+    return 0; }
   return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
 
@@ -600,6 +605,21 @@ int mpv_socket_loadfile(char* folder, char* filename, char* flag, char* opts) {
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
   free(qfilename);
+
+  return result;
+}
+
+int mpv_socket_loadurl(char* url, char* flag, char* opts) {
+
+  char * qurl = NULL;
+  url = quotify(url,&qurl);
+
+  libmpvCache->player->has_file = 1;
+  strlcpy(libmpvCache->player->url, url, 1024);
+  int result = mpv_fmt_cmd("loadfile \"%s\" %s %s\n", url, flag, opts);
+
+  // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
+  free(qurl);
 
   return result;
 }

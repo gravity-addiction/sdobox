@@ -123,26 +123,34 @@ bool pg_sdobVideoListCbBtnCancel(void* pvGui,void *pvElemRef,gslc_teTouch eTouch
 }
 
 bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int16_t nX,int16_t nY) {
+
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
+
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
   if (pg_sdobVideo_listConfig->cur >= 0) {
     struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
-    printf("Path: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16);
-    size_t serverUrlSz = snprintf(NULL, 0, "https://server.thegarybox.com/hls/USPA/%s/%s.m3u8", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    printf("Path: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path); // + 16);
+    printf("Name: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+
+//pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 
+    size_t serverUrlSz = snprintf(NULL, 0, "https://transq.thegarybox.com/source/live/uspa-collegiate-2021/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
     char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
-    snprintf(serverUrl, serverUrlSz, "https://server.thegarybox.com/hls/USPA/%s/%s.m3u8", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path + 16, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    snprintf(serverUrl, serverUrlSz, "https://transq.thegarybox.com/source/live/uspa-collegiate-2021/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    printf("Server Url: %s\n", serverUrl);
+    strlcpy(newVid->url, serverUrl, serverUrlSz);
     
-    strlcpy(newVid->url, serverUrl, 512);
-//     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
+    strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
+    strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
 
     // Load Video Into Player
     struct queue_head *item = new_qhead();
-    item->action = E_Q_ACTION_LOADURL;
+    item->action = E_Q_ACTION_LOADVIDEO;
     item->data = newVid;
     item->u1.ptr = pGui;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
 /*
     // Parse Filename for Comp Info
     struct queue_head *itemParse = new_qhead();
@@ -150,7 +158,8 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     itemParse->data = newVid;
     itemParse->u1.ptr = pGui;
     queue_put(itemParse, pg_sdobQueue, &pg_sdobQueueLen);
-
+*/
+/*
     // Notify Slave Devices
     struct queue_head *itemNotify = new_qhead();
     itemNotify->action = E_Q_ACTION_NOTIFY_SLAVES;
@@ -159,7 +168,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     queue_put(itemNotify, pg_sdobQueue, &pg_sdobQueueLen);
 */
     // Close Menu
-    pg_sdobVideoListClose(pGui);
+     pg_sdobVideoListClose(pGui);
   }
 
   return true;
@@ -471,7 +480,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CANCEL], true);
   }
 
-/*
+
   // Change Button
   if ((
     pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE] = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
@@ -484,7 +493,7 @@ void pg_sdobVideoListGuiInit(gslc_tsGui *pGui) {
     gslc_ElemSetFillEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
     gslc_ElemSetFrameEn(pGui, pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_CHANGE], true);
   }
-*/
+
   // Re-fresh Button
   gslc_tsElemRef** eRef = &pg_sdobVideolistEl[E_SDOB_VIDEOLIST_EL_BTN_REFRESH];
   if ((*eRef = gslc_ElemCreateBtnTxt(pGui, GSLC_ID_AUTO, ePage,
