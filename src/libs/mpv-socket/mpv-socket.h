@@ -44,7 +44,7 @@ void mpv_socket_destroy();
 
 int mpv_create_player(char* filePath);
 int mpv_fd_write(char *data);
-int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop);
+int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait);
 
 // void mpv_setCallbackDouble(int evt, void (*function)(double));
 // void mpv_runCallbackDouble(int evt, double spd);

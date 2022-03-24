@@ -18,7 +18,7 @@ void pg_sdob_player_clear() {
 void pg_sdob_player_setChapterCur() {
   /*
   mpv_any_u* chapterRet;
-  if ((mpvSocketSinglet("chapter", &chapterRet)) != -1) {
+  if ((mpvSocketSinglet("chapter", &chapterRet, 1)) != -1) {
     sdob_chapters->cur = chapterRet->integer;
     MPV_ANY_U_FREE(chapterRet);
   } else {
@@ -72,7 +72,7 @@ void pg_sdob_player_video_chapterList(int len) {
 
       /*
       mpv_any_u* retChapterTime;
-      if (mpvSocketSinglet(cmd, &retChapterTime) != -1) {
+      if (mpvSocketSinglet(cmd, &retChapterTime, 1) != -1) {
         sdob_chapters->ptr[i_chapter] = retChapterTime->floating;
         MPV_ANY_U_FREE(retChapterTime);
       } else {
@@ -90,7 +90,7 @@ void pg_sdob_player_video_chapterList(int len) {
 void pg_sdob_player_video_chapters() {
   /*
   mpv_any_u* retChapters;
-  if ((mpvSocketSinglet("chapter-list/count", &retChapters)) != -1) {
+  if ((mpvSocketSinglet("chapter-list/count", &retChapters, 1)) != -1) {
     pg_sdob_player_video_chapterList(retChapters->integer);
     MPV_ANY_U_FREE(retChapters);
   }

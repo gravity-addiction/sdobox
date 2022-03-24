@@ -58,7 +58,7 @@ struct pg_sdob_device_host * PG_SDOB_DEVICE_HOST()
   sdh->cnt = 1; // 1 for initalization in thread
   sdh->seenCnt = 0;
   sdh->isHost = 1; // 1 is host device, 0 is not
-  sdh->teamStart = 1; // 1 for room api to start working time, 0 send mpv start and length commands
+  sdh->teamStart = 0; // 1 for room api to start working time, 0 send mpv start and length commands
   return sdh;
 }
 
@@ -702,11 +702,11 @@ void pg_sdobUpdateDiscipline(gslc_tsGui *pGui, char* ident, char* name) {
 }
 
 void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
-  if (pg_sdob_player_move_timepos_lock == 1) { return; }
+  if (pg_sdob_player_move_timepos_lock == 1) { printf("TimeLock!\n"); return; }
   pg_sdob_player_move_timepos_lock = 1;
 
   mpv_any_u* retTime;
-  if ((mpvSocketSinglet("time-pos", &retTime)) != -1) {
+  if (mpvSocketSinglet("time-pos", &retTime, 0) != -1) {
     if (retTime == NULL) {
       pg_sdob_player_move_timepos_lock = 0;
       MPV_ANY_U_FREE(retTime);
@@ -726,11 +726,12 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
       // printf("No Ptr: %f\n", retTime->floating);
       libmpvCache->player->position = retTime->floating;
     }
-    
     MPV_ANY_U_FREE(retTime);
   } else {
-    libmpvCache->player->position = 0;
+    // printf("No Time-Pos Return\n");
+    // libmpvCache->player->position = 0;
   }
+
 
   if (sdob_judgement->sowt == -1.0 || !pg_sdob_timeline_zoom_workingtime) {
 
@@ -2441,7 +2442,8 @@ void * pg_sdobMpvTimeposThread(void *input) {
     
   while (!pg_sdobMpvTimeposThreadKill) {
     // printf("Timestamp: %f @ %lld\n", libmpvCache->player->position, libmpvCache->player->position_update);
-    pg_skydiveorbust_update_positionStr();
+    pg_sdobUpdatePlayerSlider(&m_gui);
+    //-/ pg_skydiveorbust_update_positionStr();
 
     usleep(1000000);
   }
@@ -2751,12 +2753,16 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
   // mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
-  printf("Going To: %s\n", sdob_judgement->video->url);
+  // printf("Going To: %s\n", sdob_judgement->video->url);
   mpv_loadurl(sdob_judgement->video->url, "replace", "");
   
   mpv_fullscreen(1);
   pg_sdob_pl_sliderForceUpdate = 1;
+  mpv_pause();
 
+  if (strlen(sdob_judgement->video->video_file) > 20) {
+    sdob_judgement->video->video_file[21] = '\0';
+  }
   pg_sdobUpdateVideoDescOne(pGui, sdob_judgement->video->video_file);
 }
 
@@ -3050,6 +3056,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
 
       // Writes commands to open FD Socket
       case E_Q_ACTION_MPV_COMMAND:
+        // printf("MPV CMD: %s\n", item->cmd);
         switch (libmpvCache->player_out) {
         case E_MPV_PLAYER_SOCKET:
           mpv_cmd(item->cmd);
@@ -3367,7 +3374,7 @@ void pg_sdobMpvEventCb(char* event) {
   /*
   if (strcmp(event, "file-loaded") == 0) {
     mpv_any_u* retPath;
-    if ((mpvSocketSinglet("path", &retPath)) != -1) {
+    if ((mpvSocketSinglet("path", &retPath, 1)) != -1) {
       printf("File Path: %s\n", (char *)retPath->ptr);
       free(retPath->ptr);
       MPV_ANY_U_FREE(retPath);
@@ -3512,8 +3519,8 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
   ////////////////////////////
   // Start SDOB Thread
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Stopping MPV TimePos Thread");
-  //-/pg_sdobMpvTimeposThreadStart(); // Processes Timestamps in a human way
-  //-/pg_sdobMpvEventsThreadStart(); // Fetch events from video server :5555
+  pg_sdobMpvTimeposThreadStart(); // Processes Timestamps in a human way
+  pg_sdobMpvEventsThreadStart(); // Fetch events from video server :5555
   // dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Starting Thread");
   pg_sdobThreadStart(); // Processes QUEUE Events
 
@@ -3561,7 +3568,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
     
     /*
     mpv_any_u* retPlay;
-    if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+    if ((mpvSocketSinglet("pause", &retPlay, 0)) != -1) {
       if (retPlay->hasPtr == 1 && strncmp(retPlay->ptr, "false", 5) == 0) {
         libmpvCache->player->is_playing = 1;
         free(retPlay->ptr);
@@ -3574,7 +3581,7 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
     }
     */
     mpv_any_u* retFilename;
-    if ((mpvSocketSinglet("filename", &retFilename)) != -1) {
+    if ((mpvSocketSinglet("filename", &retFilename, 1)) != -1) {
       if (retFilename->hasPtr == 1) {
         strlcpy(libmpvCache->player->file, retFilename->ptr, 512);
         free(retFilename->ptr);

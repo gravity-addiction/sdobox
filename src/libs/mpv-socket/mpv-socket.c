@@ -209,7 +209,6 @@ int mpv_fd_write(char *data) {
 static pthread_mutex_t mpvSocketCmdLock = PTHREAD_MUTEX_INITIALIZER;
 
 int mpv_cmd(char *cmd_string) {
-
     pthread_mutex_lock(&mpvSocketCmdLock);
     int fdWrite = mpv_fd_write(cmd_string);
     pthread_mutex_unlock(&mpvSocketCmdLock);
@@ -219,8 +218,9 @@ int mpv_cmd(char *cmd_string) {
 }
 
 unsigned int reqId = 1;
+unsigned int rReqId = 0;
 unsigned int reqTop = -1;
-int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
+int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
   // dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "mpvsinglet: %s\n", prop);
 
   // struct mpv_cmd_status *mpvSocketCmdStatus = (struct mpv_cmd_status *)malloc(sizeof(struct mpv_cmd_status));
@@ -228,11 +228,12 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
   // mpvSocketCmdStatus->jsonReqId = (char*)malloc(64 * sizeof(char));
   // mpvSocketCmdStatus->jsonError = (char*)malloc(128 * sizeof(char));
   // mpvSocketCmdStatus->jsonData = (char*)malloc(512 * sizeof(char));
-
+  if (reqId - rReqId > 3) {
+    return -1;
+  }
   pthread_mutex_lock(&mpvSocketCmdLock);
 
   if (++reqId == reqTop) { reqId = 1; } // reset request ids
-
   char* data_tmp = "{\"command\":[\"get_property\",\"%s\"],\"request_id\": %d}\n";
   size_t len = snprintf(NULL, 0, data_tmp, prop, reqId) + 1;
   char *data = (char*)malloc(len * sizeof(char));
@@ -246,6 +247,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
   int result = -1;
 
   if (!mpv_fd_write(data)) {
+    // printf("No Write\n");
     goto cleanup;
   }
   
@@ -253,14 +255,12 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
   time_t startTimeout = time(NULL);
   time_t timeoutSeconds = 10; // 10 Second timeout getting back your cmd
   endTimeout = startTimeout + timeoutSeconds;
-  int rReqId = 0;
   int errSuccess = 1;
 
   while (startTimeout < endTimeout && rReqId != reqId) {
-
     /* select returns 0 if timeout, 1 if input available, -1 if error. */
     int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
-    if (selT == -1) {
+    if (selT == -1 || selT == 0) {
       dbgprintf(DBG_ERROR, "%s\n%s\n","Error! Closing MPV Socket, SELECT -1", strerror(errno));
       mpv_socket_close(mpv_socket_fdSelect);
       mpv_socket_fdSelect = -1;
@@ -273,13 +273,19 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
         json_error_t error;
         root = json_loads(mpv_rpc_ret, 0, &error);
         if (json_is_object(root) != 1) {
-          rReqId = 0;
+          // rReqId = 0;
+          if (force_wait == 0) {
+            goto cleanup;
+          }
         } else {
           // Successful Response With Data
           json_t *rReqObj = json_object_get(root, "request_id");
           if (json_is_integer(rReqObj) != 1) {
             // printf("No Request Event\n");
-            rReqId = 0;
+            // rReqId = 0;
+            if (force_wait == 0) {
+              goto cleanup;
+            }
           } else {
             rReqId = json_integer_value(rReqObj);
           }
@@ -296,6 +302,11 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
           // free(&strError);
         }
         json_decref(rError);
+
+        // printf("Process %d - %u\n", rReqId, reqId);
+        // if (rReqId < reqId) {
+        //   printf("Defunkle %d - %u\n", rReqId, reqId);
+        // }
 
         if (rReqId == reqId && errSuccess == 0) {
           dbgprintf(DBG_MPV_READ, "mpvread %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
@@ -392,8 +403,6 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop) {
       } else {
         goto cleanup;
       }
-    } else {
-      goto cleanup;
     }
   }
 
@@ -457,7 +466,7 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
 
 int mpv_socket_seek(double distance) {
   if (!libmpvCache->player->is_loaded) { 
-    printf("Video Not Loaded mpv_socket_seek\n");
+    // printf("Video Not Loaded mpv_socket_seek\n");
     return 0;
   }
   return mpv_fmt_cmd("seek %f\n", distance);
@@ -465,14 +474,14 @@ int mpv_socket_seek(double distance) {
 
 int mpv_socket_seek_arg(double distance, char* flags) {
   if (!libmpvCache->player->is_loaded) { 
-    printf("Video Not Loaded mpv_socket_seek\n"); 
+    // printf("Video Not Loaded mpv_socket_seek\n"); 
     return 0; }
   return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
 
 void mpv_socket_check_pause() {
   mpv_any_u* retPlay;
-  if ((mpvSocketSinglet("pause", &retPlay)) != -1) {
+  if ((mpvSocketSinglet("pause", &retPlay, 0)) != -1) {
     if (strncmp(retPlay->ptr, "false", 5) == 0) {
       libmpvCache->player->is_playing = 1;
     } else {
@@ -529,7 +538,7 @@ double mpv_socket_speed(double spd) {
 double mpv_socket_speed_adjust(double spd) {
   mpv_any_u* retSpeed;
   double new_spd;
-  if (mpvSocketSinglet("speed", &retSpeed)) {
+  if (mpvSocketSinglet("speed", &retSpeed, 1)) {
     double number = retSpeed->floating;
     MPV_ANY_U_FREE(retSpeed);
     if (number == 0) { return -1; }

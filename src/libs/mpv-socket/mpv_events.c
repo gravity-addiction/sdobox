@@ -170,9 +170,12 @@ void libMpvProcessEvent(char *event) {
 void libmpv_setduration() {
   // Update Duration
   mpv_any_u * retDur;
-  if ((mpvSocketSinglet("duration", &retDur)) != -1) {
-    if (retDur->hasPtr == 1) { libmpvCache->player->duration = atof(retDur->ptr);
-    } else { libmpvCache->player->duration = retDur->floating;
+  if ((mpvSocketSinglet("duration", &retDur, 1)) != -1) {
+    if (retDur->hasPtr == 1) {
+      libmpvCache->player->duration = atof(retDur->ptr);
+      free(retDur->ptr);
+    } else {
+      libmpvCache->player->duration = retDur->floating;
     }
     MPV_ANY_U_FREE(retDur);
     // printf("Video Duration Dbl: %f\n", libmpvCache->player->duration);
