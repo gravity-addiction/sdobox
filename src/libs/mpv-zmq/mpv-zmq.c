@@ -55,11 +55,14 @@ void libmpv_zmq_destroy() {
 
 // Soon to be Async requests with responses returned in event thread
 int libmpv_zmq_async_init() {
+  return -1;
+  /*
   dbgprintf(DBG_DEBUG, "%s\n", "Attempting Asyncv 5557");
   reqasync = zmq_socket (libzhelpers_context(), ZMQ_REQ);
   int rc = zmq_connect (reqasync, "tcp://flittermouse.local:5557");
   dbgprintf(DBG_DEBUG, "Async 5557: %d\n", rc);
   return rc;
+  */
 }
 
 uint64_t libmpv_zmq_cmd_async(char* question, void *cb) {
