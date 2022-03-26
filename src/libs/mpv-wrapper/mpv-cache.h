@@ -5,6 +5,8 @@
 extern "C" {
 #endif // __cplusplus
 
+#include "libs/queue/queue.h"
+
 enum lib_mpv_player_out {
   E_MPV_PLAYER_SOCKET,
   E_MPV_PLAYER_ZMQ

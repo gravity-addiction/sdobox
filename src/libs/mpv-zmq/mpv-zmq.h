@@ -28,6 +28,9 @@ int libmpv_zmq_set_prop_double(char* prop, double prop_val);
 int libmpv_zmq_set_prop_flag(char* prop, char* prop_val);
 int libmpv_zmq_cmd_prop_val(char* cmd, char* prop, double prop_val);
 
+void *pg_mpvEvents; // ZMQ mpvEventQueue
+void pg_mpv_add_event(struct queue_head **head);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

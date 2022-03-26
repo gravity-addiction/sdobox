@@ -18,6 +18,7 @@ extern "C" {
 #include "libs/shared.h"
 #include "libs/dbg/dbg.h"
 #include "libs/fbbg/fbbg.h"
+#include "libs/queue/queue.h"
 #include "libs/zhelpers/zhelpers.h"
 
 #include "libs/mpv-zmq/mpv-zmq.h"

@@ -319,3 +319,8 @@ int libmpv_zmq_set_prop_flag(char* prop, char* prop_val) {
 int libmpv_zmq_cmd_prop_val(char* cmd, char* prop, double prop_val) {
   return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("%s;%s;%f", cmd, prop, prop_val));
 }
+
+
+void pg_mpv_add_event(struct queue_head **head) {
+  zmq_send(pg_mpvEvents, head, sizeof(head), 0);
+}

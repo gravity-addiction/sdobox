@@ -105,6 +105,7 @@ void sendBeep();
 static char* quotify(char* original, char** saved_replacement);
 uint64_t nextRequestId(void);
 const char** splitCSV(char* line, char* sep);
+char *substring(char *string, int position, int length);
 
 #define MIN(a,b) \
  ({ __typeof__ (a) _a = (a); \

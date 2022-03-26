@@ -13,11 +13,23 @@
 #include "libs/fbbg/fbbg.h"
 #include "./mpv-cache.h"
 #include "./mpv-wrapper.h"
+#include "libs/mpv-socket/mpv-socket.h"
 #include "libs/mpv-zmq/mpv-zmq.h"
+
+#include "libs/zhelpers/zhelpers-conn.h"
+#include "libs/zhelpers/zhelpers-tx.h"
+#include "libs/zhelpers/zhelpers.h"
 
 int libmpv_wrapper_init() {
   dbgprintf(DBG_MPV_WRITE, "MPV Wrapper Init\n");
+
   // libmpvCache = LIBMPV_CACHE_INIT();
+  pg_mpvEvents = zmq_socket(libzhelpers_context(), ZMQ_PUB);
+  int rc = zmq_connect(pg_mpvEvents, "inproc://videoserver");
+  if (rc != 0) {
+    printf("Cannot Start Mpv Events Proc: %d\n", rc);
+  }
+
   return 1;
 }
 

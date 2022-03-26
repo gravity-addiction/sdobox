@@ -142,7 +142,7 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     
     strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
-
+        
     // Load Video Into Player
     struct queue_head *item = new_qhead();
     item->action = E_Q_ACTION_LOADVIDEO;
@@ -157,7 +157,8 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     itemParse->action = E_Q_ACTION_PARSE_VIDEO_FILENAME;
     itemParse->data = newVid;
     itemParse->u1.ptr = pGui;
-    queue_put(itemParse, pg_sdobQueue, &pg_sdobQueueLen);
+    pg_sdob_add_action(&itemParse);
+    // queue_put(itemParse, pg_sdobQueue, &pg_sdobQueueLen);
 */
 /*
     // Notify Slave Devices

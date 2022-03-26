@@ -508,13 +508,13 @@ int pg_sdobSubmitScorecard() {
   json_decref(root);
 
   // CURL Submit Scorecard to Server
-  // if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
-  //   dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
-  // };
+  if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
+    dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
+  };
   // char* scoreReply;
-  if (libsdob_zmq_scoring_send(s) < 0) {
-    dbgprintf(DBG_DEBUG, "Failed to send scoring data");
-  }
+  // if (libsdob_zmq_scoring_send(s) < 0) {
+  //   dbgprintf(DBG_DEBUG, "Failed to send scoring data");
+  // }
 
   return 1;
 }

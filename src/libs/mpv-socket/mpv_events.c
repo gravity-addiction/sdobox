@@ -102,7 +102,8 @@ void libMpvProcessEvent(char *event) {
 
   // Is Playing
   if (strcmp(event, "start-file") == 0 ||
-      strcmp(event, "play") == 0
+      strcmp(event, "play") == 0 ||
+      strcmp(event, "unpause") == 0
   ) {
     libmpvCache->player->is_playing = 1;
 
@@ -330,6 +331,7 @@ PI_THREAD (libMpvSocketThread)
       struct queue_head *item = new_qhead();
       item->data = strdup(json_event);
       item->action = 1;
+      // pg_mpv_add_event(&item);
       queue_put(item, libMpvEvents_Queue, &libMpvEvents_QueueLen);
 
       dbgprintf(DBG_MPV_EVENT, "MPV Event: -%s-, Parsed: %s Len: %d\n", mpv_event_ret, json_event, rcE);
