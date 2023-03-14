@@ -2805,11 +2805,11 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
-  pg_skydiveorbust_parsefilename_internal(pGui, newVideo);
+  // pg_skydiveorbust_parsefilename_internal(pGui, newVideo);
 
-  // mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
+  mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
   // printf("Going To: %s\n", sdob_judgement->video->url);
-  mpv_loadurl(sdob_judgement->video->url, "replace", "");
+  // mpv_loadurl(sdob_judgement->video->url, "replace", "");
   
   mpv_fullscreen(1);
   pg_sdob_pl_sliderForceUpdate = 1;

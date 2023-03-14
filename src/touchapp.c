@@ -338,8 +338,7 @@ int main( int argc, char* args[] )
   // clock_setLocaltime();
   // xdotool_wrapper_wakeUp();
   ///// TEST STUFF /////
-
-
+ 
 
   // mainButtonSetFuncs();
   // InitGUI_AdvertGui(strPath);
