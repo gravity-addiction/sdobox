@@ -1938,7 +1938,7 @@ int pg_skydiveorbustButtonRotaryCW() {
     // libmpv_zmq_cmd(strdup(cmdFSTxt));
     item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
-    item->cmd = strdup("frame-step");
+    item->cmd = strdup("frame-step\n");
     pg_sdob_add_action(&item);
 
     // item = new_qhead();
@@ -1989,7 +1989,7 @@ int pg_skydiveorbustButtonRotaryCCW() {
     // Frameback step really horrible, rather move back to last keyframe
     item = new_qhead();
     item->action = E_Q_ACTION_MPV_COMMAND;
-    item->cmd = strdup("frame-back-step");
+    item->cmd = strdup("frame-back-step\n");
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // mpv_seek(-2);
@@ -2705,10 +2705,11 @@ static void pg_skydiveorbust_parsefilename_internal(gslc_tsGui *pGui, struct pg_
   pg_sdobUpdateTeam(pGui, tFile);
   
   char* rFile = strdup(pData->video_file);
-  rFile[6] = '\0';
-  rFile += 5;
+  rFile[5] = '\0';
+  rFile += 4;
   pg_sdobUpdateRound(pGui, rFile);
 
+  printf("Video T: %s\n", tFile);
   printf("Video R: %s\n", rFile);
   // char* t = substring(strdup(pData->video_file), 0, 3);
   // printf("Team Number: %s\n", t);
@@ -3053,7 +3054,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       case E_Q_SCORECARD_SUBMIT_SCORECARD:
         // Submit scorecard to syslog
         // touchscreenPopupMsgBox(&m_gui, "Submitting Score!", "Saving your score.");
-        pg_sdobSubmitScorecard();
+        pg_sdobSubmitScorecard_API();
         // touchscreenPopupMsgBoxClose(&m_gui);
       break;
       case E_Q_SDOB_CLEAR:
@@ -3600,10 +3601,9 @@ void pg_skydiveorbust_init(gslc_tsGui *pGui) {
 void pg_skydiveorbust_open(gslc_tsGui *pGui) {
 
   dbgprintf(DBG_DEBUG, "%s\n", "Page SkydiveOrBust Setting Button Functions");
+  pg_sdobVideoDriver(1);
   pg_skydiveorbustButtonSetFuncs();
   
-  pg_sdobVideoDriver(1);
-
   // Fetch Info
   int rc;
 
@@ -3640,7 +3640,6 @@ void pg_skydiveorbust_open(gslc_tsGui *pGui) {
     if ((mpvSocketSinglet("filename", &retFilename, 1)) != -1) {
       if (retFilename->hasPtr == 1) {
         strlcpy(libmpvCache->player->file, retFilename->ptr, 512);
-        free(retFilename->ptr);
       }
       MPV_ANY_U_FREE(retFilename);
     }

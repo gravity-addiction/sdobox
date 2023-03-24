@@ -134,9 +134,11 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     printf("Name: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
 
 //pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 
-    size_t serverUrlSz = snprintf(NULL, 0, "https://transq.thegarybox.com/source/live/perris-fresh-meet-2022/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    size_t serverUrlSz = snprintf(NULL, 0, "https://transq.thegarybox.com/videos/perris-fresh-meet-2023/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    // size_t serverUrlSz = snprintf(NULL, 0, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1; 
     char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
-    snprintf(serverUrl, serverUrlSz, "https://transq.thegarybox.com/source/live/perris-fresh-meet-2022/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    snprintf(serverUrl, serverUrlSz, "https://transq.thegarybox.com/videos/perris-fresh-meet-2023/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    // snprintf(serverUrl, serverUrlSz, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name); 
     printf("Server Url: %s\n", serverUrl);
     strlcpy(newVid->url, serverUrl, serverUrlSz);
     

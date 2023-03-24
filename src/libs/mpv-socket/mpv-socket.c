@@ -275,6 +275,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
         if (json_is_object(root) != 1) {
           // rReqId = 0;
           if (force_wait == 0) {
+            free(mpv_rpc_ret);
             goto cleanup;
           }
         } else {
@@ -284,6 +285,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
             // printf("No Request Event\n");
             // rReqId = 0;
             if (force_wait == 0) {
+              free(mpv_rpc_ret);
               goto cleanup;
             }
           } else {
@@ -316,7 +318,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
             switch(json_typeof(rData)) {
               case JSON_STRING:
               {
-                // printf("STRING\n");
+                printf("STRING\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->ptr = strdup(json_string_value(rData));
                 *json_prop = mpvu;
@@ -325,7 +327,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_INTEGER:
               {
-                // printf("INTEGER\n");
+                printf("INTEGER\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->integer = json_integer_value(rData);
                 *json_prop = mpvu;
@@ -334,7 +336,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_REAL:
               {
-                // printf("REAL\n");
+                printf("REAL\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 double tFloat = (double)json_number_value(rData);
                 mpvu->floating = tFloat;
@@ -344,7 +346,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_TRUE:
               {
-                // printf("TRUE\n");
+                printf("TRUE\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->floating = 1.0;
                 mpvu->integer = 1;
@@ -356,7 +358,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_FALSE:
               {
-                // printf("FALSE\n");
+                printf("FALSE\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->floating = 0.0;
                 mpvu->integer = 0;
@@ -370,7 +372,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               case JSON_ARRAY:
               case JSON_NULL:
               {
-                // printf("OTHER\n");
+                printf("OTHER\n");
                 break;
               }
             }
@@ -538,7 +540,7 @@ double mpv_socket_speed(double spd) {
 double mpv_socket_speed_adjust(double spd) {
   mpv_any_u* retSpeed;
   double new_spd;
-  if (mpvSocketSinglet("speed", &retSpeed, 1)) {
+  if (mpvSocketSinglet("speed", &retSpeed, 1) > -1) {
     double number = retSpeed->floating;
     MPV_ANY_U_FREE(retSpeed);
     if (number == 0) { return -1; }

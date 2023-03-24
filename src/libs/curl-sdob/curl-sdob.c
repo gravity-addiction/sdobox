@@ -18,7 +18,7 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
     chunk = curl_slist_append(chunk, "Host: skydiveorbust.com");
     chunk = curl_slist_append(chunk, "Authorization: Bearer eyJpZCI6MSwibmFtZSI6IkdhcnkgVGF5bG9yIiwidXNlcm5hbWUiOiIwMDEiLCJyb2xlIjpbInVzZXIiLHsicm9sZSI6ImFkbWluIiwiYXJlYSI6IiJ9XSwianRpIjoiNmRlNDFhNzYtNTMxYS00ZmE1LTI1ZTMtZmMzNzMyY2NjMmVkIiwiaWF0IjoxNjQ4MjUwMzgyLCJleHAiOjE2NDgyNTA0NDJ9.zo8qb29uxddkmFvhoC9H3iKF6-eR2oCqSuRX21wjwQk");
 
-    curl_easy_setopt(curl, CURLOPT_URL, "https://skydiveorbust.com/api/latest/events/2022_perris_fresh_meet/scores/submit");
+    curl_easy_setopt(curl, CURLOPT_URL, "https://skydiveorbust.com/api/latest/events/2023_perris_fresh_meet/scores/submit");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, dataLen);
@@ -27,7 +27,7 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
     
     curl_slist_free_all(chunk);
     curl_easy_cleanup(curl);
-    // printf("RES %d\n", res);
+    printf("RES %d\n", res);
     return res;
   }
   return 1;

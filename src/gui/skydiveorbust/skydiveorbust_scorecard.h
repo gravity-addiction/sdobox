@@ -18,6 +18,7 @@ void pg_sdobScoringMarks(gslc_tsGui *pGui);
 void pg_sdobScoringSelectionClear(gslc_tsGui *pGui);
 void pg_sdobScoringSelectionLastHidden(gslc_tsGui *pGui);
 int pg_sdobSubmitScorecard();
+int pg_sdobSubmitScorecard_API();
 
 #ifdef __cplusplus
 }
