@@ -586,7 +586,22 @@ int pg_sdobSubmitScorecard_JRSystem() {
       libmpvCache->player->duration, sdob_judgement->sowt, csv_score);
   closelog();
 
+  size_t filepathSz = snprintf(NULL, 0, "%s/%s", (char*)sdob_judgement->video->local_folder, sdob_judgement->video->video_file) + 1;
+  char *filePath = (char *)malloc(filepathSz * sizeof(char));
+  snprintf(filePath, filepathSz, "%s/%s", (char*)sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
+
+  // open the file for writing
+  FILE *fp = fopen(filePath, "a");
+  if (fp == NULL) {
+    printf("Error opening the file %s", filePath);
+  } else {
+    fprintf(fp, "%s\n", csv_score);
+    fclose(fp);
+  }
+  free(filePath);
+
   if (csv_score != NULL) { free(csv_score); }
+  
   return 1;
 }
 
@@ -690,6 +705,8 @@ int pg_sdobSubmitScorecard_API() {
   if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
     dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   };
+
+
   // char* scoreReply;
   // if (libsdob_zmq_scoring_send(s) < 0) {
   //   dbgprintf(DBG_DEBUG, "Failed to send scoring data");
