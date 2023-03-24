@@ -3055,6 +3055,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
         // Submit scorecard to syslog
         // touchscreenPopupMsgBox(&m_gui, "Submitting Score!", "Saving your score.");
         pg_sdobSubmitScorecard_API();
+        pg_sdobSubmitScorecard_JRSystem();
         // touchscreenPopupMsgBoxClose(&m_gui);
       break;
       case E_Q_SDOB_CLEAR:
