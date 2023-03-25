@@ -42,7 +42,7 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
   if (eTouch != GSLC_TOUCH_UP_IN) { return true; }
   gslc_tsGui* pGui = (gslc_tsGui*)(pvGui);
 
-  if (pg_sdob_submit_clearCheck == 1) {
+  // if (pg_sdob_submit_clearCheck == 1) {
     // Clear Scorecard
     struct queue_head *item = new_qhead();
     item->action = E_Q_SCORECARD_CLEAN;
@@ -50,10 +50,10 @@ bool pg_sdobSubmitCbBtnClear(void* pvGui,void *pvElemRef,gslc_teTouch eTouch,int
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
     // Close Submit Menu
     pg_sdobSubmitClose(pGui);
-  } else {
-    gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], true);
-    pg_sdob_submit_clearCheck = 1;
-  }
+  // } else {
+  //   gslc_ElemSetFillEn(pGui, pg_sdobSubmitEl[E_SDOB_SUBMIT_EL_BTN_CLEAR], true);
+  //   pg_sdob_submit_clearCheck = 1;
+  // }
   return true;
 }
 
