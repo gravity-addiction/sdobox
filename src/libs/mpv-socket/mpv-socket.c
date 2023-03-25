@@ -318,7 +318,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
             switch(json_typeof(rData)) {
               case JSON_STRING:
               {
-                printf("STRING\n");
+                // printf("STRING\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->ptr = strdup(json_string_value(rData));
                 *json_prop = mpvu;
@@ -327,7 +327,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_INTEGER:
               {
-                printf("INTEGER\n");
+                // printf("INTEGER\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->integer = json_integer_value(rData);
                 *json_prop = mpvu;
@@ -336,7 +336,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_REAL:
               {
-                printf("REAL\n");
+                // printf("REAL\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 double tFloat = (double)json_number_value(rData);
                 mpvu->floating = tFloat;
@@ -346,7 +346,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_TRUE:
               {
-                printf("TRUE\n");
+                // printf("TRUE\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->floating = 1.0;
                 mpvu->integer = 1;
@@ -358,7 +358,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               }
               case JSON_FALSE:
               {
-                printf("FALSE\n");
+                // printf("FALSE\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
                 mpvu->floating = 0.0;
                 mpvu->integer = 0;
