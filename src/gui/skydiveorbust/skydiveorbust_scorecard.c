@@ -35,7 +35,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
   }
   
   sdob_judgement->marks->size++;
-/*
+
   // Try getting mark time when not present
   mpv_any_u* retTimePos;
   if (markTime < 0 && sdob_devicehost->isHost == 1) {
@@ -46,7 +46,7 @@ int pg_sdobInsertMark(int markSelected, double markTime, int mark) {
       MPV_ANY_U_FREE(retTimePos);
     }
   }
-*/
+
   // sanity check, never less than 0
   if (markTime < 0) {
     // debug_print("%s\n", "Unable to grab video time!");

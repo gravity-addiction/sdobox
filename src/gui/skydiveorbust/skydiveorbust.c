@@ -705,7 +705,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
   if (pg_sdob_player_move_timepos_lock == 1) { printf("TimeLock!\n"); return; }
   pg_sdob_player_move_timepos_lock = 1;
 
-  if (libmpvCache->player->is_playing) {
+  // if (libmpvCache->player->is_playing) {
     mpv_any_u* retTime;
     if (mpvSocketSinglet("time-pos", &retTime, 0) != -1) {
       if (retTime == NULL) {
@@ -732,7 +732,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
       // printf("No Time-Pos Return\n");
       // libmpvCache->player->position = 0;
     }
-  }
+  // }
 
   if (sdob_judgement->sowt == -1.0 || !pg_sdob_timeline_zoom_workingtime) {
 
