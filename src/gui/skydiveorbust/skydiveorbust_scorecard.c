@@ -706,6 +706,15 @@ int pg_sdobSubmitScorecard_API() {
     dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   };
 
+  size_t filepathSz = snprintf(NULL, 0, "/home/pi/finishscript %s", sdob_judgement->video->video_file) + 1;
+  char *filePath = (char *)malloc(filepathSz * sizeof(char));
+  snprintf(filePath, filepathSz, "/home/pi/finishscript %s", sdob_judgement->video->video_file);
+  printf("%s\n", filePath);
+  system(filePath);
+  free(filePath);
+
+  
+
 
   // char* scoreReply;
   // if (libsdob_zmq_scoring_send(s) < 0) {
