@@ -198,7 +198,11 @@ int pg_sdobSOWTSet(double markTime, double workingTime) {
   if (markTime < 0) { markTime = 0.0; }
   // printf("Setting Working Time at %f for %f seconds\n", markTime, workingTime);
   sdob_judgement->sowt = markTime;
+  if (sdob_judgement->sopst > -1) {
+    sdob_judgement->eopst = markTime;
+  }
   sdob_judgement->workingTime = workingTime;
+  sdob_judgement->eowt = (markTime + workingTime);
   // debug_print("SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
   if (sdob_devicehost->teamStart == 0) {
@@ -260,7 +264,9 @@ int pg_sdobSOWTSet(double markTime, double workingTime) {
 
 int pg_sdobSOWTReset() {
   sdob_judgement->sopst = -1.0;
+  sdob_judgement->eopst = -1.0;
   sdob_judgement->sowt = -1.0;
+  sdob_judgement->eowt = -1.0;
   // debug_print("Reset SOWT: %f, /home/pi/Videos/%s\n", sdob_judgement->sowt, sdob_judgement->video_file);
 
   if (sdob_devicehost->teamStart == 0) {
@@ -430,10 +436,10 @@ int pg_sdobSubmitScorecard() {
   json_object_set_new(json_workingtime, "start", json_real(sdob_judgement->sowt));
   json_object_set_new(json_workingtime, "time", json_real(sdob_judgement->workingTime));
   json_object_set_new(root, "name", json_string(sdob_judgement->judge));
-  json_object_set_new(root, "comp", json_string(sdob_judgement->compStr));
-  json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
-  json_object_set_new(root, "event", json_string(sdob_judgement->eventStr));
-  json_object_set_new(root, "eventId", json_string(sdob_judgement->event));
+  json_object_set_new(root, "comp", json_string("FS 3-Way Intermediate")); // json_string(sdob_judgement->compStr));
+  json_object_set_new(root, "compId", json_string("91")); //json_string(sdob_judgement->comp));
+  json_object_set_new(root, "event", json_string("2024_perris_fresh_meet")); // json_string(sdob_judgement->eventStr));
+  json_object_set_new(root, "eventId", json_string("17")); // json_string(sdob_judgement->event));
   json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
   json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
   json_object_set_new(root, "marks", json_marks);
@@ -508,7 +514,7 @@ int pg_sdobSubmitScorecard() {
   json_decref(root);
 
   // CURL Submit Scorecard to Server
-  if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
+  if (curl_sdob_submit_scorecard(s, (long)strlen(s), 0) != 0) {
     dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   };
   // char* scoreReply;
@@ -619,25 +625,36 @@ int pg_sdobSubmitScorecard_API() {
   char* s = NULL;
 
   json_t *root = json_object();
+  json_t *json_judge_sheet = json_object();
   json_t *json_prestarttime = json_object();
   json_t *json_workingtime = json_object();
   json_t *json_marks = json_array();
+  json_t *json_score = json_object();
 
-  json_object_set_new(root, "prestartTime", json_prestarttime);
-  json_object_set_new(json_prestarttime, "start", json_real(sdob_judgement->sopst));
-  json_object_set_new(json_prestarttime, "time", json_real(sdob_judgement->prestartTime));
-  json_object_set_new(root, "workingTime", json_workingtime);
-  json_object_set_new(json_workingtime, "start", json_real(sdob_judgement->sowt));
-  json_object_set_new(json_workingtime, "time", json_real(sdob_judgement->workingTime));
-  json_object_set_new(root, "name", json_string(sdob_judgement->judge));
-  json_object_set_new(root, "comp", json_string(sdob_judgement->compStr));
-  json_object_set_new(root, "compId", json_string(sdob_judgement->comp));
-  json_object_set_new(root, "event", json_string(sdob_judgement->eventStr));
-  json_object_set_new(root, "eventId", json_string(sdob_judgement->event));
-  json_object_set_new(root, "teamNumber", json_string(sdob_judgement->team));
-  json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
-  json_object_set_new(root, "marks", json_marks);
+  json_object_set_new(root, "judge_sheet", json_judge_sheet);
   
+  json_object_set_new(root, "comp", json_string("FS 3-Way Intermediate")); // json_string(sdob_judgement->compStr));
+  json_object_set_new(root, "comp_id", json_string("91")); //json_string(sdob_judgement->comp));
+  json_object_set_new(root, "event", json_string("2024_perris_fresh_meet")); // json_string(sdob_judgement->eventStr));
+  json_object_set_new(root, "event_id", json_string("17")); // json_string(sdob_judgement->event));
+  json_object_set_new(root, "team_number", json_string(sdob_judgement->team));
+  json_object_set_new(root, "rnd", json_string(sdob_judgement->round));
+
+  json_object_set_new(json_judge_sheet, "prestartTime", json_prestarttime);
+  json_object_set_new(json_prestarttime, "start", json_real(sdob_judgement->sopst));
+  json_object_set_new(json_prestarttime, "end", json_real(sdob_judgement->eopst));
+  json_object_set_new(json_prestarttime, "time", json_real(sdob_judgement->prestartTime));
+  json_object_set_new(json_judge_sheet, "workingTime", json_workingtime);
+  json_object_set_new(json_workingtime, "start", json_real(sdob_judgement->sowt));
+  json_object_set_new(json_workingtime, "end", json_real(sdob_judgement->eowt));
+  json_object_set_new(json_workingtime, "time", json_real(sdob_judgement->workingTime));
+  json_object_set_new(json_judge_sheet, "name", json_string(sdob_judgement->judge));
+  json_object_set_new(json_judge_sheet, "marks", json_marks);
+  json_object_set_new(json_judge_sheet, "score", json_score);
+  json_object_set_new(json_score, "total", json_real(sdob_judgement->score));
+  json_object_set_new(json_score, "pit", json_real(sdob_judgement->pit));
+  
+  json_object_set_new(json_judge_sheet, "freezeFrame", json_real(sdob_judgement->eowt));
 
   for (size_t s = 0; s < sdob_judgement->marks->size; s++) {
     json_t *json_mark = json_object();
@@ -699,19 +716,25 @@ int pg_sdobSubmitScorecard_API() {
 
   // Dump JSON and decref
   s = json_dumps(root, 0);
+
+  json_decref(json_score);
+  json_decref(json_marks);
+  json_decref(json_workingtime);
+  json_decref(json_prestarttime);
+  json_decref(json_judge_sheet);
   json_decref(root);
 
   // CURL Submit Scorecard to Server
-  if (curl_sdob_submit_scorecard(s, (long)strlen(s)) != 0) {
+  if (curl_sdob_submit_scorecard(s, (long)strlen(s), 1) != 0) {
     dbgprintf(DBG_ERROR, "%s\n", "Unable to submit score to server");
   };
 
-  size_t filepathSz = snprintf(NULL, 0, "/home/pi/finishscript %s", sdob_judgement->video->video_file) + 1;
-  char *filePath = (char *)malloc(filepathSz * sizeof(char));
-  snprintf(filePath, filepathSz, "/home/pi/finishscript %s", sdob_judgement->video->video_file);
-  printf("%s\n", filePath);
-  system(filePath);
-  free(filePath);
+  // size_t filepathSz = snprintf(NULL, 0, "/home/pi/finishscript %s", sdob_judgement->video->video_file) + 1;
+  // char *filePath = (char *)malloc(filepathSz * sizeof(char));
+  // snprintf(filePath, filepathSz, "/home/pi/finishscript %s", sdob_judgement->video->video_file);
+  // printf("%s\n", filePath);
+  // system(filePath);
+  // free(filePath);
 
   
 

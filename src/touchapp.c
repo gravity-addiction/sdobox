@@ -279,12 +279,12 @@ int main( int argc, char* args[] )
   // }
 
   // Initialize ZeroMQ Context
-  libzhelpers_conn_init();
+  // libzhelpers_conn_init();
 
   // Initialize MPV library
-  libsdob_zmq_init();
+  // libsdob_zmq_init();
 
-  libmpv_wrapper_init();
+  // libmpv_wrapper_init();
   // libmpv_zmq_init();
   mpv_socket_init();
   
@@ -312,7 +312,7 @@ int main( int argc, char* args[] )
   // wpaScan();
   // wifi_init("wlan0");
   // Load Video
-  // mpv_loadfile("/home/pi/Videos/tunnel_20191204_730pm_40358_1.mp4", "replace", "fullscreen=yes");
+  // mpv_loadfile("http://172.20.20.250/videos/2024_perris_fresh_meet", "101_4.mp4", "replace", "fullscreen=yes");
   // mpv_loadfile("/home/pi/Videos/Group1-12_2.mp4", "replace", "fullscreen=yes");
   // mpv_create_player("/home/pi/Videos/Group5-34_2.mp4");
   // int videoid = db_video_info_insert(1, "22221", "vfs,problems", 60, "About this Time last week");
@@ -473,8 +473,8 @@ int main( int argc, char* args[] )
   // }
 
   // Kill MPV
-  // mpv_stop();
-  // libMpvSocketThreadStop();
+  mpv_stop();
+  libMpvSocketThreadStop();
 
   // Kill SDOB Socket
   // libSdobSocketThreadStop();
@@ -485,8 +485,8 @@ int main( int argc, char* args[] )
   
   // Shutdown Buttons Thread
   // lib_buttonsThreadStop();
-  libmpv_zmq_destroy();
-  libsdob_zmq_destroy();
+  // libmpv_zmq_destroy();
+  // libsdob_zmq_destroy();
   
   printf("%s\n", "Relax Mirroring");
   // Kill any outstanding fbcp instances

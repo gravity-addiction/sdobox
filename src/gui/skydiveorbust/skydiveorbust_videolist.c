@@ -134,10 +134,10 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     printf("Name: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
 
 //pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 
-    size_t serverUrlSz = snprintf(NULL, 0, "https://transq.thegarybox.com/videos/perris-fresh-meet-2023/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    size_t serverUrlSz = snprintf(NULL, 0, "https://flittermouse.thegarybox.com/videos/2024_indoor_skydiving_national_championships/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
     // size_t serverUrlSz = snprintf(NULL, 0, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1; 
     char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
-    snprintf(serverUrl, serverUrlSz, "https://transq.thegarybox.com/videos/perris-fresh-meet-2023/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    snprintf(serverUrl, serverUrlSz, "https://flittermouse.thegarybox.com/videos/2024_indoor_skydiving_national_championships/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
     // snprintf(serverUrl, serverUrlSz, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name); 
     printf("Server Url: %s\n", serverUrl);
     strlcpy(newVid->url, serverUrl, serverUrlSz);
@@ -152,6 +152,8 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
     item->u1.ptr = pGui;
     pg_sdob_add_action(&item);
     // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+
+    free(serverUrl);
 
 /*
     // Parse Filename for Comp Info

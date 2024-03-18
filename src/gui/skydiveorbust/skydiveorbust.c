@@ -144,14 +144,16 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
   judgement->roundStr[0] = '\0';
 
   judgement->sopst = -1.0;
+  judgement->eopst = -1.0;
   judgement->prestartTime = 0.0;
   judgement->sowt = -1.0;
+  judgement->eowt = -1.0;
   judgement->workingTime = 0.0;
   judgement->postFreezeFrameTime = 0.0;
   judgement->tossStartCount = 0;
 
   judgement->score = 0.00;
-  judgement->scoreMax = 0.00;
+  judgement->pit = 0.00;
   judgement->scoreStr = (char*)malloc(32 * sizeof(char));
   judgement->scoreStr[0] = '\0';
   return judgement;
@@ -161,9 +163,11 @@ struct pg_sdob_judgement_data * PG_SDOB_INIT_JUDGEMENT() {
 void PG_SDOB_CLEAR_JUDGEMENT(struct pg_sdob_judgement_data *judgement)
 {
   judgement->sopst = -1.0;
+  judgement->eopst = -1.0;
   judgement->sowt = -1.0;
+  judgement->eowt = -1.0;
   judgement->score = 0.00;
-  judgement->scoreMax = 0.00;
+  judgement->pit = 0.00;
   CLEAR(judgement->scoreStr, 32);
 
   PG_SDOB_SCORECARD_CLEAR_MARKS(judgement->marks);
@@ -470,7 +474,7 @@ void pg_sdobUpdateCount(gslc_tsGui *pGui, gslc_tsElemRef *pElem) {
   if (totalScore < 0) { totalScore = 0; }
 
   sdob_judgement->score = score;
-  sdob_judgement->scoreMax = totalScore;
+  sdob_judgement->pit = totalScore;
   size_t scoreSz = snprintf(NULL, 0, "%d/%d", score, totalScore) + 1;
   if (scoreSz > 0 && scoreSz <= 32) {
     snprintf(sdob_judgement->scoreStr, scoreSz, "%d/%d", score, totalScore);
@@ -723,6 +727,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
       if (retTime->hasPtr == 1) {
         // printf("Has PTR\n");
         libmpvCache->player->position = atof(retTime->ptr);
+        free(retTime->ptr);
       } else {
         // printf("No Ptr: %f\n", retTime->floating);
         libmpvCache->player->position = retTime->floating;
@@ -731,6 +736,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
     } else {
       // printf("No Time-Pos Return\n");
       // libmpvCache->player->position = 0;
+      // MPV_ANY_U_FREE(retTime);
     }
   // }
 
@@ -1985,14 +1991,14 @@ int pg_skydiveorbustButtonRotaryCCW() {
   // Not on a selection mark
   } else if (sdob_devicehost->isHost == 1 && sdob_judgement->marks->selected <= 0) {
 
-    // Adjust SOWT Framestep
-    // Frameback step really horrible, rather move back to last keyframe
-    item = new_qhead();
-    item->action = E_Q_ACTION_MPV_COMMAND;
-    item->cmd = strdup("frame-back-step\n");
-    pg_sdob_add_action(&item);
-    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    // mpv_seek(-2);
+    // // Adjust SOWT Framestep
+    // // Frameback step really horrible, rather move back to last keyframe
+    // item = new_qhead();
+    // item->action = E_Q_ACTION_MPV_COMMAND;
+    // item->cmd = strdup("frame-back-step\n");
+    // pg_sdob_add_action(&item);
+    // // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    // // mpv_seek(-2);
 
     return 0;
   // Skip to next point
@@ -2807,10 +2813,10 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
   // pg_skydiveorbust_parsefilename_internal(pGui, newVideo);
-
-  mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
-  // printf("Going To: %s\n", sdob_judgement->video->url);
-  // mpv_loadurl(sdob_judgement->video->url, "replace", "");
+  // printf("LOAD INTERNAL: %s %s\n", sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
+  // mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
+  printf("Going To: %s\n", sdob_judgement->video->url);
+  mpv_loadurl(sdob_judgement->video->url, "replace", "");
   
   mpv_fullscreen(1);
   pg_sdob_pl_sliderForceUpdate = 1;
@@ -3144,7 +3150,7 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       break;
 
       case E_Q_ACTION_LOADVIDEO:
-        printf("LOADING VIDEO!!!\n");
+        printf("LOADING VIDEOX!!!\n");
         pg_skydiveorbust_clear_internal((gslc_tsGui*)item->u1.ptr);
         pg_skydiveorbust_loadvideo_internal
           ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);
@@ -3401,7 +3407,7 @@ int pg_sdobThreadStart() {
 
   pg_sdob_api_newVideoCnt = 0;
 
-  // printf("SkydiveOrBust MPV TimePos Thread Spinup: %d\n", pg_sdobThreadRunning);
+  printf("SkydiveOrBust SDOB Thread Spinup: %d\n", pg_sdobThreadRunning);
   pg_sdobThreadKill = 0;
   pthread_t tid;
   return pthread_create(&tid, NULL, &pg_sdobThread, NULL);

@@ -115,6 +115,36 @@ void mpv_socket_close(int fd) {
 
 
 
+
+static pthread_mutex_t mpvSocketCmdLock = PTHREAD_MUTEX_INITIALIZER;
+
+
+int mpv_fd_purge(int fd) {
+  pthread_mutex_lock(&mpvSocketCmdLock);
+
+  int selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
+  while (selT == 1) {
+    char* mpv_rpc_ret = NULL;
+    int rc = sgetline(fd, &mpv_rpc_ret);
+    if (rc > 0) {
+      json_t *root;
+      json_error_t error;
+      root = json_loads(mpv_rpc_ret, 0, &error);
+        
+      dbgprintf(DBG_MPV_READ, "mpvread : '%s'\n", mpv_rpc_ret);
+
+      json_decref(root);
+      free(mpv_rpc_ret);
+    }
+    selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout); 
+  }
+
+ cleanup:
+  pthread_mutex_unlock(&mpvSocketCmdLock); 
+
+  return 0;
+}
+
 int mpv_socket_init() {
   dbgprintf(DBG_MPV_WRITE, "MPV Socket Init\n");
   mpv_socket_path = "/tmp/mpv.socket";
@@ -147,11 +177,11 @@ int mpv_fd_check(int fd) {
   // 16-Feb-2020 - disabling this -- after the synchonization fix
   // applied last week, this really serves no purpose.
   // Reset socket if more than 10 seconds since last reconnection
-  if (0 && millis() - mpv_socket_lastConn > 10000) {
-    dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "Proactively closing MPV socket\n");
-    mpv_socket_close(fd);
-    return 0;
-  }
+  // if (0 && millis() - mpv_socket_lastConn > 10000) {
+  //   dbgprintf(DBG_MPV_WRITE|DBG_MPV_READ, "Proactively closing MPV socket\n");
+  //   mpv_socket_close(fd);
+  //   return 0;
+  // }
 
   // Check Socket is in good standing
   if (fd > -1) {
@@ -178,6 +208,7 @@ int mpv_fd_check(int fd) {
 }
 
 int mpv_fd_write(char *data) {
+  /* mpv_fd_purge(mpv_socket_fdSelect); */
   if (mpv_fd_check(mpv_socket_fdSelect) == 0) {
     mpv_socket_lastConn = millis();
     mpv_socket_fdSelect = mpv_socket_conn();
@@ -206,7 +237,6 @@ int mpv_fd_write(char *data) {
   return 1;
 }
 
-static pthread_mutex_t mpvSocketCmdLock = PTHREAD_MUTEX_INITIALIZER;
 
 int mpv_cmd(char *cmd_string) {
     pthread_mutex_lock(&mpvSocketCmdLock);
@@ -318,11 +348,12 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
             switch(json_typeof(rData)) {
               case JSON_STRING:
               {
-                // printf("STRING\n");
+                printf("STRING\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                mpvu->ptr = strdup(json_string_value(rData));
+                mpvu->ptr = strdup(json_string_value(rData));                                
+                mpvu->hasPtr = 1;
                 *json_prop = mpvu;
-                result = json_string_length(rData);
+                result = 1; // json_string_length(rData);
                 break;
               }
               case JSON_INTEGER:
@@ -387,8 +418,8 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
         } else {
           dbgprintf(DBG_MPV_READ, "mpvignore %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
 
-          char* json_event;// = malloc(128);
-          int rcE = ta_json_parse(mpv_rpc_ret, "event", &json_event);          
+          // char* json_event;// = malloc(128);
+          // int rcE = ta_json_parse(mpv_rpc_ret, "event", &json_event);          
           
           // Send all others to Event Queue
           // struct queue_head *item = new_qhead();

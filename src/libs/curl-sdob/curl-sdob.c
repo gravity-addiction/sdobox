@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 
-int curl_sdob_submit_scorecard(char *data, int dataLen) {
+int curl_sdob_submit_scorecard(char *data, int dataLen, int finalized) {
   // Post using CURL
   CURL *curl;
   CURLcode res;
@@ -13,12 +13,16 @@ int curl_sdob_submit_scorecard(char *data, int dataLen) {
   if (curl) {
     struct curl_slist *chunk = NULL;
     chunk = curl_slist_append(chunk, "Accept: application/json");
-    chunk = curl_slist_append(chunk, "Content-Type: application/json; charset: utf-8");
+    chunk = curl_slist_append(chunk, "Content-Type: application/json; charset=utf-8");
     chunk = curl_slist_append(chunk, "Connection: close");
-    chunk = curl_slist_append(chunk, "Host: skydiveorbust.com");
-    chunk = curl_slist_append(chunk, "Authorization: Bearer eyJpZCI6MSwibmFtZSI6IkdhcnkgVGF5bG9yIiwidXNlcm5hbWUiOiIwMDEiLCJyb2xlIjpbInVzZXIiLHsicm9sZSI6ImFkbWluIiwiYXJlYSI6IiJ9XSwianRpIjoiNmRlNDFhNzYtNTMxYS00ZmE1LTI1ZTMtZmMzNzMyY2NjMmVkIiwiaWF0IjoxNjQ4MjUwMzgyLCJleHAiOjE2NDgyNTA0NDJ9.zo8qb29uxddkmFvhoC9H3iKF6-eR2oCqSuRX21wjwQk");
+    chunk = curl_slist_append(chunk, "Host: dev.omniskorehd.com");
+    chunk = curl_slist_append(chunk, "Authorization: Bearer eyJpZCI6MSwibmFtZSI6IkdhcnkiLCJ1c2VybmFtZSI6ImdhcnkiLCJyb2xlIjpbInVzZXIiLHsicm9sZSI6ImFkbWluIiwiYXJlYSI6IiJ9XSwianRpIjoiZDIzYzU0ZjQtODExYS00NGYwLTJhYWYtMWFhOTUxYzhmZWE1IiwiaWF0IjoxNzEwNDc1MDU5LCJleHAiOjE3MTA0NzUxMTl9.-kEKL8JTE2zmJqyRUiQ3sPs21kZxRUvuw-sGdfDCQ1E");
 
-    curl_easy_setopt(curl, CURLOPT_URL, "https://skydiveorbust.com/api/latest/events/2023_perris_fresh_meet/scores/submit");
+    if (finalized) {
+      curl_easy_setopt(curl, CURLOPT_URL, "http://dev.omniskorehd.com/api/latest/events/2024_perris_fresh_meet/scores/finalized");
+    } else {
+      curl_easy_setopt(curl, CURLOPT_URL, "http://dev.omniskorehd.com/api/latest/events/2024_perris_fresh_meet/scores/submit");
+    }
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, dataLen);

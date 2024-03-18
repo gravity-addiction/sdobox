@@ -101,11 +101,13 @@ struct pg_sdob_video_data {
 
 struct pg_sdob_judgement_data {
   double sopst;
+  double eopst;
   double prestartTime;
   double sowt;
+  double eowt;
   double workingTime;
   double score;
-  double scoreMax;
+  double pit;
   double postFreezeFrameTime;
 
   int tossStartCount;
