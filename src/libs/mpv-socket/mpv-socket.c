@@ -130,17 +130,17 @@ int mpv_fd_purge(int fd) {
       json_t *root;
       json_error_t error;
       root = json_loads(mpv_rpc_ret, 0, &error);
-        
+
       dbgprintf(DBG_MPV_READ, "mpvread : '%s'\n", mpv_rpc_ret);
 
       json_decref(root);
       free(mpv_rpc_ret);
     }
-    selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout); 
+    selT = select(FD_SETSIZE, &mpv_socket_set, NULL, NULL, &mpv_socket_timeout);
   }
 
  cleanup:
-  pthread_mutex_unlock(&mpvSocketCmdLock); 
+  pthread_mutex_unlock(&mpvSocketCmdLock);
 
   return 0;
 }
@@ -280,7 +280,7 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
     // printf("No Write\n");
     goto cleanup;
   }
-  
+
   time_t endTimeout;
   time_t startTimeout = time(NULL);
   time_t timeoutSeconds = 10; // 10 Second timeout getting back your cmd
@@ -350,8 +350,11 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
               {
                 printf("STRING\n");
                 mpv_any_u *mpvu = MPV_ANY_U_NEW();
-                mpvu->ptr = strdup(json_string_value(rData));                                
-                mpvu->hasPtr = 1;
+                mpvu->ptr = strdup(json_string_value(rData));
+                // if (json_string_length(rData)) {
+                //   dbgprintf(DBG_DEBUG, "%s %d %s", "Has Length", json_string_length(rData), mpvu->ptr);
+                //   // mpvu->hasPtr = 1;
+                // }
                 *json_prop = mpvu;
                 result = 1; // json_string_length(rData);
                 break;
@@ -419,8 +422,8 @@ int mpvSocketSinglet(char* prop, mpv_any_u ** json_prop, int force_wait) {
           dbgprintf(DBG_MPV_READ, "mpvignore %d:%d : '%s'\n", rReqId, reqId, mpv_rpc_ret);
 
           // char* json_event;// = malloc(128);
-          // int rcE = ta_json_parse(mpv_rpc_ret, "event", &json_event);          
-          
+          // int rcE = ta_json_parse(mpv_rpc_ret, "event", &json_event);
+
           // Send all others to Event Queue
           // struct queue_head *item = new_qhead();
           // item->data = strdup(json_event);
@@ -498,7 +501,7 @@ int mpv_cmd_prop_val(char* cmd, char* prop, double prop_val) {
 
 
 int mpv_socket_seek(double distance) {
-  if (!libmpvCache->player->is_loaded) { 
+  if (!libmpvCache->player->is_loaded) {
     // printf("Video Not Loaded mpv_socket_seek\n");
     return 0;
   }
@@ -506,8 +509,8 @@ int mpv_socket_seek(double distance) {
 }
 
 int mpv_socket_seek_arg(double distance, char* flags) {
-  if (!libmpvCache->player->is_loaded) { 
-    // printf("Video Not Loaded mpv_socket_seek\n"); 
+  if (!libmpvCache->player->is_loaded) {
+    // printf("Video Not Loaded mpv_socket_seek\n");
     return 0; }
   return mpv_fmt_cmd("seek %f %s\n", distance, flags);
 }
