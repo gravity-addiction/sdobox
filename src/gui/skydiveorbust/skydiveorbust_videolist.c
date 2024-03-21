@@ -130,21 +130,21 @@ bool pg_sdobVideoListCbBtnChangeVideo(void* pvGui,void *pvElemRef,gslc_teTouch e
 
   if (pg_sdobVideo_listConfig->cur >= 0) {
     struct pg_sdob_video_data *newVid = PG_SDOB_INIT_VIDEO_DATA();
-    printf("Path: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path); // + 16);
-    printf("Name: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    dbgprintf(DBG_DEBUG, "Path: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path); // + 16);
+    dbgprintf(DBG_DEBUG, "Name: %s\n", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
 
-//pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 
-    size_t serverUrlSz = snprintf(NULL, 0, "https://flittermouse.thegarybox.com/videos/2024_indoor_skydiving_national_championships/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
-    // size_t serverUrlSz = snprintf(NULL, 0, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1; 
+//pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path,
+    size_t serverUrlSz = snprintf(NULL, 0, "http://10.24.24.106/videos/2024_perris_fresh_meet/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
+    // size_t serverUrlSz = snprintf(NULL, 0, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name) + 1;
     char *serverUrl = (char *)malloc(serverUrlSz * sizeof(char));
-    snprintf(serverUrl, serverUrlSz, "https://flittermouse.thegarybox.com/videos/2024_indoor_skydiving_national_championships/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
-    // snprintf(serverUrl, serverUrlSz, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name); 
-    printf("Server Url: %s\n", serverUrl);
+    snprintf(serverUrl, serverUrlSz, "http://10.24.24.106/videos/2024_perris_fresh_meet/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    // snprintf(serverUrl, serverUrlSz, "/home/pi/Videos/%s", pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name);
+    dbgprintf(DBG_DEBUG, "Server Url: %s\n", serverUrl);
     strlcpy(newVid->url, serverUrl, serverUrlSz);
-    
+
     strlcpy(newVid->local_folder, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->path, 256);
     strlcpy(newVid->video_file, pg_sdobVideo_list[pg_sdobVideo_listConfig->cur]->name, 256);
-        
+
     // Load Video Into Player
     struct queue_head *item = new_qhead();
     item->action = E_Q_ACTION_LOADVIDEO;

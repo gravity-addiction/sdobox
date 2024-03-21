@@ -20,7 +20,6 @@ void *zerocontext = NULL;
 
 void libzhelpers_conn_init(void) {
   zerocontext = zmq_ctx_new();
-  printf("Set Context\n");
 }
 
 void libzhelpers_conn_destroy(void) {

@@ -52,7 +52,7 @@ unsigned long int libMpvCallbackAppend(void (*function)(char*)) {
   if (libMpvEventsCbList != NULL &&
       libMpvEventsCbList->len < libMpvEventsCbList->max
   ) {
-    
+
     struct libMpvEventsCb *eventCb = (struct libMpvEventsCb*)malloc(sizeof(struct libMpvEventsCb));
     eventCb->id = libMpvEventsCbList->idC;
     eventCb->cb = function;
@@ -109,7 +109,7 @@ void libMpvProcessEvent(char *event) {
 
   // No Longer Playing
   } else if (
-    strcmp(event, "end-file") == 0 || 
+    strcmp(event, "end-file") == 0 ||
     strcmp(event, "pause") == 0
   ) {
     libmpvCache->player->is_playing = 0;
@@ -123,7 +123,7 @@ void libMpvProcessEvent(char *event) {
   } else if (strcmp(event, "idle") == 0) {
     libmpvCache->player->is_loaded = 0;
     libmpvCache->player->has_seeked = 1;
-    
+
   // Seeking Thru File, Not Playing, and not Paused
   } else if (strcmp(event, "seek") == 0) {
     libmpvCache->player->is_seeking = 1;
@@ -137,7 +137,7 @@ void libMpvProcessEvent(char *event) {
     libmpv_setduration();
     libmpvCache->player->has_seeked = 1;
   } else {
-    printf("Event: %s\n", event);
+    dbgprintf(DBG_DEBUG, "Event: %s\n", event);
     return;
   }
   libmpvCache->player->cnt++;
@@ -234,7 +234,7 @@ PI_THREAD (libMpvQueueThread)
     } else {
       usleep(200000);
     }
-    
+
   }
   // close
   // debug_print("%s\n", "Closing MPV RPC");
@@ -267,7 +267,7 @@ void libMpvQueueThreadStop() {
       usleep(100000);
       shutdown_cnt++;
     }
-    
+
     free(libMpvEvents_Queue);
     libMpvEvents_QueueLen = 0;
   }

@@ -706,7 +706,7 @@ void pg_sdobUpdateDiscipline(gslc_tsGui *pGui, char* ident, char* name) {
 }
 
 void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
-  if (pg_sdob_player_move_timepos_lock == 1) { printf("TimeLock!\n"); return; }
+  if (pg_sdob_player_move_timepos_lock == 1) { dbgprintf(DBG_DEBUG, "TimeLock!\n"); return; }
   pg_sdob_player_move_timepos_lock = 1;
 
   // if (libmpvCache->player->is_playing) {
@@ -736,7 +736,7 @@ void pg_sdobUpdatePlayerSlider(gslc_tsGui *pGui) {
       }
       MPV_ANY_U_FREE(retTime);
     } else {
-      printf("No Time-Pos Return\n");
+      dbgprintf(DBG_DEBUG, "No Time-Pos Return\n");
       // libmpvCache->player->position = 0;
       // MPV_ANY_U_FREE(retTime);
     }
@@ -1993,14 +1993,14 @@ int pg_skydiveorbustButtonRotaryCCW() {
   // Not on a selection mark
   } else if (sdob_devicehost->isHost == 1 && sdob_judgement->marks->selected <= 0) {
 
-    // Adjust SOWT Framestep
-    // Frameback step really horrible, rather move back to last keyframe
-    item = new_qhead();
-    item->action = E_Q_ACTION_MPV_COMMAND;
-    item->cmd = strdup("frame-back-step\n");
-    pg_sdob_add_action(&item);
-    // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
-    // mpv_seek(-2);
+    // // Adjust SOWT Framestep
+    // // Frameback step really horrible, rather move back to last keyframe
+    // item = new_qhead();
+    // item->action = E_Q_ACTION_MPV_COMMAND;
+    // item->cmd = strdup("frame-back-step\n");
+    // pg_sdob_add_action(&item);
+    // // queue_put(item, pg_sdobQueue, &pg_sdobQueueLen);
+    // // mpv_seek(-2);
 
     return 0;
   // Skip to next point
@@ -2707,7 +2707,7 @@ static void pg_skydiveorbust_clear_internal(gslc_tsGui *pGui) {
 }
 
 static void pg_skydiveorbust_parsefilename_internal(gslc_tsGui *pGui, struct pg_sdob_video_data *pData) {
-  printf("Video Parsed: %s\n", pData->video_file);
+  dbgprintf(DBG_DEBUG, "Video Parsed: %s\n", pData->video_file);
   char* tFile = strdup(pData->video_file);
   tFile[3] = '\0';
   pg_sdobUpdateTeam(pGui, tFile);
@@ -2717,8 +2717,9 @@ static void pg_skydiveorbust_parsefilename_internal(gslc_tsGui *pGui, struct pg_
   rFile += 4;
   pg_sdobUpdateRound(pGui, rFile);
 
-  printf("Video T: %s\n", tFile);
-  printf("Video R: %s\n", rFile);
+  dbgprintf(DBG_DEBUG, "Video T: %s\n", tFile);
+  dbgprintf(DBG_DEBUG, "Video R: %s\n", rFile);
+
   // char* t = substring(strdup(pData->video_file), 0, 3);
   // printf("Team Number: %s\n", t);
   // char* r = substring(strdup(pData->video_file), 4, 1);
@@ -2814,10 +2815,10 @@ static void pg_skydiveorbust_loadvideo_internal(gslc_tsGui *pGui, struct pg_sdob
   if (sdob_judgement->video->video_file != NULL) { strlcpy(sdob_judgement->video->video_file, newVideo->video_file, 256); }
   if (sdob_judgement->video->url != NULL) { strlcpy(sdob_judgement->video->url, newVideo->url, 512); }
 
-  // pg_skydiveorbust_parsefilename_internal(pGui, newVideo);
+  pg_skydiveorbust_parsefilename_internal(pGui, newVideo);
   // printf("LOAD INTERNAL: %s %s\n", sdob_judgement->video->local_folder, sdob_judgement->video->video_file);
   // mpv_loadfile(sdob_judgement->video->local_folder, sdob_judgement->video->video_file, "replace", "");
-  printf("Going To: %s\n", sdob_judgement->video->url);
+  dbgprintf(DBG_DEBUG, "Going To: %s\n", sdob_judgement->video->url);
   mpv_loadurl(sdob_judgement->video->url, "replace", "");
 
   mpv_fullscreen(1);
@@ -3152,7 +3153,6 @@ int pg_skydiveorbust_action_execute(struct queue_head *item) {
       break;
 
       case E_Q_ACTION_LOADVIDEO:
-        printf("LOADING VIDEOX!!!\n");
         pg_skydiveorbust_clear_internal((gslc_tsGui*)item->u1.ptr);
         pg_skydiveorbust_loadvideo_internal
           ((gslc_tsGui*)item->u1.ptr, (struct pg_sdob_video_data*)item->data);

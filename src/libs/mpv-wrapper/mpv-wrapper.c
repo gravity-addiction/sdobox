@@ -36,7 +36,7 @@ int libmpv_wrapper_init() {
 double mpv_calc_marktime(struct lib_mpv_player *player) {
   double markTime = player->position;
   // double nDiff = (((double)(s_clock() - player->position_update)) * player->pbrate) / 1000;
-  
+
   if (player->is_playing == 1) {
     // printf("Calc %d -- %f .. %f .. %f .. %lld\n", libmpvCache->player->is_playing, nDiff, markTime, player->position, player->position_update);
     // if (nDiff < libmpvCache->player->duration) {
@@ -51,7 +51,7 @@ double mpv_calc_marktime(struct lib_mpv_player *player) {
   if (markTime < 0) {
     markTime = 0;
   } else if (markTime > libmpvCache->player->duration) {
-    markTime = libmpvCache->player->duration; 
+    markTime = libmpvCache->player->duration;
   }
   return markTime;
 }
@@ -78,12 +78,12 @@ int mpv_seek_arg(double distance, char* flags) {
   case E_MPV_PLAYER_ZMQ:
     return libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("seek;%f;%s", distance, flags));
   break;
-  }  
+  }
   return 1;
 }
 
 void mpv_check_pause() {
-  printf("Check Pausing\n");
+  dbgprintf(DBG_DEBUG, "Check Pausing\n");
   char *paused = NULL;
   int rc;
   switch (libmpvCache->player_out) {
@@ -113,7 +113,7 @@ int mpv_pause() {
   case E_MPV_PLAYER_ZMQ:
     return libmpv_zmq_cmd(strdup("set_prop_flag;pause;true"));
   break;
-  }  
+  }
   return 1;
 }
 
@@ -128,7 +128,7 @@ int mpv_play() {
   case E_MPV_PLAYER_ZMQ:
     return libmpv_zmq_cmd(strdup("set_prop_flag;pause;false"));
   break;
-  }    
+  }
   return 1;
 }
 
@@ -207,7 +207,7 @@ double mpv_speed_adjust(double spd) {
   break;
   case E_MPV_PLAYER_ZMQ:
     cur_spd = libmpv_zmq_get_prop_double("speed");
-  
+
     if (cur_spd == 0) { return -1; }
 
     if (cur_spd <= 0.1) {
@@ -226,7 +226,7 @@ double mpv_speed_adjust(double spd) {
     if (cur_spd != new_spd) {
       return mpv_speed(new_spd);
       // sprintf(m_player_playback_speed, "%.0f%%", (i_mpv_playback_speed * 100));
-    }    
+    }
   break;
   }
 
@@ -238,7 +238,7 @@ double mpv_time_pos() {
   switch (libmpvCache->player_out) {
   case E_MPV_PLAYER_SOCKET:
 
-  break;    
+  break;
   case E_MPV_PLAYER_ZMQ:
     return libmpv_zmq_get_prop_double("time-pos");
   break;
@@ -256,8 +256,8 @@ void mpv_stop() {
   case E_MPV_PLAYER_ZMQ:
     libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("stop"));
   break;
-  }  
-  
+  }
+
 }
 
 void mpv_playlist_clear() {
@@ -268,7 +268,7 @@ void mpv_playlist_clear() {
   case E_MPV_PLAYER_ZMQ:
     libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("playlist-clear"));
   break;
-  }    
+  }
 }
 
 //
@@ -314,7 +314,7 @@ int mpv_loadfile(char* folder, char* filename, char* flag, char* opts) {
     result = libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("loadfile;%s/%s;%s;%s;", folder, filename, flag, opts));
     mpv_pause();
   break;
-  }  
+  }
 
   // Free the possibly-allocated replacement strings -- free(NULL) is a safe no-op.
   free(qfolder);
@@ -329,7 +329,7 @@ int mpv_loadurl(char* url, char* flag, char* opts) {
   // libmpvCache->player->has_file = 1;
   libmpvCache->player->url = strdup(url);
   // strlcpy(libmpvCache->player->url, url, 512);
-  printf("Incoming: %s\n", url);
+  dbgprintf(DBG_DEBUG, "Incoming: %s\n", url);
   switch (libmpvCache->player_out) {
   case E_MPV_PLAYER_SOCKET:
     result = mpv_socket_loadurl(libmpvCache->player->url, flag, opts);
@@ -340,7 +340,7 @@ int mpv_loadurl(char* url, char* flag, char* opts) {
     mpv_pause();
   break;
   }
-  printf("Returing\n");
+  dbgprintf(DBG_DEBUG, "Returing\n");
   return result;
 }
 
@@ -353,8 +353,8 @@ void mpv_quit() {
   case E_MPV_PLAYER_ZMQ:
     libmpv_zmq_cmd(libmpv_zmq_fmt_cmd("quit"));
   break;
-  } 
-  
+  }
+
 }
 
 void stop_video() {
